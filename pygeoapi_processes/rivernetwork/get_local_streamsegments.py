@@ -9,9 +9,9 @@ import sys
 import traceback
 import json
 import psycopg2
-import pygeoapi.process.utils.upstream_helpers as helpers
-from pygeoapi.process.geofresh.py_query_db import get_connection_object
-from pygeoapi.process.geofresh.py_query_db import get_strahler_and_stream_segment_linestring
+from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_subc_id_basin_id_reg_id
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_strahler_and_stream_segment_linestring
 
 
 
@@ -95,7 +95,7 @@ class LocalStreamSegmentsGetter(BaseProcessor):
         geometry_only = (geometry_only.lower() == 'true')
 
         LOGGER.info('Retrieving stream segment for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
-        subc_id, basin_id, reg_id = helpers.get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, subc_id)
+        subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, subc_id)
         
         LOGGER.debug('Now, getting stream segment (incl. strahler order) for subc_id: %s' % subc_id)
         strahler, streamsegment = get_strahler_and_stream_segment_linestring(

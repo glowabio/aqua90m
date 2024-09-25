@@ -8,9 +8,11 @@ import os
 import sys
 import traceback
 import json
-import pygeoapi.process.utils.upstream_helpers as helpers
-from pygeoapi.process.geofresh.py_query_db import get_connection_object
 import psycopg2
+from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_subc_id_basin_id_reg_id
+from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_upstream_catchment_ids
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
+
 
 '''
 # Small:
@@ -92,9 +94,9 @@ class UpstreamSubcidGetter(BaseProcessor):
         LOGGER.info('START: Getting upstream subc_ids for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
 
         # Get reg_id, basin_id, subc_id, upstream_ids
-        subc_id, basin_id, reg_id = helpers.get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, subc_id)
+        subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, subc_id)
 
-        upstream_ids = helpers.get_upstream_catchment_ids(conn, subc_id, basin_id, reg_id, LOGGER)
+        upstream_ids = get_upstream_catchment_ids(conn, subc_id, basin_id, reg_id, LOGGER)
         LOGGER.debug('END: Received ids : %s' % upstream_ids)
 
         ################

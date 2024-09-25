@@ -8,11 +8,12 @@ import os
 import sys
 import traceback
 import json
-import pygeoapi.process.utils.upstream_helpers as helpers
-from pygeoapi.process.geofresh.py_query_db import get_connection_object
-from pygeoapi.process.geofresh.py_query_db import get_feature_linestrings_for_subc_ids
-from pygeoapi.process.geofresh.py_query_db import get_simple_linestrings_for_subc_ids
 import psycopg2
+from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_subc_id_basin_id_reg_id
+from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_upstream_catchment_ids
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_feature_linestrings_for_subc_ids
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_simple_linestrings_for_subc_ids
 
 
 
@@ -101,8 +102,8 @@ class UpstreamStreamSegmentsGetter(BaseProcessor):
         LOGGER.info('Getting upstream line segments for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
 
         # Get reg_id, basin_id, subc_id, upstream_ids
-        subc_id, basin_id, reg_id = helpers.get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, subc_id)
-        upstream_ids = helpers.get_upstream_catchment_ids(conn, subc_id, basin_id, reg_id, LOGGER)
+        subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, subc_id)
+        upstream_ids = get_upstream_catchment_ids(conn, subc_id, basin_id, reg_id, LOGGER)
 
         # Log interesting cases:
         if len(upstream_ids) == 0:

@@ -1,7 +1,7 @@
-from pygeoapi.process.geofresh.py_query_db import get_reg_id
-from pygeoapi.process.geofresh.py_query_db import get_basin_id_reg_id
-from pygeoapi.process.geofresh.py_query_db import get_subc_id_basin_id
-from pygeoapi.process.geofresh.py_query_db import get_upstream_catchment_ids_incl_itself
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_reg_id
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_basin_id_reg_id
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_subc_id_basin_id
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_upstream_catchment_ids_incl_itself
 
 
 def get_subc_id_basin_id_reg_id(conn, LOGGER, lon = None, lat = None, subc_id = None):

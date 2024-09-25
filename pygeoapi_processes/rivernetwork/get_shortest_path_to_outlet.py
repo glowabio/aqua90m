@@ -9,11 +9,13 @@ import sys
 import traceback
 import json
 import psycopg2
-import pygeoapi.process.utils.upstream_helpers as helpers
-from pygeoapi.process.geofresh.py_query_db import get_connection_object
-from pygeoapi.process.geofresh.py_query_db import get_dijkstra_ids
-from pygeoapi.process.geofresh.py_query_db import get_simple_linestrings_for_subc_ids
-from pygeoapi.process.geofresh.py_query_db import get_feature_linestrings_for_subc_ids
+import pygeoapi.process.aqua90m.geofresh.upstream_helpers as helpers
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_dijkstra_ids
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_simple_linestrings_for_subc_ids
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_feature_linestrings_for_subc_ids
+
+
 
 '''
 curl -X POST "https://aqua.igb-berlin.de/pygeoapi/processes/get-shortest-path-to-outlet/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lon\": 9.937520027160646, \"lat\": 54.69422745526058, \"geometry_only\": \"true\"}}"

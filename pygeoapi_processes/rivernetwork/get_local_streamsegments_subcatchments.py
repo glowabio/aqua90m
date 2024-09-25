@@ -9,10 +9,11 @@ import sys
 import traceback
 import json
 import psycopg2
-import pygeoapi.process.utils.upstream_helpers as helpers
-from pygeoapi.process.geofresh.py_query_db import get_connection_object
-from pygeoapi.process.geofresh.py_query_db import get_polygon_for_subcid_simple
-from pygeoapi.process.geofresh.py_query_db import get_strahler_and_stream_segment_linestring
+import pygeoapi.process.aqua90m.geofresh.upstream_helpers as helpers
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_polygon_for_subcid_simple
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_strahler_and_stream_segment_linestring
+
 
 
 '''

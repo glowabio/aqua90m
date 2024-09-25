@@ -7,10 +7,10 @@ import os
 import sys
 import traceback
 import json
-import pygeoapi.process.utils.upstream_helpers as helpers
-from pygeoapi.process.geofresh.py_query_db import get_connection_object
-from pygeoapi.process.geofresh.py_query_db import get_snapped_point_simple
 import psycopg2
+from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_subc_id_basin_id_reg_id
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_snapped_point_simple
 
 '''
 curl -X POST "https://aqua.igb-berlin.de/pygeoapi/processes/get-snapped-points/execution" -H "Content-Type: application/json" -d "{\"inputs\":{ \"lon\": 9.931555, \"lat\": 54.695070, \"comment\":\"Schlei\"}}"
@@ -88,7 +88,7 @@ class SnappedPointsGetter(BaseProcessor):
 
         # Get reg_id, basin_id, subc_id, upstream_ids
         LOGGER.info('START: Getting snapped point for lon, lat: %s, %s (or subc_id NONE)' % (lon, lat))
-        subc_id, basin_id, reg_id = helpers.get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, None)
+        subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, None)
 
         # Get snapped points:
         LOGGER.debug('... Now, getting snapped point for subc_id (as simple geometries): %s' % subc_id)

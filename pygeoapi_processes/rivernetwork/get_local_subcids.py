@@ -8,9 +8,9 @@ import os
 import sys
 import traceback
 import json
-import pygeoapi.process.utils.upstream_helpers as helpers
-from pygeoapi.process.geofresh.py_query_db import get_connection_object
 import psycopg2
+from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_subc_id_basin_id_reg_id
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
 
 '''
 curl -X POST "https://aqua.igb-berlin.de/pygeoapi/processes/get-local-subcids/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lon\": 9.931555, \"lat\": 54.695070, \"comment\":\"Nordoestliche Schlei, bei Rabenholz\"}}"
@@ -85,7 +85,7 @@ class LocalSubcidGetter(BaseProcessor):
         comment = data.get('comment') # optional
 
         print('Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
-        subc_id, basin_id, reg_id = helpers.get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, subc_id)
+        subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, subc_id)
 
 
         ################
