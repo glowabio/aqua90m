@@ -1,0 +1,80 @@
+{
+    "version": "0.0.1",
+    "id": "get-local-streamsegments-subcatchments",
+    "title": {"en": "Return a Stream Segment and its local subcatchment as GeoJSON"},
+    "description": {
+        "en": "Return a Stream Segment and its local subcatchment as a GeoJSON Feature (where the geometry is a LineString). Upstream not included."
+    },
+    "jobControlOptions": ["sync-execute", "async-execute"],
+    "keywords": ["subcatchment", "stream", "stream-segment", "geojson", "GeoFRESH", "hydrography90m"],
+    "links": [{
+        "type": "text/html",
+        "rel": "about",
+        "title": "GeoFRESH website",
+        "href": "https://geofresh.org/",
+        "hreflang": "en-US"
+    },
+    {
+        "type": "text/html",
+        "rel": "about",
+        "title": "On Stream segments (Hydrography90m)",
+        "href": "https://hydrography.org/hydrography90m/hydrography90m_layers",
+        "hreflang": "en-US"
+    }],
+    "inputs": {
+        "lon": {
+            "title": "Longitude (WGS84)",
+            "description": "Longitude....",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["longitude", "wgs84"]
+        },
+        "lat": {
+            "title": "Latitude (WGS84)",
+            "description": "Latitude....",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["latitude", "wgs84"]
+        },
+        "comment": {
+            "title": "Comment",
+            "description": "Arbitrary string that will not be processed but returned, for user\"s convenience.",
+            "schema": {"type": "string"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["comment"]
+        },
+        "geometry_only": {
+            "title": "Get only GeoJSON GeometryCollection?",
+            "description": "Specify whether to return only a GeoJSON GeometryCollection (in this case, a LineString), instead of a GeoJSON FeatureCollection containing additional properties. Please write \"true\" or \"false\".",
+            "schema": {"enum": ["true", "false"]},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["GeoJSON", "GeometryCollection", "FeatureCollection"]
+        }
+    },
+    "outputs": {
+        "stream_segment_subcatchment": {
+            "title": "Stream Segment and Subcatchment Area",
+            "description": "Stream Segment (incl. Strahler Order) and Subcatchment Area (as a Polygon) of the local subcatchment, as a GeoJSON GeometryCollection or FeatureCollection.",
+            "schema": {
+                "type": "object",
+                "contentMediaType": "application/json"
+            }
+        }
+    },
+    "example": {
+        "inputs": {
+            "lon": "9.931555",
+            "lat": "54.695070",
+            "comment": "located in schlei area",
+            "geometry_only": "false"
+        }
+    }
+}

@@ -1,0 +1,90 @@
+{
+    "version": "0.0.1",
+    "id": "get-upstream-streamsegments",
+    "title": {"en": "Return upstream catchment stream segments as GeoJSON"},
+    "description": {
+        "en": "Return the stream segments of the upstream catchments of the subcatchment (into which the given point falls) as a GeoJSON Feature (where the geometry is a LineString). The subcatchment itself not included."
+    },
+    "jobControlOptions": ["sync-execute", "async-execute"],
+    "keywords": ["subcatchment", "upstream", "stream", "stream-segment", "geojson", "GeoFRESH", "hydrography90m"],
+    "links": [{
+        "type": "text/html",
+        "rel": "about",
+        "title": "GeoFRESH website",
+        "href": "https://geofresh.org/",
+        "hreflang": "en-US"
+    },
+    {
+        "type": "text/html",
+        "rel": "about",
+        "title": "On Stream segments (Hydrography90m)",
+        "href": "https://hydrography.org/hydrography90m/hydrography90m_layers",
+        "hreflang": "en-US"
+    }],
+    "inputs": {
+        "lon": {
+            "title": "Longitude (WGS84)",
+            "description": "Longitude....",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["longitude", "wgs84"]
+        },
+        "lat": {
+            "title": "Latitude (WGS84)",
+            "description": "Latitude....",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["latitude", "wgs84"]
+        },
+        "add_upstream_ids": {
+            "title": "Add upstream ids?",
+            "description": "Specify whether to add the upstream ids to the GeoJSON Feature's properties. Please write \"true\" or \"false\".",
+            "schema": {"enum": ["true", "false"]},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "comment": {
+            "title": "Comment",
+            "description": "Arbitrary string that will not be processed but returned, for user\"s convenience.",
+            "schema": {"type": "string"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["comment"]
+        },
+        "geometry_only": {
+            "title": "Get only GeoJSON GeometryCollection?",
+            "description": "Specify whether to return only a GeoJSON GeometryCollection (in this case, LineStrings), instead of a GeoJSON FeatureCollection containing additional properties. Please write \"true\" or \"false\".",
+            "schema": {"enum": ["true", "false"]},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["GeoJSON", "GeometryCollection", "FeatureCollection"]
+        }
+    },
+    "outputs": {
+        "upstream_stream_segments": {
+            "title": "Upstream Stream Segments",
+            "description": "All stream segments upstream of the given location, as a GeoJSON FeatureCollection or GeometryCollection.",
+            "schema": {
+                "type": "object",
+                "contentMediaType": "application/json"
+            }
+        }
+    },
+    "example": {
+        "inputs": {
+            "lon": "9.931555",
+            "lat": "54.695070",
+            "comment": "located in schlei area",
+            "add_upstream_ids": "true",
+            "geometry_only": "false"
+        }
+    }
+}
