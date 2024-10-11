@@ -36,7 +36,7 @@ from rasterio import warp
 #import rasterio.mask
 from osgeo import gdal
 import json
-import pygeoapi.process.aqua90m.utils.raster_helpers as helpers
+from pygeoapi.process.aqua90m.utils.raster_helpers import compress_tiff
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 
 
@@ -122,7 +122,7 @@ class SubsetterBbox(BaseProcessor):
         #polygon = _make_bbox_geojson(north_lat, south_lat, east_lon, west_lon)
         #_subset_by_polygon(polygon, input_raster_filepath, result_filepath_uncompressed) # same function as subset_by_polygon
 
-        helpers.compress_tiff(result_filepath_uncompressed, result_filepath_compressed, LOGGER)
+        compress_tiff(result_filepath_uncompressed, result_filepath_compressed, LOGGER)
 
         # Read bytestream from disk and return to user as application/octet-stream:
         with open(result_filepath_compressed, 'r+b') as myraster:

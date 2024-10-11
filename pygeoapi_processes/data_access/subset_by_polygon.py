@@ -35,7 +35,7 @@ import rasterio.mask
 from osgeo import gdal
 import json
 import requests
-import pygeoapi.process.aqua90m.utils.raster_helpers as helpers
+from pygeoapi.process.aqua90m.utils.raster_helpers import compress_tiff
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 
 
@@ -166,7 +166,7 @@ class SubsetterPolygon(BaseProcessor):
 
         # Run it:
         _subset_by_polygon(polygon, input_raster_filepath, result_filepath_uncompressed)
-        helpers.compress_tiff(result_filepath_uncompressed, result_filepath_compressed, LOGGER)
+        compress_tiff(result_filepath_uncompressed, result_filepath_compressed, LOGGER)
 
         # Read bytestream from disk and return to user as application/octet-stream:
         with open(result_filepath_compressed, 'r+b') as myraster:
