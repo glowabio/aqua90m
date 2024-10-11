@@ -1,6 +1,7 @@
 {
     "version": "0.0.1",
     "id": "get-snapped-points",
+    "use_case": "hydrography90m",
     "title": {"en": "Get corrected coordinates: Snapped to nearest stream segment."},
     "description": {
         "en": "Return a pair of coordinates that were snapped to the nearest stream segment as a GeoJSON Point. Also return the stream segment as a GeoJSON LineString, and basin id, region id, subcatchment id."

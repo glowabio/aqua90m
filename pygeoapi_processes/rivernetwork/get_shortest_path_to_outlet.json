@@ -1,6 +1,7 @@
 {
     "version": "0.0.1",
     "id": "get-shortest-path-to-outlet",
+    "use_case": "hydrography90m",
     "title": {"en": "Shortest path to the outlet (i.e. to the sea)"},
     "description": {
         "en": "Return the shortest path (using the Dijkstra algorithm) from the stream segment to which the given start point belongs to sea (outlet). The path is returned as GeoJSON FeatureCollection or GeometryCollection, depending  on user input. The geometries are LineStrings in both cases. The start and end segments are included."

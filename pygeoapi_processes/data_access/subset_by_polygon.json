@@ -1,13 +1,10 @@
 {
     "version": "0.2.0",
     "id": "get-subset-by-polygon",
-    "title": {
-        "en": "Subset by Polygon",
-        "fr": "Subset by Polygon"
-    },
+    "use_case": "hydrography90m",
+    "title": {"en": "Subset by Polygon"},
     "description": {
-        "en": "This process returns a raster subset from a tiff raster image, based on a polygon provided by the user in WGS84 coordinates. The result is a compressed tiff file.",
-        "fr": "Pas de description encore."
+        "en": "This process returns a raster subset from a tiff raster image, based on a polygon provided by the user in WGS84 coordinates. The result is a compressed tiff file."
     },
     "jobControlOptions": ["sync-execute", "async-execute"],
     "keywords": ["subset", "raster", "polygon"],

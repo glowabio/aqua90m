@@ -1,6 +1,7 @@
 {
     "version": "0.0.1",
     "id": "get-upstream-dissolved",
+    "use_case": "hydrography90m",
     "title": {"en": "Get Upstream Catchment as GeoJSON Polygon Feature"},
     "description": {
         "en": "Return the geometry of the upstream catchment of the subcatchment into which the given point falls as a GeoJSON Feature (where the geometry is a Polygon). The subcatchment itself not included."

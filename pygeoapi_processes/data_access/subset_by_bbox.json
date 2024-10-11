@@ -1,9 +1,8 @@
 {
     "version": "0.2.0",
     "id": "get-subset-by-bbox",
-    "title": {
-        "en": "Subset by Bounding Box"
-    },
+    "use_case": "hydrography90m",
+    "title": {"en": "Subset by Bounding Box"},
     "description": {
         "en": "This process returns a raster subset from a tiff raster image, based on a bounding box provided by the user in WGS84 coordinates. The result is a compressed tiff file."
     },

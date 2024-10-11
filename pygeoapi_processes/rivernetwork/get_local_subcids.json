@@ -1,6 +1,7 @@
 {
     "version": "0.0.1",
     "id": "get-local-subcids",
+    "use_case": "hydrography90m",
     "title": {"en": "Return subcatchment ids"},
     "description": {
         "en": "Return the subcatchment id of the single subcatchment (into which the given point falls), as an integer number"

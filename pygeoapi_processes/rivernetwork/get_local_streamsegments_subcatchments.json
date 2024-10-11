@@ -1,6 +1,7 @@
 {
     "version": "0.0.1",
     "id": "get-local-streamsegments-subcatchments",
+    "use_case": "hydrography90m",
     "title": {"en": "Return a Stream Segment and its local subcatchment as GeoJSON"},
     "description": {
         "en": "Return a Stream Segment and its local subcatchment as a GeoJSON Feature (where the geometry is a LineString). Upstream not included."

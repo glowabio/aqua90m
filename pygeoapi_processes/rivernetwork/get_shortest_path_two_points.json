@@ -1,6 +1,7 @@
 {
     "version": "0.0.1",
     "id": "get-shortest-path-two-points",
+    "use_case": "hydrography90m",
     "title": {"en": "Shortest path between two points"},
     "description": {
         "en": "Return the shortest path (using the Dijkstra algorithm) stream from the stream segment to which the given start point belongs to the stream segment to which the given end point belongs. They have to be in the same river basin. The path is returned as GeoJSON FeatureCollection or GeometryCollection, depending on user input. The geometries are LineStrings in both cases. The start and end segments are included."
