@@ -1,0 +1,91 @@
+{
+    "version": "0.2.0",
+    "id": "extract-point-stats",
+    "use_case": "hydrography90m",
+    "title": {"en": "Extract Values from Raster per Point"},
+    "description": {
+        "en": "This process returns a ...."
+    },
+    "jobControlOptions": ["sync-execute", "async-execute"],
+    "keywords": ["subset", "raster"],
+    "links": [{
+        "type": "text/html",
+        "rel": "about",
+        "title": "information",
+        "href": "https://example.org/process",
+        "hreflang": "en-US"
+    }],
+    "inputs": {
+        "lonlatstring": {
+            "title": "Lon and lat as string",
+            "description": "Blah",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["coordinate", "wgs84"]
+        },
+        "variable": {
+            "title": "Variable",
+            "description": "Variable to query",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["south", "coordinate", "wgs84"]
+        },
+        "colname_lon": {
+            "title": "Column name for Longitude",
+            "description": "TODO",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["coordinate", "wgs84"]
+        },
+        "colname_lat": {
+            "title": "Column name for Latitude",
+            "description": "TODO",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["coordinate", "wgs84"]
+        }
+    },
+    "outputs": {
+        "csv": {
+            "title": "Value per point as csv",
+            "description": "As csv, semicolon-separated.",
+            "schema": {
+                "type": "object",
+                "contentMediaType": "application/octet-stream"
+            }
+        },
+        "geojson": {
+            "title": "Value per point as csv",
+            "description": "As GeoJSON Feature Collection",
+            "schema": {
+                "type": "object",
+                "contentMediaType": "application/json"
+            }
+        }
+    },
+    "example": {
+        "inputs": {
+            "lonlatstring": "lon lat\n5.5 52.7\n7.3 51.6",
+            "variable": "sti",
+            "colname_lon":  "lon",
+            "colname_lat":  "lat",
+            "comment":  "blabla"
+        }
+    }
+}
