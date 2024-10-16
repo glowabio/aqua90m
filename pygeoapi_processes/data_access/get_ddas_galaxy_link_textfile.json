@@ -1,0 +1,48 @@
+{
+    "version": "0.2.0",
+    "id": "get-ddas-galaxy-link-textfile",
+    "use_case": "(admin)",
+    "title": {
+        "en": "DDAS Galaxy Link Helper"
+    },
+    "description": {
+        "en": "This is not intended for use by human users, only by the AIP. It returns a link to a textfile that contains the link to data found on DDAS. This is needed as input to the AquaINFRA Galaxy processes."
+    },
+    "jobControlOptions": ["sync-execute", "async-execute"],
+    "keywords": ["galaxy", "ddas"],
+    "links": [{
+        "type": "text/html",
+        "rel": "about",
+        "title": "information",
+        "href": "https://example.org/process",
+        "hreflang": "en-US"
+    }],
+    "inputs": {
+        "link_from_ddas": {
+            "title": "Link from DDAS",
+            "description": "This should be a URL to a dataset which can later be fed as input to the AquaINFRA Galaxy tools / AquaINFRA OGC API processes.",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["url"]
+        }
+    },
+    "outputs": {
+        "textfile": {
+            "title": "Textfile needed in Galaxy",
+            "description": "Textfile that contains the link to data found on DDAS. This is needed as input to the AquaINFRA Galaxy processes.",
+            "schema": {
+                "type": "object",
+                "contentMediaType": "application/json"
+            }
+        }
+    },
+    "example": {
+        "inputs": {
+            "link_from_ddas": "https://bla.com/"
+        }
+    }
+}
