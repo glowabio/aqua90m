@@ -1,4 +1,3 @@
-
 import logging
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 LOGGER = logging.getLogger(__name__)
@@ -12,9 +11,90 @@ import subprocess
 import pandas as pd
 
 '''
-curl -X POST "http://localhost:5000/processes/extract-point-stats/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lonlatstring\": \"lon lat\n5.5 52.7\n7.3 51.6\", \"variable\": \"sti\", \"comment\":\"schna\", \"colname_lon\":\"lon\", \"colname_lat\":\"lat\"}, \"outputs\": {\"transmissionMode\": \"reference\", \"csv\": \"dummy\", \"geojson\": \"dummy\"}}"
+# Input points: lonlatstring
+# Input raster: variable name, local tif from lookuptable
+# Outputs: json and csv, both as reference
+curl -X POST "http://localhost:5000/processes/extract-point-stats/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "variable": "sti",
+    "lonlatstring": "lon lat\n5.5 52.7\n7.3 51.6",
+    "colname_lon": "lon",
+    "colname_lat": "lat",
+    "comment": "test 1"
+  },
+  "outputs": {
+    "transmissionMode": "reference"
+  }
+}'
 
-curl -X POST "http://localhost:5000/processes/extract-point-stats/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lonlatstring\": \"lon lat\n5.5 52.7\n7.3 51.6\", \"variable\": \"sti\", \"comment\":\"schna\", \"colname_lon\":\"lon\", \"colname_lat\":\"lat\"}, \"outputs\": {\"transmissionMode\": \"value\", \"csv\": \"dummy\", \"geojson\": \"dummy\"}}"
+# Input points: lonlatstring
+# Input raster: variable name, local tif from lookuptable
+# Outputs: Requested nothing, so getting all back as reference...
+curl -X POST "http://localhost:5000/processes/extract-point-stats/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "variable": "sti",
+    "lonlatstring": "lon lat\n5.5 52.7\n7.3 51.6",
+    "colname_lon": "lon",
+    "colname_lat": "lat",
+    "comment": "test 2"
+  }
+}'
+
+
+# Input points: lonlatstring
+# Input raster: variable name, Allas VRT from lookuptable
+# Outputs: json and csv, both as value
+curl -X POST "http://localhost:5000/processes/extract-point-stats/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "variable": "basin",
+    "lonlatstring": "lon lat\n5.5 52.7\n7.3 51.6",
+    "colname_lon": "lon",
+    "colname_lat": "lat",
+    "comment": "test 3"
+  },
+  "outputs": {
+    "transmissionMode": "value"
+  }
+}'
+
+
+# Input points: GeoJSON
+# Input raster: variable name, Allas VRT from lookuptable
+# Outputs: json and csv, both as value
+curl -X POST "http://localhost:5000/processes/extract-point-stats/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "variable": "basin",
+    "points_geojson": {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": [-16.1547,66.3945]},
+                "properties": {"comment": "North East Iceland, tile h16v00"}
+            },
+            {
+                "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": [24.7615,56.8253]},
+                "properties": {"comment": "South East of Riga, tile h20v02"}
+            }
+        ]
+    },
+    "comment": "test 4"
+  },
+  "outputs": {
+    "geojson": "value",
+    "csv": "reference"
+  }
+}'
+
 
 '''
 
