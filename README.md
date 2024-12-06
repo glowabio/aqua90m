@@ -6,6 +6,8 @@ deployed on pygeoapi instances.
 
 ## List of processes
 
+* extract-point-stats
+
 (TODO)
 
 
@@ -65,4 +67,31 @@ and runnable by the Linux user running pygeoapi.
 
 ## Process-specific details
 
-(TODO)
+### extract-point-stats
+
+For this process, R and the R package `hydrographr` are needed.
+
+For this process, the config file needs to contain these items:
+
+* rasterlayer_lookup_table: Mapping between variable names and a local path or
+  remote URL where the corresponding raster layer can be found, as GeoTIFF or
+  VRT or any layer that `gdallocationinfo` can work with.
+* hydrographr_bash_files: Path where the executable bash files of the
+  `hydrographr` R package can be found.
+* download_dir
+* download_url
+
+
+Example:
+
+```
+    "rasterlayer_lookup_table": {
+        "basin": "https://2007367-nextcloud.a3s.fi/igb/vrt/basin.vrt",
+        "sti": "/opt/aquainfra_inputs/Hydrography90m/sti_h18v02.tif"
+    },
+    "hydrographr_bash_files": "/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/hydrographr/inst/sh",
+    "download_dir": "/var/www/nginx/download/",
+    "download_url": "https://aqua.igb-berlin.de/download/",
+
+
+```
