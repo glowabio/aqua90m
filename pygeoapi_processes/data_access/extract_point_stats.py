@@ -74,14 +74,17 @@ class ExtractPointStatsProcessor(BaseProcessor):
         colname_lat = data.get('colname_lat', None)
         colname_lon = data.get('colname_lon', None)
         points_geojson = data.get('points_geojson', None)
+        points_geojson_url = data.get('points_geojson_url')
 
         # Check user inputs
         if variable is None:
             raise ProcessorExecuteError('Need to provide "variable".')
-        if lonlatstring is None and points_geojson is None:
-            raise ProcessorExecuteError('Need to provide "lonlatstring" or "points_geojson".')
-        elif lonlatstring is not None and points_geojson is not None:
-            raise ProcessorExecuteError('Need to provide either "lonlatstring" or "points_geojson", not both.')
+        if lonlatstring is None and points_geojson is None and points_geojson_url is None:
+            raise ProcessorExecuteError('Need to provide "lonlatstring" or "points_geojson" or "points_geojson_url".')
+        elif sum([lonlatstring is not None,
+                  points_geojson is not None,
+                  points_geojson_url is not None]) > 1:
+            raise ProcessorExecuteError('Need to provide either "lonlatstring" or "points_geojson" or "points_geojson_url", just one of them.')
         elif lonlatstring is not None:
             if colname_lat is None or colname_lon is None:
                  raise ProcessorExecuteError('If you provide "lonlatstring", you also must provide "colname_lat" and "colname_lon".')
@@ -97,6 +100,12 @@ class ExtractPointStatsProcessor(BaseProcessor):
         # Write user-provided points to tmp
         # (as input for gdallocation info):
         coord_tmp_path = '/tmp/inputcoordinates_%s.txt' % self.job_id
+
+        # User provided URL to GeoJSON points:
+        if points_geojson_url is not None:
+            resp = requests.get(points_geojson_url)
+            if resp.status_code == 200:
+                points_geojson = resp.json()
 
         # User provided points as feature collection:
         if points_geojson is not None:
