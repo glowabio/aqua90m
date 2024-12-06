@@ -8,7 +8,14 @@ from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 
 
 '''
-curl -X POST "http://localhost:5000/processes/get-ddas-galaxy-link-textfile/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"link_from_ddas\": \"www.bla.com\"}}"
+curl -X POST --location 'http://localhost:5000/processes/get-ddas-galaxy-link-textfile/execution' \
+--header 'Content-Type: application/json' \
+--data '{
+    "inputs": {
+        "link_from_ddas": "https://www.bla.com"
+    }
+}'
+
 '''
 
 LOGGER = logging.getLogger(__name__)
