@@ -69,16 +69,17 @@ class ExtractPointStatsProcessor(BaseProcessor):
 
         # User inputs
         lonlatstring = data.get('lonlatstring', None)
-        variable = data.get('variable')  # names, e.g. "spi", "sti" --> enum!
+        variable = data.get('variable', None)  # names, e.g. "spi", "sti" --> enum!
         comment = data.get('comment') # optional
         colname_lat = data.get('colname_lat', None)
         colname_lon = data.get('colname_lon', None)
         points_geojson = data.get('points_geojson', None)
         points_geojson_url = data.get('points_geojson_url')
+        variable_layer_from_ddas = data.get('variable_layer_from_ddas', None)
 
         # Check user inputs
-        if variable is None:
-            raise ProcessorExecuteError('Need to provide "variable".')
+        if variable is None and variable_layer_from_ddas is None:
+            raise ProcessorExecuteError('Need to provide "variable" or "variable_layer_from_ddas".')
         if lonlatstring is None and points_geojson is None and points_geojson_url is None:
             raise ProcessorExecuteError('Need to provide "lonlatstring" or "points_geojson" or "points_geojson_url".')
         elif sum([lonlatstring is not None,
@@ -129,24 +130,29 @@ class ExtractPointStatsProcessor(BaseProcessor):
         ### Raster layer ###
         ####################
 
-        LOGGER.debug('Requested variable "%s"...' % variable)
+        if variable_layer_from_ddas is not None:
+            var_layer = variable_layer_from_ddas
 
-        # Read path from config:
-        path_tiffs = self.config['path_hy90m_rasters'].rstrip('/')
+        else:
+            LOGGER.debug('Requested variable "%s"...' % variable)
 
-        # EITHER: Path and filename are always the same, given the variable name:
-        # TODO: Test case, individual tiles, no VRT yet, so file id has to be specified!
-        var_layer = '{path}/{var}_{tile}.tif'.format(
-            path = path_tiffs, var=variable, tile='18v02')
+            # Read path from config:
+            path_tiffs = self.config['path_hy90m_rasters'].rstrip('/')
 
-        # OR: Path and filename are read from this Lookup Table:
-        # TODO: Have an entire Lookup Table stored somewhere? Maybe in config?
-        lookup_vrt = {
-            "basin": "https://2007367-nextcloud.a3s.fi/igb/vrt/basin.vrt",
-            "sti": path_tiffs+'/sti_h18v02.tif',
-            "cti": "not-yet"
-        }
-        var_layer = lookup_vrt[variable]
+            # EITHER: Path and filename are always the same, given the variable name:
+            # TODO: Test case, individual tiles, no VRT yet, so file id has to be specified!
+            var_layer = '{path}/{var}_{tile}.tif'.format(
+                path = path_tiffs, var=variable, tile='18v02')
+
+            # OR: Path and filename are read from this Lookup Table:
+            # TODO: Have an entire Lookup Table stored somewhere? Maybe in config?
+            lookup_vrt = {
+                "basin": "https://2007367-nextcloud.a3s.fi/igb/vrt/basin.vrt",
+                "sti": path_tiffs+'/sti_h18v02.tif',
+                "cti": "not-yet"
+            }
+            var_layer = lookup_vrt[variable]
+
         LOGGER.debug('Requested variable file "%s"...' % var_layer)
 
         # Where to store results:
