@@ -221,21 +221,22 @@ class ExtractPointStatsProcessor(BaseProcessor):
             LOGGER.debug('Requested variable "%s"...' % variable_name)
 
             # Read path from config:
-            path_tiffs = self.config['path_hy90m_rasters'].rstrip('/')
+            #path_tiffs = self.config['path_hy90m_rasters'].rstrip('/')
 
             # EITHER: Path and filename are always the same, given the variable name:
             # TODO: Test case, individual tiles, no VRT yet, so file id has to be specified!
-            var_layer = '{path}/{var}_{tile}.tif'.format(
-                path = path_tiffs, var=variable_name, tile='18v02')
+            #var_layer = '{path}/{var}_{tile}.tif'.format(
+            #    path = path_tiffs, var=variable_name, tile='18v02')
 
             # OR: Path and filename are read from this Lookup Table:
             # TODO: Have an entire Lookup Table stored somewhere? Maybe in config?
-            lookup_vrt = {
-                "basin": "https://2007367-nextcloud.a3s.fi/igb/vrt/basin.vrt",
-                "sti": path_tiffs+'/sti_h18v02.tif',
-                "cti": "not-yet"
-            }
-            var_layer = lookup_vrt[variable_name]
+            #lookup_vrt = {
+            #    "basin": "https://2007367-nextcloud.a3s.fi/igb/vrt/basin.vrt",
+            #    "sti": path_tiffs+'/sti_h18v02.tif',
+            #    "cti": "not-yet"
+            #}
+            # var_layer = lookup_vrt[variable_name]
+            var_layer = self.config['rasterlayer_lookup_table'][variable_name]
 
         LOGGER.debug('Requested variable file "%s"...' % var_layer)
 
