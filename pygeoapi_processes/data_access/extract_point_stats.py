@@ -68,7 +68,6 @@ class ExtractPointStatsProcessor(BaseProcessor):
     def _execute(self, data, requested_outputs):
 
         # User inputs
-        # TODO: Allow user passing csv, GeoJSON, ...
         lonlatstring = data.get('lonlatstring', None)
         variable = data.get('variable')  # names, e.g. "spi", "sti" --> enum!
         comment = data.get('comment') # optional
@@ -86,8 +85,14 @@ class ExtractPointStatsProcessor(BaseProcessor):
         elif lonlatstring is not None:
             if colname_lat is None or colname_lon is None:
                  raise ProcessorExecuteError('If you provide "lonlatstring", you also must provide "colname_lat" and "colname_lon".')
+            if not colname_lat in lonlatstring:
+                 raise ProcessorExecuteError('If you provide "lonlatstring", you also must provide matching "colname_lat".')
+            if not colname_lon in lonlatstring:
+                 raise ProcessorExecuteError('If you provide "lonlatstring", you also must provide matching "colname_lon".')
 
-
+        ####################
+        ### Points layer ###
+        ####################
 
         # Write user-provided points to tmp
         # (as input for gdallocation info):
