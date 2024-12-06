@@ -258,7 +258,8 @@ class ExtractPointStatsProcessor(BaseProcessor):
 
         outputs = {}
 
-        if "geojson" in requested_outputs.keys() or "ALL" in requested_outputs.keys():
+        output_name = "geojson"
+        if output_name in requested_outputs.keys() or "ALL" in requested_outputs.keys():
 
             # TODO: Add properties of original feature collection?
 
@@ -282,25 +283,25 @@ class ExtractPointStatsProcessor(BaseProcessor):
                 "features": geojson_features
             }
 
-            if self.return_hyperlink("geojson", requested_outputs):
+            if self.return_hyperlink(output_name, requested_outputs):
 
-                downloadlink = self.store_to_json_file("geojson", geojson)
-                outputs["geojson"] = {
-                    "title": "",
-                    "description": "",
+                downloadlink = self.store_to_json_file(output_name, geojson)
+                outputs[output_name] = {
+                    "title": self.metadata['outputs'][output_name]['title'],
+                    "description": self.metadata['outputs'][output_name]['description'],
                     "value": downloadlink
                 }
             else:
-                outputs["geojson"] = {
-                    "title": "",
-                    "description": "",
+                outputs[output_name] = {
+                    "title": self.metadata['outputs'][output_name]['title'],
+                    "description": self.metadata['outputs'][output_name]['description'],
                     "value": geojson
                 }
 
+        output_name = "csv"
+        if output_name in requested_outputs.keys() or "ALL" in requested_outputs.keys():
 
-        if "csv" in requested_outputs.keys() or "ALL" in requested_outputs.keys():
-
-            if self.return_hyperlink("csv", requested_outputs):
+            if self.return_hyperlink(output_name, requested_outputs):
 
                 # Transform from space-separated to semicolon-separated:
                 with open(out_path_txt, 'r') as txtfile:
@@ -314,9 +315,9 @@ class ExtractPointStatsProcessor(BaseProcessor):
                     self.config['download_url']
                 )
 
-                outputs["csv"] = {
-                    "title": "",
-                    "description": "",
+                outputs[output_name] = {
+                    "title": self.metadata['outputs'][output_name]['title'],
+                    "description": self.metadata['outputs'][output_name]['description'],
                     "value": downloadlink
                 }
 
@@ -329,9 +330,9 @@ class ExtractPointStatsProcessor(BaseProcessor):
                         line = txtfile.read().replace(' ', ';')
                         resultstring += line+'\n'
 
-                outputs["csv"] = {
-                    "title": "",
-                    "description": "",
+                outputs[output_name] = {
+                    "title": self.metadata['outputs'][output_name]['title'],
+                    "description": self.metadata['outputs'][output_name]['description'],
                     "value": resultstring.rstrip("\n")
                 }
 
