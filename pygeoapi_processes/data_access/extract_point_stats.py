@@ -52,6 +52,9 @@ class ExtractPointStatsProcessor(BaseProcessor):
         LOGGER.info('Inputs: %s' % data)
         LOGGER.info('Requested outputs: %s' % outputs)
 
+        if outputs is None:
+            outputs = {'ALL': 'dummy'}
+
         try:
             res = self._execute(data, outputs)
             return res
@@ -151,7 +154,9 @@ class ExtractPointStatsProcessor(BaseProcessor):
 
         outputs = {}
 
-        if "geojson" in requested_outputs.keys():
+        if "geojson" in requested_outputs.keys() or "ALL" in requested_outputs.keys():
+
+            # TODO: Add properties of original feature collection?
 
             # Make GeoJSON from it:
             df = pd.read_csv(out_path_txt, sep=" ")
@@ -189,7 +194,7 @@ class ExtractPointStatsProcessor(BaseProcessor):
                 }
 
 
-        if "csv" in requested_outputs.keys():
+        if "csv" in requested_outputs.keys() or "ALL" in requested_outputs.keys():
 
             if self.return_hyperlink("csv", requested_outputs):
 
