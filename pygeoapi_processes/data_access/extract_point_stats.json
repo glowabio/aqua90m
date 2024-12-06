@@ -4,7 +4,7 @@
     "use_case": "hydrography90m",
     "title": {"en": "Extract Values from Raster per Point"},
     "description": {
-        "en": "This process returns a ...."
+        "en": "This process returns the value of the given variable for each of the provided points."
     },
     "jobControlOptions": ["sync-execute", "async-execute"],
     "keywords": ["subset", "raster"],
@@ -16,46 +16,79 @@
         "hreflang": "en-US"
     }],
     "inputs": {
-        "lonlatstring": {
-            "title": "Lon and lat as string",
-            "description": "Blah",
+        "variable_layer_url": {
+            "title": "Variable layer URL",
+            "description": "URL of the variable layer (raster layer) to query. This can be a URL to a cloud-optimized GeoTIFF or a VRT layer. (Can be omitted in case of Hydrography90m and Environment90m variables).",
             "schema": {
                 "type": "string"
             },
-            "minOccurs": 1,
+            "minOccurs": 0,
             "maxOccurs": 1,
             "metadata": null,
-            "keywords": ["coordinate", "wgs84"]
+            "keywords": ["raster", "wgs84", "geotiff", "vrt"]
         },
-        "variable": {
-            "title": "Variable",
-            "description": "Variable to query",
+        "variable_name": {
+            "title": "Variable name",
+            "description": "Name of the variable to query. This will be used to name the values in the result, and to find the raster layer in case no URL is provided.",
             "schema": {
                 "type": "string"
             },
             "minOccurs": 1,
             "maxOccurs": 1,
             "metadata": null,
-            "keywords": ["south", "coordinate", "wgs84"]
+            "keywords": ["raster", "wgs84"]
+        },
+        "points_geojson": {
+            "title": "Coordinates (GeoJSON)",
+            "description": "WGS84 Coordinates of the locations to be queried as a GeoJSON FeatureCollection. Please pass the values.",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["coordinates", "wgs84"]
+        },
+        "points_geojson_url": {
+            "title": "Coordinates (GeoJSON), as URL",
+            "description": "WGS84 Coordinates of the locations to be queried as a GeoJSON FeatureCollection. Please pass a URL to the values.",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["coordinates", "wgs84"]
+        },
+        "lonlatstring": {
+            "title": "Coordinates (String)",
+            "description": "WGS84 Coordinates of the locations to be queried as a simple string of the format \"lon lat\n5.5 52.7\n7.3 51.6\".",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["coordinates", "wgs84"]
         },
         "colname_lon": {
             "title": "Column name for Longitude",
-            "description": "TODO",
+            "description": "If you provide coordinates as a string, how is the longitude column called.",
             "schema": {
                 "type": "string"
             },
-            "minOccurs": 1,
+            "minOccurs": 0,
             "maxOccurs": 1,
             "metadata": null,
             "keywords": ["coordinate", "wgs84"]
         },
         "colname_lat": {
             "title": "Column name for Latitude",
-            "description": "TODO",
+            "description": "If you provide coordinates as a string, how is the latitude column called.",
             "schema": {
                 "type": "string"
             },
-            "minOccurs": 1,
+            "minOccurs": 0,
             "maxOccurs": 1,
             "metadata": null,
             "keywords": ["coordinate", "wgs84"]
@@ -82,7 +115,8 @@
     "example": {
         "inputs": {
             "lonlatstring": "lon lat\n5.5 52.7\n7.3 51.6",
-            "variable": "sti",
+            "variable_name": "basin",
+            "variable_layer_url": "https://2007367-nextcloud.a3s.fi/igb/vrt/basin.vrt",
             "colname_lon":  "lon",
             "colname_lat":  "lat",
             "comment":  "blabla"
