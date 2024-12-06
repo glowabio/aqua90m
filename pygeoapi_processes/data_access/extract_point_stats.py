@@ -18,7 +18,7 @@ curl -X POST "http://localhost:5000/processes/extract-point-stats/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
-    "variable": "sti",
+    "variable_name": "sti",
     "lonlatstring": "lon lat\n5.5 52.7\n7.3 51.6",
     "colname_lon": "lon",
     "colname_lat": "lat",
@@ -36,7 +36,7 @@ curl -X POST "http://localhost:5000/processes/extract-point-stats/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
-    "variable": "sti",
+    "variable_name": "sti",
     "lonlatstring": "lon lat\n5.5 52.7\n7.3 51.6",
     "colname_lon": "lon",
     "colname_lat": "lat",
@@ -52,7 +52,7 @@ curl -X POST "http://localhost:5000/processes/extract-point-stats/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
-    "variable": "basin",
+    "variable_name": "basin",
     "lonlatstring": "lon lat\n5.5 52.7\n7.3 51.6",
     "colname_lon": "lon",
     "colname_lat": "lat",
@@ -71,7 +71,7 @@ curl -X POST "http://localhost:5000/processes/extract-point-stats/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
-    "variable": "basin",
+    "variable_name": "basin",
     "points_geojson": {
         "type": "FeatureCollection",
         "features": [
@@ -151,17 +151,17 @@ class ExtractPointStatsProcessor(BaseProcessor):
 
         # User inputs
         lonlatstring = data.get('lonlatstring', None)
-        variable = data.get('variable', None)  # names, e.g. "spi", "sti" --> enum!
+        variable_name = data.get('variable_name', None)  # names, e.g. "spi", "sti" --> enum!
         comment = data.get('comment') # optional
         colname_lat = data.get('colname_lat', None)
         colname_lon = data.get('colname_lon', None)
         points_geojson = data.get('points_geojson', None)
         points_geojson_url = data.get('points_geojson_url')
-        variable_layer_from_ddas = data.get('variable_layer_from_ddas', None)
+        variable_layer_url = data.get('variable_layer_url', None)
 
         # Check user inputs
-        if variable is None and variable_layer_from_ddas is None:
-            raise ProcessorExecuteError('Need to provide "variable" or "variable_layer_from_ddas".')
+        if variable_name is None and variable_layer_url is None:
+            raise ProcessorExecuteError('Need to provide "variable_name" or "variable_layer_url".')
         if lonlatstring is None and points_geojson is None and points_geojson_url is None:
             raise ProcessorExecuteError('Need to provide "lonlatstring" or "points_geojson" or "points_geojson_url".')
         elif sum([lonlatstring is not None,
@@ -214,13 +214,11 @@ class ExtractPointStatsProcessor(BaseProcessor):
         ### Raster layer ###
         ####################
 
-        if variable_layer_from_ddas is not None:
-            var_layer = variable_layer_from_ddas
-            if variable is None:
-                variable = 'novarname'
+        if variable_layer_url is not None:
+            var_layer = variable_layer_url
 
         else:
-            LOGGER.debug('Requested variable "%s"...' % variable)
+            LOGGER.debug('Requested variable "%s"...' % variable_name)
 
             # Read path from config:
             path_tiffs = self.config['path_hy90m_rasters'].rstrip('/')
@@ -228,7 +226,7 @@ class ExtractPointStatsProcessor(BaseProcessor):
             # EITHER: Path and filename are always the same, given the variable name:
             # TODO: Test case, individual tiles, no VRT yet, so file id has to be specified!
             var_layer = '{path}/{var}_{tile}.tif'.format(
-                path = path_tiffs, var=variable, tile='18v02')
+                path = path_tiffs, var=variable_name, tile='18v02')
 
             # OR: Path and filename are read from this Lookup Table:
             # TODO: Have an entire Lookup Table stored somewhere? Maybe in config?
@@ -237,19 +235,19 @@ class ExtractPointStatsProcessor(BaseProcessor):
                 "sti": path_tiffs+'/sti_h18v02.tif',
                 "cti": "not-yet"
             }
-            var_layer = lookup_vrt[variable]
+            var_layer = lookup_vrt[variable_name]
 
         LOGGER.debug('Requested variable file "%s"...' % var_layer)
 
         # Where to store results:
         out_dir = self.config['download_dir'].rstrip('/')
-        out_path_txt = out_dir+'/outputs_%s_%s_%s.txt' % (self.metadata['id'], variable, self.job_id)
-        out_path_csv = out_dir+'/outputs_%s_%s_%s.csv' % (self.metadata['id'], variable, self.job_id)
+        out_path_txt = out_dir+'/outputs_%s_%s_%s.txt' % (self.metadata['id'], variable_name, self.job_id)
+        out_path_csv = out_dir+'/outputs_%s_%s_%s.csv' % (self.metadata['id'], variable_name, self.job_id)
         LOGGER.debug('Will write final result here: %s' % out_path_txt)
 
         # Run bash script
         path_bash_scripts = self.config['hydrographr_bash_files']
-        args = [coord_tmp_path, colname_lon, colname_lat, var_layer, variable, out_dir, out_path_txt]
+        args = [coord_tmp_path, colname_lon, colname_lat, var_layer, variable_name, out_dir, out_path_txt]
         returncode, stdouttext, stderrtext, err_msg = call_bash_script(LOGGER, "extract_point_stats.sh", path_bash_scripts, args)
         if not returncode == 0:
             raise ProcessorExecuteError(user_msg = err_msg)
@@ -274,7 +272,7 @@ class ExtractPointStatsProcessor(BaseProcessor):
                         "coordinates": [row['lon'], row['lat']]
                     },
                     "properties": {
-                        variable: row[variable]
+                        variable_name: row[variable_name]
                     }
                 }
 
