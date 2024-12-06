@@ -107,13 +107,29 @@ class ExtractPointStatsProcessor(BaseProcessor):
                 myfile.write(lonlatstring)
 
         LOGGER.debug('Written user input lon lat to file: %s' % coord_tmp_path)
-        
 
-        # File names of variable rasters!
+        ####################
+        ### Raster layer ###
+        ####################
+
         LOGGER.debug('Requested variable "%s"...' % variable)
+
+        # Read path from config:
         path_tiffs = self.config['path_hy90m_rasters'].rstrip('/')
-        var_filename = '%s_h18v02.tif' % variable # TODO Replace by global/by VRT/by Allas!
-        var_layer = path_tiffs+'/'+var_filename
+
+        # EITHER: Path and filename are always the same, given the variable name:
+        # TODO: Test case, individual tiles, no VRT yet, so file id has to be specified!
+        var_layer = '{path}/{var}_{tile}.tif'.format(
+            path = path_tiffs, var=variable, tile='18v02')
+
+        # OR: Path and filename are read from this Lookup Table:
+        # TODO: Have an entire Lookup Table stored somewhere? Maybe in config?
+        lookup_vrt = {
+            "basin": "https://2007367-nextcloud.a3s.fi/igb/vrt/basin.vrt",
+            "sti": path_tiffs+'/sti_h18v02.tif',
+            "cti": "not-yet"
+        }
+        var_layer = lookup_vrt[variable]
         LOGGER.debug('Requested variable file "%s"...' % var_layer)
 
         # Where to store results:
