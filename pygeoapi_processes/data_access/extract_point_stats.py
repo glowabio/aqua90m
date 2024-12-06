@@ -113,6 +113,8 @@ class ExtractPointStatsProcessor(BaseProcessor):
             LOGGER.debug('Client provided a GeoJSON FeatureCollection...')
             # TODO Should we validate it?
             with open(coord_tmp_path, 'w') as myfile:
+                colname_lon = 'lon'
+                colname_lat = 'lat'
                 myfile.write('lon lat\n')
                 for item in points_geojson['features']:
                     coord_pair = item['geometry']['coordinates']
@@ -322,7 +324,7 @@ def call_bash_script(LOGGER, bash_file_name, path_bash_scripts, args):
             name=bash_file_name, stdout=stdouttext, stderr=stderrtext)
         LOGGER.error(err_and_out)
     else:
-        err_and_out = 'Bash sstdour:\n___PROCESS OUTPUT {name} ___\n___stdout___\n{stdout}\n___stderr___\n___(Nothing written to stderr)___\n___END PROCESS OUTPUT {name} ___\n______________________'.format(
+        err_and_out = 'Bash sstdout:\n___PROCESS OUTPUT {name} ___\n___stdout___\n{stdout}\n___stderr___\n___(Nothing written to stderr)___\n___END PROCESS OUTPUT {name} ___\n______________________'.format(
             name=bash_file_name, stdout=stdouttext)
         LOGGER.info(err_and_out)
 
