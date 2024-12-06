@@ -65,25 +65,50 @@ class ExtractPointStatsProcessor(BaseProcessor):
     def _execute(self, data, requested_outputs):
 
         # User inputs
-        lonlatstring = data.get('lonlatstring')
+        # TODO: Allow user passing csv, GeoJSON, ...
+        lonlatstring = data.get('lonlatstring', None)
         variable = data.get('variable')  # names, e.g. "spi", "sti" --> enum!
         comment = data.get('comment') # optional
-        colname_lat = data.get('colname_lat')
-        colname_lon = data.get('colname_lon')
+        colname_lat = data.get('colname_lat', None)
+        colname_lon = data.get('colname_lon', None)
+        points_geojson = data.get('points_geojson', None)
 
         # Check user inputs
-        if lonlatstring is None:
-            raise ProcessorExecuteError('Need to provide "lonlatstring".')
         if variable is None:
             raise ProcessorExecuteError('Need to provide "variable".')
+        if lonlatstring is None and points_geojson is None:
+            raise ProcessorExecuteError('Need to provide "lonlatstring" or "points_geojson".')
+        elif lonlatstring is not None and points_geojson is not None:
+            raise ProcessorExecuteError('Need to provide either "lonlatstring" or "points_geojson", not both.')
+        elif lonlatstring is not None:
+            if colname_lat is None or colname_lon is None:
+                 raise ProcessorExecuteError('If you provide "lonlatstring", you also must provide "colname_lat" and "colname_lon".')
 
-        # User provided points as space-separated, stored to temp
+
+
+        # Write user-provided points to tmp
         # (as input for gdallocation info):
         coord_tmp_path = '/tmp/inputcoordinates_%s.txt' % self.job_id
-        with open(coord_tmp_path, 'w') as myfile:
-            myfile.write(lonlatstring)
+
+        # User provided points as feature collection:
+        if points_geojson is not None:
+            LOGGER.debug('Client provided a GeoJSON FeatureCollection...')
+            # TODO Should we validate it?
+            with open(coord_tmp_path, 'w') as myfile:
+                myfile.write('lon lat\n')
+                for item in points_geojson['features']:
+                    coord_pair = item['geometry']['coordinates']
+                    myfile.write('%s %s\n' % (coord_pair[0], coord_pair[1]))
+
+        # User provided points as space-separated string:
+        elif lonlatstring is not None:
+            LOGGER.debug('Client provided coordinates in a string...')
+            with open(coord_tmp_path, 'w') as myfile:
+                myfile.write(lonlatstring)
+
         LOGGER.debug('Written user input lon lat to file: %s' % coord_tmp_path)
         
+
         # File names of variable rasters!
         LOGGER.debug('Requested variable "%s"...' % variable)
         path_tiffs = self.config['path_hy90m_rasters'].rstrip('/')
