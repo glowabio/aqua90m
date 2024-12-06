@@ -240,7 +240,10 @@ class ExtractPointStatsProcessor(BaseProcessor):
     def return_hyperlink(self, output_name, requested_outputs):
 
         if requested_outputs is None:
-            return False
+            return True # against specs!
+
+        #if set(requested_outputs.keys()) == set('ALL'):
+        #    return True # against specs!
 
         if 'transmissionMode' in requested_outputs.keys():
             if requested_outputs['transmissionMode'] == 'reference':
@@ -251,7 +254,7 @@ class ExtractPointStatsProcessor(BaseProcessor):
                 if requested_outputs[output_name]['transmissionMode'] == 'reference':
                     return True
 
-        return False
+        return True # against specs
 
 
     def store_to_json_file(self, output_name, json_object):
