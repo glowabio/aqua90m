@@ -54,6 +54,8 @@ class ExtractPointStatsProcessor(BaseProcessor):
 
         if outputs is None:
             outputs = {'ALL': 'dummy'}
+        elif set(outputs.keys()) == set(['transmissionMode']):
+            outputs['ALL'] = 'dummy'
 
         try:
             res = self._execute(data, outputs)
@@ -263,21 +265,41 @@ class ExtractPointStatsProcessor(BaseProcessor):
 
     def return_hyperlink(self, output_name, requested_outputs):
 
+        # No requested outputs: Returning reference per default (against specs!)
         if requested_outputs is None:
-            return True # against specs!
+            LOGGER.debug('Client asked for no specific return type: Returning reference (against specs).')
+            return True
 
-        #if set(requested_outputs.keys()) == set('ALL'):
-        #    return True # against specs!
-
+        # Requested specific transmissionMode for all outputs:
         if 'transmissionMode' in requested_outputs.keys():
             if requested_outputs['transmissionMode'] == 'reference':
+                LOGGER.debug('Client asked for reference for all outputs...')
                 return True
+            elif requested_outputs['transmissionMode'] == 'value':
+                LOGGER.debug('Client asked for value for all outputs...')
+                return False
 
+        # Specific requests per individual output:
         if output_name in requested_outputs.keys():
-            if 'transmissionMode' in requested_outputs[output_name]:
-                if requested_outputs[output_name]['transmissionMode'] == 'reference':
-                    return True
 
+            # Client requests reference/value directly (probably not compliant to specs):
+            if requested_outputs[output_name] == 'reference':
+                LOGGER.debug('Client asked for reference for output "%s"' % output_name)
+                return True
+            elif requested_outputs[output_name] == 'value':
+                LOGGER.debug('Client asked for value for output "%s"' % output_name)
+                return False
+
+            # Client provides a dictionary per output, containing transmissionMode:
+            elif 'transmissionMode' in requested_outputs[output_name]:
+                if requested_outputs[output_name]['transmissionMode'] == 'reference':
+                    LOGGER.debug('Asked for reference: %s' % output_name)
+                    return True
+                elif requested_outputs[output_name]['transmissionMode'] == 'value':
+                    LOGGER.debug('Asked for value: %s' % output_name)
+                    return False
+
+        LOGGER.debug('Fallback: Returning reference...')
         return True # against specs
 
 
