@@ -132,6 +132,8 @@ class ExtractPointStatsProcessor(BaseProcessor):
 
         if variable_layer_from_ddas is not None:
             var_layer = variable_layer_from_ddas
+            if variable is None:
+                variable = 'novarname'
 
         else:
             LOGGER.debug('Requested variable "%s"...' % variable)
