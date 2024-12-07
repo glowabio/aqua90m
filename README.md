@@ -6,9 +6,38 @@ deployed on pygeoapi instances.
 
 ## List of processes
 
-* extract-point-stats
+local subcatchment
 
-(TODO)
+* get_snapped_points
+* get_snapped_points_plus
+* get_local_subcids
+* get_local_subcids_plural
+* get_local_streamsegments
+* get_local_streamsegments_subcatchments
+
+upstream
+
+* get_upstream_subcids
+* get_upstream_streamsegments
+* get_upstream_bbox
+* get_upstream_subcatchments
+* get_upstream_dissolved
+* get_upstream_dissolved_aip (special version for usage by the AIP search interface, kept constant)
+
+downstream
+
+* get_shortest_path_two_points
+* get_shortest_path_to_outlet
+
+data access
+
+* extract_point_stats
+* subset_by_polygon (currently fails on aqua due to dependency issues with gdal)
+* subset_by_bbox (currently fails on aqua due to dependency issues with gdal)
+
+utils
+
+* get_ddas_galaxy_link_textfile
 
 
 ## Pygeoapi deployment
@@ -24,14 +53,141 @@ the following existing files:
 File `pygeoapi/pygeoapi/plugin.py`:
 
 ```
-TODO
+        # local subcatchment
+        'SnappedPointsGetter': 'pygeoapi.process.aqua90m.pygeoapi_processes.rivernetwork.get_snapped_points.SnappedPointsGetter',
+        'SnappedPointsGetterPlus': 'pygeoapi.process.aqua90m.pygeoapi_processes.rivernetwork.get_snapped_points_plus.SnappedPointsGetterPlus',
+        'LocalSubcidGetter': 'pygeoapi.process.aqua90m.pygeoapi_processes.rivernetwork.get_local_subcids.LocalSubcidGetter',
+        'LocalSubcidPluralGetter': 'pygeoapi.process.aqua90m.pygeoapi_processes.rivernetwork.get_local_subcids_plural.LocalSubcidPluralGetter',
+        'LocalStreamSegmentsGetter': 'pygeoapi.process.aqua90m.pygeoapi_processes.rivernetwork.get_local_streamsegments.LocalStreamSegmentsGetter',
+        'LocalStreamSegmentSubcatchmentGetter': 'pygeoapi.process.aqua90m.pygeoapi_processes.rivernetwork.get_local_streamsegments_subcatchments.LocalStreamSegmentSubcatchmentGetter',
+        # upstream
+        'UpstreamSubcidGetter': 'pygeoapi.process.aqua90m.pygeoapi_processes.rivernetwork.get_upstream_subcids.UpstreamSubcidGetter',
+        'UpstreamStreamSegmentsGetter': 'pygeoapi.process.aqua90m.pygeoapi_processes.rivernetwork.get_upstream_streamsegments.UpstreamStreamSegmentsGetter',
+        'UpstreamBboxGetter': 'pygeoapi.process.aqua90m.pygeoapi_processes.rivernetwork.get_upstream_bbox.UpstreamBboxGetter',
+        'UpstreamSubcatchmentGetter': 'pygeoapi.process.aqua90m.pygeoapi_processes.rivernetwork.get_upstream_subcatchments.UpstreamSubcatchmentGetter',
+        'UpstreamDissolvedGetterCont': 'pygeoapi.process.aqua90m.pygeoapi_processes.rivernetwork.get_upstream_dissolved.UpstreamDissolvedGetter',
+        'UpstreamDissolvedGetter': 'pygeoapi.process.aqua90m.pygeoapi_processes.rivernetwork.get_upstream_dissolved_aip.UpstreamDissolvedGetter',
+        # downstream
+        'ShortestPathTwoPointsGetter': 'pygeoapi.process.aqua90m.pygeoapi_processes.rivernetwork.get_shortest_path_two_points.ShortestPathTwoPointsGetter',
+        'ShortestPathToOutletGetter': 'pygeoapi.process.aqua90m.pygeoapi_processes.rivernetwork.get_shortest_path_to_outlet.ShortestPathToOutletGetter',
+        # data access
+        'ExtractPointStatsProcessor': 'pygeoapi.process.aqua90m.pygeoapi_processes.data_access.extract_point_stats.ExtractPointStatsProcessor',
+        #'SubsetterBbox': 'pygeoapi.process.aqua90m.pygeoapi_processes.data_access.subset_by_bbox.SubsetterBbox',
+        #'SubsetterPolygon': 'pygeoapi.process.aqua90m.pygeoapi_processes.data_access.subset_by_polygon.SubsetterPolygon',
+        # utils
+        'HelferleinProcessor': 'pygeoapi.process.aqua90m.pygeoapi_processes.data_access.get_ddas_galaxy_link_textfile.HelferleinProcessor',
 ```
 
 File `pygeoapi/pygeoapi-config.yml`:
 
 
 ```
-TODO
+   # local subcatchment
+
+    get-snapped-points:
+        type: process
+        processor:
+            name: SnappedPointsGetter
+
+    get-snapped-point-plus:
+        type: process
+        processor:
+            name: SnappedPointsGetterPlus
+
+    get-local-subcids:
+        type: process
+        processor:
+            name: LocalSubcidGetter
+
+    get-local-subcids-plural:
+        type: process
+        processor:
+            name: LocalSubcidPluralGetter
+
+    get-local-streamsegments:
+        type: process
+        processor:
+            name: LocalStreamSegmentsGetter
+
+    get-local-streamsegments-subcatchments:
+        type: process
+        processor:
+            name: LocalStreamSegmentSubcatchmentGetter
+
+
+
+    # upstream
+
+    get-upstream-subcids:
+        type: process
+        processor:
+            name: UpstreamSubcidGetter
+
+    get-upstream-streamsegments:
+        type: process
+        processor:
+            name: UpstreamStreamSegmentsGetter
+
+    get-upstream-bbox:
+        type: process
+        processor:
+            name: UpstreamBboxGetter
+
+    get-upstream-subcatchments:
+        type: process
+        processor:
+            name: UpstreamSubcatchmentGetter
+
+    get-upstream-dissolved:
+        type: process
+        processor:
+            name: UpstreamDissolvedGetter
+
+    get-upstream-dissolved-cont:
+        type: process
+        processor:
+            name: UpstreamDissolvedGetterCont
+
+
+
+    # downstream
+
+    get-shortest-path-two-points:
+        type: process
+        processor:
+            name: ShortestPathTwoPointsGetter
+
+    get-shortest-path-to-outlet:
+        type: process
+        processor:
+            name: ShortestPathToOutletGetter
+
+
+
+    # data access
+
+    extract-point-stats:
+        type: process
+        processor:
+            name: ExtractPointStatsProcessor
+
+    #FAILS (GDAL) get-subset-by-bbox:
+        #type: process
+        #processor:
+              #name: SubsetterBbox
+
+    # FAILS (GDAL) get-subset-by-polygon:
+        #type: process
+        #processor:
+              #name: SubsetterPolygon
+
+
+
+    # utils
+    get-ddas-galaxy-link-textfile:
+        type: process
+        processor:
+            name: HelferleinProcessor
 ```
 
 Dependencies, to be added to `dependencies.txt`
