@@ -155,7 +155,7 @@ class ShortestPathTwoPointsGetter(BaseProcessor):
             # TODO: Should we include the requested lon and lat? Maybe as a point?
             feature_coll = {
                 "type": "FeatureCollection",
-                "features": [],
+                "features": dijkstra_path_list,
                 "description": "Connecting path between %s and %s" % (subc_id1, subc_id2),
                 "start_subc_id": subc_id1, # TODO how to name it?
                 "target_subc_id": subc_id2, # TODO how to name it?
