@@ -129,19 +129,20 @@ integrity=
     //    }
     //}).addTo(map);
 
+
     // DISPLAY DATA FROM WPS CALL ON MAP, STATIC:
     // https://gis.stackexchange.com/questions/68489/loading-external-geojson-file-into-leaflet-map
-    //let xhr = new XMLHttpRequest();
-    //var url = "https://aqua.igb-berlin.de/pygeoapi/processes/get-upstream-dissolved/execution";
-    //xhr.open('POST', url, true)
-    //var jsonstuff = JSON.stringify({"inputs":{"lon":9.931555, "lat":54.695070}})
-    //xhr.setRequestHeader('Content-Type', 'application/json');
-    //xhr.responseType = 'json';
-    //xhr.onload = function() {
-    //    if (xhr.status !== 200) return
-    //    L.geoJSON(xhr.response).addTo(map);
+    //let xhrWps = new XMLHttpRequest();
+    //var urlWps = "https://aqua.igb-berlin.de/pygeoapi/processes/get-upstream-dissolved/execution";
+    //xhrWps.open('POST', urlWps, true)
+    //var inputsWpsCall = JSON.stringify({"inputs":{"lon":9.931555, "lat":54.695070}})
+    //xhrWps.setRequestHeader('Content-Type', 'application/json');
+    //xhrWps.responseType = 'json';
+    //xhrWps.onload = function() {
+    //    if (xhrWps.status !== 200) return
+    //    L.geoJSON(xhrWps.response).addTo(map);
     //};
-    //xhr.send(jsonstuff);
+    //xhrWps.send(inputsWpsCall);
 
 
     // Buttons
@@ -175,39 +176,39 @@ integrity=
 
       // Construct HTTP request to OGC service:
       document.getElementById("resperrr").innerHTML = "Reesponse returned by server for lon "+clicklonn+", lat = "+clicklatt+"...";
-      let xhr = new XMLHttpRequest();
+      let xhrPygeo = new XMLHttpRequest();
       var url = "https://aqua.igb-berlin.de/pygeoapi/processes/"+dropdown.value+"/execution";
-      xhr.open('POST', url, true)
+      xhrPygeo.open('POST', url, true)
       console.log("Reached this code?");
       var jsonstuff = JSON.stringify({"inputs":{"lon":clicklonn, "lat":clicklatt}})
-      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhrPygeo.setRequestHeader('Content-Type', 'application/json');
       console.log("Reached this code 2?");
-      xhr.responseType = 'json';
+      xhrPygeo.responseType = 'json';
 
       // Define behaviour for HTTP request:
-      xhr.onload = function() {
+      xhrPygeo.onload = function() {
         console.log("Reached this code 3?");
         console.log("Selected: "+dropdown.value+"...");
-        if (xhr.status == 200) {
+        if (xhrPygeo.status == 200) {
           console.log("oh yeah");
           clickMarker.bindPopup("Waiting for "+lookingfor+" for lat="+clicklat.toFixed(3)+", lon="+clicklon.toFixed(3)+"...").openPopup();
-        } else if (xhr.status == 400) {
+        } else if (xhrPygeo.status == 400) {
           console.log("oh no, internal server error...");
-          var errmsg = xhr.response["description"];
+          var errmsg = xhrPygeo.response["description"];
           clickMarker.bindPopup(errmsg);
           return
-        } else if (xhr.status !== 200) {
+        } else if (xhrPygeo.status !== 200) {
           console.log("oh nooo");
           clickMarker.bindPopup("Failed for unspecified reason (possibly timeout), try another one!!");
           return
         }
-        L.geoJSON(xhr.response).addTo(map);
+        L.geoJSON(xhrPygeo.response).addTo(map);
         clickMarker.closePopup();
-        document.getElementById("display_geojson").innerHTML = JSON.stringify(xhr.response);
+        document.getElementById("display_geojson").innerHTML = JSON.stringify(xhrPygeo.response);
       };
 
       // Send HTTP request:
-      xhr.send(jsonstuff);
+      xhrPygeo.send(jsonstuff);
     };
 
 //THis fires immediately on load!
@@ -220,7 +221,7 @@ map.on('click', function (e) {
   //coords= e.latlng.lat + ", " + e.latlng.lng;
   clicklat = e.latlng.lat;
   clicklon = e.latlng.lng;
-  console.log('THERE WAS A CLICK: lat '+clicklat+', lon '+clicklon);
+  console.log('There was a click: lat '+clicklat+', lon '+clicklon);
   //console.log(clicklat)
 
 
@@ -257,7 +258,7 @@ map.on('click', function (e) {
   let xhr2 = new XMLHttpRequest();
   var url2 = "https://aqua.igb-berlin.de/pygeoapi-dev/processes/"+dropdown.value+"/execution";
   xhr2.open('POST', url2, true)
-  var jsonstuff2 = JSON.stringify({"inputs":{"lon":clicklon, "lat":clicklat}})
+  var payload_inputs_json = JSON.stringify({"inputs":{"lon":clicklon, "lat":clicklat}})
   xhr2.setRequestHeader('Content-Type', 'application/json');
   xhr2.responseType = 'json';
   xhr2.onload = function() {
@@ -301,7 +302,7 @@ map.on('click', function (e) {
                   clickMarker.bindPopup("No "+lookingfor+", is this a headwater?").openPopup();
     }
   };
-  xhr2.send(jsonstuff2);
+  xhr2.send(payload_inputs_json);
 });
 
 console.log('Map click post request done?!?!');
