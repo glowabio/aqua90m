@@ -55,7 +55,7 @@ integrity=
     <!-- If you want the grey examples to disappear on focus, set onfocus to this:   onfocus="if(this.value=='9.17'){ this.value='NIX'; this.style.color='#000';}"   -->
       <td>Longitude:</td>
       <td>
-        <input type="text" id="lonnn" value="9.17"
+        <input type="text" id="custom_lon" value="9.17"
           onblur="if(this.value==''){ this.value='9.17'; this.style.color='#BBB';}"
           onfocus="if(this.value=='9.17'){ this.value='9.17'; this.style.color='#000';}"
           style="color:#BBB;" />
@@ -65,7 +65,7 @@ integrity=
     <tr>
       <td>Latitude:</td>
       <td>
-        <input type="text" id="lattt" value="52.95"
+        <input type="text" id="custom_lat" value="52.95"
           onblur="if(this.value==''){ this.value='52.95'; this.style.color='#BBB';}"
           onfocus="if(this.value=='9.17'){ this.value='52.95'; this.style.color='#000';}"
           style="color:#BBB;" />
@@ -73,7 +73,11 @@ integrity=
       <td>e.g. 52.95</td>
     </tr>
   </table>
-  <button id="example1" onclick="return myFunction()">put your own values!</button>
+  <!-- Behaviour is defined programmatically further below -->
+  <button id="customLonlatButton">Use these values!</button>
+
+
+  <!-- Example buttons -->
   <h3>...or use these examples:</h3>
   <table>
     <tr>
@@ -111,9 +115,6 @@ integrity=
 "sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
     crossorigin=""></script>
   <script>
-
-    // Define behaviour for input buttons
-    document.getElementById("example1").onclick = function() { myFunction(document.getElementById("lonnn").value, document.getElementById("lattt").value); };
 
     // Initialize the map
     const map = L.map('map')
@@ -164,14 +165,6 @@ integrity=
     //};
     //xhrWps.send(inputsWpsCall);
 
-
-    // Create buttons
-    var clicklon = 9.973955154418947;
-    var clicklat = 53.54193634826804;
-    var dropdown = document.getElementById("processes");
-    var button1 = document.getElementById("example1");
-    button1.innerHTML = "lon = "+clicklon+", lat = "+clicklat+" (8071 subcatchments)";
-    button1.innerHTML = "use your own values!" // but if I delete it it does not work, hae???
 
     var ogcRequest = function(dropdown, paramlon, paramlat, clickMarker) {
         console.log('Preparing to make HTTP POST request triggered by button-click')
@@ -253,10 +246,7 @@ integrity=
         xhrPygeo.send(payload_inputs_json);
     }
 
-    // Define button behaviour (function)
-    //button1.onclick = function(){ // this works!
-    // testing this one further down!
-    //button1.onclick = myFunction(clicklon, clicklat);
+    // Define button behaviour (function):
     var buttonClickBehaviour = function(paramlon, paramlat){
       console.log("Clicked button for "+paramlon+", "+paramlat);
 
@@ -267,7 +257,19 @@ integrity=
       ogcRequest(dropdown, paramlon, paramlat, clickMarker);
     };
 
-    //This fires immediately on load!
+
+    // Define behaviour for custom lonlat button (function):
+    var customButtonClickBehaviour = function() {
+      console.log("User requested to use their own values...")
+      var paramlon = document.getElementById("custom_lon").value;
+      var paramlat = document.getElementById("custom_lat").value;
+      buttonClickBehaviour(paramlon, paramlat);
+    }
+
+    // Bind custom-button behaviour to the custom-button click event:
+    document.getElementById("customLonlatButton").onclick = customButtonClickBehaviour;
+
+    // This fires immediately on load!
     //button1.onclick = buttonClickBehaviour(clicklon, clicklat);
 
 
