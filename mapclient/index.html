@@ -165,6 +165,7 @@ integrity=
     //xhrWps.send(inputsWpsCall);
 
 
+    // Define making request to OGC service (function):
     var ogcRequest = function(dropdown, paramlon, paramlat, clickMarker) {
         console.log('Preparing to make HTTP POST request triggered by button-click')
         document.getElementById("responseField").innerHTML = "Reesponse returned by server for lon "+paramlon+", lat = "+paramlat+"...";
@@ -257,7 +258,6 @@ integrity=
       ogcRequest(dropdown, paramlon, paramlat, clickMarker);
     };
 
-
     // Define behaviour for custom lonlat button (function):
     var customButtonClickBehaviour = function() {
       console.log("User requested to use their own values...")
@@ -265,9 +265,6 @@ integrity=
       var paramlat = document.getElementById("custom_lat").value;
       buttonClickBehaviour(paramlon, paramlat);
     }
-
-    // Bind custom-button behaviour to the custom-button click event:
-    document.getElementById("customLonlatButton").onclick = customButtonClickBehaviour;
 
     // Define behaviour for example button (function):
     var exampleButtonClickBehaviour = function() {
@@ -366,10 +363,6 @@ integrity=
       buttonEx.onclick = exampleButtonClickBehaviour;
     }
 
-    // Run the button content/text definition:
-    defineExampleButtons();
-
-
     // Function to add a grey marker, and a pop-up, to a location on the map
     var putIconToClickLocation = function(paramlat, paramlon, map, actionDone) {
       console.log("User "+actionDone+" (coordinates lon "+paramlon+", lat "+paramlat);
@@ -395,6 +388,7 @@ integrity=
       return (clickMarker);
     }
 
+    // Define behaviour on map click (function)
     var mapClickBehaviour = function(e) {
       // Get coordinates from click location:
       clicklat = e.latlng.lat;
@@ -409,8 +403,13 @@ integrity=
       ogcRequest(dropdown, clicklon, clicklat, clickMarker);
     }
 
+    // Run the button content/text definition:
+    defineExampleButtons();
 
-    // GET COORDINATES FROM MAP:
+    // Bind custom-button behaviour to the custom-button click event:
+    document.getElementById("customLonlatButton").onclick = customButtonClickBehaviour;
+
+    // Bind map click behaviour to the map click event:
     console.log('Waiting for user to click to get a coordinate...');
     map.on('click', mapClickBehaviour);
 
