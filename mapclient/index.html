@@ -156,8 +156,32 @@ integrity=
     //}).addTo(map);
 
     // Define making request to OGC service (function):
-    var ogcRequest = function(dropdown, paramlon, paramlat, clickMarker) {
-        console.log('Preparing to make HTTP POST request triggered by button-click')
+    var ogcRequestTwoCoordinatePairs = function(dropdown, clickMarker, lon1, lat1, lon2, lat2) {
+
+        // Reset result field:
+        document.getElementById("responseField").innerHTML = "Response returned by server for lon "+lon1+", lat = "+lat1+" to lon = "+lon2+", lat = "+lat2+"...";
+        document.getElementById("displayGeoJSON").innerHTML = "waiting..."
+
+        // Parse coordinates to Float
+        var lat1 = parseFloat(lat1);
+        var lon1 = parseFloat(lon1);
+        var lat2 = parseFloat(lat2);
+        var lon2 = parseFloat(lon2);
+
+        // Param string for logging
+        var paramstring = "lat="+lat1.toFixed(3)+", lon="+lon1.toFixed(3)+ "lat="+lat2.toFixed(3)+", lon="+lon2.toFixed(3);
+
+        // Define JSON payload and send:
+        var payload_inputs_json = JSON.stringify({"inputs": {
+          "lon_start":lon1, "lat_start":lat1,
+          "lon_end": lon2, "lat_end": lat2
+        }})
+        _ogcRequest(dropdown, clickMarker, payload_inputs_json, paramstring) ;
+    }
+
+    var ogcRequestOneCoordinatePair = function(dropdown, clickMarker, paramlon, paramlat) {
+
+        // Reset result field:
         document.getElementById("responseField").innerHTML = "Response returned by server for lon "+paramlon+", lat = "+paramlat+"...";
         document.getElementById("displayGeoJSON").innerHTML = "waiting..."
 
@@ -165,12 +189,29 @@ integrity=
         var lat = parseFloat(paramlat);
         var lon = parseFloat(paramlon);
 
+        // Param string for logging
+        var paramstring = "lat="+lat.toFixed(3)+", lon="+lon.toFixed(3);
+
+        // Define JSON payload and send:
+        var payload_inputs_json = JSON.stringify({"inputs":{"lon":lon, "lat":lat}})
+        _ogcRequest(dropdown, clickMarker, payload_inputs_json, paramstring) ;
+    }
+
+    var _ogcRequest = function(dropdown, clickMarker, payload_inputs_json, paramstring)  {
+        console.log('Preparing to make HTTP POST request triggered by button-click')
+        //document.getElementById("responseField").innerHTML = "Response returned by server for lon "+paramlon+", lat = "+paramlat+"...";
+        document.getElementById("displayGeoJSON").innerHTML = "waiting..."
+
+        // Parse coordinates to Float
+        //var lat = parseFloat(paramlat);
+        //var lon = parseFloat(paramlon);
+
         // Which process?
         var processId = dropdown.value;
         var processDesc = dropdown.options[dropdown.selectedIndex].text;
 
         // Construct HTTP request to OGC service:
-        var payload_inputs_json = JSON.stringify({"inputs":{"lon":lon, "lat":lat}})
+        //var payload_inputs_json = JSON.stringify({"inputs":{"lon":lon, "lat":lat}})
         let xhrPygeo = new XMLHttpRequest();
         var url = "https://aqua.igb-berlin.de/pygeoapi/processes/"+processId+"/execution";
         xhrPygeo.open('POST', url, true)
@@ -184,7 +225,8 @@ integrity=
           
           if (xhrPygeo.status == 200) {
             console.log("OGC server returned HTTP 200");
-            clickMarker.bindPopup("Waiting for "+processDesc+" for lat="+lat.toFixed(3)+", lon="+lon.toFixed(3)+"...").openPopup();
+            //clickMarker.bindPopup("Waiting for "+processDesc+" for lat="+lat.toFixed(3)+", lon="+lon.toFixed(3)+"...").openPopup();
+            clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring+"...").openPopup();
           } else if (xhrPygeo.status == 400) {
             console.log("Oh no: Internal server error (HTTP 400)");
             var errmsg = xhrPygeo.response["description"];
@@ -263,7 +305,7 @@ integrity=
               };
 
             } else if (processId == "get-shortest-path-two-points") {
-              console.log('Not implemented yet...'); // TODO
+              layer.setStyle({color: '#00b8e6', weight: 8});
 
             } else if (processId == "get-snapped-point-plus") {
 
@@ -316,11 +358,20 @@ integrity=
       console.log("Clicked button for "+paramlon+", "+paramlat);
 
       // Add icon and popup to click location:
-      clickMarker = putIconToClickLocation(paramlat, paramlon, map, "clicked on button");
+      clickMarker = putIconToClickLocation(paramlat, paramlon, map, "clicked on button", false);
 
       // Construct and send HTTP request to OGC service:
       var dropdown = document.getElementById("processes");
-      ogcRequest(dropdown, paramlon, paramlat, clickMarker);
+
+      var processId = dropdown.value;
+      if (processId == "get-shortest-path-two-points") {
+        // TODO nothing happens! notify user!
+        // TODO have buttons grey!
+
+      } else {
+        //ogcRequest(dropdown, paramlon, paramlat, clickMarker);
+        ogcRequestOneCoordinatePair(dropdown, clickMarker, paramlon, paramlat);
+      }
     };
 
     // Define behaviour for custom lonlat button (function):
@@ -450,7 +501,7 @@ integrity=
     }
 
     // Function to add a grey marker, and a pop-up, to a location on the map
-    var putIconToClickLocation = function(paramlat, paramlon, map, actionDone) {
+    var putIconToClickLocation = function(paramlat, paramlon, map, actionDone, askToClickAgain) {
       console.log("User "+actionDone+" (coordinates lon "+paramlon+", lat "+paramlat);
       var lat = parseFloat(paramlat);
       var lon = parseFloat(paramlon);
@@ -470,25 +521,66 @@ integrity=
       // Add Popup to user-click
       var dropdown = document.getElementById("processes");
       var lookingfor = dropdown.options[dropdown.selectedIndex].text
-      clickMarker.bindPopup("Waiting for "+lookingfor+" for lat="+lat.toFixed(3)+", lon="+lon.toFixed(3)+"...").openPopup();
+      if (askToClickAgain) {
+        clickMarker.bindPopup("You selected "+lookingfor+", so please click another time!").openPopup();
+      } else {
+        clickMarker.bindPopup("Waiting for "+lookingfor+" for lat="+lat.toFixed(3)+", lon="+lon.toFixed(3)+"...").openPopup();
+      }
       console.log("When clicked, this process was selected: "+dropdown.value+"...");
       return (clickMarker);
     }
 
     // Define behaviour on map click (function)
+    var thisIsSecondClick = false;
+    var firstClickLon = null;
+    var firstClickLat = null;
+
     var mapClickBehaviour = function(e) {
+
       // Get coordinates from click location:
       clicklat = e.latlng.lat;
       clicklon = e.latlng.lng;
       console.log('There was a click: lat '+clicklat+', lon '+clicklon);
 
-      // Add icon and popup to click location:
-      clickMarker = putIconToClickLocation(clicklat, clicklon, map, "clicked on map");
-
-      // Construct and send HTTP request to OGC service:
+      // Check if we need two points!
       var dropdown = document.getElementById("processes");
-      ogcRequest(dropdown, clicklon, clicklat, clickMarker);
-    }
+      if (dropdown.value == "get-shortest-path-two-points") {
+        console.log('Shortest path between two points');
+
+        if (thisIsSecondClick) {
+          // Second click of two!
+          // Make sure the next click is counted the first:
+          thisIsSecondClick = false;
+
+          // Add icon and popup to click location:
+          clickMarker = putIconToClickLocation(clicklat, clicklon, map, "clicked on map", false);
+
+          // Construct and send HTTP request to OGC service:
+          ogcRequestTwoCoordinatePairs(dropdown, clickMarker, firstClickLon, firstClickLat, clicklon, clicklat);
+
+        } else {
+          // First click of two!
+          // Make sure the next click is counted the second:
+          thisIsSecondClick = true;
+
+          // Add icon and popup to click location, telling user to click again
+          clickMarker = putIconToClickLocation(clicklat, clicklon, map, "clicked on map", true);
+
+          // Remember the coordinates of this first click, for the second:
+          firstClickLat = clicklat;
+          firstClickLon = clicklon;
+        }
+
+      // Normal process that works with one click!
+      } else {
+        // Add icon and popup to click location:
+          clickMarker = putIconToClickLocation(clicklat, clicklon, map, "clicked on map", false);
+
+        // Construct and send HTTP request to OGC service:
+        // ogcRequest(dropdown, clicklon, clicklat, clickMarker); WIP
+        ogcRequestOneCoordinatePair(dropdown, clickMarker, clicklon, clicklat);
+      }
+    };
 
     // Define clearing the map
     var clearMap = function() {
