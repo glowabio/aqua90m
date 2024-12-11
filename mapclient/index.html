@@ -217,9 +217,79 @@ integrity=
 
           // Style features depending on their properties:
           pygeoResponseGeoJSONLayer.eachLayer(function (layer) {
-            if (layer.feature.properties.description == 'connecting line') {
-              layer.setStyle({fillColor: 'red', color: 'red'});
-              console.log('Found a connecting line and painted it red...');
+
+            // Depending on process:
+            // Upstream bbox = Grey
+            // Upstream (segments, catchments) = Navy
+            // Local (segment, catchment) = Blue #3366cc
+            // Downstream = Light blue
+            // Connecting line = red dashed
+            // TODO: Style points!!
+            // TODO: Style based on strahler?
+            // TODO: In upstream catchment, distinguish local and upstream...
+
+            if (processId == "get-upstream-bbox") {
+              layer.setStyle({fillColor: 'grey', color: 'grey'});
+
+            } else if (processId == "get-shortest-path-to-outlet") {
+              layer.setStyle({color: '#00b8e6', weight: 8});
+
+            } else if (processId == "get-upstream-dissolved-cont") {
+              layer.setStyle({color: 'navy', weight: 5});
+
+            } else if (processId == "get-upstream-subcatchments") {
+              layer.setStyle({color: 'navy', weight: 1});
+
+            } else if (processId == "get-upstream-streamsegments") {
+              layer.setStyle({color: 'navy', weight: 4});
+
+            } else if (processId == "get-local-streamsegments") {
+              layer.setStyle({color: '#3366cc', weight: 4});
+
+            } else if (processId == "get-local-streamsegments-subcatchments") {
+
+              if (layer.feature.geometry.type == 'LineString') {
+                layer.setStyle({fillColor: '#3366cc', color: '#3366cc', weight: 4});
+
+              } else if (layer.feature.geometry.type == 'MultiPolygon') {
+                //layer.setStyle({color: '#3366cc', fillColor: '#3366cc'});
+                //layer.setStyle({color: '3366cc', fillColor: '3366cc'}); // this is grey!
+                //layer.setStyle({color: 'black', fillColor: 'black', weight: 0}); // this is grey!
+                layer.setStyle({color: '#3366cc', fillColor: '#3366cc', weight: 0}); // is this light blue?
+
+              } else {
+                console.log('Found something else and painted it black...');
+                layer.setStyle({color: 'black', weight: 3});
+              };
+
+            } else if (processId == "get-shortest-path-two-points") {
+              console.log('Not implemented yet...'); // TODO
+
+            } else if (processId == "get-snapped-point-plus") {
+
+              if (layer.feature.properties.description == 'connecting line') {
+                layer.setStyle({fillColor: 'red', color: 'red', weight: 1, dashArray: '8 4'});
+                console.log('Found a connecting line and painted it dashed red...');
+
+              } else if (layer.feature.geometry.type == 'LineString') {
+                layer.setStyle({fillColor: '#3366cc', color: '#3366cc', weight: 4});
+
+              } else if (layer.feature.geometry.type == 'MultiPolygon') {
+                layer.setStyle({fillColor: '#3366cc', color: '#3366cc', weight: 0});
+
+              } else if (layer.feature.geometry.type == 'Point') {
+                // TODO POINT
+
+              } else {
+                console.log('Found another feature, ORANGE...');
+                layer.setStyle({fillColor: 'orange', color: 'orange', weight: 3});
+              };
+
+            } else if (processId == "get-snapped-points") { // TODO POINT
+                //layer.setStyle({color: 'black', weight: 3});
+                //console.log('Found snapped point and painted them black...');
+
+            // All others:
             } else {
               console.log('Found any feature, no particular styling...');
             }
