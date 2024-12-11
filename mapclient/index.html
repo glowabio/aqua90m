@@ -351,7 +351,26 @@ integrity=
               layer.setStyle({color: 'navy', weight: 1});
 
             } else if (processId == "get-upstream-streamsegments") {
-              layer.setStyle({color: 'navy', weight: 4});
+              // this worked: layer.setStyle({color: 'navy', weight: 4});
+
+              // let's vary colour with strahler order, more precisely with
+              // lightness in the HSL colour model:
+              // Navy: hue=240, saturation=1
+              //  lightness = 0.25 or 25% medium blue
+              //  lightness = 0.2 or 20% black-ish
+              //  lightness = 0.9 or 90% quite light
+              // Reasonable base colour to start with. Now vary lightness with strahler...
+              let hue = 240;
+              let saturation = 1;
+              let lightness = 0.25
+
+              // Get from strahler to a lightness value between 0.2 and 0.9!
+              let strahler = layer.feature.properties.strahler_order;
+              let lowest_lightness = 0
+              let highest_lightness = 0.8
+              lightness = strahler_to_hsl_lightness(strahler, lowest_lightness, highest_lightness);
+              let col_hex = convert_hsl_to_hex(hue, 1, lightness);
+              layer.setStyle({color: col_hex, weight: 4});
 
             } else if (processId == "get-local-streamsegments") {
               layer.setStyle({color: '#3366cc', weight: 4});
