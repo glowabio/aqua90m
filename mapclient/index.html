@@ -32,7 +32,7 @@ integrity=
     <option value="get-snapped-points">Snapped point</option>
     <option value="get-snapped-point-plus">Snapped point, local stream segment and local subcatchment</option>
     <option value="get-shortest-path-to-outlet">Shortest path from point to sea</option>
-    <option value="get-shortest-path-two-points">Shortest path from point to point (NOT YET)</option>
+    <option value="get-shortest-path-two-points">Shortest path from point to point</option>
   </select>
   <p>
   <span>(please choose!)...</span>
@@ -247,7 +247,7 @@ integrity=
     }
 
     var _ogcRequest = function(dropdown, clickMarker, payload_inputs_json, paramstring)  {
-        console.log('Preparing to make HTTP POST request triggered by button-click')
+        console.log('Preparing to make HTTP POST request...')
         //document.getElementById("responseField").innerHTML = "Response returned by server for lon "+paramlon+", lat = "+paramlat+"...";
         document.getElementById("displayGeoJSON").innerHTML = "waiting..."
 
@@ -341,7 +341,7 @@ integrity=
               let lowest_lightness = 0.2
               let highest_lightness = 0.9
               lightness = strahler_to_hsl_lightness(strahler, lowest_lightness, highest_lightness);
-              let col_hex = convert_hsl_to_hex(192, 1, lightness);
+              let col_hex = convert_hsl_to_hex(hue, 1, lightness);
               layer.setStyle({color: col_hex, weight: 8});
 
             } else if (processId == "get-upstream-dissolved-cont") {
@@ -393,7 +393,7 @@ integrity=
               let highest_lightness = 0.9
               lightness = strahler_to_hsl_lightness(strahler, lowest_lightness, highest_lightness);
               //console.log('Looking for colour of lightness '+lightness);
-              let col_hex = convert_hsl_to_hex(192, 1, lightness);
+              let col_hex = convert_hsl_to_hex(hue, 1, lightness);
               //console.log('Colour in HEX: '+col_hex);
               layer.setStyle({color: col_hex, weight: 8});
 
@@ -439,7 +439,7 @@ integrity=
         };
 
         // Send HTTP request:
-        console.log('Sending HTTP POST request triggered by button-click')
+        console.log('Sending HTTP POST request...')
         xhrPygeo.send(payload_inputs_json);
     }
 
@@ -684,10 +684,9 @@ integrity=
       // Normal process that works with one click!
       } else {
         // Add icon and popup to click location:
-          clickMarker = putIconToClickLocation(clicklat, clicklon, map, "clicked on map", false);
+        clickMarker = putIconToClickLocation(clicklat, clicklon, map, "clicked on map", false);
 
         // Construct and send HTTP request to OGC service:
-        // ogcRequest(dropdown, clicklon, clicklat, clickMarker); WIP
         ogcRequestOneCoordinatePair(dropdown, clickMarker, clicklon, clicklat);
       }
     };
