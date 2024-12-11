@@ -46,7 +46,8 @@ integrity=
 
   <!-- Map -->
   <div id="map" style="width: 960px; height: 500px"></div>
-
+  <!-- Behaviour is defined programmatically further below -->
+  <button id="clearMapButton">Clear the map!</button>
 
   <!-- Custom lonlat button -->
   <h3>Input your own coordinates...</h3>
@@ -128,6 +129,10 @@ integrity=
     // Initialize the map
     const map = L.map('map')
 
+    // Collect layers so I can remove them:
+    var allMyLayers = [];
+    var allMyIcons = [];
+
     // Get the tile layer from OpenStreetMaps
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19, // maximum zoom of map
@@ -208,10 +213,10 @@ integrity=
           //L.geoJSON(xhrPygeo.response).addTo(map);
 
           // Make layer(s) from GeoJSON that the server returned:
-          var layer = L.geoJSON(xhrPygeo.response);
+          var pygeoResponseGeoJSONLayer = L.geoJSON(xhrPygeo.response);
 
           // Style features depending on their properties:
-          layer.eachLayer(function (layer) {
+          pygeoResponseGeoJSONLayer.eachLayer(function (layer) {
             if (layer.feature.properties.description == 'connecting line') {
               layer.setStyle({fillColor: 'red', color: 'red'});
               console.log('Found a connecting line and painted it red...');
@@ -221,8 +226,9 @@ integrity=
           });
 
           // Add styled layers to map:
-          layer.addTo(map);
-          console.log('Added layer to map...')
+          pygeoResponseGeoJSONLayer.addTo(map);
+          allMyLayers.push(pygeoResponseGeoJSONLayer);
+          console.log('Added layer to map...');
           clickMarker.closePopup();
 
           // Write GeoJSON into field so that user can copy-paste it:
@@ -389,6 +395,7 @@ integrity=
         popupAnchor: [0, -iconheight-5] // where iconAnchor is, go full-height to top plus 5 pixels
       });
       let clickMarker = L.marker([lat, lon], {icon: clickIcon}).addTo(map);
+      allMyIcons.push(clickMarker);
 
       // Add Popup to user-click
       var dropdown = document.getElementById("processes");
@@ -413,8 +420,22 @@ integrity=
       ogcRequest(dropdown, clicklon, clicklat, clickMarker);
     }
 
+    // Define clearing the map
+    var clearMap = function() {
+      for (var i = 0; i < allMyLayers.length; i++) {
+        map.removeLayer(allMyLayers[i]);
+      };
+      for (var i = 0; i < allMyIcons.length; i++) {
+        map.removeLayer(allMyIcons[i]);
+      };
+      document.getElementById("displayGeoJSON").innerHTML = "";
+    }
+
     // Run the button content/text definition:
     defineExampleButtons();
+
+    // Bind custom-button behaviour to the custom-button click event:
+    document.getElementById("clearMapButton").onclick = clearMap;
 
     // Bind custom-button behaviour to the custom-button click event:
     document.getElementById("customLonlatButton").onclick = customButtonClickBehaviour;
