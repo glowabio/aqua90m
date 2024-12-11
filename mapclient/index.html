@@ -220,95 +220,95 @@ integrity=
       xhrPygeo.send(jsonstuff);
     }; // finished defining button behaviour
 
-//This fires immediately on load!
-//button1.onclick = myFunction(clicklon, clicklat); 
+    //This fires immediately on load!
+    //button1.onclick = myFunction(clicklon, clicklat); 
 
 
-// GET COORDINATES FROM MAP:
-console.log('Waiting for user to click to get a coordinate...');
-map.on('click', function (e) {
+    // GET COORDINATES FROM MAP:
+    console.log('Waiting for user to click to get a coordinate...');
+    map.on('click', function (e) {
 
-  // Get coordinates from click location:
-  clicklat = e.latlng.lat;
-  clicklon = e.latlng.lng;
-  console.log('There was a click: lat '+clicklat+', lon '+clicklon);
+      // Get coordinates from click location:
+      clicklat = e.latlng.lat;
+      clicklon = e.latlng.lng;
+      console.log('There was a click: lat '+clicklat+', lon '+clicklon);
 
-  // Icon for user-clicks
-  var iconheight = 30;
-  var iconwidth = 0.61*iconheight;
-  var clickIcon = L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png',
-    iconSize: [iconwidth, iconheight],
-    iconAnchor: [iconwidth*0.5, iconheight], // from top left corner: go half-width to right, full-height to bottom 
-    popupAnchor: [0, -iconheight-5] // where iconAnchor is, go full-height to top plus 5 pixels
-  });
-  let clickMarker = L.marker([clicklat, clicklon], {icon: clickIcon}).addTo(map);
+      // Icon for user-clicks
+      var iconheight = 30;
+      var iconwidth = 0.61*iconheight;
+      var clickIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png',
+        iconSize: [iconwidth, iconheight],
+        iconAnchor: [iconwidth*0.5, iconheight], // from top left corner: go half-width to right, full-height to bottom 
+        popupAnchor: [0, -iconheight-5] // where iconAnchor is, go full-height to top plus 5 pixels
+      });
+      let clickMarker = L.marker([clicklat, clicklon], {icon: clickIcon}).addTo(map);
 
-  // Add Popup to user-click
-  var dropdown = document.getElementById("processes");
-  var lookingfor = dropdown.options[dropdown.selectedIndex].text
-  clickMarker.bindPopup("Waiting for "+lookingfor+" for lat="+clicklat.toFixed(3)+", lon="+clicklon.toFixed(3)+"...").openPopup();
-  console.log("When clicked, this process was selected: "+dropdown.value+"...");
-
-
-
-
-  //// MAKE REQUEST TO PYGEOAPI
-  console.log('Preparing to make HTTP POST request triggered by map-click')
-  document.getElementById("responseField").innerHTML = "Response returned by server for lon "+clicklon+", lat = "+clicklat+"...";
-  
-  let xhr2 = new XMLHttpRequest();
-  var url2 = "https://aqua.igb-berlin.de/pygeoapi-dev/processes/"+dropdown.value+"/execution";
-  xhr2.open('POST', url2, true)
-  var payload_inputs_json = JSON.stringify({"inputs":{"lon":clicklon, "lat":clicklat}})
-  xhr2.setRequestHeader('Content-Type', 'application/json');
-  xhr2.responseType = 'json';
-  xhr2.onload = function() {
-    //if (xhr2.status !== 200) return
-    console.log("Selected: "+dropdown.value+"...");
-    if (xhr2.status == 200) {
-      console.log("OGC server returned HTTP 200");
+      // Add Popup to user-click
+      var dropdown = document.getElementById("processes");
+      var lookingfor = dropdown.options[dropdown.selectedIndex].text
       clickMarker.bindPopup("Waiting for "+lookingfor+" for lat="+clicklat.toFixed(3)+", lon="+clicklon.toFixed(3)+"...").openPopup();
-    } else if (xhr2.status == 400) {
-      console.log("Oh no: Internal server error (HTTP 400)");
-      var errmsg = xhr2.response["description"];
-      clickMarker.bindPopup(errmsg);
-      return
-    } else if (xhr2.status !== 200) {
-      console.log("Oh no: OGC server returned bad HTTP status (not 200, not 400)");
-      clickMarker.bindPopup("Failed for unspecified reason (possibly timeout), try another one!!");
-      return
-    }
+      console.log("When clicked, this process was selected: "+dropdown.value+"...");
 
-    // Just adding to map, without restyle:
-    //L.geoJSON(xhr2.response).addTo(map);
 
-    // With restyle:
-    // Any line that has the property "description" = "connecting line" becomes red!
-    var respi = xhr2.response;
-    //console.log('respi: '+respi.type);
-    //console.log('respi: '+JSON.stringify(respi));
-    document.getElementById("display_geojson").innerHTML = JSON.stringify(xhr2.response);
-    var layer = L.geoJSON(xhr2.response);
-    layer.eachLayer(function (layer) {  
-    if(layer.feature.properties.description == 'connecting line') {    
-      layer.setStyle({fillColor: 'red', color: 'red'});
-      console.log('BLAA');
-      }
+
+
+      //// MAKE REQUEST TO PYGEOAPI
+      console.log('Preparing to make HTTP POST request triggered by map-click')
+      document.getElementById("responseField").innerHTML = "Response returned by server for lon "+clicklon+", lat = "+clicklat+"...";
+      
+      let xhr2 = new XMLHttpRequest();
+      var url2 = "https://aqua.igb-berlin.de/pygeoapi-dev/processes/"+dropdown.value+"/execution";
+      xhr2.open('POST', url2, true)
+      var payload_inputs_json = JSON.stringify({"inputs":{"lon":clicklon, "lat":clicklat}})
+      xhr2.setRequestHeader('Content-Type', 'application/json');
+      xhr2.responseType = 'json';
+      xhr2.onload = function() {
+        //if (xhr2.status !== 200) return
+        console.log("Selected 2: "+dropdown.value+"...");
+        if (xhr2.status == 200) {
+          console.log("OGC server returned HTTP 200");
+          clickMarker.bindPopup("Waiting for "+lookingfor+" for lat="+clicklat.toFixed(3)+", lon="+clicklon.toFixed(3)+"...").openPopup();
+        } else if (xhr2.status == 400) {
+          console.log("Oh no: Internal server error (HTTP 400)");
+          var errmsg = xhr2.response["description"];
+          clickMarker.bindPopup(errmsg);
+          return
+        } else if (xhr2.status !== 200) {
+          console.log("Oh no: OGC server returned bad HTTP status (not 200, not 400)");
+          clickMarker.bindPopup("Failed for unspecified reason (possibly timeout), try another one!!");
+          return
+        }
+
+        // Just adding to map, without restyle:
+        //L.geoJSON(xhr2.response).addTo(map);
+
+        // With restyle:
+        // Any line that has the property "description" = "connecting line" becomes red!
+        var respi = xhr2.response;
+        //console.log('respi: '+respi.type);
+        //console.log('respi: '+JSON.stringify(respi));
+        document.getElementById("display_geojson").innerHTML = JSON.stringify(xhr2.response);
+        var layer = L.geoJSON(xhr2.response);
+        layer.eachLayer(function (layer) {
+        if(layer.feature.properties.description == 'connecting line') {
+          layer.setStyle({fillColor: 'red', color: 'red'});
+          console.log('BLAA');
+          }
+        });
+        layer.addTo(map);
+        console.log('Added layer to map...')
+        clickMarker.closePopup();
+        if (xhr2.response == null){
+          // Stream segments CAN be shown if it is a headwater!
+                      clickMarker.bindPopup("No "+lookingfor+", is this a headwater?").openPopup();
+        }
+      };
+      xhr2.send(payload_inputs_json);
     });
-    layer.addTo(map);
-    console.log('Added layer to map...')
-    clickMarker.closePopup();
-    if (xhr2.response == null){
-      // Stream segments CAN be shown if it is a headwater!
-                  clickMarker.bindPopup("No "+lookingfor+", is this a headwater?").openPopup();
-    }
-  };
-  xhr2.send(payload_inputs_json);
-});
 
-console.log('Map click post request done?!?!');
-</script>
+    console.log('Map click post request done?!?!');
+  </script>
 </body>
 
 </html>
