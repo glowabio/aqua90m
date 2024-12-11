@@ -370,7 +370,16 @@ integrity=
               let highest_lightness = 0.8
               lightness = strahler_to_hsl_lightness(strahler, lowest_lightness, highest_lightness);
               let col_hex = convert_hsl_to_hex(hue, 1, lightness);
-              layer.setStyle({color: col_hex, weight: 4});
+
+              // Get from strahler to a line weight value between 2 and 4!
+              //let weight = 1.8 + 0.2*strahler
+              let min_weight = 2
+              let max_weight = 4
+              let slope = (max_weight - min_weight)/10 // 10 is approximately strahler spread...
+              let add = min_weight - slope * 1 // 1 is minimum strahler
+              let weight = add + slope*strahler
+              console.log('Strahler: '+strahler+', line weight: '+weight);
+              layer.setStyle({color: col_hex, weight: weight});
 
             } else if (processId == "get-local-streamsegments") {
               layer.setStyle({color: '#3366cc', weight: 4});
