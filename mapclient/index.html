@@ -19,16 +19,16 @@ integrity=
   <!--h1>TEMPORARILY OFFLINE: On the fly upstream catchments</h1-->
   <p><span>Click on the map, be patient (!!), and there will be the </span>
   <select id="processes">
-	  <option value="get-upstream-bbox">Upstream bounding box</option>
-	  <option value="get-upstream-dissolved-cont">Upstream catchment (one large polygon)</option>
-	  <option value="get-upstream-subcatchments">Upstream catchment (individual polygons)</option>
-	  <option value="get-upstream-streamsegments">Upstream stream segments</option>
-	  <option value="get-local-streamsegments">Local stream segment</option>
-	  <option value="get-local-streamsegments-subcatchments">Local stream segment and local subcatchment</option>
-	  <option value="get-snapped-points">Snapped point</option>
-	  <option value="get-snapped-point-plus">Snapped point, local stream segment and local subcatchment</option>
-          <option value="get-shortest-path-to-outlet">Shortest path from point to sea</option>
-          <option value="get-shortest-path-two-points">Shortest path from point to point (NOT YET)</option>
+    <option value="get-upstream-bbox">Upstream bounding box</option>
+    <option value="get-upstream-dissolved-cont">Upstream catchment (one large polygon)</option>
+    <option value="get-upstream-subcatchments">Upstream catchment (individual polygons)</option>
+    <option value="get-upstream-streamsegments">Upstream stream segments</option>
+    <option value="get-local-streamsegments">Local stream segment</option>
+    <option value="get-local-streamsegments-subcatchments">Local stream segment and local subcatchment</option>
+    <option value="get-snapped-points">Snapped point</option>
+    <option value="get-snapped-point-plus">Snapped point, local stream segment and local subcatchment</option>
+    <option value="get-shortest-path-to-outlet">Shortest path from point to sea</option>
+    <option value="get-shortest-path-two-points">Shortest path from point to point (NOT YET)</option>
   </select>
   <span>(please choose!)...</span>
   </p>
@@ -93,7 +93,7 @@ integrity=
 //        switch (feature.properties.UnitID) {
 //            case 1: return {color: "#ff0000"};
 //            case 2: return {color: "#0000ff"};
-//	    default: return {color: "#ff8c00"};
+//      default: return {color: "#ff8c00"};
 //        }
 //    }
 //}).addTo(map);
@@ -223,17 +223,17 @@ map.on('click', function (e) {
     //if (xhr2.status !== 200) return
     console.log("Selected: "+dropdown.value+"...");
     if (xhr2.status == 200) {
-		  console.log("oh yeah");
+      console.log("oh yeah");
                   clickMarker.bindPopup("Waiting for "+lookingfor+" for lat="+clicklat.toFixed(3)+", lon="+clicklon.toFixed(3)+"...").openPopup();
     } else if (xhr2.status == 400) {
         console.log("oh no, internal server error...");
-	var errmsg = xhr2.response["description"];
+  var errmsg = xhr2.response["description"];
         clickMarker.bindPopup(errmsg);
         return
     } else if (xhr2.status !== 200) {
-		  console.log("oh nooo");
-		  clickMarker.bindPopup("Failed for unspecified reason (possibly timeout), try another one!!");
-		  return
+      console.log("oh nooo");
+      clickMarker.bindPopup("Failed for unspecified reason (possibly timeout), try another one!!");
+      return
     }
 
     // Just adding to map, without restyle:
@@ -256,7 +256,7 @@ map.on('click', function (e) {
     console.log('added to map...')
     clickMarker.closePopup();
     if (xhr2.response == null){
-		  // Stream segments CAN be shown if it is a headwater!
+      // Stream segments CAN be shown if it is a headwater!
                   clickMarker.bindPopup("No "+lookingfor+", is this a headwater?").openPopup();
     }
   };
