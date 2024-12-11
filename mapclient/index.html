@@ -81,27 +81,26 @@ integrity=
   <h3>...or use these examples:</h3>
   <table>
     <tr>
-      <td><button id="example2" onclick="return buttonClickBehaviour('9.17770385', '52.957628575')">lon=9.17770385, lat=52.957628575</button></td>
-      <td>(208433 subcatchments - only bbox works)</td>
+      <td><button id="example1" thislon="not set" thislat="not set">not set</button></td>
+      <td id="example1desc">(not set)</td>
     </tr>
     <tr>
-      <td><button id="example3" onclick="return buttonClickBehaviour('9.109039306640627', '52.7810591224723')">lon=9.1090393, lat=52.781059</button></td>
-      <td>(403 subcatchments</td>
+      <td><button id="example2" thislon="not set" thislat="not set">not set</button></td>
+      <td id="example2desc">(not set)</td>
     </tr>
     <tr>
-      <td><button id="example4" onclick="return buttonClickBehaviour('10.055837', '53.483139')">lon=10.055837, lat=53.483139</button></td>
-      <td>(11 subcatchments)</td>
+      <td><button id="example3" thislon="not set" thislat="not set">not set</button></td>
+      <td id="example3desc">(not set)</td>
     </tr>
     <tr>
-      <td><button id="example5" onclick="return buttonClickBehaviour('9.973955154418947', '53.54193634826804')">lon=9.973955, lat=53.541936</button></td>
-      <td>(8071 subcatchments)</td>
+      <td><button id="example4" thislon="not set" thislat="not set">not set</button></td>
+      <td id="example4desc">(not set)</td>
     </tr>
     <tr>
-      <td><button id="example6" onclick="return buttonClickBehaviour('9.921666666666667', '54.69166666666666')">lon=9.921666666666667, lat=54.69166666666666</button></td>
-      <td>(exactly on boundary)</td>
+      <td><button id="example5" thislon="not set" thislat="not set">not set</button></td>
+      <td id="example5desc">(not set)</td>
     </tr>
   </table>
-
 
 
   <!-- Text field -->
@@ -270,8 +269,98 @@ integrity=
     // Bind custom-button behaviour to the custom-button click event:
     document.getElementById("customLonlatButton").onclick = customButtonClickBehaviour;
 
-    // This fires immediately on load!
-    //button1.onclick = buttonClickBehaviour(clicklon, clicklat);
+    // Define behaviour for example button (function):
+    var exampleButtonClickBehaviour = function() {
+      console.log("User requested to use example values...")
+      var caller = event.target;
+      console.log("Event: "+event)
+      console.log("Caller: "+caller)
+      console.log("Button who called this: "+caller.id)
+      var paramlon = caller.getAttribute("thislon");
+      var paramlat = caller.getAttribute("thislat");
+      console.log("paramlon: "+paramlon+", paramlat: "+paramlat)
+      buttonClickBehaviour(paramlon, paramlat);
+    }
+
+    // Define example values for buttons:
+    // TODO: URGENT: Fill the button table and their attributes in a for loop...
+    var examples = {
+      ex1: {lon: 9.17770385, lat: 52.957628575, text: "Weser bei Verden (Aller)", desc: "208433 subcatchments - only bbox works"},
+      ex2: {lon: 9.109039306640627, lat: 52.7810591224723, text: "Bei Hoya", desc: "403 subcatchments"},
+      ex3: {lon: 10.055837, lat: 53.483139, text: "Östlich von Hamburg", desc: "11 subcatchments)"},
+      ex4: {lon: 9.973955154418947, lat: 53.54193634826804, text: "Elbe in Hamburg", desc: "8071 subcatchments"},
+      ex5: {lon: 9.921666666666667, lat: 54.69166666666666, text: "Nördlich von Kappeln (Schlei)", desc: "exactly on boundary"},
+    };
+    var buttonEx = document.getElementById("example1");
+    var textEx = document.getElementById("example1desc");
+    var exlon = examples.ex1.lon
+    var exlat = examples.ex1.lat
+    var text = examples.ex1.text
+    var descr = examples.ex1.desc
+    //buttonEx.innerHTML = "lon = "+exlon.toFixed(3)+", lat = "+exlat.toFixed(3);
+    //textEx.innerHTML   = "lon = "+exlon+", lat = "+exlat+descr;
+    buttonEx.innerHTML = descr
+    textEx.innerHTML   = text + " (lon = "+exlon+", lat = "+exlat+")";
+    buttonEx.setAttribute("thislon", exlon)
+    buttonEx.setAttribute("thislat", exlat)
+    buttonEx.onclick = exampleButtonClickBehaviour;
+
+    var buttonEx = document.getElementById("example2");
+    var textEx = document.getElementById("example2desc");
+    var exlon = examples.ex2.lon
+    var exlat = examples.ex2.lat
+    var text = examples.ex2.text
+    var descr = examples.ex2.desc
+    //buttonEx.innerHTML = "lon = "+exlon.toFixed(3)+", lat = "+exlat.toFixed(3);
+    //textEx.innerHTML   = "lon = "+exlon+", lat = "+exlat+descr;
+    buttonEx.innerHTML = descr
+    textEx.innerHTML   = text + " (lon = "+exlon+", lat = "+exlat+")";
+    buttonEx.setAttribute("thislon", exlon)
+    buttonEx.setAttribute("thislat", exlat)
+    buttonEx.onclick = exampleButtonClickBehaviour;
+
+    var buttonEx = document.getElementById("example3");
+    var textEx = document.getElementById("example3desc");
+    var exlon = examples.ex3.lon
+    var exlat = examples.ex3.lat
+    var text = examples.ex3.text
+    var descr = examples.ex3.desc
+    //buttonEx.innerHTML = "lon = "+exlon.toFixed(3)+", lat = "+exlat.toFixed(3);
+    //textEx.innerHTML   = "lon = "+exlon+", lat = "+exlat+descr;
+    buttonEx.innerHTML = descr
+    textEx.innerHTML   = text + " (lon = "+exlon+", lat = "+exlat+")";
+    buttonEx.setAttribute("thislon", exlon)
+    buttonEx.setAttribute("thislat", exlat)
+    buttonEx.onclick = exampleButtonClickBehaviour;
+
+    var buttonEx = document.getElementById("example4");
+    var textEx = document.getElementById("example4desc");
+    var exlon = examples.ex4.lon
+    var exlat = examples.ex4.lat
+    var text = examples.ex4.text
+    var descr = examples.ex4.desc
+    //buttonEx.innerHTML = "lon = "+exlon.toFixed(3)+", lat = "+exlat.toFixed(3);
+    //textEx.innerHTML   = "lon = "+exlon+", lat = "+exlat+descr;
+    buttonEx.innerHTML = descr
+    textEx.innerHTML   = text + " (lon = "+exlon+", lat = "+exlat+")";
+    buttonEx.setAttribute("thislon", exlon)
+    buttonEx.setAttribute("thislat", exlat)
+    buttonEx.onclick = exampleButtonClickBehaviour;
+
+    var buttonEx = document.getElementById("example5");
+    var example = examples.ex5
+    var textEx = document.getElementById("example5desc");
+    var exlon = examples.ex5.lon
+    var exlat = examples.ex5.lat
+    var text = examples.ex5.text
+    var descr = examples.ex5.desc
+    //buttonEx.innerHTML = "lon = "+exlon.toFixed(3)+", lat = "+exlat.toFixed(3);
+    //textEx.innerHTML   = "lon = "+exlon+", lat = "+exlat+descr;
+    buttonEx.innerHTML = descr
+    textEx.innerHTML   = text + " (lon = "+exlon+", lat = "+exlat+")";
+    buttonEx.setAttribute("thislon", exlon)
+    buttonEx.setAttribute("thislat", exlat)
+    buttonEx.onclick = exampleButtonClickBehaviour;
 
 
     // Function to add a grey marker, and a pop-up, to a location on the map
