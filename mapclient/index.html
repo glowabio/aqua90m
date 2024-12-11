@@ -144,6 +144,7 @@ integrity=
     var ogcRequest = function(dropdown, paramlon, paramlat, clickMarker) {
         console.log('Preparing to make HTTP POST request triggered by button-click')
         document.getElementById("responseField").innerHTML = "Response returned by server for lon "+paramlon+", lat = "+paramlat+"...";
+        document.getElementById("displayGeoJSON").innerHTML = "waiting..."
 
         // Parse coordinates to Float
         var lat = parseFloat(paramlat);
@@ -173,10 +174,13 @@ integrity=
             console.log("Oh no: Internal server error (HTTP 400)");
             var errmsg = xhrPygeo.response["description"];
             clickMarker.bindPopup(errmsg);
+            document.getElementById("displayGeoJSON").innerHTML = errmsg
+
             return
           } else {
             console.log("Oh no: OGC server returned bad HTTP status: "+xhrPygeo.status);
             clickMarker.bindPopup("Failed for unspecified reason (possibly timeout), try another one!!");
+            document.getElementById("displayGeoJSON").innerHTML = "nothing to display"
             return
           }
 
