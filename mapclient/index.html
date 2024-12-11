@@ -175,37 +175,70 @@ integrity=
         var processDesc = dropdown.options[dropdown.selectedIndex].text;
 
         // Construct HTTP request to OGC service:
+        var payload_inputs_json = JSON.stringify({"inputs":{"lon":lon, "lat":lat}})
         let xhrPygeo = new XMLHttpRequest();
         var url = "https://aqua.igb-berlin.de/pygeoapi/processes/"+processId+"/execution";
         xhrPygeo.open('POST', url, true)
-        var jsonstuff = JSON.stringify({"inputs":{"lon":lon, "lat":lat}})
+
         xhrPygeo.setRequestHeader('Content-Type', 'application/json');
         xhrPygeo.responseType = 'json';
 
         // Define behaviour for HTTP request:
         xhrPygeo.onload = function() {
           console.log("Returning from OGC process: "+processId+"...");
+          
           if (xhrPygeo.status == 200) {
             console.log("OGC server returned HTTP 200");
             clickMarker.bindPopup("Waiting for "+processDesc+" for lat="+lat.toFixed(3)+", lon="+lon.toFixed(3)+"...").openPopup();
           } else if (xhrPygeo.status == 400) {
-            console.log("oh no, internal server error...");
+            console.log("Oh no: Internal server error (HTTP 400)");
             var errmsg = xhrPygeo.response["description"];
             clickMarker.bindPopup(errmsg);
             return
-          } else if (xhrPygeo.status !== 200) {
-            console.log("oh nooo");
+          } else {
+            console.log("Oh no: OGC server returned bad HTTP status: "+xhrPygeo.status);
             clickMarker.bindPopup("Failed for unspecified reason (possibly timeout), try another one!!");
             return
           }
-          L.geoJSON(xhrPygeo.response).addTo(map);
+
+          // If there is no response, it might be a headwater!
+          // Stream segments CAN be shown if it is a headwater! Then they would be returned!
+          if (xhrPygeo.response == null){
+            clickMarker.bindPopup("No "+lookingfor+", is this a headwater?").openPopup();
+            // TODO Stop here?
+          } else {
+            console.log('DEBUG: SERVER RESPONSE: '+xhrPygeo.response.type);
+            console.log('DEBUG: SERVER RESPONSE AS JSON: '+JSON.stringify(xhrPygeo.response));
+          }
+
+          // Add to map the GeoJSON that the server returned
+          //L.geoJSON(xhrPygeo.response).addTo(map);
+
+          // Make layer(s) from GeoJSON that the server returned:
+          var layer = L.geoJSON(xhrPygeo.response);
+
+          // Style features depending on their properties:
+          layer.eachLayer(function (layer) {
+            if (layer.feature.properties.description == 'connecting line') {
+              layer.setStyle({fillColor: 'red', color: 'red'});
+              console.log('Found a connecting line and painted it red...');
+            } else {
+              console.log('Found any feature, no particular styling...');
+            }
+          });
+
+          // Add styled layers to map:
+          layer.addTo(map);
+          console.log('Added layer to map...')
           clickMarker.closePopup();
+
+          // Write GeoJSON into field so that user can copy-paste it:
           document.getElementById("display_geojson").innerHTML = JSON.stringify(xhrPygeo.response);
         };
 
         // Send HTTP request:
         console.log('Sending HTTP POST request triggered by button-click')
-        xhrPygeo.send(jsonstuff);
+        xhrPygeo.send(payload_inputs_json);
     }
 
     // Define button behaviour (function)
@@ -226,6 +259,7 @@ integrity=
     //button1.onclick = buttonClickOGCRequest(clicklon, clicklat);
 
 
+    // Function to add a grey marker, and a pop-up, to a location on the map
     var putIconToClickLocation = function(paramlat, paramlon, map, actionDone) {
       console.log("User "+actionDone+" (coordinates lon "+paramlon+", lat "+paramlat);
       var lat = parseFloat(paramlat);
@@ -263,67 +297,12 @@ integrity=
       // Add icon and popup to click location:
       clickMarker = putIconToClickLocation(clicklat, clicklon, map, "clicked on map");
 
-
-
-
-      //// MAKE REQUEST TO PYGEOAPI
-      console.log('Preparing to make HTTP POST request triggered by map-click')
-      document.getElementById("responseField").innerHTML = "Response returned by server for lon "+clicklon+", lat = "+clicklat+"...";
-      
-      let xhr2 = new XMLHttpRequest();
+      // Construct and send HTTP request to OGC service:
       var dropdown = document.getElementById("processes");
-      var url2 = "https://aqua.igb-berlin.de/pygeoapi-dev/processes/"+dropdown.value+"/execution";
-      xhr2.open('POST', url2, true)
-      var payload_inputs_json = JSON.stringify({"inputs":{"lon":clicklon, "lat":clicklat}})
-      xhr2.setRequestHeader('Content-Type', 'application/json');
-      xhr2.responseType = 'json';
-      xhr2.onload = function() {
-        var dropdown = document.getElementById("processes");
-        var lookingfor = dropdown.options[dropdown.selectedIndex].text // TODO: Could this have changed in meantime?
-        console.log("Returning from OGC process: "+dropdown.value+"...");
-        if (xhr2.status == 200) {
-          console.log("OGC server returned HTTP 200");
-          clickMarker.bindPopup("Waiting for "+lookingfor+" for lat="+clicklat.toFixed(3)+", lon="+clicklon.toFixed(3)+"...").openPopup();
-        } else if (xhr2.status == 400) {
-          console.log("Oh no: Internal server error (HTTP 400)");
-          var errmsg = xhr2.response["description"];
-          clickMarker.bindPopup(errmsg);
-          return
-        } else if (xhr2.status !== 200) {
-          console.log("Oh no: OGC server returned bad HTTP status: "+xhr2.status);
-          clickMarker.bindPopup("Failed for unspecified reason (possibly timeout), try another one!!");
-          return
-        }
-
-        // Just adding to map, without restyle:
-        //L.geoJSON(xhr2.response).addTo(map);
-
-        // With restyle:
-        // Any line that has the property "description" = "connecting line" becomes red!
-        var respi = xhr2.response;
-        //console.log('respi: '+respi.type);
-        //console.log('respi: '+JSON.stringify(respi));
-        document.getElementById("display_geojson").innerHTML = JSON.stringify(xhr2.response);
-        var layer = L.geoJSON(xhr2.response);
-        layer.eachLayer(function (layer) {
-        if(layer.feature.properties.description == 'connecting line') {
-          layer.setStyle({fillColor: 'red', color: 'red'});
-          console.log('BLAA');
-          }
-        });
-        layer.addTo(map);
-        console.log('Added layer to map...')
-        clickMarker.closePopup();
-        if (xhr2.response == null){
-          // Stream segments CAN be shown if it is a headwater!
-                      clickMarker.bindPopup("No "+lookingfor+", is this a headwater?").openPopup();
-        }
-      };
-      console.log('Sending HTTP POST request triggered by map-click')
-      xhr2.send(payload_inputs_json);
+      ogcRequest(dropdown, clicklon, clicklat, clickMarker);
     });
 
-    console.log('Map click post request done?!?!');
+    console.log('KLASDJA Map click post request done?!?!');
   </script>
 </body>
 
