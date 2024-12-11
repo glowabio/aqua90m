@@ -233,7 +233,8 @@ integrity=
           clickMarker.closePopup();
 
           // Write GeoJSON into field so that user can copy-paste it:
-          document.getElementById("display_geojson").innerHTML = JSON.stringify(xhrPygeo.response);
+          var prettyResponse = JSON.stringify(xhrPygeo.response, null, 2); // spacing level = 2
+          document.getElementById("display_geojson").innerHTML = prettyResponse;
         };
 
         // Send HTTP request:
