@@ -17,7 +17,11 @@ integrity=
 <body>
   <h1>On the fly upstream catchments</h1>
   <!--h1>TEMPORARILY OFFLINE: On the fly upstream catchments</h1-->
-  <p><span>Click on the map, be patient (!!), and there will be the </span>
+
+
+
+  <!-- Selection -->
+  <p><span>Click on the map to display: (Note: Computing may take some time, depending on catchment size!) </span>
   <select id="processes">
     <option value="get-upstream-bbox">Upstream bounding box</option>
     <option value="get-upstream-dissolved-cont">Upstream catchment (one large polygon)</option>
@@ -34,8 +38,12 @@ integrity=
   </p>
   <p>In case you click to a headwater, no upstream catchment is provided, as no upstream exists...</p>
 
+
+
   <!-- Map -->
   <div id="map" style="width: 960px; height: 500px"></div>
+
+
 
   <!-- Example buttons -->
   <h3>Input your own coordinates...</h3>
@@ -48,6 +56,8 @@ integrity=
   <button id="example4" onclick="return myFunction('10.055837', '53.483139')">lon=10.055837, lat=53.483139 (11 subcatchments)</button>
   <button id="example5" onclick="return myFunction('9.973955154418947', '53.54193634826804')">lon=9.973955, lat=53.541936 (8071 subcatchments)</button>
   <button id="example6" onclick="return myFunction('9.921666666666667', '54.69166666666666')">lon=9.921666666666667, lat=54.69166666666666 (exactly on boundary)</button>
+
+
 
   <!-- Text field -->
   <p id="resperrr">Response returned by server:</p>
@@ -119,7 +129,7 @@ var clicklat = 53.54193634826804;
 var dropdown = document.getElementById("processes");
 var button1 = document.getElementById("example1");
 button1.innerHTML = "lon = "+clicklon+", lat = "+clicklat+" (8071 subcatchments)";
-button1.innerHTML = "use your own values!" // but if I delete it it does not work, hae???
+button1.innerHTML = "use these values!" // but if I delete it it does not work, hae???
 //button1.onclick = function(){ // this works!
 // testing this one further down!
 //button1.onclick = myFunction(clicklon, clicklat); 
