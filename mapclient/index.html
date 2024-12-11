@@ -12,6 +12,7 @@
 integrity=
 "sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
     crossorigin="" />
+  <link rel="stylesheet" href="mystyle.css"/ >
 </head>
 
 <body>
@@ -19,9 +20,8 @@ integrity=
   <!--h1>TEMPORARILY OFFLINE: On the fly upstream catchments</h1-->
 
 
-
   <!-- Selection -->
-  <p><span>Click on the map to display: (Note: Computing may take some time, depending on catchment size!) </span>
+  <p><span>Click on the map to display:</span></p>
   <select id="processes">
     <option value="get-upstream-bbox">Upstream bounding box</option>
     <option value="get-upstream-dissolved-cont">Upstream catchment (one large polygon)</option>
@@ -34,15 +34,17 @@ integrity=
     <option value="get-shortest-path-to-outlet">Shortest path from point to sea</option>
     <option value="get-shortest-path-two-points">Shortest path from point to point (NOT YET)</option>
   </select>
+  <p>
   <span>(please choose!)...</span>
+  <br />
+  <span class="greynote">(Note: Computing may take some time, depending on catchment size!)</span>
+  <br />
+  <span class="greynote">(Note: In case you click to a headwater, no upstream catchment is provided, as no upstream exists...</span>
   </p>
-  <p>In case you click to a headwater, no upstream catchment is provided, as no upstream exists...</p>
-
 
 
   <!-- Map -->
   <div id="map" style="width: 960px; height: 500px"></div>
-
 
 
   <!-- Example buttons -->
@@ -58,10 +60,11 @@ integrity=
   <button id="example6" onclick="return myFunction('9.921666666666667', '54.69166666666666')">lon=9.921666666666667, lat=54.69166666666666 (exactly on boundary)</button>
 
 
-
   <!-- Text field -->
   <p id="resperrr">Response returned by server:</p>
   <textarea id="display_geojson" rows="20", cols="120">(Result GeoJSON will be displayed here)</textarea>
+
+
   <!-- Get the leaflet JavaScript file -->
   <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
     integrity=
@@ -97,94 +100,104 @@ integrity=
     //eiffelMarker.bindPopup("Helsinki").openPopup();
 
 
-// Other way. WORKS!
-//L.geoJSON(data, {
-//    style: function(feature) {
-//        switch (feature.properties.UnitID) {
-//            case 1: return {color: "#ff0000"};
-//            case 2: return {color: "#0000ff"};
-//      default: return {color: "#ff8c00"};
-//        }
-//    }
-//}).addTo(map);
+    // Other way. WORKS!
+    //L.geoJSON(data, {
+    //    style: function(feature) {
+    //        switch (feature.properties.UnitID) {
+    //            case 1: return {color: "#ff0000"};
+    //            case 2: return {color: "#0000ff"};
+    //      default: return {color: "#ff8c00"};
+    //        }
+    //    }
+    //}).addTo(map);
 
-// DISPLAY DATA FROM WPS CALL ON MAP, STATIC:
-// https://gis.stackexchange.com/questions/68489/loading-external-geojson-file-into-leaflet-map
-//let xhr = new XMLHttpRequest();
-//var url = "https://aqua.igb-berlin.de/pygeoapi/processes/get-upstream-dissolved/execution";
-//xhr.open('POST', url, true)
-//var jsonstuff = JSON.stringify({"inputs":{"lon":9.931555, "lat":54.695070}})
-//xhr.setRequestHeader('Content-Type', 'application/json');
-//xhr.responseType = 'json';
-//xhr.onload = function() {
-//    if (xhr.status !== 200) return
-//    L.geoJSON(xhr.response).addTo(map);
-//};
-//xhr.send(jsonstuff);
+    // DISPLAY DATA FROM WPS CALL ON MAP, STATIC:
+    // https://gis.stackexchange.com/questions/68489/loading-external-geojson-file-into-leaflet-map
+    //let xhr = new XMLHttpRequest();
+    //var url = "https://aqua.igb-berlin.de/pygeoapi/processes/get-upstream-dissolved/execution";
+    //xhr.open('POST', url, true)
+    //var jsonstuff = JSON.stringify({"inputs":{"lon":9.931555, "lat":54.695070}})
+    //xhr.setRequestHeader('Content-Type', 'application/json');
+    //xhr.responseType = 'json';
+    //xhr.onload = function() {
+    //    if (xhr.status !== 200) return
+    //    L.geoJSON(xhr.response).addTo(map);
+    //};
+    //xhr.send(jsonstuff);
 
 
-// Buttons
-var clicklon = 9.973955154418947;
-var clicklat = 53.54193634826804;
-var dropdown = document.getElementById("processes");
-var button1 = document.getElementById("example1");
-button1.innerHTML = "lon = "+clicklon+", lat = "+clicklat+" (8071 subcatchments)";
-button1.innerHTML = "use these values!" // but if I delete it it does not work, hae???
-//button1.onclick = function(){ // this works!
-// testing this one further down!
-//button1.onclick = myFunction(clicklon, clicklat); 
-var myFunction = function(clicklonn, clicklatt){
-  console.log("Clicked button for "+clicklonn+", "+clicklatt); 
-  // Hier die gleiche Funktion wie onclick!
-  // Icon for just user-clicks
-  var clickIcon = L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34]
-  });
-  let clickMarker = L.marker([clicklatt, clicklonn], {icon: clickIcon}).addTo(map);
-  var lookingfor = dropdown.options[dropdown.selectedIndex].text
-  //clickMarker.bindPopup("You asked for "+lookingfor+" for lat="+clicklatt.toFixed(3)+", lon="+clicklonn.toFixed(3)+"...").openPopup();
-  clickMarker.bindPopup("You asked for "+lookingfor+" for lat="+clicklatt+", lon="+clicklonn+"...").openPopup();
-  document.getElementById("resperrr").innerHTML = "Reesponse returned by server for lon "+clicklonn+", lat = "+clicklatt+"...";
-  let xhr = new XMLHttpRequest();
-  var url = "https://aqua.igb-berlin.de/pygeoapi/processes/"+dropdown.value+"/execution";
-  xhr.open('POST', url, true)
-  console.log("Reached this code?");
-  var jsonstuff = JSON.stringify({"inputs":{"lon":clicklonn, "lat":clicklatt}})
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  console.log("Reached this code 2?");
-  xhr.responseType = 'json';
-  xhr.onload = function() {
-    console.log("Reached this code 3?");
-    console.log("Selected: "+dropdown.value+"...");
-    if (xhr.status == 200) {
-           console.log("oh yeah");
-           clickMarker.bindPopup("Waiting for "+lookingfor+" for lat="+clicklat.toFixed(3)+", lon="+clicklon.toFixed(3)+"...").openPopup();
-    } else if (xhr.status == 400) {
-        console.log("oh no, internal server error...");
-        var errmsg = xhr.response["description"];
-        clickMarker.bindPopup(errmsg);
-        return
-    } else if (xhr.status !== 200) {
-            console.log("oh nooo");
-            clickMarker.bindPopup("Failed for unspecified reason (possibly timeout), try another one!!");
-            return
-    }
-  L.geoJSON(xhr.response).addTo(map);
-  clickMarker.closePopup();
-  document.getElementById("display_geojson").innerHTML = JSON.stringify(xhr.response);
-  };
-  xhr.send(jsonstuff);
-};
+    // Buttons
+    var clicklon = 9.973955154418947;
+    var clicklat = 53.54193634826804;
+    var dropdown = document.getElementById("processes");
+    var button1 = document.getElementById("example1");
+    button1.innerHTML = "lon = "+clicklon+", lat = "+clicklat+" (8071 subcatchments)";
+    button1.innerHTML = "use your own values!" // but if I delete it it does not work, hae???
+
+
+    // Button behaviour
+    //button1.onclick = function(){ // this works!
+    // testing this one further down!
+    //button1.onclick = myFunction(clicklon, clicklat);
+    var myFunction = function(clicklonn, clicklatt){
+      console.log("Clicked button for "+clicklonn+", "+clicklatt); 
+
+      // Hier die gleiche Funktion wie onclick!
+      // Icon for just user-clicks
+      var clickIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34]
+      });
+      let clickMarker = L.marker([clicklatt, clicklonn], {icon: clickIcon}).addTo(map);
+      var lookingfor = dropdown.options[dropdown.selectedIndex].text
+      //clickMarker.bindPopup("You asked for "+lookingfor+" for lat="+clicklatt.toFixed(3)+", lon="+clicklonn.toFixed(3)+"...").openPopup();
+      clickMarker.bindPopup("You asked for "+lookingfor+" for lat="+clicklatt+", lon="+clicklonn+"...").openPopup();
+
+      // Construct HTTP request to OGC service:
+      document.getElementById("resperrr").innerHTML = "Reesponse returned by server for lon "+clicklonn+", lat = "+clicklatt+"...";
+      let xhr = new XMLHttpRequest();
+      var url = "https://aqua.igb-berlin.de/pygeoapi/processes/"+dropdown.value+"/execution";
+      xhr.open('POST', url, true)
+      console.log("Reached this code?");
+      var jsonstuff = JSON.stringify({"inputs":{"lon":clicklonn, "lat":clicklatt}})
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      console.log("Reached this code 2?");
+      xhr.responseType = 'json';
+
+      // Define behaviour for HTTP request:
+      xhr.onload = function() {
+        console.log("Reached this code 3?");
+        console.log("Selected: "+dropdown.value+"...");
+        if (xhr.status == 200) {
+          console.log("oh yeah");
+          clickMarker.bindPopup("Waiting for "+lookingfor+" for lat="+clicklat.toFixed(3)+", lon="+clicklon.toFixed(3)+"...").openPopup();
+        } else if (xhr.status == 400) {
+          console.log("oh no, internal server error...");
+          var errmsg = xhr.response["description"];
+          clickMarker.bindPopup(errmsg);
+          return
+        } else if (xhr.status !== 200) {
+          console.log("oh nooo");
+          clickMarker.bindPopup("Failed for unspecified reason (possibly timeout), try another one!!");
+          return
+        }
+        L.geoJSON(xhr.response).addTo(map);
+        clickMarker.closePopup();
+        document.getElementById("display_geojson").innerHTML = JSON.stringify(xhr.response);
+      };
+
+      // Send HTTP request:
+      xhr.send(jsonstuff);
+    };
 
 //THis fires immediately on load!
 //button1.onclick = myFunction(clicklon, clicklat); 
 
 
 // GET COORDINATES FROM MAP:
-console.log('WAIT FOR COORINDATE CLICK');
+console.log('Waiting for user to click to get a coordinate...');
 map.on('click', function (e) {
   //coords= e.latlng.lat + ", " + e.latlng.lng;
   clicklat = e.latlng.lat;
@@ -220,10 +233,10 @@ map.on('click', function (e) {
 
 
   //// MAKE REQUEST TO PYGEOAPI
-  console.log('Make map-click post request')
+  console.log('Preparing to make HTTP POST request triggered by map-click')
   document.getElementById("resperrr").innerHTML = "Response returned by server for lon "+clicklon+", lat = "+clicklat+"...";
+  
   let xhr2 = new XMLHttpRequest();
-  //var url2 = "https://aqua.igb-berlin.de/pygeoapi/processes/get-upstream-dissolved/execution";
   var url2 = "https://aqua.igb-berlin.de/pygeoapi-dev/processes/"+dropdown.value+"/execution";
   xhr2.open('POST', url2, true)
   var jsonstuff2 = JSON.stringify({"inputs":{"lon":clicklon, "lat":clicklat}})
@@ -233,15 +246,15 @@ map.on('click', function (e) {
     //if (xhr2.status !== 200) return
     console.log("Selected: "+dropdown.value+"...");
     if (xhr2.status == 200) {
-      console.log("oh yeah");
-                  clickMarker.bindPopup("Waiting for "+lookingfor+" for lat="+clicklat.toFixed(3)+", lon="+clicklon.toFixed(3)+"...").openPopup();
+      console.log("OGC server returned HTTP 200");
+      clickMarker.bindPopup("Waiting for "+lookingfor+" for lat="+clicklat.toFixed(3)+", lon="+clicklon.toFixed(3)+"...").openPopup();
     } else if (xhr2.status == 400) {
-        console.log("oh no, internal server error...");
-  var errmsg = xhr2.response["description"];
-        clickMarker.bindPopup(errmsg);
-        return
+      console.log("Oh no: Internal server error (HTTP 400)");
+      var errmsg = xhr2.response["description"];
+      clickMarker.bindPopup(errmsg);
+      return
     } else if (xhr2.status !== 200) {
-      console.log("oh nooo");
+      console.log("Oh no: OGC server returned bad HTTP status (not 200, not 400)");
       clickMarker.bindPopup("Failed for unspecified reason (possibly timeout), try another one!!");
       return
     }
