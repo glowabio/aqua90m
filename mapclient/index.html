@@ -357,21 +357,20 @@ integrity=
     var buttonClickBehaviour = function(paramlon, paramlat){
       console.log("Clicked button for "+paramlon+", "+paramlat);
 
+      // Warn if this example does not apply:
+      var dropdown = document.getElementById("processes");
+      var processId = dropdown.value;
+      if (processId == "get-shortest-path-two-points") {
+        var processDesc = dropdown.options[dropdown.selectedIndex].text;
+        window.alert("This example does not work with "+processDesc+", as it needs two pairs of coordinates!");
+        return
+      }
+
       // Add icon and popup to click location:
       clickMarker = putIconToClickLocation(paramlat, paramlon, map, "clicked on button", false);
 
       // Construct and send HTTP request to OGC service:
-      var dropdown = document.getElementById("processes");
-
-      var processId = dropdown.value;
-      if (processId == "get-shortest-path-two-points") {
-        // TODO nothing happens! notify user!
-        // TODO have buttons grey!
-
-      } else {
-        //ogcRequest(dropdown, paramlon, paramlat, clickMarker);
-        ogcRequestOneCoordinatePair(dropdown, clickMarker, paramlon, paramlat);
-      }
+      ogcRequestOneCoordinatePair(dropdown, clickMarker, paramlon, paramlat);
     };
 
     // Define behaviour for custom lonlat button (function):
