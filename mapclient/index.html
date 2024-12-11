@@ -323,7 +323,26 @@ integrity=
               layer.setStyle({fillColor: 'grey', color: 'grey'});
 
             } else if (processId == "get-shortest-path-to-outlet") {
-              layer.setStyle({color: '#00b8e6', weight: 8});
+              // this worked: layer.setStyle({color: '#00b8e6', weight: 8});
+
+              // let's vary colour with strahler order, more precisely with
+              // lightness in the HSL colour model:
+              // Blue: hue=192, saturation=1
+              //  lightness = 0.5 or 50% medium blue
+              //  lightness = 0.2 or 20% black-ish
+              //  lightness = 0.9 or 90% quite light
+              // Reasonable base colour to start with. Now vary lightness with strahler...
+              let hue = 192;
+              let saturation = 1;
+              let lightness = 0.5
+
+              // Get from strahler to a lightness value between 0.2 and 0.9!
+              let strahler = layer.feature.properties.strahler_order;
+              let lowest_lightness = 0.2
+              let highest_lightness = 0.9
+              lightness = strahler_to_hsl_lightness(strahler, lowest_lightness, highest_lightness);
+              let col_hex = convert_hsl_to_hex(192, 1, lightness);
+              layer.setStyle({color: col_hex, weight: 8});
 
             } else if (processId == "get-upstream-dissolved-cont") {
               layer.setStyle({color: 'navy', weight: 5});
@@ -357,7 +376,7 @@ integrity=
               // this worked:
               //layer.setStyle({color: '#00b8e6', weight: 8});
 
-              // let's try to vary colour with strahler order, more precisely with
+              // let's vary colour with strahler order, more precisely with
               // lightness in the HSL colour model:
               // Blue: hue=192, saturation=1
               //  lightness = 0.5 or 50% medium blue
