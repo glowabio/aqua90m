@@ -190,6 +190,7 @@ integrity=
 
     // Lightness conversion function for strahler-colouring.
     // TODO: Move to separate javascript and import
+    // TODO: Would be good to precompute, as we have few strahler-orders, and many features...
     var strahler_to_hsl_lightness = function(strahler, lowest_lightness, highest_lightness) {
       strahler = parseInt(strahler);
       let tmp = 11-strahler;
@@ -202,6 +203,17 @@ integrity=
       //let lightness = 0.2 + ((0.9-0.2)*0.1) * tmp
       let lightness = lowest_lightness + (highest_lightness - lowest_lightness) * tmp * 0.1
       return lightness
+    }
+
+    // Line weight conversion function for strahler-colouring.
+    // TODO: Move to separate javascript and import
+    // TODO: Would be good to precompute, as we have few strahler-orders, and many features...
+    var strahler_to_line_weight = function(strahler, min_weight=2, max_weight=4) {
+      let slope = (max_weight - min_weight)/10 // 10 is approximately strahler spread...
+      let add = min_weight - slope * 1 // 1 is minimum strahler
+      let weight = add + slope*strahler
+      //console.log('Strahler: '+strahler+', line weight: '+weight);
+      return(weight)
     }
 
     // Define making request to OGC service (function):
@@ -372,13 +384,9 @@ integrity=
               let col_hex = convert_hsl_to_hex(hue, 1, lightness);
 
               // Get from strahler to a line weight value between 2 and 4!
-              //let weight = 1.8 + 0.2*strahler
-              let min_weight = 2
-              let max_weight = 4
-              let slope = (max_weight - min_weight)/10 // 10 is approximately strahler spread...
-              let add = min_weight - slope * 1 // 1 is minimum strahler
-              let weight = add + slope*strahler
-              console.log('Strahler: '+strahler+', line weight: '+weight);
+              let min_weight = 2;
+              let max_weight = 4;
+              let weight = strahler_to_line_weight(strahler, min_weight, max_weight)
               layer.setStyle({color: col_hex, weight: weight});
 
             } else if (processId == "get-local-streamsegments") {
