@@ -105,7 +105,7 @@ integrity=
 
   <!-- Text field -->
   <p id="responseField">Response returned by server:</p>
-  <textarea id="display_geojson" rows="20", cols="120">(Result GeoJSON will be displayed here)</textarea>
+  <textarea id="displayGeoJSON" rows="20", cols="120">(Result GeoJSON will be displayed here)</textarea>
 
 
   <!-- Get the leaflet JavaScript file -->
@@ -120,23 +120,14 @@ integrity=
 
     // Get the tile layer from OpenStreetMaps
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-
-    // Specify the maximum zoom of the map
-    maxZoom: 19,
-
-    // Set the attribution for OpenStreetMaps
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      maxZoom: 19, // maximum zoom of map
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
     // Set the view of the map
     // with the latitude, longitude and the zoom value
     // map.setView([60.19123, 24.94612], 10); // Helsinki
     map.setView([53.014, 12.008], 7); // Northern Germany
-
-    // Show a marker at the position of Helsinki
-    //let eiffelMarker = L.marker([60.19123, 24.94612]).addTo(map);
-    // Bind popup to the marker with a popup
-    //eiffelMarker.bindPopup("Helsinki").openPopup();
 
     // Other way. WORKS!
     //L.geoJSON(data, {
@@ -149,26 +140,10 @@ integrity=
     //    }
     //}).addTo(map);
 
-
-    // DISPLAY DATA FROM WPS CALL ON MAP, STATIC:
-    // https://gis.stackexchange.com/questions/68489/loading-external-geojson-file-into-leaflet-map
-    //let xhrWps = new XMLHttpRequest();
-    //var urlWps = "https://aqua.igb-berlin.de/pygeoapi/processes/get-upstream-dissolved/execution";
-    //xhrWps.open('POST', urlWps, true)
-    //var inputsWpsCall = JSON.stringify({"inputs":{"lon":9.931555, "lat":54.695070}})
-    //xhrWps.setRequestHeader('Content-Type', 'application/json');
-    //xhrWps.responseType = 'json';
-    //xhrWps.onload = function() {
-    //    if (xhrWps.status !== 200) return
-    //    L.geoJSON(xhrWps.response).addTo(map);
-    //};
-    //xhrWps.send(inputsWpsCall);
-
-
     // Define making request to OGC service (function):
     var ogcRequest = function(dropdown, paramlon, paramlat, clickMarker) {
         console.log('Preparing to make HTTP POST request triggered by button-click')
-        document.getElementById("responseField").innerHTML = "Reesponse returned by server for lon "+paramlon+", lat = "+paramlat+"...";
+        document.getElementById("responseField").innerHTML = "Response returned by server for lon "+paramlon+", lat = "+paramlat+"...";
 
         // Parse coordinates to Float
         var lat = parseFloat(paramlat);
@@ -238,7 +213,7 @@ integrity=
 
           // Write GeoJSON into field so that user can copy-paste it:
           var prettyResponse = JSON.stringify(xhrPygeo.response, null, 2); // spacing level = 2
-          document.getElementById("display_geojson").innerHTML = prettyResponse;
+          document.getElementById("displayGeoJSON").innerHTML = prettyResponse;
         };
 
         // Send HTTP request:
