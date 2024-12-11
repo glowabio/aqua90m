@@ -254,6 +254,7 @@ integrity=
       clickMarker = putIconToClickLocation(paramlat, paramlon, map, "clicked on button");
 
       // Construct and send HTTP request to OGC service:
+      var dropdown = document.getElementById("processes");
       ogcRequest(dropdown, paramlon, paramlat, clickMarker);
     };
 
