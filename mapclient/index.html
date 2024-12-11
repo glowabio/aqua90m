@@ -285,11 +285,7 @@ integrity=
       return (clickMarker);
     }
 
-
-    // GET COORDINATES FROM MAP:
-    console.log('Waiting for user to click to get a coordinate...');
-    map.on('click', function (e) {
-
+    var mapClickBehaviour = function(e) {
       // Get coordinates from click location:
       clicklat = e.latlng.lat;
       clicklon = e.latlng.lng;
@@ -301,9 +297,14 @@ integrity=
       // Construct and send HTTP request to OGC service:
       var dropdown = document.getElementById("processes");
       ogcRequest(dropdown, clicklon, clicklat, clickMarker);
-    });
+    }
 
-    console.log('KLASDJA Map click post request done?!?!');
+
+    // GET COORDINATES FROM MAP:
+    console.log('Waiting for user to click to get a coordinate...');
+    map.on('click', mapClickBehaviour);
+
+
   </script>
 </body>
 
