@@ -85,30 +85,30 @@ integrity=
     </tr>
   </table>
   <!-- Behaviour is defined programmatically further below -->
-  <button id="customLonlatButton">Use these values!</button>
+  <button class="oneclickexample" id="customLonlatButton">Use these values!</button>
 
 
   <!-- Example buttons -->
   <h3>...or use these examples:</h3>
   <table>
     <tr>
-      <td><button id="example1" thislon="not set" thislat="not set">not set</button></td>
+      <td><button class="oneclickexample" id="example1" thislon="not set" thislat="not set">not set</button></td>
       <td id="example1desc">(not set)</td>
     </tr>
     <tr>
-      <td><button id="example2" thislon="not set" thislat="not set">not set</button></td>
+      <td><button class="oneclickexample"  id="example2" thislon="not set" thislat="not set">not set</button></td>
       <td id="example2desc">(not set)</td>
     </tr>
     <tr>
-      <td><button id="example3" thislon="not set" thislat="not set">not set</button></td>
+      <td><button class="oneclickexample"  id="example3" thislon="not set" thislat="not set">not set</button></td>
       <td id="example3desc">(not set)</td>
     </tr>
     <tr>
-      <td><button id="example4" thislon="not set" thislat="not set">not set</button></td>
+      <td><button class="oneclickexample"  id="example4" thislon="not set" thislat="not set">not set</button></td>
       <td id="example4desc">(not set)</td>
     </tr>
     <tr>
-      <td><button id="example5" thislon="not set" thislat="not set">not set</button></td>
+      <td><button class="oneclickexample"  id="example5" thislon="not set" thislat="not set">not set</button></td>
       <td id="example5desc">(not set)</td>
     </tr>
   </table>
@@ -403,6 +403,27 @@ integrity=
       document.getElementById("customLonLat").value = newlonlat;
     };
 
+    // Define event listener for change of process id, so I can switch off/ switch on
+    // the buttons for examples (which only work for one-click examples)!
+    var eventProcessChanged = function(evt){
+      console.log("Process changed to: "+this.value);
+      if (this.value == 'get-shortest-path-two-points') {
+        // now, two clicks are needed and our examples don't work anymore:
+        let exampleButtons = document.getElementsByClassName("oneclickexample");
+        for (let i = 0; i < exampleButtons.length; i++) {
+          //exampleButtons[i].style.backgroundColor = "red";
+          exampleButtons[i].disabled = true;
+        }
+      } else {
+        // now, one click is needed and our examples will work:
+        let exampleButtons = document.getElementsByClassName("oneclickexample");
+        for (let i = 0; i < exampleButtons.length; i++) {
+          //exampleButtons[i].style.backgroundColor = "red";
+          exampleButtons[i].disabled = false;
+        }
+      }
+    }
+
     // Define behaviour for example button (function):
     var exampleButtonClickBehaviour = function() {
       console.log("User requested to use example values...")
@@ -601,6 +622,9 @@ integrity=
 
     // Bind custom-button behaviour to the custom-button click event:
     document.getElementById("customLonlatButton").onclick = customButtonClickBehaviour;
+
+    // Bind one-click or two-click to the event of process change:
+    document.getElementById("processes").addEventListener('input', eventProcessChanged);
 
     // When a user modifies text fields "lon", "lat" or "lon,lat", modify the others accordinly:
     document.getElementById("customLonLat").addEventListener('input', eventLonLatChanged);
