@@ -48,17 +48,28 @@ integrity=
   <div id="map" style="width: 960px; height: 500px"></div>
 
 
-  <!-- Example buttons -->
+  <!-- Custom lonlat button -->
   <h3>Input your own coordinates...</h3>
   <table>
     <tr>
+    <!-- If you want the grey examples to disappear on focus, set onfocus to this:   onfocus="if(this.value=='9.17'){ this.value='NIX'; this.style.color='#000';}"   -->
       <td>Longitude:</td>
-      <td><input id="lonnn" /></td>
+      <td>
+        <input type="text" id="lonnn" value="9.17"
+          onblur="if(this.value==''){ this.value='9.17'; this.style.color='#BBB';}"
+          onfocus="if(this.value=='9.17'){ this.value='9.17'; this.style.color='#000';}"
+          style="color:#BBB;" />
+      </td>
       <td>e.g. 9.17</td>
     </tr>
     <tr>
       <td>Latitude:</td>
-      <td><input id="lattt" /></td>
+      <td>
+        <input type="text" id="lattt" value="52.95"
+          onblur="if(this.value==''){ this.value='52.95'; this.style.color='#BBB';}"
+          onfocus="if(this.value=='9.17'){ this.value='52.95'; this.style.color='#000';}"
+          style="color:#BBB;" />
+      </td>
       <td>e.g. 52.95</td>
     </tr>
   </table>
