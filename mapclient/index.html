@@ -67,7 +67,7 @@ integrity=
           onfocus="if(this.value=='9.17'){ this.value='9.17'; this.style.color='#000';}"
           style="color:#BBB;" />
       </td>
-      <td>e.g. 9.17</td>
+      <td>e.g. <span class="code">9.17</span></td>
     </tr>
     <tr>
       <td>Latitude:</td>
@@ -77,7 +77,7 @@ integrity=
           onfocus="if(this.value=='9.17'){ this.value='52.95'; this.style.color='#000';}"
           style="color:#BBB;" />
       </td>
-      <td>e.g. 52.95</td>
+      <td>e.g. <span class="code">52.95</span></td>
     </tr>
     <tr>
       <td>Lon lat:</td>
@@ -87,7 +87,7 @@ integrity=
           onfocus="if(this.value=='9.17, 52.95'){ this.value='9.17, 52.95'; this.style.color='#000';}"
           style="color:#BBB;" />
       </td>
-      <td>e.g. 9.17, 52.95</td>
+      <td>e.g. <span class="code">9.17, 52.95</span></td>
     </tr>
   </table>
   <!-- Behaviour is defined programmatically further below -->
@@ -121,8 +121,9 @@ integrity=
 
 
   <!-- Text field -->
+  <h3>Response returned by server:</h3>
   <p id="responseField">Response returned by server:</p>
-  <textarea id="displayGeoJSON" rows="20", cols="120">(Result GeoJSON will be displayed here)</textarea>
+  <textarea id="displayGeoJSON" class="codeblock" rows="20", cols="120">(Result GeoJSON will be displayed here)</textarea>
 
 
   <!-- Get the leaflet JavaScript file -->
@@ -268,12 +269,7 @@ integrity=
     // Define making request to OGC service (function):
     var _ogcRequest = function(clickMarker, payload_inputs_json, paramstring)  {
         console.log('Preparing to make HTTP POST request...')
-        //document.getElementById("responseField").innerHTML = "Response returned by server for lon "+paramlon+", lat = "+paramlat+"...";
         document.getElementById("displayGeoJSON").innerHTML = "waiting..."
-
-        // Parse coordinates to Float
-        //var lat = parseFloat(paramlat);
-        //var lon = parseFloat(paramlon);
 
         // Which process?
         var dropdown = document.getElementById("processes");
@@ -281,11 +277,9 @@ integrity=
         var processDesc = dropdown.options[dropdown.selectedIndex].text;
 
         // Construct HTTP request to OGC service:
-        //var payload_inputs_json = JSON.stringify({"inputs":{"lon":lon, "lat":lat}})
         let xhrPygeo = new XMLHttpRequest();
         var url = "https://aqua.igb-berlin.de/pygeoapi/processes/"+processId+"/execution";
         xhrPygeo.open('POST', url, true)
-
         xhrPygeo.setRequestHeader('Content-Type', 'application/json');
         xhrPygeo.responseType = 'json';
 
@@ -295,7 +289,6 @@ integrity=
           
           if (xhrPygeo.status == 200) {
             console.log("OGC server returned HTTP 200");
-            //clickMarker.bindPopup("Waiting for "+processDesc+" for lat="+lat.toFixed(3)+", lon="+lon.toFixed(3)+"...").openPopup();
             clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring+"...").openPopup();
           } else if (xhrPygeo.status == 400) {
             console.log("Oh no: Internal server error (HTTP 400)");
@@ -320,9 +313,6 @@ integrity=
             console.log('DEBUG: SERVER RESPONSE: '+xhrPygeo.response.type);
             console.log('DEBUG: SERVER RESPONSE AS JSON: '+JSON.stringify(xhrPygeo.response));
           }
-
-          // Add to map the GeoJSON that the server returned
-          //L.geoJSON(xhrPygeo.response).addTo(map);
 
           // Make layer(s) from GeoJSON that the server returned:
           var pygeoResponseGeoJSONLayer = L.geoJSON(xhrPygeo.response);
@@ -601,9 +591,9 @@ integrity=
       var examples = {
         ex1: {lon: 9.001922607421877,  lat: 52.91177308077004, lon2: 9.055137634277346,  lat2: 52.90224825087554,  text: "Near Schwarme", desc: "few segments"},
         ex2: {lon: 12.577028274536135, lat: 51.38613070285945, lon2: 12.564454078674318, lat2: 51.36524123530659,  text: "Wachtelteich", desc: "few segments"},
-        ex3: {lon: 13.542366027832033, lat: 52.44028788912483, lon2: 13.283157348632814, lat2: 52.454516998017894, text: "Adlershof to Dahlem", desc: "...via Krumme Lanke, Wannsee, Havel, Spree, Teltowkanal - not many segments"},
+        ex3: {lon: 13.542366027832033, lat: 52.44028788912483, lon2: 13.283157348632814, lat2: 52.454516998017894, text: "Adlershof to Dahlem", desc: "not many segments ...via Krumme Lanke, Wannsee, Havel, Spree, Teltowkanal"},
         ex4: {lon: 12.115173339843752, lat: 53.44051847367499, lon2: 12.113800048828127, lat2: 53.149131411867074, text: "Pritzwalk to Plau via Elbe", desc: "many segments"},
-        ex5: {lon: 13.051757812500002, lat: 50.85959488957681, lon2: 14.414062500000002, lat2: 51.08098143406474,  text: "Chemnitz to Wilthen via Mulde, Elbe, Havel, Spree", desc: "very many segments"},
+        ex5: {lon: 13.051757812500002, lat: 50.85959488957681, lon2: 14.414062500000002, lat2: 51.08098143406474,  text: "Chemnitz to Wilthen via Elbe, Havel, Spree", desc: "very many segments"},
       };
       _defineExampleButtons(examples, true)
     }
@@ -611,7 +601,7 @@ integrity=
     // Define programatically content/text of buttons:
     var defineOneClickExampleButtons = function() {
       var examples = {
-        ex1: {lon: 10.055837,         lat: 53.483139,         text: "Östlich von Hamburg", desc: "11 subcatchments)"},
+        ex1: {lon: 10.055837,         lat: 53.483139,         text: "Östlich von Hamburg", desc: "11 subcatchments"},
         ex2: {lon: 9.109039306640627, lat: 52.7810591224723,  text: "Bei Hoya", desc: "403 subcatchments"},
         ex3: {lon: 9.973955154418947, lat: 53.54193634826804, text: "Elbe in Hamburg", desc: "8071 subcatchments"},
         ex4: {lon: 9.17770385,        lat: 52.957628575,      text: "Weser bei Verden (Aller)", desc: "208433 subcatchments - only bbox works"},
@@ -630,7 +620,8 @@ integrity=
       var textEx = document.getElementById("example1desc");
       var example = examples.ex1
       buttonEx.innerHTML = example.text
-      textEx.innerHTML = example.desc + " <span class=\"lightsmall\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
+      textEx.innerHTML = example.desc + " <span class=\"code\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
+      //textEx.innerHTML = example.desc + " <span class=\"lightsmall\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
       buttonEx.setAttribute("thislon", example.lon)
       buttonEx.setAttribute("thislat", example.lat)
       if (twopairs) {
@@ -647,7 +638,8 @@ integrity=
       var textEx = document.getElementById("example2desc");
       var example = examples.ex2
       buttonEx.innerHTML = example.text
-      textEx.innerHTML = example.desc + " <span class=\"lightsmall\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
+      textEx.innerHTML = example.desc + " <span class=\"code\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
+      //textEx.innerHTML = example.desc + " <span class=\"lightsmall\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
       buttonEx.setAttribute("thislon", example.lon)
       buttonEx.setAttribute("thislat", example.lat)
       if (twopairs) {
@@ -664,7 +656,8 @@ integrity=
       var textEx = document.getElementById("example3desc");
       var example = examples.ex3
       buttonEx.innerHTML = example.text
-      textEx.innerHTML = example.desc + " <span class=\"lightsmall\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
+      textEx.innerHTML = example.desc + " <span class=\"code\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
+      //textEx.innerHTML = example.desc + " <span class=\"lightsmall\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
       buttonEx.setAttribute("thislon", example.lon)
       buttonEx.setAttribute("thislat", example.lat)
       if (twopairs) {
@@ -681,7 +674,8 @@ integrity=
       var textEx = document.getElementById("example4desc");
       var example = examples.ex4
       buttonEx.innerHTML = example.text
-      textEx.innerHTML = example.desc + " <span class=\"lightsmall\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
+      textEx.innerHTML = example.desc + " <span class=\"code\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
+      //textEx.innerHTML = example.desc + " <span class=\"lightsmall\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
       buttonEx.setAttribute("thislon", example.lon)
       buttonEx.setAttribute("thislat", example.lat)
       if (twopairs) {
@@ -698,7 +692,8 @@ integrity=
       var textEx = document.getElementById("example5desc");
       var example = examples.ex5
       buttonEx.innerHTML = example.text
-      textEx.innerHTML = example.desc + " <span class=\"lightsmall\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
+      textEx.innerHTML = example.desc + " <span class=\"code\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
+      //textEx.innerHTML = example.desc + " <span class=\"lightsmall\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
       buttonEx.setAttribute("thislon", example.lon)
       buttonEx.setAttribute("thislat", example.lat)
       if (twopairs) {

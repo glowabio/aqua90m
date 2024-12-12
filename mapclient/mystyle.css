@@ -1,0 +1,71 @@
+body {
+  #background-color: #bfecfd; /* footer color */
+  #background-color: #aad3df; /* osm blue */
+  #background-color: #e3f4f9; /* osm blue off */
+  background-color: #f4fafc; /* osm blue off */
+  font-family: var(--monaBold-font);
+}
+
+#id {
+  color: red;
+}
+
+#header {
+  width: 100%;
+  max-height: 170px;
+  min-height: 40px;
+  #margin-left: 0px;
+}
+
+img#waterheader {
+  width: 100%;
+}
+p, select, button, table {
+  margin-left: 20px;
+}
+
+#map {
+  margin-left: 20px;
+}
+
+
+.greynote {
+  color: grey;
+}
+
+.lightsmall {
+  color: lightgrey;
+}
+
+
+h1,h2,h3 {
+  color: navy;
+  font-family: "Roboto Slab",serif; /* from IGB website */
+  margin-left: 20px;
+}
+
+.codeblock {
+    background: #f4f4f4;
+    border: 1px solid #ddd;
+    /* border-left: 3px solid navy; */
+    border-left: 3px solid #819f00;
+    color: #666;
+    page-break-inside: avoid;
+    font-family: monospace;
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 1.6em;
+    max-width: 100%;
+    overflow: auto;
+    padding: 1em 1.5em;
+    display: block;
+    word-wrap: break-word;
+}
+
+.code {
+    background: #f4f4f4;
+    border: 1px solid #ddd;
+    color: #666;
+    font-family: monospace;
+    line-height: 1.6;
+}
