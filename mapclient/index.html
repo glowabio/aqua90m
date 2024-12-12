@@ -246,24 +246,26 @@ integrity=
         _ogcRequest(dropdown, clickMarker, payload_inputs_json, paramstring) ;
     }
 
-    var ogcRequestOneCoordinatePair = function(dropdown, clickMarker, paramlon, paramlat) {
+    // Define making request to OGC service (function):
+    var ogcRequestOneCoordinatePair = function(dropdown, clickMarker, lon1, lat1) {
 
         // Reset result field:
-        document.getElementById("responseField").innerHTML = "Response returned by server for lon "+paramlon+", lat = "+paramlat+"...";
+        document.getElementById("responseField").innerHTML = "Response returned by server for lon "+lon1+", lat = "+lat1+"...";
         document.getElementById("displayGeoJSON").innerHTML = "waiting..."
 
         // Parse coordinates to Float
-        var lat = parseFloat(paramlat);
-        var lon = parseFloat(paramlon);
+        var lon1 = parseFloat(lon1);
+        var lat1 = parseFloat(lat1);
 
         // Param string for logging
-        var paramstring = "lat="+lat.toFixed(3)+", lon="+lon.toFixed(3);
+        var paramstring = "lat="+lat1.toFixed(3)+", lon="+lon1.toFixed(3);
 
         // Define JSON payload and send:
-        var payload_inputs_json = JSON.stringify({"inputs":{"lon":lon, "lat":lat}})
+        var payload_inputs_json = JSON.stringify({"inputs":{"lon":lon1, "lat":lat1}})
         _ogcRequest(dropdown, clickMarker, payload_inputs_json, paramstring) ;
     }
 
+    // Define making request to OGC service (function):
     var _ogcRequest = function(dropdown, clickMarker, payload_inputs_json, paramstring)  {
         console.log('Preparing to make HTTP POST request...')
         //document.getElementById("responseField").innerHTML = "Response returned by server for lon "+paramlon+", lat = "+paramlat+"...";
@@ -398,19 +400,14 @@ integrity=
               layer.setStyle({color: '#3366cc', weight: 4});
 
             } else if (processId == "get-local-streamsegments-subcatchments") {
-
               if (layer.feature.geometry.type == 'LineString') {
                 layer.setStyle({fillColor: '#3366cc', color: '#3366cc', weight: 4});
-
               } else if (layer.feature.geometry.type == 'MultiPolygon') {
-                //layer.setStyle({color: '#3366cc', fillColor: '#3366cc'});
-                //layer.setStyle({color: '3366cc', fillColor: '3366cc'}); // this is grey!
-                //layer.setStyle({color: 'black', fillColor: 'black', weight: 0}); // this is grey!
-                layer.setStyle({color: '#3366cc', fillColor: '#3366cc', weight: 0}); // is this light blue?
-
+                layer.setStyle({color: '#3366cc', fillColor: '#3366cc', weight: 0});
               } else {
-                console.log('Found something else and painted it black...');
-                layer.setStyle({color: 'black', weight: 3});
+                console.log('TODO: Found feature that is neither LineString nor MultiPolygon... You may want to check this.');
+                console.log('PAINTED IT PINK!')
+                layer.setStyle({fillColor: 'pink', color: 'pink', weight: 3});
               };
 
             } else if (processId == "get-shortest-path-two-points") {
@@ -439,23 +436,19 @@ integrity=
               layer.setStyle({color: col_hex, weight: 8});
 
             } else if (processId == "get-snapped-point-plus") {
-
               if (layer.feature.properties.description == 'connecting line') {
                 layer.setStyle({fillColor: 'red', color: 'red', weight: 1, dashArray: '8 4'});
                 console.log('Found a connecting line and painted it dashed red...');
-
               } else if (layer.feature.geometry.type == 'LineString') {
                 layer.setStyle({fillColor: '#3366cc', color: '#3366cc', weight: 4});
-
               } else if (layer.feature.geometry.type == 'MultiPolygon') {
                 layer.setStyle({fillColor: '#3366cc', color: '#3366cc', weight: 0});
-
               } else if (layer.feature.geometry.type == 'Point') {
                 // TODO POINT
-
               } else {
-                console.log('Found another feature, ORANGE...');
-                layer.setStyle({fillColor: 'orange', color: 'orange', weight: 3});
+                console.log('TODO: Found feature that is neither LineString nor MultiPolygon nor Point.You may want to check this.');
+                console.log('PAINTED IT PINK!')
+                layer.setStyle({fillColor: 'pink', color: 'pink', weight: 3});
               };
 
             } else if (processId == "get-snapped-points") { // TODO POINT
@@ -464,7 +457,9 @@ integrity=
 
             // All others:
             } else {
-              console.log('Found any feature, no particular styling...');
+              console.log('TODO: Found feature that is not styled yet. You may want to check this.');
+              console.log('PAINTED IT PINK!')
+              layer.setStyle({fillColor: 'pink', color: 'pink', weight: 3});
             }
           });
 
@@ -485,19 +480,19 @@ integrity=
     }
 
     // Define button behaviour (function):
-    var buttonClickBehaviourOnePair = function(paramlon, paramlat){
-      console.log("Clicked button for one coordinate pair: "+paramlon+", "+lat1);
+    var buttonClickBehaviourOnePair = function(lon1, lat1){
+      console.log("Clicked button for one coordinate pair: "+lon1+", "+lat1+" (lon, lat, WGS84)");
 
       // Add icon and popup to click location:
-      clickMarker = putIconToClickLocation(paramlon, paramlat, map, "clicked on button", false);
+      clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button", false);
 
       // Construct and send HTTP request to OGC service:
-      ogcRequestOneCoordinatePair(dropdown, clickMarker, paramlon, paramlat);
+      ogcRequestOneCoordinatePair(dropdown, clickMarker, lon1, lat1);
     }
 
     // Define button behaviour (function):
     var buttonClickBehaviourTwoPairs = function(lon1, lat1, lon2, lat2){
-      console.log("Clicked button for two coordinate pairs: "+lon1+", "+lat1+" and "+lon2+", "+lat2);
+      console.log("Clicked button for two coordinate pairs: "+lon1+", "+lat1+" and "+lon2+", "+lat2+" (lon, lat, WGS84)");
 
       // Add icon and popup to click location:
       clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button (part 1)", false);
@@ -510,9 +505,9 @@ integrity=
     // Define behaviour for custom lonlat button (function):
     var customButtonClickBehaviour = function() {
       console.log("User requested to use their own values...")
-      var paramlon = document.getElementById("customLon").value;
-      var paramlat = document.getElementById("customLat").value;
-      buttonClickBehaviourOnePair(paramlon, paramlat);
+      var lon1 = document.getElementById("customLon").value;
+      var lat1 = document.getElementById("customLat").value;
+      buttonClickBehaviourOnePair(lon1, lat1);
       // TODO: Also, add functionality to allow users to input two custom points!
     }
 
@@ -548,7 +543,7 @@ integrity=
 
       // Is this a process that needs one or two coordinate pairs?
       let pairs = evt.target.options[evt.target.selectedIndex].dataset.pairs;
-      console.log("Process needs coordinate pairs: "+pairs);
+      console.log("Process needs "+pairs+" coordinate pairs.");
       if (pairs == 'two') {
         defineTwoClickExampleButtons();
       } else {
@@ -580,10 +575,10 @@ integrity=
       var caller = event.target;
       console.log("Caller: "+caller)
       console.log("Button who called this: "+caller.id)
-      var paramlon = caller.getAttribute("thislon");
-      var paramlat = caller.getAttribute("thislat");
-      console.log("paramlon: "+paramlon+", paramlat: "+paramlat)
-      buttonClickBehaviourOnePair(paramlon, paramlat);
+      var lon1 = caller.getAttribute("thislon");
+      var lat1 = caller.getAttribute("thislat");
+      console.log("Example coordinate pair: "+lon1+", "+lat1+" (lon, lat, WGS84)")
+      buttonClickBehaviourOnePair(lon1, lat1);
     }
 
     // Define behaviour for example button (function):
@@ -596,7 +591,7 @@ integrity=
       var lat1 = caller.getAttribute("thislat");
       var lon2 = caller.getAttribute("thislon2");
       var lat2 = caller.getAttribute("thislat2");
-      console.log("lon1: "+lon1+", lat1: "+lat1+", lon2: "+lon2+", lat2: "+lat2)
+      console.log("Example coordinate pairs: "+lon1+", "+lat1+" and "+lon2+", "+lat2+" (lon, lat, WGS84)")
       buttonClickBehaviourTwoPairs(lon1, lat1, lon2, lat2);
     }
 
@@ -615,13 +610,12 @@ integrity=
     // Define programatically content/text of buttons:
     var defineOneClickExampleButtons = function() {
       var examples = {
-        ex1: {lon: 9.17770385,        lat: 52.957628575,      text: "Weser bei Verden (Aller)", desc: "208433 subcatchments - only bbox works"},
+        ex1: {lon: 10.055837,         lat: 53.483139,         text: "Östlich von Hamburg", desc: "11 subcatchments)"},
         ex2: {lon: 9.109039306640627, lat: 52.7810591224723,  text: "Bei Hoya", desc: "403 subcatchments"},
-        ex3: {lon: 10.055837,         lat: 53.483139,         text: "Östlich von Hamburg", desc: "11 subcatchments)"},
-        ex4: {lon: 9.973955154418947, lat: 53.54193634826804, text: "Elbe in Hamburg", desc: "8071 subcatchments"},
+        ex3: {lon: 9.973955154418947, lat: 53.54193634826804, text: "Elbe in Hamburg", desc: "8071 subcatchments"},
+        ex4: {lon: 9.17770385,        lat: 52.957628575,      text: "Weser bei Verden (Aller)", desc: "208433 subcatchments - only bbox works"},
         ex5: {lon: 9.921666666666667, lat: 54.69166666666666, text: "Nördlich von Kappeln (Schlei)", desc: "exactly on boundary"},
       };
-
       _defineExampleButtons(examples, false)
     }
 
@@ -701,10 +695,10 @@ integrity=
     }
 
     // Function to add a grey marker, and a pop-up, to a location on the map
-    var putIconToClickLocation = function(paramlon, paramlat, map, actionDone, askToClickAgain) {
-      console.log("User "+actionDone+" (coordinates lon "+paramlon+", lat "+paramlat);
-      var lat = parseFloat(paramlat);
-      var lon = parseFloat(paramlon);
+    var putIconToClickLocation = function(lon1, lat1, map, actionDone, askToClickAgain) {
+      console.log("User "+actionDone+" (coordinates: "+lon1+", "+lat1+" (lon, lat, WGS84)");
+      var lon1 = parseFloat(lon1);
+      var lat1 = parseFloat(lat1);
 
       // Icon for user-clicks
       var iconheight = 30;
@@ -715,7 +709,7 @@ integrity=
         iconAnchor: [iconwidth*0.5, iconheight], // from top left corner: go half-width to right, full-height to bottom 
         popupAnchor: [0, -iconheight-5] // where iconAnchor is, go full-height to top plus 5 pixels
       });
-      let clickMarker = L.marker([lat, lon], {icon: clickIcon}).addTo(map);
+      let clickMarker = L.marker([lat1, lon1], {icon: clickIcon}).addTo(map);
       allMyIcons.push(clickMarker);
 
       // Add Popup to user-click
@@ -724,7 +718,7 @@ integrity=
       if (askToClickAgain) {
         clickMarker.bindPopup("You selected "+lookingfor+", so please click another time!").openPopup();
       } else {
-        clickMarker.bindPopup("Waiting for "+lookingfor+" for lat="+lat.toFixed(3)+", lon="+lon.toFixed(3)+"...").openPopup();
+        clickMarker.bindPopup("Waiting for "+lookingfor+" for "+lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat)...").openPopup();
       }
       console.log("When clicked, this process was selected: "+dropdown.value+"...");
       return (clickMarker);
@@ -739,15 +733,14 @@ integrity=
     var mapClickBehaviour = function(evt) {
 
       // Get coordinates from click location:
-      clicklat = evt.latlng.lat;
       clicklon = evt.latlng.lng;
-      console.log('There was a click: lat '+clicklat+', lon '+clicklon);
+      clicklat = evt.latlng.lat;
+      console.log('There was a click: '+clicklat+', '+clicklon+' (lon, lat, WGS84)');
 
       // Check if we need two points!
       var dropdown = document.getElementById("processes");
       let pairs = dropdown.options[dropdown.selectedIndex].dataset.pairs;
       if (pairs == "two") {
-        console.log('Shortest path between two points');
         console.log('Any function requiring two pairs of coordinates...');
 
         if (thisIsSecondClick) {
