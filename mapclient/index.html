@@ -490,12 +490,13 @@ integrity=
       console.log("Clicked button for "+paramlon+", "+paramlat);
 
       // Warn if this example does not apply:
+      // Deactivate warning, as we will soon have running examples for two coordinate pairs:
       var dropdown = document.getElementById("processes");
       var processId = dropdown.value;
       if (processId == "get-shortest-path-two-points") {
         var processDesc = dropdown.options[dropdown.selectedIndex].text;
         window.alert("This example does not work with "+processDesc+", as it needs two pairs of coordinates!");
-        return
+        //return
       }
 
       // Add icon and popup to click location:
