@@ -16,6 +16,9 @@ integrity=
 </head>
 
 <body>
+  <!--div><img href="logo_de.svg"></div-->
+  <!--div id="header"><img id="waterheader" src="footer-water.webp" /></div-->
+
   <h1>On the fly upstream catchments</h1>
   <!--h1>TEMPORARILY OFFLINE: On the fly upstream catchments</h1-->
 
@@ -219,7 +222,7 @@ integrity=
 
     // Lightness conversion function for strahler-colouring.
     // TODO: Move to separate javascript and import
-    // TODO: Would be good to precompute, as we have few strahler-orders, and many features...
+    // TODO: EFFICIENCY: Would be good to precompute, as we have few strahler-orders, and many features...
     var strahler_to_hsl_lightness = function(strahler, lowest_lightness, highest_lightness) {
       strahler = parseInt(strahler);
       let tmp = 11-strahler;
@@ -236,7 +239,7 @@ integrity=
 
     // Line weight conversion function for strahler-colouring.
     // TODO: Move to separate javascript and import
-    // TODO: Would be good to precompute, as we have few strahler-orders, and many features...
+    // TODO: EFFICIENCY: Would be good to precompute, as we have few strahler-orders, and many features...
     var strahler_to_line_weight = function(strahler, min_weight=2, max_weight=4) {
       let slope = (max_weight - min_weight)/10 // 10 is approximately strahler spread...
       let add = min_weight - slope * 1 // 1 is minimum strahler
@@ -249,7 +252,7 @@ integrity=
     var ogcRequestTwoCoordinatePairs = function(clickMarker, lon1, lat1, lon2, lat2) {
 
         // Reset result field:
-        document.getElementById("responseField").innerHTML = "Response returned by server for lon "+lon1+", lat = "+lat1+" to lon = "+lon2+", lat = "+lat2+"...";
+        document.getElementById("responseField").innerHTML = "Response returned by server for <span class=\"code\">"+lon1+", "+lat1+"</span> to <span class=\"code\">"+lon2+", "+lat2+"</span> (lon, lat, WGS84)...";
         document.getElementById("displayGeoJSON").innerHTML = "waiting..."
 
         // Parse coordinates to Float
@@ -273,7 +276,7 @@ integrity=
     var ogcRequestOneCoordinatePair = function(clickMarker, lon1, lat1) {
 
         // Reset result field:
-        document.getElementById("responseField").innerHTML = "Response returned by server for lon "+lon1+", lat = "+lat1+"...";
+        document.getElementById("responseField").innerHTML = "Response returned by server for lon <span class=\"code\">"+lon1+", "+lat1+"</span> (lon, lat, WGS84)...";
         document.getElementById("displayGeoJSON").innerHTML = "waiting..."
 
         // Parse coordinates to Float
@@ -330,7 +333,8 @@ integrity=
           // Stream segments CAN be shown if it is a headwater! Then they would be returned!
           if (xhrPygeo.response == null){
             clickMarker.bindPopup("No "+lookingfor+", is this a headwater?").openPopup();
-            // TODO Stop here?
+            // TODO Headwater, how to handle? Has not happened for a while, I think we now include the local
+            // one itself to the upstream, so the response will not be null anywhere. Except for ocean I guess.
           } else {
             console.log('DEBUG: SERVER RESPONSE: '+xhrPygeo.response.type);
             console.log('DEBUG: SERVER RESPONSE AS JSON: '+JSON.stringify(xhrPygeo.response));
@@ -348,8 +352,8 @@ integrity=
             // Local (segment, catchment) = Blue #3366cc
             // Downstream = Light blue
             // Connecting line = red dashed
-            // TODO: Style points!!
-            // TODO: In upstream catchment, distinguish local and upstream...
+            // TODO: In upstream catchment, distinguish local and upstream (in feature properties, then here style!)
+            // TODO: Display number of subcatchment? Does server return them?
 
             if (processId == "get-upstream-bbox") {
               layer.setStyle({fillColor: 'grey', color: 'grey'});
@@ -418,7 +422,7 @@ integrity=
               } else if (layer.feature.geometry.type == 'MultiPolygon') {
                 layer.setStyle({color: '#3366cc', fillColor: '#3366cc', weight: 0});
               } else {
-                console.log('TODO: Found feature that is neither LineString nor MultiPolygon... You may want to check this.');
+                console.log('TODO: Found feature that is neither LineString nor MultiPolygon. You may want to check this.');
                 console.log('PAINTED IT PINK!')
                 layer.setStyle({fillColor: 'pink', color: 'pink', weight: 3});
               };
@@ -457,14 +461,15 @@ integrity=
               } else if (layer.feature.geometry.type == 'MultiPolygon') {
                 layer.setStyle({fillColor: '#3366cc', color: '#3366cc', weight: 0});
               } else if (layer.feature.geometry.type == 'Point') {
-                // TODO POINT
+                // TODO How to style points?
               } else {
-                console.log('TODO: Found feature that is neither LineString nor MultiPolygon nor Point.You may want to check this.');
+                console.log('TODO: Found feature that is neither LineString nor MultiPolygon nor Point. You may want to check this.');
                 console.log('PAINTED IT PINK!')
                 layer.setStyle({fillColor: 'pink', color: 'pink', weight: 3});
               };
 
-            } else if (processId == "get-snapped-points") { // TODO POINT
+            } else if (processId == "get-snapped-points") {
+                // TODO How to style points?
                 //layer.setStyle({color: 'black', weight: 3});
                 //console.log('Found snapped point and painted them black...');
 
@@ -684,8 +689,8 @@ integrity=
     var _defineExampleButtons = function(examples, twopairs) {
 
       // Define example values for buttons:
-      // TODO: URGENT: Fill the button table and their attributes in a for loop...
-      // TODO: Have them all, just set display none if not needed!
+      // TODO: CODE STUPIDITY: Fill the button table and their attributes in a for loop...
+      // TODO: EFFICIENCY: Have them all, just set display none if not needed!
 
       var buttonEx = document.getElementById("example1");
       var textEx = document.getElementById("example1desc");
