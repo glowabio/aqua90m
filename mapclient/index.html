@@ -43,6 +43,7 @@ integrity=
       <option data-pairs="two" value="get-shortest-path-two-points">Shortest path from point to point</option>
     </optgroup>
   </select>
+  <label><input type="checkbox" id="stylingStrahlerToggle">Style depending on strahler order</label>
   <p>
   <span>(please choose!)...</span>
   <br />
@@ -248,7 +249,85 @@ integrity=
       return(weight)
     }
 
-    var styleLayer = function(layer) {
+    var styleLayerUni = function(layer) {
+      // Depending on process:
+      // Upstream bbox = Grey
+      // Upstream (segments, catchments) = Navy
+      // Local (segment, catchment) = Blue #3366cc
+      // Downstream = Light blue
+      // Connecting line = red dashed
+      // TODO: In upstream catchment, distinguish local and upstream (in feature properties, then here style!)
+      // TODO: Display number of subcatchment? Does server return them?
+
+      // Which process?
+      var dropdown = document.getElementById("processes");
+      var processId = dropdown.value;
+
+      if (processId == "get-upstream-bbox") {
+        layer.setStyle({fillColor: 'grey', color: 'grey'});
+
+      } else if (processId == "get-shortest-path-to-outlet") {
+        layer.setStyle({color: '#00b8e6', weight: 8});
+        // This layer can already be styled based on strahler!
+
+      } else if (processId == "get-upstream-dissolved-cont") {
+        layer.setStyle({color: 'navy', weight: 5});
+
+      } else if (processId == "get-upstream-subcatchments") {
+        layer.setStyle({color: 'navy', weight: 1});
+
+      } else if (processId == "get-upstream-streamsegments") {
+        layer.setStyle({color: 'navy', weight: 4});
+        // This layer can already be styled based on strahler!
+
+      } else if (processId == "get-local-streamsegments") {
+        layer.setStyle({color: '#3366cc', weight: 4});
+
+      } else if (processId == "get-local-streamsegments-subcatchments") {
+        if (layer.feature.geometry.type == 'LineString') {
+          layer.setStyle({fillColor: '#3366cc', color: '#3366cc', weight: 4});
+        } else if (layer.feature.geometry.type == 'MultiPolygon') {
+          layer.setStyle({color: '#3366cc', fillColor: '#3366cc', weight: 0});
+        } else {
+          console.log('TODO: Found feature that is neither LineString nor MultiPolygon. You may want to check this.');
+          console.log('PAINTED IT PINK!')
+          layer.setStyle({fillColor: 'pink', color: 'pink', weight: 3});
+        };
+
+      } else if (processId == "get-shortest-path-two-points") {
+        layer.setStyle({color: '#00b8e6', weight: 8});
+        // This layer can already be styled based on strahler!
+
+      } else if (processId == "get-snapped-point-plus") {
+        if (layer.feature.properties.description == 'connecting line') {
+          layer.setStyle({fillColor: 'red', color: 'red', weight: 1, dashArray: '8 4'});
+          console.log('Found a connecting line and painted it dashed red...');
+        } else if (layer.feature.geometry.type == 'LineString') {
+          layer.setStyle({fillColor: '#3366cc', color: '#3366cc', weight: 4});
+        } else if (layer.feature.geometry.type == 'MultiPolygon') {
+          layer.setStyle({fillColor: '#3366cc', color: '#3366cc', weight: 0});
+        } else if (layer.feature.geometry.type == 'Point') {
+          // TODO How to style points?
+        } else {
+          console.log('TODO: Found feature that is neither LineString nor MultiPolygon nor Point. You may want to check this.');
+          console.log('PAINTED IT PINK!')
+          layer.setStyle({fillColor: 'pink', color: 'pink', weight: 3});
+        };
+
+      } else if (processId == "get-snapped-points") {
+          // TODO How to style points?
+          //layer.setStyle({color: 'black', weight: 3});
+          //console.log('Found snapped point and painted them black...');
+
+      // All others:
+      } else {
+        console.log('TODO: Found feature that is not styled yet. You may want to check this.');
+        console.log('PAINTED IT PINK!')
+        layer.setStyle({fillColor: 'pink', color: 'pink', weight: 3});
+      }
+    };
+
+    var styleLayerStrahler = function(layer) {
       // Depending on process:
       // Upstream bbox = Grey
       // Upstream (segments, catchments) = Navy
@@ -267,8 +346,6 @@ integrity=
         // Cannot differentiate by strahler: Just a bbox!
 
       } else if (processId == "get-shortest-path-to-outlet") {
-        // this worked: layer.setStyle({color: '#00b8e6', weight: 8});
-
         // let's vary colour with strahler order, more precisely with
         // lightness in the HSL colour model:
         // Blue: hue=192, saturation=1
@@ -297,8 +374,6 @@ integrity=
         // TODO! Strahler-Style for upstream catchments
 
       } else if (processId == "get-upstream-streamsegments") {
-        // this worked: layer.setStyle({color: 'navy', weight: 4});
-
         // let's vary colour with strahler order, more precisely with
         // lightness in the HSL colour model:
         // Navy: hue=240, saturation=1
@@ -340,8 +415,6 @@ integrity=
         };
 
       } else if (processId == "get-shortest-path-two-points") {
-        // this worked: //layer.setStyle({color: '#00b8e6', weight: 8});
-
         // let's vary colour with strahler order, more precisely with
         // lightness in the HSL colour model:
         // Blue: hue=192, saturation=1
@@ -488,8 +561,12 @@ integrity=
           // Make layer(s) from GeoJSON that the server returned:
           var pygeoResponseGeoJSONLayer = L.geoJSON(xhrPygeo.response);
 
-          // Style features:
-          pygeoResponseGeoJSONLayer.eachLayer(styleLayer);
+          // Style features depending on their properties:
+          if (document.getElementById("stylingStrahlerToggle").checked){
+            pygeoResponseGeoJSONLayer.eachLayer(styleLayerStrahler);
+          } else {
+            pygeoResponseGeoJSONLayer.eachLayer(styleLayerUni);
+          }
 
           // Add styled layers to map:
           pygeoResponseGeoJSONLayer.addTo(map);
