@@ -44,6 +44,10 @@ h1,h2,h3 {
   margin-left: 20px;
 }
 
+.invisible {
+  display: none;
+}
+
 .codeblock {
     background: #f4f4f4;
     border: 1px solid #ddd;

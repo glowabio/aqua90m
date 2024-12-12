@@ -69,13 +69,13 @@ integrity=
           style="color:#BBB;" />
       </td>
       <td>e.g. <span class="code">9.17</span></td>
-      <td class="fortwo_invis fortwo invisible">
+      <td class="fortwo invisible">
         <input type="text" id="customLon2" value="8.99853"
           onblur="if(this.value==''){ this.value='8.99853'; this.style.color='#BBB';}"
           onfocus="if(this.value=='9.17'){ this.value='8.99853'; this.style.color='#000';}"
           style="color:#BBB;" />
       </td>
-      <td class="fortwo_invis fortwo invisible">e.g. <span class="code">9.17</span></td>
+      <td class="fortwo invisible">e.g. <span class="code">9.17</span></td>
     </tr>
     <tr>
       <td>Latitude:</td>
@@ -86,13 +86,13 @@ integrity=
           style="color:#BBB;" />
       </td>
       <td>e.g. <span class="code">52.95</span></td>
-      <td class="fortwo_invis fortwo invisible">
+      <td class="fortwo invisible">
         <input type="text" id="customLat2" value="52.799"
           onblur="if(this.value==''){ this.value='52.799'; this.style.color='#BBB';}"
           onfocus="if(this.value=='9.17'){ this.value='52.799'; this.style.color='#000';}"
           style="color:#BBB;" />
       </td>
-      <td class="fortwo_invis fortwo invisible">e.g. <span class="code">52.95</span></td>
+      <td class="fortwo invisible">e.g. <span class="code">52.95</span></td>
     </tr>
     <tr>
       <td>Lon lat:</td>
@@ -103,13 +103,13 @@ integrity=
           style="color:#BBB;" />
       </td>
       <td>e.g. <span class="code">8.99853, 52.799</span></td>
-      <td class="fortwo_invis fortwo invisible">
+      <td class="fortwo invisible">
         <input type="text" id="customLonLat2" value="8.99853, 52.799"
           onblur="if(this.value==''){ this.value='8.99853, 52.799'; this.style.color='#BBB';}"
           onfocus="if(this.value=='8.99853, 52.799'){ this.value='8.99853, 52.799'; this.style.color='#000';}"
           style="color:#BBB;" />
       </td>
-      <td class="fortwo_invis fortwo invisible">e.g. <span class="code">9.17, 52.95</span></td>
+      <td class="fortwo invisible">e.g. <span class="code">9.17, 52.95</span></td>
     </tr>
   </table>
   <!-- Behaviour is defined programmatically further below -->
@@ -566,8 +566,16 @@ integrity=
       console.log("Process needs "+pairs+" coordinate pairs.");
       if (pairs == 'two') {
         defineTwoClickExampleButtons();
+        var divsToHide = document.getElementsByClassName("fortwo");
+        for(var i = 0; i < divsToHide.length; i++){
+          divsToHide[i].classList.remove('invisible');
+        }
       } else {
         defineOneClickExampleButtons();
+        var divsToHide = document.getElementsByClassName("fortwo");
+        for(var i = 0; i < divsToHide.length; i++){
+          divsToHide[i].classList.add('invisible');
+        }
       }
 
       // Previously, we had to disable the example buttons once a two-pair process
@@ -644,6 +652,7 @@ integrity=
 
       // Define example values for buttons:
       // TODO: URGENT: Fill the button table and their attributes in a for loop...
+      // TODO: Have them all, just set display none if not needed!
 
       var buttonEx = document.getElementById("example1");
       var textEx = document.getElementById("example1desc");
