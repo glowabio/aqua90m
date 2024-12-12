@@ -626,73 +626,70 @@ integrity=
 
       var buttonEx = document.getElementById("example1");
       var textEx = document.getElementById("example1desc");
-      var exlon = examples.ex1.lon
-      var exlat = examples.ex1.lat
-      var text = examples.ex1.text
-      var descr = examples.ex1.desc
-      //buttonEx.innerHTML = "lon = "+exlon.toFixed(3)+", lat = "+exlat.toFixed(3);
-      //textEx.innerHTML   = "lon = "+exlon+", lat = "+exlat+descr;
-      buttonEx.innerHTML = descr
-      textEx.innerHTML   = text + " (lon = "+exlon+", lat = "+exlat+")";
-      buttonEx.setAttribute("thislon", exlon)
-      buttonEx.setAttribute("thislat", exlat)
+      var example = examples.ex1
+      buttonEx.innerHTML = example.text
+      textEx.innerHTML = example.desc + " <span class=\"lightsmall\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
+      buttonEx.setAttribute("thislon", example.lon)
+      buttonEx.setAttribute("thislat", example.lat)
+      if (twopairs) {
+        buttonEx.setAttribute("thislon2", example.lon2)
+        buttonEx.setAttribute("thislat2", example.lat2)
+      } else {
+        buttonEx.setAttribute("thislon2", null)
+        buttonEx.setAttribute("thislat2", null)
+      }
       buttonEx.onclick = exampleButtonClickBehaviour;
 
       var buttonEx = document.getElementById("example2");
       var textEx = document.getElementById("example2desc");
-      var exlon = examples.ex2.lon
-      var exlat = examples.ex2.lat
-      var text = examples.ex2.text
-      var descr = examples.ex2.desc
-      //buttonEx.innerHTML = "lon = "+exlon.toFixed(3)+", lat = "+exlat.toFixed(3);
-      //textEx.innerHTML   = "lon = "+exlon+", lat = "+exlat+descr;
-      buttonEx.innerHTML = descr
-      textEx.innerHTML   = text + " (lon = "+exlon+", lat = "+exlat+")";
-      buttonEx.setAttribute("thislon", exlon)
-      buttonEx.setAttribute("thislat", exlat)
+      var example = examples.ex2
+      buttonEx.innerHTML = example.text
+      textEx.innerHTML = example.desc + " <span class=\"lightsmall\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
+      buttonEx.setAttribute("thislon", example.lon)
+      buttonEx.setAttribute("thislat", example.lat)
+      if (twopairs) {
+        buttonEx.setAttribute("thislon2", example.lon2)
+        buttonEx.setAttribute("thislat2", example.lat2)
+      }
       buttonEx.onclick = exampleButtonClickBehaviour;
 
       var buttonEx = document.getElementById("example3");
       var textEx = document.getElementById("example3desc");
-      var exlon = examples.ex3.lon
-      var exlat = examples.ex3.lat
-      var text = examples.ex3.text
-      var descr = examples.ex3.desc
-      //buttonEx.innerHTML = "lon = "+exlon.toFixed(3)+", lat = "+exlat.toFixed(3);
-      //textEx.innerHTML   = "lon = "+exlon+", lat = "+exlat+descr;
-      buttonEx.innerHTML = descr
-      textEx.innerHTML   = text + " (lon = "+exlon+", lat = "+exlat+")";
-      buttonEx.setAttribute("thislon", exlon)
-      buttonEx.setAttribute("thislat", exlat)
+      var example = examples.ex3
+      buttonEx.innerHTML = example.text
+      textEx.innerHTML = example.desc + " <span class=\"lightsmall\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
+      buttonEx.setAttribute("thislon", example.lon)
+      buttonEx.setAttribute("thislat", example.lat)
+      if (twopairs) {
+        buttonEx.setAttribute("thislon2", example.lon2)
+        buttonEx.setAttribute("thislat2", example.lat2)
+      }
       buttonEx.onclick = exampleButtonClickBehaviour;
 
       var buttonEx = document.getElementById("example4");
       var textEx = document.getElementById("example4desc");
-      var exlon = examples.ex4.lon
-      var exlat = examples.ex4.lat
-      var text = examples.ex4.text
-      var descr = examples.ex4.desc
-      //buttonEx.innerHTML = "lon = "+exlon.toFixed(3)+", lat = "+exlat.toFixed(3);
-      //textEx.innerHTML   = "lon = "+exlon+", lat = "+exlat+descr;
-      buttonEx.innerHTML = descr
-      textEx.innerHTML   = text + " (lon = "+exlon+", lat = "+exlat+")";
-      buttonEx.setAttribute("thislon", exlon)
-      buttonEx.setAttribute("thislat", exlat)
+      var example = examples.ex4
+      buttonEx.innerHTML = example.text
+      textEx.innerHTML = example.desc + " <span class=\"lightsmall\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
+      buttonEx.setAttribute("thislon", example.lon)
+      buttonEx.setAttribute("thislat", example.lat)
+      if (twopairs) {
+        buttonEx.setAttribute("thislon2", example.lon2)
+        buttonEx.setAttribute("thislat2", example.lat2)
+      }
       buttonEx.onclick = exampleButtonClickBehaviour;
 
       var buttonEx = document.getElementById("example5");
-      var example = examples.ex5
       var textEx = document.getElementById("example5desc");
-      var exlon = examples.ex5.lon
-      var exlat = examples.ex5.lat
-      var text = examples.ex5.text
-      var descr = examples.ex5.desc
-      //buttonEx.innerHTML = "lon = "+exlon.toFixed(3)+", lat = "+exlat.toFixed(3);
-      //textEx.innerHTML   = "lon = "+exlon+", lat = "+exlat+descr;
-      buttonEx.innerHTML = descr
-      textEx.innerHTML   = text + " (lon = "+exlon+", lat = "+exlat+")";
-      buttonEx.setAttribute("thislon", exlon)
-      buttonEx.setAttribute("thislat", exlat)
+      var example = examples.ex5
+      buttonEx.innerHTML = example.text
+      textEx.innerHTML = example.desc + " <span class=\"lightsmall\">(lon = "+example.lon+", lat = "+example.lat+")</span>";
+      buttonEx.setAttribute("thislon", example.lon)
+      buttonEx.setAttribute("thislat", example.lat)
+      if (twopairs) {
+        buttonEx.setAttribute("thislon2", example.lon2)
+        buttonEx.setAttribute("thislat2", example.lat2)
+      }
       buttonEx.onclick = exampleButtonClickBehaviour;
     }
 
