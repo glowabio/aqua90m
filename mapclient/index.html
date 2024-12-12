@@ -486,25 +486,25 @@ integrity=
     }
 
     // Define button behaviour (function):
-    var buttonClickBehaviour = function(paramlon, paramlat){
-      console.log("Clicked button for "+paramlon+", "+paramlat);
-
-      // Warn if this example does not apply:
-      // Deactivate warning, as we will soon have running examples for two coordinate pairs:
-      var dropdown = document.getElementById("processes");
-      let pairs = dropdown.options[dropdown.selectedIndex].dataset.pairs;
-      if (pairs == "two") {
-        console.log('Any function requiring two pairs of coordinates...');
-        var processDesc = dropdown.options[dropdown.selectedIndex].text;
-        window.alert("This example does not work with "+processDesc+", as it needs two pairs of coordinates!");
-        //return
-      }
+    var buttonClickBehaviourOnePair = function(paramlon, paramlat){
+      console.log("Clicked button for one coordinate pair: "+paramlon+", "+lat1);
 
       // Add icon and popup to click location:
       clickMarker = putIconToClickLocation(paramlat, paramlon, map, "clicked on button", false);
 
       // Construct and send HTTP request to OGC service:
       ogcRequestOneCoordinatePair(dropdown, clickMarker, paramlon, paramlat);
+
+    // Define button behaviour (function):
+    var buttonClickBehaviourTwoPairs = function(lon1, lat1, lon2, lat2){
+      console.log("Clicked button for two coordinate pairs: "+lon1+", "+lat1+" and "+lon2+", "+lat2);
+
+      // Add icon and popup to click location:
+      clickMarker = putIconToClickLocation(lat1, lon1, map, "clicked on button (part 1)", false);
+      clickMarker = putIconToClickLocation(lat2, lon2, map, "clicked on button (part 2)", false);
+
+      // Construct and send HTTP request to OGC service:
+      ogcRequestTwoCoordinatePairs(dropdown, clickMarker, lon1, lat1, lon2, lat2)
     };
 
     // Define behaviour for custom lonlat button (function):
@@ -512,7 +512,8 @@ integrity=
       console.log("User requested to use their own values...")
       var paramlon = document.getElementById("custom_lon").value;
       var paramlat = document.getElementById("custom_lat").value;
-      buttonClickBehaviour(paramlon, paramlat);
+      buttonClickBehaviourOnePair(paramlon, paramlat);
+      // TODO: Also, add functionality to allow users to input two custom points!
     }
 
     // Define event listeners for custom lon and lat
@@ -570,7 +571,7 @@ integrity=
     }
 
     // Define behaviour for example button (function):
-    var exampleButtonClickBehaviour = function() {
+    var exampleButtonClickBehaviourOnePair = function() {
       console.log("User requested to use example values...")
       var caller = event.target;
       console.log("Event: "+event)
@@ -579,7 +580,21 @@ integrity=
       var paramlon = caller.getAttribute("thislon");
       var paramlat = caller.getAttribute("thislat");
       console.log("paramlon: "+paramlon+", paramlat: "+paramlat)
-      buttonClickBehaviour(paramlon, paramlat);
+      buttonClickBehaviourOnePair(paramlon, paramlat);
+    }
+
+    // Define behaviour for example button (function):
+    var exampleButtonClickBehaviourTwoPairs = function() {
+      console.log("User requested to use example values...")
+      var caller = event.target;
+      console.log("Caller: "+caller)
+      console.log("Button who called this: "+caller.id)
+      var lon1 = caller.getAttribute("thislon");
+      var lat1 = caller.getAttribute("thislat");
+      var lon2 = caller.getAttribute("thislon2");
+      var lat2 = caller.getAttribute("thislat2");
+      console.log("lon1: "+lon1+", lat1: "+lat1+", lon2: "+lon2+", lat2: "+lat2)
+      buttonClickBehaviourTwoPairs(lon1, lat1, lon2, lat2);
     }
 
     // Define programatically content/text of buttons:
