@@ -635,11 +635,12 @@ integrity=
       if (twopairs) {
         buttonEx.setAttribute("thislon2", example.lon2)
         buttonEx.setAttribute("thislat2", example.lat2)
+        buttonEx.onclick = exampleButtonClickBehaviourTwoPairs;
       } else {
         buttonEx.setAttribute("thislon2", null)
         buttonEx.setAttribute("thislat2", null)
+        buttonEx.onclick = exampleButtonClickBehaviourOnePair;
       }
-      buttonEx.onclick = exampleButtonClickBehaviour;
 
       var buttonEx = document.getElementById("example2");
       var textEx = document.getElementById("example2desc");
@@ -651,8 +652,12 @@ integrity=
       if (twopairs) {
         buttonEx.setAttribute("thislon2", example.lon2)
         buttonEx.setAttribute("thislat2", example.lat2)
+        buttonEx.onclick = exampleButtonClickBehaviourTwoPairs;
+      } else {
+        buttonEx.setAttribute("thislon2", null)
+        buttonEx.setAttribute("thislat2", null)
+        buttonEx.onclick = exampleButtonClickBehaviourOnePair;
       }
-      buttonEx.onclick = exampleButtonClickBehaviour;
 
       var buttonEx = document.getElementById("example3");
       var textEx = document.getElementById("example3desc");
@@ -664,8 +669,12 @@ integrity=
       if (twopairs) {
         buttonEx.setAttribute("thislon2", example.lon2)
         buttonEx.setAttribute("thislat2", example.lat2)
+        buttonEx.onclick = exampleButtonClickBehaviourTwoPairs;
+      } else {
+        buttonEx.setAttribute("thislon2", null)
+        buttonEx.setAttribute("thislat2", null)
+        buttonEx.onclick = exampleButtonClickBehaviourOnePair;
       }
-      buttonEx.onclick = exampleButtonClickBehaviour;
 
       var buttonEx = document.getElementById("example4");
       var textEx = document.getElementById("example4desc");
@@ -677,8 +686,12 @@ integrity=
       if (twopairs) {
         buttonEx.setAttribute("thislon2", example.lon2)
         buttonEx.setAttribute("thislat2", example.lat2)
+        buttonEx.onclick = exampleButtonClickBehaviourTwoPairs;
+      } else {
+        buttonEx.setAttribute("thislon2", null)
+        buttonEx.setAttribute("thislat2", null)
+        buttonEx.onclick = exampleButtonClickBehaviourOnePair;
       }
-      buttonEx.onclick = exampleButtonClickBehaviour;
 
       var buttonEx = document.getElementById("example5");
       var textEx = document.getElementById("example5desc");
@@ -690,8 +703,12 @@ integrity=
       if (twopairs) {
         buttonEx.setAttribute("thislon2", example.lon2)
         buttonEx.setAttribute("thislat2", example.lat2)
+        buttonEx.onclick = exampleButtonClickBehaviourTwoPairs;
+      } else {
+        buttonEx.setAttribute("thislon2", null)
+        buttonEx.setAttribute("thislat2", null)
+        buttonEx.onclick = exampleButtonClickBehaviourOnePair;
       }
-      buttonEx.onclick = exampleButtonClickBehaviour;
     }
 
     // Function to add a grey marker, and a pop-up, to a location on the map
