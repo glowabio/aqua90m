@@ -24,20 +24,20 @@ integrity=
   <p><span>Click on the map to display:</span></p>
   <select id="processes">
     <optgroup label="upstream">
-      <option value="get-upstream-bbox">Upstream bounding box</option>
-      <option value="get-upstream-dissolved-cont">Upstream catchment (one large polygon)</option>
-      <option value="get-upstream-subcatchments">Upstream catchment (individual polygons)</option>
-      <option value="get-upstream-streamsegments">Upstream stream segments</option>
+      <option data-pairs="one" value="get-upstream-bbox">Upstream bounding box</option>
+      <option data-pairs="one" value="get-upstream-dissolved-cont">Upstream catchment (one large polygon)</option>
+      <option data-pairs="one" value="get-upstream-subcatchments">Upstream catchment (individual polygons)</option>
+      <option data-pairs="one" value="get-upstream-streamsegments">Upstream stream segments</option>
     </optgroup>
     <optgroup label="local">
-      <option value="get-local-streamsegments">Local stream segment</option>
-      <option value="get-local-streamsegments-subcatchments">Local stream segment and local subcatchment</option>
-      <option value="get-snapped-points">Snapped point</option>
-      <option value="get-snapped-point-plus">Snapped point, local stream segment and local subcatchment</option>
+      <option data-pairs="one" value="get-local-streamsegments">Local stream segment</option>
+      <option data-pairs="one" value="get-local-streamsegments-subcatchments">Local stream segment and local subcatchment</option>
+      <option data-pairs="one" value="get-snapped-points">Snapped point</option>
+      <option data-pairs="one" value="get-snapped-point-plus">Snapped point, local stream segment and local subcatchment</option>
     </optgroup>
     <optgroup label="routing">
-      <option value="get-shortest-path-to-outlet">Shortest path from point to sea</option>
-      <option value="get-shortest-path-two-points">Shortest path from point to point</option>
+      <option data-pairs="one" value="get-shortest-path-to-outlet">Shortest path from point to sea</option>
+      <option data-pairs="two" value="get-shortest-path-two-points">Shortest path from point to point</option>
     </optgroup>
   </select>
   <p>
@@ -492,8 +492,9 @@ integrity=
       // Warn if this example does not apply:
       // Deactivate warning, as we will soon have running examples for two coordinate pairs:
       var dropdown = document.getElementById("processes");
-      var processId = dropdown.value;
-      if (processId == "get-shortest-path-two-points") {
+      let pairs = dropdown.options[dropdown.selectedIndex].dataset.pairs;
+      if (pairs == "two") {
+        console.log('Any function requiring two pairs of coordinates...');
         var processDesc = dropdown.options[dropdown.selectedIndex].text;
         window.alert("This example does not work with "+processDesc+", as it needs two pairs of coordinates!");
         //return
@@ -539,7 +540,14 @@ integrity=
     // the buttons for examples (which only work for one-click examples)!
     var eventProcessChanged = function(evt){
       console.log("Process changed to: "+this.value);
-      if (this.value == 'get-shortest-path-two-points') {
+
+      // Is this a process that needs one or two coordinate pairs?
+      let pairs = evt.target.options[evt.target.selectedIndex].dataset.pairs;
+      console.log("Process needs coordinate pairs: "+pairs);
+
+      // So far, we have to disable the example buttons once a two-pair process
+      // was selected, as we had no two-pair examples:
+      if (pairs == 'two') {
         // now, two clicks are needed and our examples don't work anymore:
         let exampleButtons = document.getElementsByClassName("oneclickexample");
         for (let i = 0; i < exampleButtons.length; i++) {
@@ -697,8 +705,10 @@ integrity=
 
       // Check if we need two points!
       var dropdown = document.getElementById("processes");
-      if (dropdown.value == "get-shortest-path-two-points") {
+      let pairs = dropdown.options[dropdown.selectedIndex].dataset.pairs;
+      if (pairs == "two") {
         console.log('Shortest path between two points');
+        console.log('Any function requiring two pairs of coordinates...');
 
         if (thisIsSecondClick) {
           // Second click of two!
@@ -726,6 +736,8 @@ integrity=
 
       // Normal process that works with one click!
       } else {
+        console.log('Any function requiring just one pair of coordinates...');
+
         // Add icon and popup to click location:
         clickMarker = putIconToClickLocation(clicklat, clicklon, map, "clicked on map", false);
 
