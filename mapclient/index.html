@@ -485,6 +485,8 @@ integrity=
           pygeoResponseGeoJSONLayer.addTo(map);
           allMyLayers.push(pygeoResponseGeoJSONLayer);
           console.log('Added layer to map...');
+          map.fitBounds(pygeoResponseGeoJSONLayer.getBounds());
+          console.log('Zoomed to layer...');
           clickMarker.closePopup();
 
           // Write GeoJSON into field so that user can copy-paste it:
