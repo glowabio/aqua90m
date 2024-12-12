@@ -531,8 +531,12 @@ integrity=
       }
     }
 
+    /////////////////////////////////////////////////////////////////
+    //// Event Listeners for connecting the lon, lat input boxes ////
+    /////////////////////////////////////////////////////////////////
+
     // Define event listeners for custom lon and lat
-    var eventLonLatChanged = function(evt) { // TODO add one for second pair
+    var eventLonLatChanged = function(evt) {
       var temp = this.value.split(",");
       var newlon = parseFloat(temp[0]);
       var newlat = parseFloat(temp[1]);
@@ -541,7 +545,7 @@ integrity=
     };
 
     // Define event listeners for custom lon and lat
-    var eventLonChanged = function(evt) { // TODO add one for second pair
+    var eventLonChanged = function(evt) {
       var newlon = parseFloat(this.value);
       var oldlonlat = document.getElementById("customLonLat1").value;
       var newlonlat = newlon+', '+oldlonlat.split(",")[1];
@@ -549,12 +553,41 @@ integrity=
     };
 
     // Define event listeners for custom lon and lat
-    var eventLatChanged = function(evt) { // TODO add one for second pair
+    var eventLatChanged = function(evt) {
       var newlat = parseFloat(this.value);
       var oldlonlat = document.getElementById("customLonLat1").value;
       var newlonlat = oldlonlat.split(",")[0]+', '+newlat;
       document.getElementById("customLonLat1").value = newlonlat;
     };
+
+    // Define event listeners for custom lon and lat
+    var eventLonLat2Changed = function(evt) {
+      var temp = this.value.split(",");
+      var newlon = parseFloat(temp[0]);
+      var newlat = parseFloat(temp[1]);
+      document.getElementById("customLon2").value = newlon;
+      document.getElementById("customLat2").value = newlat;
+    };
+
+    // Define event listeners for custom lon and lat
+    var eventLon2Changed = function(evt) {
+      var newlon = parseFloat(this.value);
+      var oldlonlat = document.getElementById("customLonLat2").value;
+      var newlonlat = newlon+', '+oldlonlat.split(",")[1];
+      document.getElementById("customLonLat2").value = newlonlat;
+    };
+
+    // Define event listeners for custom lon and lat
+    var eventLat2Changed = function(evt) {
+      var newlat = parseFloat(this.value);
+      var oldlonlat = document.getElementById("customLonLat2").value;
+      var newlonlat = oldlonlat.split(",")[0]+', '+newlat;
+      document.getElementById("customLonLat2").value = newlonlat;
+    };
+
+    ///////////////////////////////
+    //// Other Event Listeners ////
+    ///////////////////////////////
 
     // Define event listener for change of process id, so I can switch off/ switch on
     // the buttons for examples (which only work for one-click examples)!
@@ -857,6 +890,9 @@ integrity=
     document.getElementById("customLonLat1").addEventListener('input', eventLonLatChanged);
     document.getElementById("customLon1").addEventListener('input', eventLonChanged);
     document.getElementById("customLat1").addEventListener('input', eventLatChanged);
+    document.getElementById("customLonLat2").addEventListener('input', eventLonLat2Changed);
+    document.getElementById("customLon2").addEventListener('input', eventLon2Changed);
+    document.getElementById("customLat2").addEventListener('input', eventLat2Changed);
 
     // Bind map click behaviour to the map click event:
     console.log('Waiting for user to click to get a coordinate...');
