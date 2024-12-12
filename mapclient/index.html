@@ -223,7 +223,7 @@ integrity=
     }
 
     // Define making request to OGC service (function):
-    var ogcRequestTwoCoordinatePairs = function(dropdown, clickMarker, lon1, lat1, lon2, lat2) {
+    var ogcRequestTwoCoordinatePairs = function(clickMarker, lon1, lat1, lon2, lat2) {
 
         // Reset result field:
         document.getElementById("responseField").innerHTML = "Response returned by server for lon "+lon1+", lat = "+lat1+" to lon = "+lon2+", lat = "+lat2+"...";
@@ -243,11 +243,11 @@ integrity=
           "lon_start":lon1, "lat_start":lat1,
           "lon_end": lon2, "lat_end": lat2
         }})
-        _ogcRequest(dropdown, clickMarker, payload_inputs_json, paramstring) ;
+        _ogcRequest(clickMarker, payload_inputs_json, paramstring) ;
     }
 
     // Define making request to OGC service (function):
-    var ogcRequestOneCoordinatePair = function(dropdown, clickMarker, lon1, lat1) {
+    var ogcRequestOneCoordinatePair = function(clickMarker, lon1, lat1) {
 
         // Reset result field:
         document.getElementById("responseField").innerHTML = "Response returned by server for lon "+lon1+", lat = "+lat1+"...";
@@ -262,11 +262,11 @@ integrity=
 
         // Define JSON payload and send:
         var payload_inputs_json = JSON.stringify({"inputs":{"lon":lon1, "lat":lat1}})
-        _ogcRequest(dropdown, clickMarker, payload_inputs_json, paramstring) ;
+        _ogcRequest(clickMarker, payload_inputs_json, paramstring) ;
     }
 
     // Define making request to OGC service (function):
-    var _ogcRequest = function(dropdown, clickMarker, payload_inputs_json, paramstring)  {
+    var _ogcRequest = function(clickMarker, payload_inputs_json, paramstring)  {
         console.log('Preparing to make HTTP POST request...')
         //document.getElementById("responseField").innerHTML = "Response returned by server for lon "+paramlon+", lat = "+paramlat+"...";
         document.getElementById("displayGeoJSON").innerHTML = "waiting..."
@@ -276,6 +276,7 @@ integrity=
         //var lon = parseFloat(paramlon);
 
         // Which process?
+        var dropdown = document.getElementById("processes");
         var processId = dropdown.value;
         var processDesc = dropdown.options[dropdown.selectedIndex].text;
 
@@ -487,7 +488,7 @@ integrity=
       clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button", false);
 
       // Construct and send HTTP request to OGC service:
-      ogcRequestOneCoordinatePair(dropdown, clickMarker, lon1, lat1);
+      ogcRequestOneCoordinatePair(clickMarker, lon1, lat1);
     }
 
     // Define button behaviour (function):
@@ -499,7 +500,7 @@ integrity=
       clickMarker = putIconToClickLocation(lon2, lat2, map, "clicked on button (part 2)", false);
 
       // Construct and send HTTP request to OGC service:
-      ogcRequestTwoCoordinatePairs(dropdown, clickMarker, lon1, lat1, lon2, lat2)
+      ogcRequestTwoCoordinatePairs(clickMarker, lon1, lat1, lon2, lat2)
     };
 
     // Define behaviour for custom lonlat button (function):
@@ -769,7 +770,7 @@ integrity=
           clickMarker = putIconToClickLocation(clicklon, clicklat, map, "clicked on map", false);
 
           // Construct and send HTTP request to OGC service:
-          ogcRequestTwoCoordinatePairs(dropdown, clickMarker, firstClickLon, firstClickLat, clicklon, clicklat);
+          ogcRequestTwoCoordinatePairs(clickMarker, firstClickLon, firstClickLat, clicklon, clicklat);
 
         } else {
           // First click of two!
@@ -792,7 +793,7 @@ integrity=
         clickMarker = putIconToClickLocation(clicklon, clicklat, map, "clicked on map", false);
 
         // Construct and send HTTP request to OGC service:
-        ogcRequestOneCoordinatePair(dropdown, clickMarker, clicklon, clicklat);
+        ogcRequestOneCoordinatePair(clickMarker, clicklon, clicklat);
       }
     };
 
