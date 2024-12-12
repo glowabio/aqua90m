@@ -544,24 +544,29 @@ integrity=
       // Is this a process that needs one or two coordinate pairs?
       let pairs = evt.target.options[evt.target.selectedIndex].dataset.pairs;
       console.log("Process needs coordinate pairs: "+pairs);
-
-      // So far, we have to disable the example buttons once a two-pair process
-      // was selected, as we had no two-pair examples:
       if (pairs == 'two') {
-        // now, two clicks are needed and our examples don't work anymore:
-        let exampleButtons = document.getElementsByClassName("oneclickexample");
-        for (let i = 0; i < exampleButtons.length; i++) {
-          //exampleButtons[i].style.backgroundColor = "red";
-          exampleButtons[i].disabled = true;
-        }
+        defineTwoClickExampleButtons();
       } else {
-        // now, one click is needed and our examples will work:
-        let exampleButtons = document.getElementsByClassName("oneclickexample");
-        for (let i = 0; i < exampleButtons.length; i++) {
-          //exampleButtons[i].style.backgroundColor = "red";
-          exampleButtons[i].disabled = false;
-        }
+        defineOneClickExampleButtons();
       }
+
+      // Previously, we had to disable the example buttons once a two-pair process
+      // was selected, as we had no two-pair examples - now we do.
+      //
+      // But in case we include processes where we need to disable again:
+      //if (pairs == 'n') {
+      //  // now, n clicks are needed and our examples don't work anymore:
+      //  let exampleButtons = document.getElementsByClassName("oneclickexample");
+      //  for (let i = 0; i < exampleButtons.length; i++) {
+      //    exampleButtons[i].disabled = true;
+      //  }
+      //} else {
+      // now, 1-2 clicks are needed and our examples will work:
+      //  let exampleButtons = document.getElementsByClassName("oneclickexample");
+      //  for (let i = 0; i < exampleButtons.length; i++) {
+      //    exampleButtons[i].disabled = false;
+      //  }
+      //}
     }
 
     // Define behaviour for example button (function):
@@ -578,10 +583,17 @@ integrity=
     }
 
     // Define programatically content/text of buttons:
-    var defineExampleButtons = function() {
-
-      // Define example values for buttons:
-      // TODO: URGENT: Fill the button table and their attributes in a for loop...
+    var defineTwoClickExampleButtons = function() {
+      var examples = {
+        ex1: {lon: 9.001922607421877,  lat: 52.91177308077004, lon2: 9.055137634277346,  lat2: 52.90224825087554,  text: "Near Schwarme", desc: "few segments"},
+        ex2: {lon: 12.577028274536135, lat: 51.38613070285945, lon2: 12.564454078674318, lat2: 51.36524123530659,  text: "Wachtelteich", desc: "few segments"},
+        ex3: {lon: 13.542366027832033, lat: 52.44028788912483, lon2: 13.283157348632814, lat2: 52.454516998017894, text: "Adlershof to Dahlem", desc: "...via Krumme Lanke, Wannsee, Havel, Spree, Teltowkanal - not many segments"},
+        ex4: {lon: 12.115173339843752, lat: 53.44051847367499, lon2: 12.113800048828127, lat2: 53.149131411867074, text: "Pritzwalk to Plau via Elbe", desc: "many segments"},
+        ex5: {lon: 13.051757812500002, lat: 50.85959488957681, lon2: 14.414062500000002, lat2: 51.08098143406474,  text: "Chemnitz to Wilthen via Mulde, Elbe, Havel, Spree", desc: "very many segments"},
+      };
+      _defineExampleButtons(examples, true)
+    }
+    var defineOneClickExampleButtons = function() {
       var examples = {
         ex1: {lon: 9.17770385, lat: 52.957628575, text: "Weser bei Verden (Aller)", desc: "208433 subcatchments - only bbox works"},
         ex2: {lon: 9.109039306640627, lat: 52.7810591224723, text: "Bei Hoya", desc: "403 subcatchments"},
@@ -589,6 +601,14 @@ integrity=
         ex4: {lon: 9.973955154418947, lat: 53.54193634826804, text: "Elbe in Hamburg", desc: "8071 subcatchments"},
         ex5: {lon: 9.921666666666667, lat: 54.69166666666666, text: "Nördlich von Kappeln (Schlei)", desc: "exactly on boundary"},
       };
+
+      _defineExampleButtons(examples, false)
+    }
+    var _defineExampleButtons = function(examples, twopairs) {
+
+      // Define example values for buttons:
+      // TODO: URGENT: Fill the button table and their attributes in a for loop...
+
       var buttonEx = document.getElementById("example1");
       var textEx = document.getElementById("example1desc");
       var exlon = examples.ex1.lon
@@ -758,7 +778,7 @@ integrity=
     }
 
     // Run the button content/text definition:
-    defineExampleButtons();
+    defineOneClickExampleButtons();
 
     // Bind custom-button behaviour to the custom-button click event:
     document.getElementById("clearMapButton").onclick = clearMap;
