@@ -62,7 +62,7 @@ integrity=
     <!-- If you want the grey examples to disappear on focus, set onfocus to this:   onfocus="if(this.value=='9.17'){ this.value='NIX'; this.style.color='#000';}"   -->
       <td>Longitude:</td>
       <td>
-        <input type="text" id="custom_lon" value="9.17"
+        <input type="text" id="customLon" value="9.17"
           onblur="if(this.value==''){ this.value='9.17'; this.style.color='#BBB';}"
           onfocus="if(this.value=='9.17'){ this.value='9.17'; this.style.color='#000';}"
           style="color:#BBB;" />
@@ -72,7 +72,7 @@ integrity=
     <tr>
       <td>Latitude:</td>
       <td>
-        <input type="text" id="custom_lat" value="52.95"
+        <input type="text" id="customLat" value="52.95"
           onblur="if(this.value==''){ this.value='52.95'; this.style.color='#BBB';}"
           onfocus="if(this.value=='9.17'){ this.value='52.95'; this.style.color='#000';}"
           style="color:#BBB;" />
@@ -334,7 +334,6 @@ integrity=
             // Downstream = Light blue
             // Connecting line = red dashed
             // TODO: Style points!!
-            // TODO: Style based on strahler?
             // TODO: In upstream catchment, distinguish local and upstream...
 
             if (processId == "get-upstream-bbox") {
@@ -510,8 +509,8 @@ integrity=
     // Define behaviour for custom lonlat button (function):
     var customButtonClickBehaviour = function() {
       console.log("User requested to use their own values...")
-      var paramlon = document.getElementById("custom_lon").value;
-      var paramlat = document.getElementById("custom_lat").value;
+      var paramlon = document.getElementById("customLon").value;
+      var paramlat = document.getElementById("customLat").value;
       buttonClickBehaviourOnePair(paramlon, paramlat);
       // TODO: Also, add functionality to allow users to input two custom points!
     }
@@ -521,15 +520,19 @@ integrity=
       var temp = this.value.split(",");
       var newlon = parseFloat(temp[0]);
       var newlat = parseFloat(temp[1]);
-      document.getElementById("custom_lon").value = newlon;
-      document.getElementById("custom_lat").value = newlat;
+      document.getElementById("customLon").value = newlon;
+      document.getElementById("customLat").value = newlat;
     };
+
+    // Define event listeners for custom lon and lat
     var eventLonChanged = function(evt) {
       var newlon = parseFloat(this.value);
       var oldlonlat = document.getElementById("customLonLat").value;
       var newlonlat = newlon+', '+oldlonlat.split(",")[1];
       document.getElementById("customLonLat").value = newlonlat;
     };
+
+    // Define event listeners for custom lon and lat
     var eventLatChanged = function(evt) {
       var newlat = parseFloat(this.value);
       var oldlonlat = document.getElementById("customLonLat").value;
@@ -574,7 +577,6 @@ integrity=
     var exampleButtonClickBehaviourOnePair = function() {
       console.log("User requested to use example values...")
       var caller = event.target;
-      console.log("Event: "+event)
       console.log("Caller: "+caller)
       console.log("Button who called this: "+caller.id)
       var paramlon = caller.getAttribute("thislon");
@@ -608,17 +610,21 @@ integrity=
       };
       _defineExampleButtons(examples, true)
     }
+
+    // Define programatically content/text of buttons:
     var defineOneClickExampleButtons = function() {
       var examples = {
-        ex1: {lon: 9.17770385, lat: 52.957628575, text: "Weser bei Verden (Aller)", desc: "208433 subcatchments - only bbox works"},
-        ex2: {lon: 9.109039306640627, lat: 52.7810591224723, text: "Bei Hoya", desc: "403 subcatchments"},
-        ex3: {lon: 10.055837, lat: 53.483139, text: "Östlich von Hamburg", desc: "11 subcatchments)"},
+        ex1: {lon: 9.17770385,        lat: 52.957628575,      text: "Weser bei Verden (Aller)", desc: "208433 subcatchments - only bbox works"},
+        ex2: {lon: 9.109039306640627, lat: 52.7810591224723,  text: "Bei Hoya", desc: "403 subcatchments"},
+        ex3: {lon: 10.055837,         lat: 53.483139,         text: "Östlich von Hamburg", desc: "11 subcatchments)"},
         ex4: {lon: 9.973955154418947, lat: 53.54193634826804, text: "Elbe in Hamburg", desc: "8071 subcatchments"},
         ex5: {lon: 9.921666666666667, lat: 54.69166666666666, text: "Nördlich von Kappeln (Schlei)", desc: "exactly on boundary"},
       };
 
       _defineExampleButtons(examples, false)
     }
+
+    // Define programatically content/text of buttons:
     var _defineExampleButtons = function(examples, twopairs) {
 
       // Define example values for buttons:
@@ -723,16 +729,17 @@ integrity=
       return (clickMarker);
     }
 
-    // Define behaviour on map click (function)
+    // Global variables needed for behaviour on map click:
     var thisIsSecondClick = false;
     var firstClickLon = null;
     var firstClickLat = null;
 
-    var mapClickBehaviour = function(e) {
+    // Define behaviour on map click (function)
+    var mapClickBehaviour = function(evt) {
 
       // Get coordinates from click location:
-      clicklat = e.latlng.lat;
-      clicklon = e.latlng.lng;
+      clicklat = evt.latlng.lat;
+      clicklon = evt.latlng.lng;
       console.log('There was a click: lat '+clicklat+', lon '+clicklon);
 
       // Check if we need two points!
@@ -803,8 +810,8 @@ integrity=
 
     // When a user modifies text fields "lon", "lat" or "lon,lat", modify the others accordinly:
     document.getElementById("customLonLat").addEventListener('input', eventLonLatChanged);
-    document.getElementById("custom_lon").addEventListener('input', eventLonChanged);
-    document.getElementById("custom_lat").addEventListener('input', eventLatChanged);
+    document.getElementById("customLon").addEventListener('input', eventLonChanged);
+    document.getElementById("customLat").addEventListener('input', eventLatChanged);
 
     // Bind map click behaviour to the map click event:
     console.log('Waiting for user to click to get a coordinate...');
