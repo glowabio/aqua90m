@@ -489,7 +489,7 @@ integrity=
       console.log("Clicked button for one coordinate pair: "+paramlon+", "+lat1);
 
       // Add icon and popup to click location:
-      clickMarker = putIconToClickLocation(paramlat, paramlon, map, "clicked on button", false);
+      clickMarker = putIconToClickLocation(paramlon, paramlat, map, "clicked on button", false);
 
       // Construct and send HTTP request to OGC service:
       ogcRequestOneCoordinatePair(dropdown, clickMarker, paramlon, paramlat);
@@ -499,8 +499,8 @@ integrity=
       console.log("Clicked button for two coordinate pairs: "+lon1+", "+lat1+" and "+lon2+", "+lat2);
 
       // Add icon and popup to click location:
-      clickMarker = putIconToClickLocation(lat1, lon1, map, "clicked on button (part 1)", false);
-      clickMarker = putIconToClickLocation(lat2, lon2, map, "clicked on button (part 2)", false);
+      clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button (part 1)", false);
+      clickMarker = putIconToClickLocation(lon2, lat2, map, "clicked on button (part 2)", false);
 
       // Construct and send HTTP request to OGC service:
       ogcRequestTwoCoordinatePairs(dropdown, clickMarker, lon1, lat1, lon2, lat2)
@@ -700,7 +700,7 @@ integrity=
     }
 
     // Function to add a grey marker, and a pop-up, to a location on the map
-    var putIconToClickLocation = function(paramlat, paramlon, map, actionDone, askToClickAgain) {
+    var putIconToClickLocation = function(paramlon, paramlat, map, actionDone, askToClickAgain) {
       console.log("User "+actionDone+" (coordinates lon "+paramlon+", lat "+paramlat);
       var lat = parseFloat(paramlat);
       var lon = parseFloat(paramlon);
@@ -755,7 +755,7 @@ integrity=
           thisIsSecondClick = false;
 
           // Add icon and popup to click location:
-          clickMarker = putIconToClickLocation(clicklat, clicklon, map, "clicked on map", false);
+          clickMarker = putIconToClickLocation(clicklon, clicklat, map, "clicked on map", false);
 
           // Construct and send HTTP request to OGC service:
           ogcRequestTwoCoordinatePairs(dropdown, clickMarker, firstClickLon, firstClickLat, clicklon, clicklat);
@@ -766,7 +766,7 @@ integrity=
           thisIsSecondClick = true;
 
           // Add icon and popup to click location, telling user to click again
-          clickMarker = putIconToClickLocation(clicklat, clicklon, map, "clicked on map", true);
+          clickMarker = putIconToClickLocation(clicklon, clicklat, map, "clicked on map", true);
 
           // Remember the coordinates of this first click, for the second:
           firstClickLat = clicklat;
@@ -778,7 +778,7 @@ integrity=
         console.log('Any function requiring just one pair of coordinates...');
 
         // Add icon and popup to click location:
-        clickMarker = putIconToClickLocation(clicklat, clicklon, map, "clicked on map", false);
+        clickMarker = putIconToClickLocation(clicklon, clicklat, map, "clicked on map", false);
 
         // Construct and send HTTP request to OGC service:
         ogcRequestOneCoordinatePair(dropdown, clickMarker, clicklon, clicklat);
