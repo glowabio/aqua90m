@@ -23,16 +23,22 @@ integrity=
   <!-- Selection -->
   <p><span>Click on the map to display:</span></p>
   <select id="processes">
-    <option value="get-upstream-bbox">Upstream bounding box</option>
-    <option value="get-upstream-dissolved-cont">Upstream catchment (one large polygon)</option>
-    <option value="get-upstream-subcatchments">Upstream catchment (individual polygons)</option>
-    <option value="get-upstream-streamsegments">Upstream stream segments</option>
-    <option value="get-local-streamsegments">Local stream segment</option>
-    <option value="get-local-streamsegments-subcatchments">Local stream segment and local subcatchment</option>
-    <option value="get-snapped-points">Snapped point</option>
-    <option value="get-snapped-point-plus">Snapped point, local stream segment and local subcatchment</option>
-    <option value="get-shortest-path-to-outlet">Shortest path from point to sea</option>
-    <option value="get-shortest-path-two-points">Shortest path from point to point</option>
+    <optgroup label="upstream">
+      <option value="get-upstream-bbox">Upstream bounding box</option>
+      <option value="get-upstream-dissolved-cont">Upstream catchment (one large polygon)</option>
+      <option value="get-upstream-subcatchments">Upstream catchment (individual polygons)</option>
+      <option value="get-upstream-streamsegments">Upstream stream segments</option>
+    </optgroup>
+    <optgroup label="local">
+      <option value="get-local-streamsegments">Local stream segment</option>
+      <option value="get-local-streamsegments-subcatchments">Local stream segment and local subcatchment</option>
+      <option value="get-snapped-points">Snapped point</option>
+      <option value="get-snapped-point-plus">Snapped point, local stream segment and local subcatchment</option>
+    </optgroup>
+    <optgroup label="routing">
+      <option value="get-shortest-path-to-outlet">Shortest path from point to sea</option>
+      <option value="get-shortest-path-two-points">Shortest path from point to point</option>
+    </optgroup>
   </select>
   <p>
   <span>(please choose!)...</span>
