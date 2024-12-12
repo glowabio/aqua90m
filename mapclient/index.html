@@ -60,34 +60,56 @@ integrity=
   <table>
     <tr>
     <!-- If you want the grey examples to disappear on focus, set onfocus to this:   onfocus="if(this.value=='9.17'){ this.value='NIX'; this.style.color='#000';}"   -->
+ 8.998532295227053, 52.79904767235847
       <td>Longitude:</td>
       <td>
-        <input type="text" id="customLon" value="9.17"
-          onblur="if(this.value==''){ this.value='9.17'; this.style.color='#BBB';}"
-          onfocus="if(this.value=='9.17'){ this.value='9.17'; this.style.color='#000';}"
+        <input type="text" id="customLon1" value="9.0409"
+          onblur="if(this.value==''){ this.value='9.0409'; this.style.color='#BBB';}"
+          onfocus="if(this.value=='9.17'){ this.value='9.0409'; this.style.color='#000';}"
           style="color:#BBB;" />
       </td>
       <td>e.g. <span class="code">9.17</span></td>
+      <td class="fortwo_invis fortwo invisible">
+        <input type="text" id="customLon2" value="8.99853"
+          onblur="if(this.value==''){ this.value='8.99853'; this.style.color='#BBB';}"
+          onfocus="if(this.value=='9.17'){ this.value='8.99853'; this.style.color='#000';}"
+          style="color:#BBB;" />
+      </td>
+      <td class="fortwo_invis fortwo invisible">e.g. <span class="code">9.17</span></td>
     </tr>
     <tr>
       <td>Latitude:</td>
       <td>
-        <input type="text" id="customLat" value="52.95"
-          onblur="if(this.value==''){ this.value='52.95'; this.style.color='#BBB';}"
-          onfocus="if(this.value=='9.17'){ this.value='52.95'; this.style.color='#000';}"
+        <input type="text" id="customLat1" value="52.7769"
+          onblur="if(this.value==''){ this.value='52.7769'; this.style.color='#BBB';}"
+          onfocus="if(this.value=='9.17'){ this.value='52.7769'; this.style.color='#000';}"
           style="color:#BBB;" />
       </td>
       <td>e.g. <span class="code">52.95</span></td>
+      <td class="fortwo_invis fortwo invisible">
+        <input type="text" id="customLat2" value="52.799"
+          onblur="if(this.value==''){ this.value='52.799'; this.style.color='#BBB';}"
+          onfocus="if(this.value=='9.17'){ this.value='52.799'; this.style.color='#000';}"
+          style="color:#BBB;" />
+      </td>
+      <td class="fortwo_invis fortwo invisible">e.g. <span class="code">52.95</span></td>
     </tr>
     <tr>
       <td>Lon lat:</td>
       <td>
-        <input type="text" id="customLonLat" value="9.17, 52.95"
-          onblur="if(this.value==''){ this.value='9.17, 52.95'; this.style.color='#BBB';}"
-          onfocus="if(this.value=='9.17, 52.95'){ this.value='9.17, 52.95'; this.style.color='#000';}"
+        <input type="text" id="customLonLat1" value="9.0409, 52.7769"
+          onblur="if(this.value==''){ this.value='9.0409, 52.7769'; this.style.color='#BBB';}"
+          onfocus="if(this.value=='9.0409, 52.7769'){ this.value='9.0409, 52.7769'; this.style.color='#000';}"
           style="color:#BBB;" />
       </td>
-      <td>e.g. <span class="code">9.17, 52.95</span></td>
+      <td>e.g. <span class="code">8.99853, 52.799</span></td>
+      <td class="fortwo_invis fortwo invisible">
+        <input type="text" id="customLonLat2" value="8.99853, 52.799"
+          onblur="if(this.value==''){ this.value='8.99853, 52.799'; this.style.color='#BBB';}"
+          onfocus="if(this.value=='8.99853, 52.799'){ this.value='8.99853, 52.799'; this.style.color='#000';}"
+          style="color:#BBB;" />
+      </td>
+      <td class="fortwo_invis fortwo invisible">e.g. <span class="code">9.17, 52.95</span></td>
     </tr>
   </table>
   <!-- Behaviour is defined programmatically further below -->
@@ -496,35 +518,42 @@ integrity=
     // Define behaviour for custom lonlat button (function):
     var customButtonClickBehaviour = function() {
       console.log("User requested to use their own values...")
-      var lon1 = document.getElementById("customLon").value;
-      var lat1 = document.getElementById("customLat").value;
-      buttonClickBehaviourOnePair(lon1, lat1);
-      // TODO: Also, add functionality to allow users to input two custom points!
+      var lon1 = document.getElementById("customLon1").value;
+      var lat1 = document.getElementById("customLat1").value;
+      var dropdown = document.getElementById("processes");
+      let pairs = dropdown.options[dropdown.selectedIndex].dataset.pairs;
+      if (pairs == "one") {
+        buttonClickBehaviourOnePair(lon1, lat1);
+      } else if (pairs == "two") {
+        var lon2 = document.getElementById("customLon2").value;
+        var lat2 = document.getElementById("customLat2").value;
+        buttonClickBehaviourTwoPairs(lon1, lat1, lon2, lat2);
+      }
     }
 
     // Define event listeners for custom lon and lat
-    var eventLonLatChanged = function(evt) {
+    var eventLonLatChanged = function(evt) { // TODO add one for second pair
       var temp = this.value.split(",");
       var newlon = parseFloat(temp[0]);
       var newlat = parseFloat(temp[1]);
-      document.getElementById("customLon").value = newlon;
-      document.getElementById("customLat").value = newlat;
+      document.getElementById("customLon1").value = newlon;
+      document.getElementById("customLat1").value = newlat;
     };
 
     // Define event listeners for custom lon and lat
-    var eventLonChanged = function(evt) {
+    var eventLonChanged = function(evt) { // TODO add one for second pair
       var newlon = parseFloat(this.value);
-      var oldlonlat = document.getElementById("customLonLat").value;
+      var oldlonlat = document.getElementById("customLonLat1").value;
       var newlonlat = newlon+', '+oldlonlat.split(",")[1];
-      document.getElementById("customLonLat").value = newlonlat;
+      document.getElementById("customLonLat1").value = newlonlat;
     };
 
     // Define event listeners for custom lon and lat
-    var eventLatChanged = function(evt) {
+    var eventLatChanged = function(evt) { // TODO add one for second pair
       var newlat = parseFloat(this.value);
-      var oldlonlat = document.getElementById("customLonLat").value;
+      var oldlonlat = document.getElementById("customLonLat1").value;
       var newlonlat = oldlonlat.split(",")[0]+', '+newlat;
-      document.getElementById("customLonLat").value = newlonlat;
+      document.getElementById("customLonLat1").value = newlonlat;
     };
 
     // Define event listener for change of process id, so I can switch off/ switch on
@@ -816,9 +845,9 @@ integrity=
     document.getElementById("processes").addEventListener('input', eventProcessChanged);
 
     // When a user modifies text fields "lon", "lat" or "lon,lat", modify the others accordinly:
-    document.getElementById("customLonLat").addEventListener('input', eventLonLatChanged);
-    document.getElementById("customLon").addEventListener('input', eventLonChanged);
-    document.getElementById("customLat").addEventListener('input', eventLatChanged);
+    document.getElementById("customLonLat1").addEventListener('input', eventLonLatChanged);
+    document.getElementById("customLon1").addEventListener('input', eventLonChanged);
+    document.getElementById("customLat1").addEventListener('input', eventLatChanged);
 
     // Bind map click behaviour to the map click event:
     console.log('Waiting for user to click to get a coordinate...');
