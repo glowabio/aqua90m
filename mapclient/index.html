@@ -16,9 +16,12 @@ integrity=
 </head>
 
 <body>
-  <!--div><img href="logo_de.svg"></div-->
-  <!--div id="header"><img id="waterheader" src="footer-water.webp" /></div-->
+<div id="container">
+  <div id="header">
+    <a href="https://aquainfra.eu"><img src="logo_aquainfra.svg" height="35px" /></a>
+  </div>
 
+  <div id="body">
   <h1>On the fly upstream catchments</h1>
   <!--h1>TEMPORARILY OFFLINE: On the fly upstream catchments</h1-->
 
@@ -43,28 +46,25 @@ integrity=
       <option data-pairs="two" value="get-shortest-path-two-points">Shortest path from point to point</option>
     </optgroup>
   </select>
-  <label><input type="checkbox" id="stylingStrahlerToggle">Style depending on strahler order</label>
+  <label><input type="checkbox" id="stylingStrahlerToggle">Style depending on <strong>strahler</strong> order</label>
+  <div>(please choose!)...</div>
   <p>
-  <span>(please choose!)...</span>
-  <br />
-  <br />
-  <span class="greynote">Note: Computing may take some time, depending on catchment size!</span>
-  <br />
-  <span class="greynote">Note: In case you click to a headwater, no upstream catchment is provided, as no upstream exists...</span>
+    <span class="greynote">Note: Computing may take some time, depending on catchment size!</span>
+    <br />
+    <span class="greynote">Note: In case you click to a headwater, no upstream catchment is provided, as no upstream exists...</span>
   </p>
 
 
   <!-- Map -->
-  <div id="map" style="width: 960px; height: 500px"></div>
+  <div id="map"></div>
   <!-- Behaviour is defined programmatically further below -->
-  <button id="clearMapButton">Clear the map!</button>
+  <p><button id="clearMapButton">Clear the map!</button></p>
 
   <!-- Custom lonlat button -->
   <h3>Input your own coordinates...</h3>
   <table>
     <tr>
     <!-- If you want the grey examples to disappear on focus, set onfocus to this:   onfocus="if(this.value=='9.17'){ this.value='NIX'; this.style.color='#000';}"   -->
- 8.998532295227053, 52.79904767235847
       <td>Longitude:</td>
       <td>
         <input type="text" id="customLon1" value="9.0409"
@@ -117,7 +117,7 @@ integrity=
     </tr>
   </table>
   <!-- Behaviour is defined programmatically further below -->
-  <button id="customLonlatButton">Use these values!</button>
+  <p><button id="customLonlatButton">Use these values!</button></p>
 
 
   <!-- Example buttons -->
@@ -149,7 +149,26 @@ integrity=
   <!-- Text field -->
   <h3>Response returned by server:</h3>
   <p id="responseField">Response returned by server:</p>
-  <textarea id="displayGeoJSON" class="codeblock" rows="20", cols="120">(Result GeoJSON will be displayed here)</textarea>
+  <p><textarea id="displayGeoJSON" class="codeblock" rows="20", cols="120">(Result GeoJSON will be displayed here)</textarea></p>
+
+  <h3>Data sources</h3>
+  <p>The data based on which the above functionalities are computed is the <strong>Hydrography90m dataset</strong> (see <a href="https://hydrography.org">hydrography.org</a>), especially the vector layers contained in the <strong>GeoFRESH database</strong> (see <a href="https://geofresh.org">geofresh.org</a>):
+  </p>
+  <p class="cite">
+    Amatulli, G., Garcia Marquez, J.R., Sethi, T., Kiesel, J., Grigoropoulou, A., Üblacker, M., Shen, L., Domisch, S. (2022). Hydrography90m: A new high-resolution global hydrographic dataset. Earth System Science Data, 14, 4525–4550.<br/><a href="https://doi.org/10.5194/essd-14-4525-2022">doi:10.5194/essd-14-4525-2022</a>.
+  </p>
+  <p class="cite">
+    Domisch, S., Bremerich, V., Buurman, M., Kaminke, B., Tomiczek, T., Torres-Cambas, Y., Grigoropoulou, A., Garcia Marquez, J. R., Amatulli, G., Grossart, H. P., Gessner, M. O., Mehner, T., Adrian, R. & De Meester, L. (2024). GeoFRESH – an online platform for freshwater geospatial data processing. International Journal of Digital Earth, 17(1).<br/><a href="https://doi.org/10.1080/17538947.2024.2391033">doi:10.1080/17538947.2024.2391033</a>.
+  </p>
+
+  </div> <!-- end of body -->
+  <div id="footer">
+    <a href="https://www.igb-berlin.de/"><img src="logo_igb.svg" height="35px" /></a>
+    <span id="contact"><a id="contact" href="https://glowabio.org/about/">Contact (GLOWABIO working group)</a></span>
+  </div>
+</div> <!-- end of container -->
+
+
 
 
   <!-- Get the leaflet JavaScript file -->

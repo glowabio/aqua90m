@@ -1,33 +1,115 @@
+
+
+
+/* Positioning... */
+html,
 body {
-  #background-color: #bfecfd; /* footer color */
-  #background-color: #aad3df; /* osm blue */
-  #background-color: #e3f4f9; /* osm blue off */
-  background-color: #f4fafc; /* osm blue off */
-  font-family: var(--monaBold-font);
+   margin:0;
+   padding:0;
+   height:100%;
 }
 
-#id {
-  color: red;
+/* For the layout of header-body-footer: */
+/* https://stackoverflow.com/questions/643879/css-to-make-html-page-footer-stay-at-bottom-of-the-page-with-a-minimum-height-b#20352949 */
+#container {
+   min-height:100%;
+   position:relative;
 }
-
 #header {
   width: 100%;
-  max-height: 170px;
-  min-height: 40px;
-  #margin-left: 0px;
+  position: fixed;
+  height: 40px;
+  padding:10px;
+  z-index: 1000;
+  background: #aad3df; /* same as ocean in OSM map */
+  #background: #c2e3f0;
+  #background: #d6edf5;
+  #background: #ebf6fa; 
+  #background: #f4fafc;
+
+}
+#body {
+  padding-top: 60px;    /* space for the header + padding */
+  padding-bottom: 65px; /* space for the footer + padding */
+  margin-left: 15px;
+  margin-right: 15px;
+}
+#footer {
+  width:100%;
+  position:fixed;
+  bottom:0;
+  height:35px;
+  padding: 10px;
+  background: #aad3df; /* same as ocean in OSM map */
+  #background: #c2e3f0;
+  #background: #d6edf5;
+  #background: #ebf6fa; 
+  #background: #f4fafc;
 }
 
-img#waterheader {
-  width: 100%;
+span#contact {
+  /* Included in the #footer, so positioned relative to it... */
+  position: absolute;
+  right: 30px;
 }
-p, select, button, table {
-  margin-left: 20px;
+a#contact {
+  color: #f4fafc; /* osm blue off */
+  text-decoration: none;
+}
+
+
+/* Trying to get the OSM attribution behind the header... */
+.leaflet-control-attribution a {
+  z-index: 100;
+}
+
+/* Hide and unhide: */
+.invisible {
+  display: none;
+}
+
+/* Colours and fonts */
+
+body {
+  #background: #bfecfd; /* footer color */
+  #background: #aad3df; /* osm blue */
+  #background: #e3f4f9; /* osm blue off */
+  background: #f4fafc; /* osm blue off */
+  #font-family: Arial, Helvetica, sans-serif;
+  font-family: "Roboto Slab",sans serif; /* from IGB website */
+}
+
+h1,h2,h3 {
+  color: navy;
 }
 
 #map {
-  margin-left: 20px;
+  height: 500px;
+  width: 960px;
+  /* width: 100%; */
+  /* width 100% is nice, but makes scrolling more difficult. */
 }
 
+p {
+  width: 960px;  /* like map */
+  line-height: 1.4;
+}
+
+p.cite {
+  padding-left: 10px;
+  border-left: 3px solid #70bfdb;
+  font-style: italic;
+  max-width: 65%;
+  line-height: 1.2;
+}
+
+strong {
+  color: navy;
+}
+
+select#processes {
+  font-size: 18pt;
+}
 
 .greynote {
   color: grey;
@@ -37,39 +119,35 @@ p, select, button, table {
   color: lightgrey;
 }
 
-
-h1,h2,h3 {
-  color: navy;
-  font-family: "Roboto Slab",serif; /* from IGB website */
-  margin-left: 20px;
-}
-
-.invisible {
-  display: none;
+.code {
+  background: #f4f4f4;
+  border: 1px solid #ddd;
+  color: #666;
+  font-family: monospace;
+  line-height: 1.6;
 }
 
 .codeblock {
-    background: #f4f4f4;
-    border: 1px solid #ddd;
-    /* border-left: 3px solid navy; */
-    border-left: 3px solid #819f00;
-    color: #666;
-    page-break-inside: avoid;
-    font-family: monospace;
-    font-size: 15px;
-    line-height: 1.6;
-    margin-bottom: 1.6em;
-    max-width: 100%;
-    overflow: auto;
-    padding: 1em 1.5em;
-    display: block;
-    word-wrap: break-word;
+  background: #f4f4f4;
+  color: #666;
+  border: 1px solid #ddd;
+  border-left: 3px solid #70bfdb;
+  page-break-inside: avoid;
+  font-family: monospace;
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 1.6em;
+  width: 935px;  /* like map, minus border and padding */
+  height: 500px; /* like map */
+  max-width: 100%;
+  overflow: auto;
+  #padding: 1em 1.5em;
+  padding-left: 10px;
+  padding-top: 10px;
+  padding-right: 10px;
+  display: block;
+  word-wrap: break-word;
 }
 
-.code {
-    background: #f4f4f4;
-    border: 1px solid #ddd;
-    color: #666;
-    font-family: monospace;
-    line-height: 1.6;
-}
+
+
