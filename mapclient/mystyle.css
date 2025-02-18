@@ -77,10 +77,16 @@ body {
   background: #f4fafc; /* osm blue off */
   #font-family: Arial, Helvetica, sans-serif;
   font-family: "Roboto Slab",sans serif; /* from IGB website */
+  color: #152f37;
 }
 
 h1,h2,h3 {
-  color: navy;
+  color: #234f5c;
+}
+
+.button {
+  color: #234f5c;
+  background-color:#0a0a23;
 }
 
 #map {
@@ -104,7 +110,7 @@ p.cite {
 }
 
 strong {
-  color: navy;
+  color: #234f5c;
 }
 
 select#processes {
