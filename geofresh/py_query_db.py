@@ -475,7 +475,13 @@ def get_polygon_for_subcid_simple(conn, subc_id, basin_id, reg_id):
     LOGGER.debug('ENTERING: %s for subc_id %s' % (name, subc_id))
     
     # Get info from database:
-    query = _get_query_upstream_polygons([subc_id], basin_id, reg_id)
+    query = '''
+    SELECT subc_id, ST_AsText(geom)
+    FROM sub_catchments
+    WHERE subc_id = {subc_id}
+    AND basin_id = {basin_id}
+    AND reg_id = {reg_id}
+    '''.format(subc_id = subc_id, basin_id = basin_id, reg_id = reg_id)
     result_row = get_only_row(execute_query(conn, query), name)
     
     if result_row is None:
