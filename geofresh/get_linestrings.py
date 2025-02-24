@@ -62,7 +62,12 @@ def get_simple_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id):
 
         linestrings_geojson.append(geometry)
 
-    return linestrings_geojson
+    geometry_coll = {
+        "type": "GeometryCollection",
+        "geometries": linestrings_geojson
+    }
+
+    return geometry_coll
 
 
 def get_feature_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id):
@@ -132,7 +137,14 @@ def get_feature_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id):
         }
         features_geojson.append(feature)
 
-    return features_geojson
+    feature_coll = {
+        "type": "FeatureCollection",
+        "features": features_geojson,
+        "basin_id": basin_id,
+        "region_id": reg_id
+    }
+
+    return feature_coll
 
 
 if __name__ == "__main__":

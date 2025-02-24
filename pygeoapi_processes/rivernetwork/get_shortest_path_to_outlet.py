@@ -126,13 +126,8 @@ class ShortestPathToOutletGetter(BaseProcessor):
 
         # Get geometry only:
         if geometry_only:
-            dijkstra_path_list = get_linestrings.get_simple_linestrings_for_subc_ids(
+            geometry_coll = get_linestrings.get_simple_linestrings_for_subc_ids(
                 conn, segment_ids, basin_id1, reg_id1)
-
-            geometry_coll = {
-                "type": "GeometryCollection",
-                "geometries": dijkstra_path_list
-            }
 
             if comment is not None:
                 geometry_coll['comment'] = comment
@@ -145,19 +140,14 @@ class ShortestPathToOutletGetter(BaseProcessor):
         # Get FeatureCollection
         if not geometry_only:
 
-            dijkstra_path_list = get_linestrings.get_feature_linestrings_for_subc_ids(
+            feature_coll = get_linestrings.get_feature_linestrings_for_subc_ids(
                 conn, segment_ids, basin_id1, reg_id1)
         
+            # Add some info to the FeatureCollection:
+            feature_coll["description"] = "Downstream path from subcatchment %s to the outlet of its basin." % subc_id1
+            feature_coll["subc_id"] = subc_id1 # TODO how to name the point from where we route to outlet?
+            feature_coll["outlet_id"] = subc_id2
             # TODO: Should we include the requested lon and lat? Maybe as a point?
-            feature_coll = {
-                "type": "FeatureCollection",
-                "features": dijkstra_path_list,
-                "description": "Downstream path from subcatchment %s to the outlet of its basin." % subc_id1,
-                "start_subc_id": subc_id1, # TODO how to name it?
-                "basin_id": basin_id1,
-                "region_id": reg_id1,
-                "outlet_id": subc_id2
-            }
 
             if add_downstream_ids:
                 feature_coll['downstream_ids'] = segment_ids

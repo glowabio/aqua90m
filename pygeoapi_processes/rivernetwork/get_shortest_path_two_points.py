@@ -147,13 +147,8 @@ class ShortestPathTwoPointsGetter(BaseProcessor):
 
         # Get geometry only:
         if geometry_only:
-            dijkstra_path_list = get_linestrings.get_simple_linestrings_for_subc_ids(
+            geometry_coll = get_linestrings.get_simple_linestrings_for_subc_ids(
                 conn, segment_ids, basin_id1, reg_id1)
-
-            geometry_coll = {
-                "type": "GeometryCollection",
-                "geometries": dijkstra_path_list
-            }
 
             if comment is not None:
                 geometry_coll['comment'] = comment
@@ -167,19 +162,14 @@ class ShortestPathTwoPointsGetter(BaseProcessor):
         # Get FeatureCollection
         if not geometry_only:
 
-            dijkstra_path_list = get_linestrings.get_feature_linestrings_for_subc_ids(
+            feature_coll = get_linestrings.get_feature_linestrings_for_subc_ids(
                 conn, segment_ids, basin_id1, reg_id1)
 
+            # Add some info to the FeatureCollection:
+            feature_coll["description"] = "Connecting path between %s and %s" % (subc_id1, subc_id2)
+            feature_coll["start_subc_id"] = subc_id1 # TODO how to name the start point of routing?
+            feature_coll["target_subc_id"] = subc_id2 # TODO how to name the end point of routing?
             # TODO: Should we include the requested lon and lat? Maybe as a point?
-            feature_coll = {
-                "type": "FeatureCollection",
-                "features": dijkstra_path_list,
-                "description": "Connecting path between %s and %s" % (subc_id1, subc_id2),
-                "start_subc_id": subc_id1, # TODO how to name it?
-                "target_subc_id": subc_id2, # TODO how to name it?
-                "basin_id": basin_id1,
-                "region_id": reg_id1
-            }
 
             if add_segment_ids:
                 feature_coll['segment_ids'] = segment_ids
