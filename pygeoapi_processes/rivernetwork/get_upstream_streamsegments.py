@@ -12,17 +12,24 @@ import psycopg2
 from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_subc_id_basin_id_reg_id
 from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_upstream_catchment_ids
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_feature_linestrings_for_subc_ids
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_simple_linestrings_for_subc_ids
-
+import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
 
 
 '''
+
 # Small:
-curl -X POST "https:/aqua.igb-berlin.de/pygeoapi/processes/get-upstream-streamsegments/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lon\": 9.931555, \"lat\": 54.695070, \"comment\":\"Nordoestliche Schlei bei Rabenholz\", \"add_upstream_ids\": \"true\"}}"
+curl -X POST "http://localhost:5000/processes/get-upstream-streamsegments/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "comment": "schlei-bei-rabenholz",
+    "add_upstream_ids": "true"
+    }
+}'
 
 # Large: Mitten in der Elbe: 53.537158298376575, 9.99475350366553
-curl -X POST "https:/aqua.igb-berlin.de/pygeoapi/processes/get-upstream-streamsegments/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lon\": 9.994753, \"lat\": 53.537158, \"comment\": \"Mitten inner Elbe bei Hamburg\", \"geometry_only\": \"true\"}}"
 
 '''
 
@@ -119,7 +126,7 @@ class UpstreamStreamSegmentsGetter(BaseProcessor):
                 geometries = []
             else:
                 LOGGER.debug('... Getting upstream catchment line segments for subc_id: %s' % subc_id)
-                geometries = get_simple_linestrings_for_subc_ids(conn, upstream_ids, basin_id, reg_id)
+                geometries = get_linestrings.get_simple_linestrings_for_subc_ids(conn, upstream_ids, basin_id, reg_id)
 
             geometry_coll = {
                 "type": "GeometryCollection",
@@ -147,7 +154,7 @@ class UpstreamStreamSegmentsGetter(BaseProcessor):
             else:
                 # Note: The feature collection contains the strahler order for each feature (each stream segment)
                 LOGGER.debug('... Getting upstream catchment line segments for subc_id: %s' % subc_id)
-                features = get_feature_linestrings_for_subc_ids(conn, upstream_ids, basin_id, reg_id)
+                features = get_linestrings.get_feature_linestrings_for_subc_ids(conn, upstream_ids, basin_id, reg_id)
 
             feature_coll = {
                 "type": "FeatureCollection",

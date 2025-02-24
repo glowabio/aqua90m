@@ -12,18 +12,36 @@ import psycopg2
 import pygeoapi.process.aqua90m.geofresh.upstream_helpers as helpers
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_dijkstra_ids
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_simple_linestrings_for_subc_ids
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_feature_linestrings_for_subc_ids
-
+import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
 
 
 
 '''
+curl -X POST "http://localhost:5000/processes/get-shortest-path-two-points/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon_start": 9.937520027160646,
+    "lat_start": 54.69422745526058,
+    "lon_end": 9.9217,
+    "lat_end": 54.6917,
+    "geometry_only": "true"
+    }
+}'
 
-curl -X POST "https://aqua.igb-berlin.de/pygeoapi/processes/get-shortest-path-two-points/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lon_start\": 9.937520027160646, \"lat_start\": 54.69422745526058, \"lon_end\": 9.9217, \"lat_end\": 54.6917, \"geometry_only\": \"true\"}}"
-
-curl -X POST "https://aqua.igb-berlin.de/pygeoapi/processes/get-shortest-path-two-points/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lon_start\": 9.937520027160646, \"lat_start\": 54.69422745526058, \"lon_end\": 9.9217, \"lat_end\": 54.6917, \"comment\":\"Test\", \"add_segment_ids\": \"true\", \"geometry_only\": \"false\"}}"
-
+curl -X POST "http://localhost:5000/processes/get-shortest-path-two-points/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon_start": 9.937520027160646,
+    "lat_start": 54.69422745526058,
+    "lon_end": 9.9217,
+    "lat_end": 54.6917,
+    "geometry_only": "false",
+    "comment": "test",
+    "add_segment_ids": "true"
+    }
+}'
 '''
 
 # Process metadata and description
@@ -129,7 +147,7 @@ class ShortestPathTwoPointsGetter(BaseProcessor):
 
         # Get geometry only:
         if geometry_only:
-            dijkstra_path_list = get_simple_linestrings_for_subc_ids(
+            dijkstra_path_list = get_linestrings.get_simple_linestrings_for_subc_ids(
                 conn, segment_ids, basin_id1, reg_id1)
 
             geometry_coll = {
@@ -149,7 +167,7 @@ class ShortestPathTwoPointsGetter(BaseProcessor):
         # Get FeatureCollection
         if not geometry_only:
 
-            dijkstra_path_list = get_feature_linestrings_for_subc_ids(
+            dijkstra_path_list = get_linestrings.get_feature_linestrings_for_subc_ids(
                 conn, segment_ids, basin_id1, reg_id1)
 
             # TODO: Should we include the requested lon and lat? Maybe as a point?

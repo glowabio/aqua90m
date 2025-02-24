@@ -12,15 +12,32 @@ import psycopg2
 import pygeoapi.process.aqua90m.geofresh.upstream_helpers as helpers
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_dijkstra_ids
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_simple_linestrings_for_subc_ids
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_feature_linestrings_for_subc_ids
+import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
 
 
 
 '''
-curl -X POST "https://aqua.igb-berlin.de/pygeoapi/processes/get-shortest-path-to-outlet/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lon\": 9.937520027160646, \"lat\": 54.69422745526058, \"geometry_only\": \"true\"}}"
+curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.937520027160646,
+    "lat": 54.69422745526058,
+    "geometry_only": "true"
+    }
+}'
 
-curl -X POST "https://aqua.igb-berlin.de/pygeoapi/processes/get-shortest-path-to-outlet/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lon\": 9.937520027160646, \"lat\": 54.69422745526058, \"comment\":\"Test\", \"add_downstream_ids\": \"true\", \"geometry_only\": \"false\"}}"
+curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.937520027160646,
+    "lat": 54.69422745526058,
+    "geometry_only": "false",
+    "comment": "test",
+    "add_downstream_ids": "true"
+    }
+}'
 '''
 
 # Process metadata and description
@@ -109,7 +126,7 @@ class ShortestPathToOutletGetter(BaseProcessor):
 
         # Get geometry only:
         if geometry_only:
-            dijkstra_path_list = get_simple_linestrings_for_subc_ids(
+            dijkstra_path_list = get_linestrings.get_simple_linestrings_for_subc_ids(
                 conn, segment_ids, basin_id1, reg_id1)
 
             geometry_coll = {
@@ -128,7 +145,7 @@ class ShortestPathToOutletGetter(BaseProcessor):
         # Get FeatureCollection
         if not geometry_only:
 
-            dijkstra_path_list = get_feature_linestrings_for_subc_ids(
+            dijkstra_path_list = get_linestrings.get_feature_linestrings_for_subc_ids(
                 conn, segment_ids, basin_id1, reg_id1)
         
             # TODO: Should we include the requested lon and lat? Maybe as a point?
