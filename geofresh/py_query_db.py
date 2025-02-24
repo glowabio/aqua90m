@@ -405,47 +405,6 @@ def get_upstream_catchment_polygons_geometry_coll(conn, subc_id, upstream_ids, b
     return geometry_coll
 
 
-def get_dijkstra_ids(conn, subc_id_start, subc_id_end, reg_id, basin_id):
-    '''
-    INPUT: subc_ids (start and end)
-    OUTPUT: subc_ids (the entire path, incl. start and end)
-    '''
-    name = "get_dijkstra_ids"
-    LOGGER.info("ENTERING: %s for subc_ids: %s and %s" % (name, subc_id_start, subc_id_end))
-    query = '''
-    SELECT edge
-    FROM pgr_dijkstra('
-        SELECT
-        subc_id AS id,
-        subc_id AS source,
-        target,
-        length AS cost
-        FROM hydro.stream_segments
-        WHERE reg_id = {reg_id}
-        AND basin_id = {basin_id}',
-        {subc_id_start}, {subc_id_end},
-        directed := false);
-    '''.format(reg_id = reg_id, basin_id = basin_id, subc_id_start = subc_id_start, subc_id_end = subc_id_end)
-    query = query.replace("\n", " ")
-    query = query.replace("    ", "")
-    query = query.strip()
-
-    num_rows = 10000 # TODO WIP we don't know how many!
-    result_rows = get_rows(execute_query(conn, query), num_rows, name)
-
-    all_ids = [subc_id_start] # Adding start segment, as it is not included in database return!
-    i = 0
-    for row in result_rows:
-        i += 1
-        if row[0] == -1: # pgr_dijkstra returns -1 as the last row...
-            pass
-        else:
-            all_ids.append(row[0]) # these are already integer!
-
-    LOGGER.debug('LEAVING: %s: Returning %s subc_ids...' % (name, len(all_ids)))
-    return all_ids
-
-
 def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id):
     name = "get_upstream_catchment_ids_incl_itself"
     LOGGER.info("ENTERING: %s for subc_id: %s" % (name, subc_id))
@@ -891,7 +850,7 @@ if __name__ == "__main__":
     ### dijkstra between two points ###
     ###################################
 
-    print("\n(9) DIJKSTRA ")
+    #print("\n(9) DIJKSTRA ")
     # Falls into: 506 519 922, basin 1285755
     #lat2 = 53.695070
     #lon2 = 9.751555
@@ -899,35 +858,35 @@ if __name__ == "__main__":
     #lon2 = 9.921666666666667 # falls on boundary!
     #lat2 = 54.69166666666666 # falls on boundary!
     # Falls into 506 251 713
-    lon1 = 9.937520027160646
-    lat1 = 54.69422745526058
+    ##lon1 = 9.937520027160646
+    ##lat1 = 54.69422745526058
     # Falls into: 506 251 712, basin 1292547
-    lon2 = 9.9217
-    lat2 = 54.6917
-    subc_id_start, basin_id_dijkstra = get_subc_id_basin_id(conn, lon1, lat1, reg_id)
-    subc_id_end, basin_id_end = get_subc_id_basin_id(conn, lon2, lat2, reg_id)
-    print('Using start  subc_id: %s (%s)' % (subc_id_start, basin_id_dijkstra))
-    print('Using target subc_id: %s (%s)' % (subc_id_end, basin_id_end))
+    ##lon2 = 9.9217
+    ##lat2 = 54.6917
+    ##subc_id_start, basin_id_dijkstra = get_subc_id_basin_id(conn, lon1, lat1, reg_id)
+    ##subc_id_end, basin_id_end = get_subc_id_basin_id(conn, lon2, lat2, reg_id)
+    ##print('Using start  subc_id: %s (%s)' % (subc_id_start, basin_id_dijkstra))
+    ##print('Using target subc_id: %s (%s)' % (subc_id_end, basin_id_end))
 
     # Just the Ids:
-    segment_ids = get_dijkstra_ids(conn, subc_id_start, subc_id_end, reg_id, basin_id_dijkstra)
-    print('\nRESULT DIJKSTRA PATH segment_ids: %s\n' % segment_ids)
+    #segment_ids = get_dijkstra_ids(conn, subc_id_start, subc_id_end, reg_id, basin_id_dijkstra)
+    #print('\nRESULT DIJKSTRA PATH segment_ids: %s\n' % segment_ids)
     
     # Feature Coll
-    feature_list = get_feature_linestrings_for_subc_ids(conn, segment_ids, basin_id_dijkstra, reg_id1)
-    feature_coll = {"type": "FeatureCollection", "features": feature_list}
-    print('\nRESULT DIJKSTRA PATH TO SEA (FeatureCollection/LineStrings):\n%s' % feature_coll)
+    #feature_list = get_feature_linestrings_for_subc_ids(conn, segment_ids, basin_id_dijkstra, reg_id1)
+    #feature_coll = {"type": "FeatureCollection", "features": feature_list}
+    #print('\nRESULT DIJKSTRA PATH TO SEA (FeatureCollection/LineStrings):\n%s' % feature_coll)
     
     # GeometryColl
-    dijkstra_path_list = get_simple_linestrings_for_subc_ids(conn, segment_ids, basin_id_dijkstra, reg_id)
-    coll = {"type": "GeometryCollection", "geometries": dijkstra_path_list}
-    print('\nRESULT DIJKSTRA PATH TO SEA (GeometryCollection):\n%s' % coll)
+    #dijkstra_path_list = get_simple_linestrings_for_subc_ids(conn, segment_ids, basin_id_dijkstra, reg_id)
+    #coll = {"type": "GeometryCollection", "geometries": dijkstra_path_list}
+    #print('\nRESULT DIJKSTRA PATH TO SEA (GeometryCollection):\n%s' % coll)
 
     #######################
     ### dijkstra to sea ###
     #######################
 
-    print("\n(9b) DIJKSTRA TO SEA")
+    #print("\n(9b) DIJKSTRA TO SEA")
     # Falls into: 506 251 712, basin 1292547
     #lon1 = 9.937520027160646
     #lat1 = 54.69422745526058
@@ -935,30 +894,30 @@ if __name__ == "__main__":
     #lon1 = 10.599210072990063
     #lat1 = 51.31162492387419
     # bei Bremervoerde, leads to one non-geometry subcatchment, subc_id : 506469602
-    lat1 = 53.397626302268684
-    lon1 = 9.155709977606723
+    #lat1 = 53.397626302268684
+    #lon1 = 9.155709977606723
     # Not sure where this is:
-    lat1 = 52.76220968996532
-    lon1 = 11.558802055604199
-    subc_id_start, basin_id_dijkstra = get_subc_id_basin_id(conn, lon1, lat1, reg_id)
-    subc_id_end = -basin_id_dijkstra
-    print('Using start  subc_id: %s (%s)' % (subc_id_start, basin_id_dijkstra))
-    print('Using target subc_id: %s (%s)' % (subc_id_end, basin_id_dijkstra))
+    #lat1 = 52.76220968996532
+    #lon1 = 11.558802055604199
+    #subc_id_start, basin_id_dijkstra = get_subc_id_basin_id(conn, lon1, lat1, reg_id)
+    #subc_id_end = -basin_id_dijkstra
+    #print('Using start  subc_id: %s (%s)' % (subc_id_start, basin_id_dijkstra))
+    #print('Using target subc_id: %s (%s)' % (subc_id_end, basin_id_dijkstra))
     
     # Just the Ids:
-    segment_ids = get_dijkstra_ids(conn, subc_id_start, subc_id_end, reg_id, basin_id_dijkstra)
-    print('\nRESULT DIJKSTRA PATH TO SEA segment_ids: %s\n' % segment_ids)
+    #segment_ids = get_dijkstra_ids(conn, subc_id_start, subc_id_end, reg_id, basin_id_dijkstra)
+    #print('\nRESULT DIJKSTRA PATH TO SEA segment_ids: %s\n' % segment_ids)
     
     # Feature Coll
     #coll = get_dijkstra_linestrings_feature_coll(conn, subc_id_start, subc_id_end, reg_id, basin_id_dijkstra, destination="sea")
-    feature_list = get_feature_linestrings_for_subc_ids(conn, segment_ids, basin_id_dijkstra, reg_id1)
-    feature_coll = {"type": "FeatureCollection", "features": feature_list}
-    print('\nRESULT DIJKSTRA PATH TO SEA (FeatureCollection/LineStrings):\n%s' % feature_coll)
+    #feature_list = get_feature_linestrings_for_subc_ids(conn, segment_ids, basin_id_dijkstra, reg_id1)
+    #feature_coll = {"type": "FeatureCollection", "features": feature_list}
+    #print('\nRESULT DIJKSTRA PATH TO SEA (FeatureCollection/LineStrings):\n%s' % feature_coll)
     
     # GeometryColl
-    dijkstra_path_list = get_simple_linestrings_for_subc_ids(conn, segment_ids, basin_id_dijkstra, reg_id)
-    coll = {"type": "GeometryCollection", "geometries": dijkstra_path_list}
-    print('\nRESULT DIJKSTRA PATH TO SEA (GeometryCollection):\n%s' % coll)
+    #dijkstra_path_list = get_simple_linestrings_for_subc_ids(conn, segment_ids, basin_id_dijkstra, reg_id)
+    #coll = {"type": "GeometryCollection", "geometries": dijkstra_path_list}
+    #print('\nRESULT DIJKSTRA PATH TO SEA (GeometryCollection):\n%s' % coll)
 
     ##################################
     ### local subcatchment polygon ###

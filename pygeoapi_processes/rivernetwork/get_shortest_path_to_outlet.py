@@ -11,7 +11,7 @@ import json
 import psycopg2
 import pygeoapi.process.aqua90m.geofresh.upstream_helpers as helpers
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_dijkstra_ids
+import pygeoapi.process.aqua90m.geofresh.routing as routing
 import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
 
 
@@ -122,7 +122,7 @@ class ShortestPathToOutletGetter(BaseProcessor):
 
         # Get subc_ids of the whole connection...
         LOGGER.debug('Getting network connection for subc_id: start = %s, end = %s' % (subc_id1, subc_id2))
-        segment_ids = get_dijkstra_ids(conn, subc_id1, subc_id2, reg_id1, basin_id1)
+        segment_ids = routing.get_dijkstra_ids(conn, subc_id1, subc_id2, reg_id1, basin_id1)
 
         # Get geometry only:
         if geometry_only:
