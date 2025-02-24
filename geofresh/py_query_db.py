@@ -157,54 +157,6 @@ def get_subc_id_basin_id(conn, lon, lat, reg_id):
 ### GeoJSON                     ###
 ###################################
 
-def get_upstream_catchment_bbox_polygon(conn, subc_id, upstream_ids, basin_id, reg_id):
-    """
-    Returns GeoJSON Geometry! Can be None / null!
-    Example result:
-    {"type": "Polygon", "coordinates": [[[9.913333333333334, 54.68833333333333], [9.913333333333334, 54.70583333333333], [9.931666666666667, 54.70583333333333], [9.931666666666667, 54.68833333333333], [9.913333333333334, 54.68833333333333]]]}
-    """
-    name = "get_upstream_catchment_bbox_polygon"
-    LOGGER.debug('ENTERING: %s for subc_id %s' % (name, subc_id))
-    
-    if len(upstream_ids) == 0:
-        LOGGER.warning('No upstream ids. Cannot get upstream catchment bbox.')
-        LOGGER.info('LEAVING %s for subc_id %s: Returning empty geometry...' % (name, subc_id))
-        return None # returning null geometry
-        # A geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
-        # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
-
-    # Getting info from database:
-    """
-    Example query:
-    SELECT ST_AsText(ST_Extent(geom)) FROM sub_catchments WHERE subc_id IN (506250459, 506251015, 506251126, 506251712);
-
-    These queries return the same result:
-    geofresh_data=> SELECT ST_AsText(ST_Extent(geom)) as bbox FROM sub_catchments WHERE reg_id = 58 AND subc_id IN (506250459, 506251015, 506251126, 506251712) GROUP BY reg_id;
-    geofresh_data=> SELECT ST_AsText(ST_Extent(geom)) as bbox FROM sub_catchments WHERE reg_id = 58 AND subc_id IN (506250459, 506251015, 506251126, 506251712);
-    geofresh_data=> SELECT ST_AsText(ST_Extent(geom)) as bbox FROM sub_catchments WHERE subc_id IN (506250459, 506251015, 506251126, 506251712);
-    ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    POLYGON((9.913333333333334 54.68833333333333,9.913333333333334 54.70583333333333,9.931666666666667 54.70583333333333,9.931666666666667 54.68833333333333,9.913333333333334 54.68833333333333))
-    (1 row)
-    """
-    #LOGGER.debug('Inputs: %s' % upstream_ids)
-    relevant_ids = ", ".join([str(elem) for elem in upstream_ids])
-    # e.g. 506250459, 506251015, 506251126, 506251712
-
-    query = """
-    SELECT ST_AsText(ST_Extent(geom))
-    FROM sub_catchments
-    WHERE subc_id IN ({relevant_ids})
-    AND basin_id = {basin_id}
-    AND reg_id = {reg_id}
-    """.format(relevant_ids = relevant_ids, basin_id = basin_id, reg_id = reg_id)
-    result_row = get_only_row(execute_query(conn, query), name)
-    bbox_wkt = result_row[0]
-
-    # Assembling GeoJSON to return:
-    bbox_geojson = geomet.wkt.loads(bbox_wkt)
-    LOGGER.debug('LEAVING: %s for subc_id %s --> Geometry/Polygon (bbox)' % (name, subc_id))
-    return bbox_geojson
-
 
 def get_upstream_catchment_dissolved_feature_coll(conn, subc_id, upstream_ids, lonlat, basin_id, reg_id, **kwargs):
     name = "get_upstream_catchment_dissolved_feature_coll"
@@ -999,11 +951,6 @@ if __name__ == "__main__":
     strahler, streamsegment_linestring = get_strahler_and_stream_segment_linestring(conn, subc_id, basin_id, reg_id)
     print("\nRESULT STRAHLER: %s" % strahler)
     print("RESULT SEGMENT (Geometry/Linestring):\n%s" % streamsegment_linestring)
-
-    print("\n(6a) upstream catchment bbox as geometry: ")
-    bbox_geojson = get_upstream_catchment_bbox_polygon(
-        conn, subc_id, upstream_ids, basin_id, reg_id)
-    print("\nRESULT BBOX (Geometry/Polygon)\n%s" % bbox_geojson)
 
     print("\n(7) upstream catchment polygons: ")
     poly_collection = get_upstream_catchment_polygons_feature_coll(
