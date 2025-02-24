@@ -11,50 +11,6 @@ LOGGER = logging.getLogger(__name__)
 MAX_NUM_UPSTREAM_CATCHMENTS = None
 
 
-#######################
-### Get SQL queries ###
-#######################
-
-def _get_query_upstream(subc_id, reg_id, basin_id):
-    """
-    This one cuts the graph into connected components, by removing
-    the segment-of-interest itself. As a result, its subcatchment
-    is included in the result, and may have to be removed.
-
-    Example query:
-    SELECT 506251252, array_agg(node)::bigint[] AS nodes FROM pgr_connectedComponents('
-        SELECT basin_id, subc_id AS id, subc_id AS source, target, length AS cost
-        FROM hydro.stream_segments WHERE reg_id = 58 AND basin_id = 1292547 AND subc_id != 506251252
-    ') WHERE component > 0 GROUP BY component;
-
-    Result:
-     ?column?  |                        nodes                        
-    -----------+-----------------------------------------------------
-     506251252 | {506250459,506251015,506251126,506251252,506251712}
-    (1 row)
-    """
-
-    query = '''
-    SELECT {subc_id}, array_agg(node)::bigint[] AS nodes 
-    FROM pgr_connectedComponents('
-        SELECT
-        basin_id,
-        subc_id AS id,
-        subc_id AS source,
-        target,
-        length AS cost
-        FROM hydro.stream_segments
-        WHERE reg_id = {reg_id}
-        AND basin_id = {basin_id}
-        AND subc_id != {subc_id}
-    ') WHERE component > 0 GROUP BY component;
-    '''.format(subc_id = subc_id, reg_id = reg_id, basin_id = basin_id)
-
-    query = query.replace("\n", " ")
-    query = query.replace("    ", "")
-    query = query.strip()
-    return query
-
 
 ###################################
 ### get results from SQL result ###
@@ -470,7 +426,6 @@ def get_polygon_for_subcid_simple(conn, subc_id, basin_id, reg_id):
 
 def _get_upstream_catchment_polygons(conn, upstream_ids, basin_id, reg_id):
     
-    #def _get_query_upstream_polygons(upstream_ids, basin_id, reg_id):
     """
     Example query:
     SELECT ST_AsText(geom) FROM sub_catchments WHERE subc_id IN (506250459, 506251015, 506251126, 506251712);
@@ -624,12 +579,47 @@ def get_dijkstra_ids(conn, subc_id_start, subc_id_end, reg_id, basin_id):
     return all_ids
 
 
-def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id, include_itself = True):
+def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id):
     name = "get_upstream_catchment_ids_incl_itself"
     LOGGER.info("ENTERING: %s for subc_id: %s" % (name, subc_id))
 
     # Getting info from database:
-    query = _get_query_upstream(subc_id, reg_id, basin_id)
+    """
+    This one cuts the graph into connected components, by removing
+    the segment-of-interest itself. As a result, its subcatchment
+    is included in the result, and may have to be removed.
+
+    Example query:
+    SELECT 506251252, array_agg(node)::bigint[] AS nodes FROM pgr_connectedComponents('
+        SELECT basin_id, subc_id AS id, subc_id AS source, target, length AS cost
+        FROM hydro.stream_segments WHERE reg_id = 58 AND basin_id = 1292547 AND subc_id != 506251252
+    ') WHERE component > 0 GROUP BY component;
+
+    Result:
+     ?column?  |                        nodes                        
+    -----------+-----------------------------------------------------
+     506251252 | {506250459,506251015,506251126,506251252,506251712}
+    (1 row)
+    """
+
+    query = '''
+    SELECT {subc_id}, array_agg(node)::bigint[] AS nodes 
+    FROM pgr_connectedComponents('
+        SELECT
+        basin_id,
+        subc_id AS id,
+        subc_id AS source,
+        target,
+        length AS cost
+        FROM hydro.stream_segments
+        WHERE reg_id = {reg_id}
+        AND basin_id = {basin_id}
+        AND subc_id != {subc_id}
+    ') WHERE component > 0 GROUP BY component;
+    '''.format(subc_id = subc_id, reg_id = reg_id, basin_id = basin_id)
+    query = query.replace("\n", " ")
+    query = query.replace("    ", "")
+    query = query.strip()
     result_row = get_only_row(execute_query(conn, query), name)
 
     # If no upstream catchments are returned:
