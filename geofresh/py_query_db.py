@@ -906,8 +906,9 @@ def open_ssh_tunnel(ssh_host, ssh_username, ssh_password, remote_host, remote_po
     :return tunnel: Global SSH tunnel connection
     """
     LOGGER.info("Opening SSH tunnel...")
-    if verbose:
-        sshtunnel.DEFAULT_LOGLEVEL = logging.DEBUG
+    #if verbose:
+    #    #this works, but it is waaay to verbose!
+    #    sshtunnel.DEFAULT_LOGLEVEL = logging.DEBUG
     
     #global tunnel
     tunnel = sshtunnel.SSHTunnelForwarder(

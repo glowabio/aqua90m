@@ -86,7 +86,7 @@ class SnappedPointsGetter(BaseProcessor):
         # Parse booleans
         geometry_only = (geometry_only.lower() == 'true')
 
-        # Get reg_id, basin_id, subc_id, upstream_ids
+        # Get reg_id, basin_id, subc_id
         LOGGER.info('START: Getting snapped point for lon, lat: %s, %s (or subc_id NONE)' % (lon, lat))
         subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, None)
 
