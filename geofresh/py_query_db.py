@@ -668,50 +668,6 @@ def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id, incl
     return upstream_catchment_subcids
 
 
-# TODO MOVE TO OTHER SECTION
-def get_upstream_catchment_ids_without_itself(conn, subc_id, basin_id, reg_id, include_itself = False):
-    name = "get_upstream_catchment_ids_without_itself"
-    LOGGER.info("ENTERING: %s for subc_id: %s" % (name, subc_id))
-
-    # Getting info from database:
-    query = _get_query_upstream(subc_id, reg_id, basin_id)
-    result_row = get_only_row(execute_query(conn, query), name)
-    
-    # If no upstream catchments are returned:
-    if result_row is None:
-        LOGGER.info('No upstream catchment returned. Assuming this is a headwater. Returning an empty array.')
-        return []
-
-    upstream_catchment_subcids = result_row[1]
-    
-    # superfluous warning:
-    subc_id_returned = result_row[0]
-    if not subc_id == subc_id_returned:
-        msg = "WARNING: Wrong subc_id!"
-        LOGGER.error(msg)
-        raise ValueError(msg)
-
-    # remove itself
-    if subc_id_returned in upstream_catchment_subcids:
-        upstream_catchment_subcids.remove(subc_id_returned)
-        LOGGER.info('FYI: The database returned the local subcatchment itself in the list of upstream subcatchments, which is not fine, so we removed it.')
-    else:
-        LOGGER.debug('FYI: The database did not return the local subcatchment itself in the list of upstream subcatchments, which is fine.')
-
-    # Stop any computations with more than x upstream catchments!
-    # TODO: Allow returning them, but then nothing else!
-    max_num = get_max_upstream_catchments()
-    if len(upstream_catchment_subcids) > max_num:
-        LOGGER.warning('Limiting queries to %s upstream subcatchments' % max_num)
-        LOGGER.info("LEAVING EMPTY: %s for subc_id (found %s upstream ids): %s" % (name, len(upstream_catchment_subcids), subc_id))
-        #return []
-        raise ValueError('Found %s subcatchments, but temporarily, calculations over %s subcatchments are not done.' % 
-            (len(upstream_catchment_subcids), max_num))
-
-    LOGGER.info("LEAVING: %s for subc_id (found %s upstream ids): %s" % (name, len(upstream_catchment_subcids), subc_id))
-    return upstream_catchment_subcids
-
-
 def get_snapped_point_simple(conn, lon, lat, subc_id, basin_id, reg_id):
     """
     Example result:
