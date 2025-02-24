@@ -56,25 +56,7 @@ def _get_query_upstream(subc_id, reg_id, basin_id):
     return query
 
 
-def _get_query_linestrings_for_subc_ids(subc_ids, basin_id, reg_id):
-    '''
-    Example query:
-    SELECT  subc_id, strahler, ST_AsText(geom)
-    FROM hydro.stream_segments WHERE subc_id IN (506250459, 506251015, 506251126, 506251712);
-    '''
-    ids = ", ".join([str(elem) for elem in subc_ids])
-    # e.g. 506250459, 506251015, 506251126, 506251712
 
-    query = '''
-    SELECT 
-    subc_id, strahler, ST_AsText(geom)
-    FROM hydro.stream_segments
-    WHERE subc_id IN ({ids})
-    AND reg_id = {reg_id}
-    AND basin_id = {basin_id}
-    '''.format(ids = ids, basin_id = basin_id, reg_id = reg_id)
-    query = query.replace("\n", " ")
-    return query
 
 
 def _get_query_upstream_polygons(upstream_ids, basin_id, reg_id):
@@ -403,42 +385,10 @@ def get_upstream_catchment_dissolved_geometry(conn, subc_id, upstream_ids, basin
     return dissolved_geojson
 
 
-def get_simple_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id):
+def get_feature_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id):
     name = "get_simple_linestrings_for_subc_ids"
     LOGGER.debug('ENTERING: %s for %s subc_ids...' % (name, len(subc_ids)))
-    query = _get_query_linestrings_for_subc_ids(subc_ids, basin_id, reg_id)
-    num_rows = len(subc_ids)
-    result_rows = get_rows(execute_query(conn, query), num_rows, name)
-
-    # Create GeoJSON geometry from each linestring:
-    # In case we want a GeometryCollection, which is more lightweight to return:
-    linestrings_geojson = []
-    for row in result_rows:
-
-        geometry = None
-        if row[2] is not None:
-            geometry = geomet.wkt.loads(row[2])
-        else:
-            # Geometry errors that happen when two segments flow into one outlet (Vanessa, 17 June 2024)
-            # For example, subc_id 506469602, when routing from 507056424 to outlet -1294020
-            LOGGER.error('Subcatchment %s has no geometry!' % row[0]) # for example: 506469602
-            # Features with empty geometries:
-            # A geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
-            # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
-
-        linestrings_geojson.append(geometry)
-
-    LOGGER.debug('LEAVING: %s for %s subc_ids...' % (name, len(subc_ids)))
-    return linestrings_geojson
-
-
-def get_feature_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id):
-    name = "get_feature_linestrings_for_subc_ids"
-    LOGGER.debug('ENTERING: %s for %s subc_ids...' % (name, len(subc_ids)))
-    query = _get_query_linestrings_for_subc_ids(subc_ids, basin_id, reg_id)
-    num_rows = len(subc_ids)
-    result_rows = get_rows(execute_query(conn, query), num_rows, name)
-
+    result_rows = _get_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id)
     # Create GeoJSON feature from each linestring:
     features_geojson = []
     for row in result_rows:
@@ -466,6 +416,58 @@ def get_feature_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id):
 
     LOGGER.debug('LEAVING: %s for %s subc_ids...' % (name, len(subc_ids)))
     return features_geojson
+
+
+def get_simple_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id):
+    name = "get_simple_linestrings_for_subc_ids"
+    LOGGER.debug('ENTERING: %s for %s subc_ids...' % (name, len(subc_ids)))
+    result_rows = _get_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id)
+    
+    # Create GeoJSON geometry from each linestring:
+    # In case we want a GeometryCollection, which is more lightweight to return:
+    linestrings_geojson = []
+    for row in result_rows:
+
+        geometry = None
+        if row[2] is not None:
+            geometry = geomet.wkt.loads(row[2])
+        else:
+            # Geometry errors that happen when two segments flow into one outlet (Vanessa, 17 June 2024)
+            # For example, subc_id 506469602, when routing from 507056424 to outlet -1294020
+            LOGGER.error('Subcatchment %s has no geometry!' % row[0]) # for example: 506469602
+            # Features with empty geometries:
+            # A geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
+            # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
+
+        linestrings_geojson.append(geometry)
+
+    LOGGER.debug('LEAVING: %s for %s subc_ids...' % (name, len(subc_ids)))
+    return linestrings_geojson
+
+
+def _get_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id):
+    name = "get_linestrings_for_subc_ids"
+    '''
+    Example query:
+    SELECT  subc_id, strahler, ST_AsText(geom)
+    FROM hydro.stream_segments WHERE subc_id IN (506250459, 506251015, 506251126, 506251712);
+    '''
+    relevant_ids = ", ".join([str(elem) for elem in subc_ids])
+    # e.g. 506250459, 506251015, 506251126, 506251712
+
+    query = '''
+    SELECT 
+    subc_id, strahler, ST_AsText(geom)
+    FROM hydro.stream_segments
+    WHERE subc_id IN ({relevant_ids})
+    AND reg_id = {reg_id}
+    AND basin_id = {basin_id}
+    '''.format(relevant_ids = relevant_ids, basin_id = basin_id, reg_id = reg_id)
+    query = query.replace("\n", " ")
+    return query
+
+    num_rows = len(subc_ids)
+    result_rows = get_rows(execute_query(conn, query), num_rows, name)
 
 
 def get_polygon_for_subcid_simple(conn, subc_id, basin_id, reg_id):
