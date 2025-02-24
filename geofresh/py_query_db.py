@@ -261,120 +261,6 @@ def get_upstream_catchment_dissolved_geometry(conn, subc_id, upstream_ids, basin
     return dissolved_geojson
 
 
-def _get_upstream_catchment_polygons(conn, upstream_ids, basin_id, reg_id):
-    
-    """
-    Example query:
-    SELECT ST_AsText(geom) FROM sub_catchments WHERE subc_id IN (506250459, 506251015, 506251126, 506251712);
-    SELECT subc_id, ST_AsText(geom) FROM sub_catchments WHERE subc_id IN (506250459, 506251015, 506251126, 506251712);
-
-    Result:
-    st_astext
-    --------------------------------------------------------------------------------------------------------------------------------------------------
-     MULTIPOLYGON(((9.915833333333333 54.70583333333333,9.915833333333333 54.705,9.915000000000001 54.705,9.913333333333334 54.705,9.913333333333334 54.7025,9.916666666666668 54.7025,9.916666666666668 54.70166666666667,9.9175 54.70166666666667,9.9175 54.700833333333335,9.918333333333335 54.700833333333335,9.918333333333335 54.70166666666667,9.919166666666667 54.70166666666667,9.919166666666667 54.700833333333335,9.921666666666667 54.700833333333335,9.921666666666667 54.7,9.923333333333334 54.7,9.923333333333334 54.700833333333335,9.925 54.700833333333335,9.925 54.7,9.925833333333333 54.7,9.925833333333333 54.69916666666667,9.928333333333335 54.69916666666667,9.928333333333335 54.6975,9.929166666666667 54.6975,9.929166666666667 54.69833333333333,9.930000000000001 54.69833333333333,9.930833333333334 54.69833333333333,9.930833333333334 54.7,9.931666666666667 54.7,9.931666666666667 54.7025,9.929166666666667 54.7025,9.929166666666667 54.70333333333333,9.928333333333335 54.70333333333333,9.928333333333335 54.70583333333333,9.9275 54.70583333333333,9.9275 54.705,9.926666666666668 54.705,9.925 54.705,9.925 54.704166666666666,9.924166666666668 54.704166666666666,9.920833333333334 54.704166666666666,9.920833333333334 54.70333333333333,9.919166666666667 54.70333333333333,9.919166666666667 54.704166666666666,9.918333333333335 54.704166666666666,9.918333333333335 54.705,9.916666666666668 54.705,9.916666666666668 54.70583333333333,9.915833333333333 54.70583333333333)))
-     MULTIPOLYGON(((9.918333333333335 54.70166666666667,9.918333333333335 54.700833333333335,9.9175 54.700833333333335,9.9175 54.69833333333333,9.918333333333335 54.69833333333333,9.918333333333335 54.695,9.919166666666667 54.695,9.919166666666667 54.69583333333333,9.920833333333334 54.69583333333333,9.920833333333334 54.695,9.922500000000001 54.695,9.922500000000001 54.69583333333333,9.923333333333334 54.69583333333333,9.923333333333334 54.696666666666665,9.924166666666668 54.696666666666665,9.924166666666668 54.6975,9.923333333333334 54.6975,9.923333333333334 54.69833333333333,9.922500000000001 54.69833333333333,9.922500000000001 54.7,9.921666666666667 54.7,9.921666666666667 54.700833333333335,9.919166666666667 54.700833333333335,9.919166666666667 54.70166666666667,9.918333333333335 54.70166666666667)))
-     MULTIPOLYGON(((9.923333333333334 54.700833333333335,9.923333333333334 54.7,9.922500000000001 54.7,9.922500000000001 54.69833333333333,9.923333333333334 54.69833333333333,9.923333333333334 54.6975,9.924166666666668 54.6975,9.924166666666668 54.69583333333333,9.925833333333333 54.69583333333333,9.925833333333333 54.695,9.928333333333335 54.695,9.928333333333335 54.696666666666665,9.929166666666667 54.696666666666665,9.929166666666667 54.6975,9.928333333333335 54.6975,9.928333333333335 54.69916666666667,9.925833333333333 54.69916666666667,9.925833333333333 54.7,9.925 54.7,9.925 54.700833333333335,9.923333333333334 54.700833333333335)))
-     MULTIPOLYGON(((9.923333333333334 54.696666666666665,9.923333333333334 54.69583333333333,9.922500000000001 54.69583333333333,9.922500000000001 54.695,9.920833333333334 54.695,9.920833333333334 54.69583333333333,9.919166666666667 54.69583333333333,9.919166666666667 54.695,9.918333333333335 54.695,9.9175 54.695,9.9175 54.693333333333335,9.918333333333335 54.693333333333335,9.918333333333335 54.692499999999995,9.919166666666667 54.692499999999995,9.919166666666667 54.69166666666666,9.921666666666667 54.69166666666666,9.921666666666667 54.69083333333333,9.922500000000001 54.69083333333333,9.922500000000001 54.68833333333333,9.925 54.68833333333333,9.925 54.69,9.925833333333333 54.69,9.926666666666668 54.69,9.926666666666668 54.69083333333333,9.9275 54.69083333333333,9.9275 54.69166666666666,9.928333333333335 54.69166666666666,9.928333333333335 54.693333333333335,9.9275 54.693333333333335,9.9275 54.695,9.925833333333333 54.695,9.925833333333333 54.69583333333333,9.924166666666668 54.69583333333333,9.924166666666668 54.696666666666665,9.923333333333334 54.696666666666665)))
-    (4 rows)
-    """
-
-    relevant_ids = ", ".join([str(elem) for elem in upstream_ids])
-    # e.g. 506250459, 506251015, 506251126, 506251712
-
-    query = '''
-    SELECT subc_id, ST_AsText(geom)
-    FROM sub_catchments
-    WHERE subc_id IN ({relevant_ids})
-    AND basin_id = {basin_id}
-    AND reg_id = {reg_id}
-    '''.format(relevant_ids = relevant_ids, basin_id = basin_id, reg_id = reg_id)
-
-    num_rows = len(upstream_ids)
-    result_rows = get_rows(execute_query(conn, query), num_rows, name)
-
-    if result_rows is None:
-        err_msg = 'Received result_rows None! This is weird. Existing upstream ids should have geometries.'
-        LOGGER.error(err_msg)
-        raise ValueError(err_msg)
-
-    return result_rows
-
-
-def get_upstream_catchment_polygons_feature_coll(conn, subc_id, upstream_ids, basin_id, reg_id):
-    name = "get_upstream_catchment_polygons_feature_coll"
-    LOGGER.info("ENTERING: %s for subc_id: %s" % (name, subc_id))
-    
-    # No upstream ids: (TODO: This should be caught earlier, probably):
-    # Feature Collections can have empty array according to GeoJSON spec::
-    # https://datatracker.ietf.org/doc/html/rfc7946#section-3.3
-    if len(upstream_ids) == 0:
-        LOGGER.warning('No upstream ids. Cannot get upstream catchments (individual polygons) .')
-        feature_coll = {
-            "type": "FeatureCollection",
-            "features": []
-        }
-        LOGGER.debug('LEAVING: %s for subcid %s: No upstream catchment, empty FeatureCollection!' % (name, subc_id))
-        return feature_coll
-
-    # Get info from database:
-    result_rows = _get_upstream_catchment_polygons(conn, upstream_ids, basin_id, reg_id)
-
-    # Construct GeoJSON feature:
-    features_geojson = []
-    for row in result_rows:
-        feature = {
-            "type": "Feature",
-            "geometry": geomet.wkt.loads(row[1]),
-            "properties": {
-                "subcatchment_id": row[0]
-            }
-
-        }
-
-        features_geojson.append(feature)
-
-    feature_coll = {
-        "type": "FeatureCollection",
-        "features": features_geojson
-    }
-
-    LOGGER.debug('LEAVING: %s: Returning a FeatureCollection with Polygons...' % (name))
-    return feature_coll
-
-
-def get_upstream_catchment_polygons_geometry_coll(conn, subc_id, upstream_ids, basin_id, reg_id):
-    name = "get_upstream_catchment_polygons_geometry_coll"
-    LOGGER.info("ENTERING: %s for subc_id: %s" % (name, subc_id))
-
-    # No upstream ids: (TODO: This should be caught earlier, probably):
-    # Geometry Collections can have empty array according to GeoJSON spec: ??? WIP TODO CHECK
-    # https://datatracker.ietf.org/doc/html/rfc7946#section-3.3
-    if len(upstream_ids) == 0:
-        LOGGER.warning('No upstream ids. Cannot get upstream catchments (individual polygons) .')
-        geometry_coll = {
-            "type": "GeometryCollection",
-            "geometries": []
-        }
-        LOGGER.debug('LEAVING: %s for subcid %s: No upstream catchment, empty GeometryCollection!' % (name, subc_id))
-        return geometry_coll
-
-    # Get info from database:
-    result_rows = _get_upstream_catchment_polygons(conn, upstream_ids, basin_id, reg_id)
-
-    # Construct GeoJSON feature:
-    geometries_geojson = []
-    for row in result_rows:
-        geometries_geojson.append(geomet.wkt.loads(row[1]))
-
-    geometry_coll = {
-        "type": "GeometryCollection",
-        "geometries": geometries_geojson
-    }
-
-    LOGGER.debug('LEAVING: %s: Returning a GeometryCollection with Polygons...' % (name))
-    return geometry_coll
-
-
 def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id):
     name = "get_upstream_catchment_ids_incl_itself"
     LOGGER.info("ENTERING: %s for subc_id: %s" % (name, subc_id))
@@ -736,11 +622,6 @@ if __name__ == "__main__":
     print("\nRESULT STRAHLER: %s" % strahler)
     print("RESULT SNAPPED (Geometry/Point):\n%s" % point_snappedpoint)
     print("\nRESULT SEGMENT (Geometry/Linestring):\n%s" % linestring_streamsegment)
-
-    print("\n(7) upstream catchment polygons: ")
-    poly_collection = get_upstream_catchment_polygons_feature_coll(
-        conn, subc_id, upstream_ids, basin_id, reg_id)
-    print("\nRESULT UPSTREAM POLYGONS (FeatureCollection/MultiPolygons)\n%s" % poly_collection)
 
     print("\n(8a): dissolved polygon as geometry/polygon")
     dissolved_polygon = get_upstream_catchment_dissolved_geometry(
