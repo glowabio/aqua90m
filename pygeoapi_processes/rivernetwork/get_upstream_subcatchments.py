@@ -12,16 +12,35 @@ import psycopg2
 from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_subc_id_basin_id_reg_id
 from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_upstream_catchment_ids
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_upstream_catchment_polygons_feature_coll
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_upstream_catchment_polygons_geometry_coll
+import pygeoapi.process.aqua90m.geofresh.get_polygons as get_polygons
 
 
 '''
 
-curl -X POST "https:/aqua.igb-berlin.de/pygeoapi/processes/get-upstream-subcatchments/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lon\": 9.931555, \"lat\": 54.695070, \"comment\":\"Nordoestliche Schlei bei Rabenholz\", \"add_upstream_ids\": \"true\"}}"
+curl -X POST "http://localhost:5000/pygeoapi-dev/processes/get-upstream-subcatchments/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "geometry_only": "false",
+    "add_upstream_ids": "true",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
+
+curl -X POST "http://localhost:5000/pygeoapi-dev/processes/get-upstream-subcatchments/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "geometry_only": "true",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
 
 # Large: Mitten in der Elbe: 53.537158298376575, 9.99475350366553
-curl -X POST "https:/aqua.igb-berlin.de/pygeoapi/processes/get-upstream-subcatchments/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lon\": 9.994753, \"lat\": 53.537158, \"comment\":\"Mitten inner Elbe bei Hamburg\", \"geometry_only\": \"true\"}}"
 
 
 '''
@@ -109,8 +128,8 @@ class UpstreamSubcatchmentGetter(BaseProcessor):
         # Get geometry only:
         if geometry_only:
             LOGGER.debug('...Getting upstream catchment polygons for subc_id: %s' % subc_id)
-            geometry_coll = get_upstream_catchment_polygons_geometry_coll(
-                conn, subc_id, upstream_ids, basin_id, reg_id)
+            geometry_coll = get_polygons.get_subcatchment_polygons_geometry_coll(
+                conn, upstream_ids, basin_id, reg_id)
             LOGGER.debug('END: Received GeometryCollection: %s' % str(geometry_coll)[0:50])
 
             if comment is not None:
@@ -124,16 +143,12 @@ class UpstreamSubcatchmentGetter(BaseProcessor):
         # Get FeatureCollection
         if not geometry_only:
             LOGGER.debug('...Getting upstream catchment polygons for subc_id: %s' % subc_id)
-            feature_coll = get_upstream_catchment_polygons_feature_coll(
-                conn, subc_id, upstream_ids, basin_id, reg_id)
+            feature_coll = get_polygons.get_subcatchment_polygons_feature_coll(
+                conn, upstream_ids, basin_id, reg_id, add_upstream_ids)
             LOGGER.debug('END: Received FeatureCollection: %s' % str(feature_coll)[0:50])
 
-            feature_coll['reg_id'] = reg_id
-            feature_coll['basin_id'] = basin_id
+            feature_coll['description'] = "Upstream subcatchments of subcatchment %s." % subc_id
             feature_coll['upstream_catchment_of'] = subc_id
-
-            if add_upstream_ids:
-                feature_coll['upstream_ids'] = upstream_ids 
 
             if comment is not None:
                 feature_coll['comment'] = comment

@@ -261,36 +261,6 @@ def get_upstream_catchment_dissolved_geometry(conn, subc_id, upstream_ids, basin
     return dissolved_geojson
 
 
-def get_polygon_for_subcid_simple(conn, subc_id, basin_id, reg_id):
-    name = "get_polygon_for_subcid_simple"
-    LOGGER.debug('ENTERING: %s for subc_id %s' % (name, subc_id))
-    
-    # Get info from database:
-    query = '''
-    SELECT subc_id, ST_AsText(geom)
-    FROM sub_catchments
-    WHERE subc_id = {subc_id}
-    AND basin_id = {basin_id}
-    AND reg_id = {reg_id}
-    '''.format(subc_id = subc_id, basin_id = basin_id, reg_id = reg_id)
-    result_row = get_only_row(execute_query(conn, query), name)
-    
-    if result_row is None:
-        LOGGER.error('Received result_row None! This is weird. An existing subcatchment id should have a geometry!')
-        err_msg = "Weird: No area (polygon) found in database for subcatchment %s" % subc_id
-        LOGGER.error(err_msg)
-        raise ValueError(err_msg)
-        # Or allow it:
-        #polygon_subcatchment = None
-        # This geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
-        # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
-    else:
-        polygon_subcatchment = geomet.wkt.loads(result_row[1])
-
-    LOGGER.debug('LEAVING: %s: Returning a single polygon: %s' % (name, str(polygon_subcatchment)[0:50]))
-    return polygon_subcatchment
-
-
 def _get_upstream_catchment_polygons(conn, upstream_ids, basin_id, reg_id):
     
     """
@@ -861,14 +831,6 @@ if __name__ == "__main__":
     #dijkstra_path_list = get_simple_linestrings_for_subc_ids(conn, segment_ids, basin_id_dijkstra, reg_id)
     #coll = {"type": "GeometryCollection", "geometries": dijkstra_path_list}
     #print('\nRESULT DIJKSTRA PATH TO SEA (GeometryCollection):\n%s' % coll)
-
-    ##################################
-    ### local subcatchment polygon ###
-    ##################################
-
-    print("\n(10) Catchment polygon: ")
-    polygon = get_polygon_for_subcid_simple(conn, subc_id, basin_id, reg_id)
-    print("\nRESULT CATCHMENT (Geometry/Polygon)\n%s\n" % polygon)
 
     # Finally:
     print("Closing connection...")
