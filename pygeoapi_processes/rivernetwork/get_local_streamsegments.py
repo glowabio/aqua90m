@@ -11,17 +11,34 @@ import json
 import psycopg2
 from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_subc_id_basin_id_reg_id
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_strahler_and_stream_segment_linestring
-
+import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
 
 
 '''
 
 # Request returning a Feature:
-curl -X POST "https://aqua.igb-berlin.de/pygeoapi/processes/get-local-streamsegments/execution" -H "Content-Type: application/json" -d "{\"inputs\":{ \"lon\": 9.931555, \"lat\": 54.695070, \"comment\":\"Schlei\"}}"
+curl -X POST "http://localhost:5000/processes/get-local-streamsegments/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "geometry_only": "false",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
 
 # Request, returning a simple geometry (linestring):
-curl -X POST "https://aqua.igb-berlin.de/pygeoapi/processes/get-local-streamsegments/execution" -H "Content-Type: application/json" -d "{\"inputs\":{ \"lon\": 9.931555, \"lat\": 54.695070, \"geometry_only\": true}}"
+curl -X POST "http://localhost:5000/processes/get-local-streamsegments/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "geometry_only": "true",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
 '''
 
 # Process metadata and description
@@ -97,12 +114,12 @@ class LocalStreamSegmentsGetter(BaseProcessor):
         LOGGER.info('Retrieving stream segment for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
         subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, subc_id)
         
-        LOGGER.debug('Now, getting stream segment (incl. strahler order) for subc_id: %s' % subc_id)
-        strahler, streamsegment = get_strahler_and_stream_segment_linestring(
-            conn, subc_id, basin_id, reg_id)
-
         # Get only geometry:
         if geometry_only:
+
+            LOGGER.debug('Now, getting stream segment for subc_id: %s' % subc_id)
+            geometry_coll = get_linestrings.get_simple_linestrings_for_subc_ids(conn, [subc_id], basin_id, reg_id)
+            streamsegment = geometry_coll["geometries"][0]
         
             if comment is not None:
                 streamsegment['comment'] = comment
@@ -116,25 +133,17 @@ class LocalStreamSegmentsGetter(BaseProcessor):
         # Get Feature:
         if not geometry_only:
 
-            # Assembling GeoJSON feature to return:
-            feature = {
-                "type": "Feature",
-                "geometry": streamsegment,
-                "properties": {
-                    "subcatchment_id": subc_id,
-                    "strahler_order": strahler,
-                    "basin_id": basin_id,
-                    "reg_id": reg_id
-                }
-            }
+            LOGGER.debug('Now, getting stream segment (incl. strahler order) for subc_id: %s' % subc_id)
+            feature_coll = get_linestrings.get_feature_linestrings_for_subc_ids(conn, [subc_id], basin_id, reg_id)
+            streamsegment = feature_coll["features"][0]
 
             if comment is not None:
-                feature['properties']['comment'] = comment
+                streamsegment['properties']['comment'] = comment
 
             if self.return_hyperlink('snapped_point', requested_outputs):
                 return 'application/json', self.store_to_json_file('stream_segment', feature)
             else:
-                return 'application/json', feature
+                return 'application/json', streamsegment
 
 
     def return_hyperlink(self, output_name, requested_outputs):

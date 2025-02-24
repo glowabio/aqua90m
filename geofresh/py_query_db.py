@@ -548,58 +548,6 @@ def get_snapped_point_simple(conn, lon, lat, subc_id, basin_id, reg_id):
         return strahler, snappedpoint_point, streamsegment_linestring
 
 
-def get_strahler_and_stream_segment_linestring(conn, subc_id, basin_id, reg_id):
-    # TODO Make one query for various subc_ids! When would this be needed?
-    """
-
-    Stream segment is returned as a single LineString.
-    Cannot return valid geoJSON, because this returns just the geometry, where we
-    cannot add the strahler order as property.
-
-    Example result:
-    2, {"type": "LineString", "coordinates": [[9.929583333333333, 54.69708333333333], [9.930416666666668, 54.69625], [9.932083333333335, 54.69625], [9.933750000000002, 54.694583333333334], [9.934583333333334, 54.694583333333334]]}
-    """
-    name = "get_strahler_and_stream_segment_linestring"
-    LOGGER.debug("ENTERING: %s for subc_id %s)" % (name, subc_id))
-
-    # Getting info from the database:
-    """
-    Example query:
-    SELECT seg.strahler, ST_AsText(seg.geom) FROM hydro.stream_segments seg WHERE seg.subc_id = 506251252;
-
-    Result:
-     strahler |                                                                                    st_astext                                                                                    
-    ----------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-            2 | LINESTRING(9.929583333333333 54.69708333333333,9.930416666666668 54.69625,9.932083333333335 54.69625,9.933750000000002 54.694583333333334,9.934583333333334 54.694583333333334)
-    (1 row)
-    """
-
-    query = """
-    SELECT 
-    strahler,
-    ST_AsText(geom)
-    FROM hydro.stream_segments
-    WHERE subc_id = {subc_id}
-    AND reg_id = {reg_id}
-    AND basin_id = {basin_id}
-    """.format(subc_id = subc_id, basin_id = basin_id, reg_id = reg_id)
-    query = query.replace("\n", " ")
-    result_row = get_only_row(execute_query(conn, query), name)
-    
-    # Database returns nothing:
-    if result_row is None:
-        LOGGER.error('Received result_row None! This is weird. An existing subcatchment id should have a linestring geometry!')
-        err_msg = "Weird: No stream segment (linestring) found in database for subcatchment %s" % subc_id
-        LOGGER.error(err_msg)
-        raise ValueError(err_msg)
-    
-    # Getting geomtry from database result:
-    strahler = result_row[0]
-    streamsegment_wkt = result_row[1]
-    streamsegment_linestring = geomet.wkt.loads(streamsegment_wkt)
-    LOGGER.debug("LEAVING: %s for subc_id %s: %s, %s" % (name, subc_id, strahler, str(streamsegment_linestring)[0:50]))
-    return strahler, streamsegment_linestring
-
     
 
 ###########################
@@ -820,11 +768,6 @@ if __name__ == "__main__":
     print("\nRESULT STRAHLER: %s" % strahler)
     print("RESULT SNAPPED (Geometry/Point):\n%s" % point_snappedpoint)
     print("\nRESULT SEGMENT (Geometry/Linestring):\n%s" % linestring_streamsegment)
-
-    print("\n(5) strahler, stream segment: ")
-    strahler, streamsegment_linestring = get_strahler_and_stream_segment_linestring(conn, subc_id, basin_id, reg_id)
-    print("\nRESULT STRAHLER: %s" % strahler)
-    print("RESULT SEGMENT (Geometry/Linestring):\n%s" % streamsegment_linestring)
 
     print("\n(7) upstream catchment polygons: ")
     poly_collection = get_upstream_catchment_polygons_feature_coll(
