@@ -147,7 +147,7 @@ class ShortestPathTwoPointsGetter(BaseProcessor):
 
         # Get geometry only:
         if geometry_only:
-            geometry_coll = get_linestrings.get_simple_linestrings_for_subc_ids(
+            geometry_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll(
                 conn, segment_ids, basin_id1, reg_id1)
 
             if comment is not None:
@@ -162,17 +162,14 @@ class ShortestPathTwoPointsGetter(BaseProcessor):
         # Get FeatureCollection
         if not geometry_only:
 
-            feature_coll = get_linestrings.get_feature_linestrings_for_subc_ids(
-                conn, segment_ids, basin_id1, reg_id1)
+            feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(
+                conn, segment_ids, basin_id1, reg_id1, add_subc_ids = add_segment_ids)
 
             # Add some info to the FeatureCollection:
             feature_coll["description"] = "Connecting path between %s and %s" % (subc_id1, subc_id2)
             feature_coll["start_subc_id"] = subc_id1 # TODO how to name the start point of routing?
             feature_coll["target_subc_id"] = subc_id2 # TODO how to name the end point of routing?
             # TODO: Should we include the requested lon and lat? Maybe as a point?
-
-            if add_segment_ids:
-                feature_coll['segment_ids'] = segment_ids
 
             if comment is not None:
                 feature_coll['comment'] = comment

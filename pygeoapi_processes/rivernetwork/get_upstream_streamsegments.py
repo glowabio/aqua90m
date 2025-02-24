@@ -123,15 +123,13 @@ class UpstreamStreamSegmentsGetter(BaseProcessor):
         if geometry_only:
 
             if len(upstream_ids) == 0:
-                geometries = []
+                geometry_coll = {
+                    "type": "GeometryCollection",
+                    "geometries": []
+                }
             else:
                 LOGGER.debug('... Getting upstream catchment line segments for subc_id: %s' % subc_id)
-                geometries = get_linestrings.get_simple_linestrings_for_subc_ids(conn, upstream_ids, basin_id, reg_id)
-
-            geometry_coll = {
-                "type": "GeometryCollection",
-                "geometries": geometries
-            }
+                geometry_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll(conn, upstream_ids, basin_id, reg_id)
 
             LOGGER.debug('END: Received GeometryCollection: %s' % str(geometry_coll)[0:50])
 
@@ -148,26 +146,24 @@ class UpstreamStreamSegmentsGetter(BaseProcessor):
         if not geometry_only:
 
             if len(upstream_ids) == 0:
-                features = []
                 # Feature Collections can have empty array according to GeoJSON spec::
                 # https://datatracker.ietf.org/doc/html/rfc7946#section-3.3
+                feature_coll = {
+                    "type": "FeatureCollection",
+                    "features": [],
+                    "basin_id": basin_id,
+                    "reg_id": reg_id,
+                }
+
             else:
                 # Note: The feature collection contains the strahler order for each feature (each stream segment)
                 LOGGER.debug('... Getting upstream catchment line segments for subc_id: %s' % subc_id)
-                features = get_linestrings.get_feature_linestrings_for_subc_ids(conn, upstream_ids, basin_id, reg_id)
+                feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(
+                    conn, upstream_ids, basin_id, reg_id, add_subc_ids = add_upstream_ids)
 
-            feature_coll = {
-                "type": "FeatureCollection",
-                "features": features,
-                "basin_id": basin_id,
-                "reg_id": reg_id,
-                "part_of_upstream_catchment_of": subc_id
-            }
+            feature_coll["part_of_upstream_catchment_of"] = subc_id
 
             LOGGER.debug('END: Received FeatureCollection: %s' % str(feature_coll)[0:50])
-
-            if add_upstream_ids:
-                feature_coll['upstream_ids'] = upstream_ids 
 
             if comment is not None:
                 feature_coll['comment'] = comment

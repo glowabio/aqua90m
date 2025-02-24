@@ -108,17 +108,15 @@ if __name__ == "__main__":
     print('RESULT:\n%s' % res)
     
     # If you then want geometries for this, use functions
-    # "get_feature_linestrings_for_subc_ids" and
-    # "get_simple_linestrings_for_subc_ids"
+    # "get_streamsegment_linestrings_feature_coll" and
+    # "get_streamsegment_linestrings_geometry_coll"
     # from module aqua90m.geofresh.get_linestrings:
     import get_linestrings
 
     # GeometryColl
-    path_list = get_linestrings.get_simple_linestrings_for_subc_ids(conn, res, basin_id, reg_id)
-    geom_coll = {"type": "GeometryCollection", "geometries": path_list}
+    geom_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll(conn, res, basin_id, reg_id)
     print('\nRESULT (GeometryCollection):\n%s' % geom_coll)
 
     # Feature Coll
-    feature_list = get_linestrings.get_feature_linestrings_for_subc_ids(conn, res, basin_id, reg_id)
-    feature_coll = {"type": "FeatureCollection", "features": feature_list}
+    feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(conn, res, basin_id, reg_id)
     print('\nRESULT (FeatureCollection/LineStrings):\n%s' % feature_coll)

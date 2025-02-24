@@ -518,8 +518,6 @@ def get_snapped_point_simple(conn, lon, lat, subc_id, basin_id, reg_id):
         return strahler, snappedpoint_point, streamsegment_linestring
 
 
-    
-
 ###########################
 ### database connection ###
 ###########################

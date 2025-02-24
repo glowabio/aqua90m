@@ -131,7 +131,7 @@ class LocalStreamSegmentSubcatchmentGetter(BaseProcessor):
         if geometry_only:
 
             LOGGER.debug('... Now, getting stream segment for subc_id: %s' % subc_id)
-            geometry_coll = get_linestrings.get_simple_linestrings_for_subc_ids(conn, [subc_id], basin_id, reg_id)
+            geometry_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll(conn, [subc_id], basin_id, reg_id)
             streamsegment_simple = geometry_coll["geometries"][0]
 
             # Make GeometryCollection from both:
@@ -153,7 +153,7 @@ class LocalStreamSegmentSubcatchmentGetter(BaseProcessor):
         if not geometry_only:
 
             LOGGER.debug('...Now, getting stream segment (incl. strahler order) for subc_id: %s' % subc_id)
-            feature_coll = get_linestrings.get_feature_linestrings_for_subc_ids(conn, [subc_id], basin_id, reg_id)
+            feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(conn, [subc_id], basin_id, reg_id)
             feature_streamsegment = feature_coll["features"][0]
 
             # Make GeoJSON Feature from subcatchment:

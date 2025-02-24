@@ -3,7 +3,7 @@ import logging
 import geomet.wkt
 LOGGER = logging.getLogger(__name__)
 
-def get_simple_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id):
+def get_streamsegment_linestrings_geometry_coll(conn, subc_ids, basin_id, reg_id):
 
     ### Define query:
     '''
@@ -40,11 +40,8 @@ def get_simple_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id):
     ### Get results and construct GeoJSON:
     LOGGER.debug('Iterating over the result rows, constructing GeoJSON...')
     linestrings_geojson = []
-    i = 0
     while (True):
-        i += 1
         row = cursor.fetchone()
-
         if row is None:
             break
 
@@ -70,7 +67,7 @@ def get_simple_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id):
     return geometry_coll
 
 
-def get_feature_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id):
+def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id, add_subc_ids = False):
 
     ### Define query:
     '''
@@ -107,11 +104,8 @@ def get_feature_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id):
     ### Get results and construct GeoJSON:
     LOGGER.debug('Iterating over the result rows, constructing GeoJSON...')
     features_geojson = []
-    i = 0
     while (True):
-        i += 1
         row = cursor.fetchone()
-
         if row is None:
             break
 
@@ -122,7 +116,7 @@ def get_feature_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id):
         else:
             # Geometry errors that happen when two segments flow into one outlet (Vanessa, 17 June 2024)
             # For example, subc_id 506469602, when routing from 507056424 to outlet -1294020
-            LOGGER.error('Subcatchment %s has no geometry!' % row[1]) # for example: 506469602
+            LOGGER.error('Subcatchment %s has no linestring!' % row[1]) # for example: 506469602
             # Features with empty geometries:
             # A geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
             # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
@@ -143,6 +137,9 @@ def get_feature_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id):
         "basin_id": basin_id,
         "region_id": reg_id
     }
+
+    if add_subc_ids:
+        feature_coll["subc_ids"] = subc_ids
 
     return feature_coll
 
@@ -190,10 +187,10 @@ if __name__ == "__main__":
     basin_id = 1292547
     reg_id = 58
 
-    print('\nSTART RUNNING FUNCTION: get_simple_linestrings_for_subc_ids')
-    res = get_simple_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id)
+    print('\nSTART RUNNING FUNCTION: get_streamsegment_linestrings_geometry_coll')
+    res = get_streamsegment_linestrings_geometry_coll(conn, subc_ids, basin_id, reg_id)
     print('RESULT:\n%s' % res)
     
-    print('\nSTART RUNNING FUNCTION: get_feature_linestrings_for_subc_ids')
-    res = get_feature_linestrings_for_subc_ids(conn, subc_ids, basin_id, reg_id)
+    print('\nSTART RUNNING FUNCTION: get_streamsegment_linestrings_feature_coll')
+    res = get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id, add_subc_ids=True)
     print('RESULT:\n%s' % res)
