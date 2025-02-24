@@ -3,7 +3,12 @@ import sys
 import logging
 import sshtunnel
 import geomet.wkt
+import os
+import json
 LOGGER = logging.getLogger(__name__)
+
+# global variable:
+MAX_NUM_UPSTREAM_CATCHMENTS = None
 
 
 #######################
@@ -737,7 +742,7 @@ def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id, incl
 
     # Stop any computations with more than x upstream catchments!
     # TODO: Allow returning them, but then nothing else!
-    max_num = 200
+    max_num = get_max_upstream_catchments()
     if len(upstream_catchment_subcids) > max_num:
         LOGGER.warning('Limiting queries to %s upstream subcatchments' % max_num)
         LOGGER.info("LEAVING EMPTY: %s for subc_id (found %s upstream ids): %s" % (name, len(upstream_catchment_subcids), subc_id))
@@ -781,7 +786,7 @@ def get_upstream_catchment_ids_without_itself(conn, subc_id, basin_id, reg_id, i
 
     # Stop any computations with more than x upstream catchments!
     # TODO: Allow returning them, but then nothing else!
-    max_num = 200
+    max_num = get_max_upstream_catchments()
     if len(upstream_catchment_subcids) > max_num:
         LOGGER.warning('Limiting queries to %s upstream subcatchments' % max_num)
         LOGGER.info("LEAVING EMPTY: %s for subc_id (found %s upstream ids): %s" % (name, len(upstream_catchment_subcids), subc_id))
@@ -870,6 +875,28 @@ def get_strahler_and_stream_segment_linestring(conn, subc_id, basin_id, reg_id):
 ###########################
 ### database connection ###
 ###########################
+
+def get_max_upstream_catchments():
+
+    global MAX_NUM_UPSTREAM_CATCHMENTS
+    if MAX_NUM_UPSTREAM_CATCHMENTS is not None:
+        LOGGER.debug("MAX_NUM_UPSTREAM_CATCHMENTS set already, returning it!")
+        return MAX_NUM_UPSTREAM_CATCHMENTS
+
+    # If it was not set yet, set it and return it:
+    config_file_path = os.environ.get('AQUA90M_CONFIG_FILE', "./config.json")
+    MAX_NUM_UPSTREAM_CATCHMENTS = 1000 # default...
+    try:
+        with open(config_file_path, 'r') as config_file:
+            config = json.load(config_file)
+            max_num = config["max_num_upstream_catchments"]
+            MAX_NUM_UPSTREAM_CATCHMENTS = max_num
+    except FileNotFoundError as e:
+        LOGGER.info("Maximum upstream catchments not configured (config file not found), using default (%s)." % MAX_NUM_UPSTREAM_CATCHMENTS)
+    except KeyError as e:
+        LOGGER.info("Maximum upstream catchments not configured (config file does not contain item), using default (%s)." % MAX_NUM_UPSTREAM_CATCHMENTS)
+
+    return MAX_NUM_UPSTREAM_CATCHMENTS
 
 
 def open_ssh_tunnel(ssh_host, ssh_username, ssh_password, remote_host, remote_port, verbose=False):
