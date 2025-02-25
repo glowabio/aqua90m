@@ -10,9 +10,9 @@ import traceback
 import json
 import psycopg2
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
-import pygeoapi.process.aqua90m.geofresh.get_upstream_subcids as get_upstream_subcids
+import pygeoapi.process.aqua90m.geofresh.upstream_subcids as upstream_subcids
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
-import pygeoapi.process.aqua90m.geofresh.get_dissolved_polygon as get_dissolved_polygon
+import pygeoapi.process.aqua90m.geofresh.dissolved as dissolved
 
 
 '''
@@ -152,26 +152,26 @@ class UpstreamDissolvedGetter(BaseProcessor):
             # Get reg_id, basin_id, subc_id, upstream_catchment_ids
             subc_id, basin_id, reg_id = basic_queries.get_subc_id_basin_id_reg_id(
                 conn, LOGGER, lon, lat, subc_id)
-            upstream_catchment_ids = get_upstream_subcids.get_upstream_catchment_ids_incl_itself(
+            upstream_catchment_ids = upstream_subcids.get_upstream_catchment_ids_incl_itself(
                 conn, subc_id, basin_id, reg_id)
 
             # Get geometry (three types)
             LOGGER.debug('...Getting upstream catchment dissolved polygon for subc_id: %s' % subc_id)
             geojson_object = {}
             if get_type.lower() == 'polygon':
-                geojson_object = get_dissolved_polygon.get_dissolved_simplegeom(
+                geojson_object = dissolved.get_dissolved_simplegeom(
                     conn, upstream_catchment_ids, basin_id, reg_id)
                 LOGGER.debug('END: Received simple polygon : %s' % str(geojson_object)[0:50])
 
             elif get_type.lower() == 'feature':
-                geojson_object = get_dissolved_polygon.get_dissolved_feature(
+                geojson_object = dissolved.get_dissolved_feature(
                     conn, upstream_catchment_ids, basin_id, reg_id, add_subc_ids = False)
                 if comment is not None:
                     geojson_object["properties"]["comment"] = comment
                 LOGGER.debug('END: Received feature : %s' % str(geojson_object)[0:50])
            
             elif get_type.lower() == 'featurecollection':
-                dissolved_feature = get_dissolved_polygon.get_dissolved_feature(
+                dissolved_feature = dissolved.get_dissolved_feature(
                     conn, upstream_catchment_ids, basin_id, reg_id, add_subc_ids = False)
 
                 # Create point:

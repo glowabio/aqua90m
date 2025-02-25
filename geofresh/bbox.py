@@ -22,7 +22,7 @@ def get_bbox_feature(conn, subc_ids, basin_id, reg_id, add_subc_ids = False):
     return bbox_feature
 
 
-def get_bbox_polygon(conn, subc_ids, basin_id, reg_id):
+def get_bbox_simplegeom(conn, subc_ids, basin_id, reg_id):
     """
     Returns GeoJSON Geometry (can be None / null)!
     Example result:
@@ -99,6 +99,8 @@ if __name__ == "__main__":
 
     # Get config
     config_file_path = "./config.json"
+    # NOT COMMIT:
+    config_file_path = "./config.NOTCOMMIT.geofreshprod.json"
     with open(config_file_path, 'r') as config_file:
         config = json.load(config_file)
         geofresh_server = config['geofresh_server']

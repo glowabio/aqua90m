@@ -11,8 +11,8 @@ import json
 import psycopg2
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
-import pygeoapi.process.aqua90m.geofresh.get_upstream_subcids as get_upstream_subcids
-import pygeoapi.process.aqua90m.geofresh.get_dissolved_polygon as get_dissolved_polygon
+import pygeoapi.process.aqua90m.geofresh.upstream_subcids as upstream_subcids
+import pygeoapi.process.aqua90m.geofresh.dissolved as dissolved
 
 
 
@@ -125,13 +125,13 @@ class UpstreamDissolvedGetter(BaseProcessor):
             conn, LOGGER, lon, lat, subc_id)
 
         # Get upstream id
-        upstream_ids = get_upstream_subcids.get_upstream_catchment_ids_incl_itself(
+        upstream_ids = upstream_subcids.get_upstream_catchment_ids_incl_itself(
             conn, subc_id, basin_id, reg_id)
 
         # Return only geometry:
         if geometry_only:
 
-            dissolved_simplegeom = get_dissolved_polygon.get_dissolved_simplegeom(
+            dissolved_simplegeom = dissolved.get_dissolved_simplegeom(
                 conn, upstream_ids, basin_id, reg_id)
 
             if comment is not None:
@@ -146,7 +146,7 @@ class UpstreamDissolvedGetter(BaseProcessor):
         # Return Feature:
         if not geometry_only:
 
-            dissolved_feature = get_dissolved_polygon.get_dissolved_feature(
+            dissolved_feature = dissolved.get_dissolved_feature(
                 conn, upstream_ids, basin_id, reg_id, add_subc_ids = add_upstream_ids)
 
             # Add some info to Feature:

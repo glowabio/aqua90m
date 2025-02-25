@@ -10,9 +10,9 @@ import traceback
 import json
 import psycopg2
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
-import pygeoapi.process.aqua90m.geofresh.get_upstream_subcids as get_upstream_subcids
+import pygeoapi.process.aqua90m.geofresh.upstream_subcids as upstream_subcids
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
-import pygeoapi.process.aqua90m.geofresh.get_bbox_polygon as get_bbox_polygon
+import pygeoapi.process.aqua90m.geofresh.bbox as bbox
 
 
 
@@ -127,13 +127,13 @@ class UpstreamBboxGetter(BaseProcessor):
         # Get reg_id, basin_id, subc_id, upstream_ids
         subc_id, basin_id, reg_id = basic_queries.get_subc_id_basin_id_reg_id(
             conn, LOGGER, lon, lat, subc_id)
-        upstream_ids = get_upstream_subcids.get_upstream_catchment_ids_incl_itself(
+        upstream_ids = upstream_subcids.get_upstream_catchment_ids_incl_itself(
             conn, subc_id, basin_id, reg_id)
 
         if geometry_only:
 
             # Get bounding box:
-            bbox_simplegeom = get_bbox_polygon.get_bbox_polygon(
+            bbox_simplegeom = bbox.get_bbox_simplegeom(
                 conn, upstream_ids, basin_id, reg_id)
             # This geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
             # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
@@ -151,7 +151,7 @@ class UpstreamBboxGetter(BaseProcessor):
             # Get bounding box:
             # This geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
             # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
-            bbox_feature = get_bbox_polygon.get_bbox_feature(
+            bbox_feature = bbox.get_bbox_feature(
                 conn, upstream_ids, basin_id, reg_id, add_subc_ids = add_upstream_ids)
 
 
