@@ -1,0 +1,90 @@
+{
+    "version": "0.0.1",
+    "id": "get-shortest-path-between-points-plural",
+    "use_case": "hydrography90m",
+    "title": {"en": "Shortest paths between two points"},
+    "description": {
+        "en": "Return the shortest paths (using the Dijkstra algorithm) stream from the stream segment to which the given start point belongs to the stream segment to which the given end point belongs. They have to be in the same river basin. The path is returned as GeoJSON FeatureCollection or GeometryCollection, depending on user input. The geometries are LineStrings in both cases. The start and end segments are included."
+    },
+    "jobControlOptions": ["sync-execute", "async-execute"],
+    "keywords": ["dijkstra", "shortest-path", "stream", "stream-segment", "geojson", "GeoFRESH", "hydrography90m", "routing"],
+    "links": [{
+        "type": "text/html",
+        "rel": "about",
+        "title": "GeoFRESH website",
+        "href": "https://geofresh.org/",
+        "hreflang": "en-US"
+    },
+    {
+        "type": "text/html",
+        "rel": "about",
+        "title": "On Stream segments (Hydrography90m)",
+        "href": "https://hydrography.org/hydrography90m/hydrography90m_layers",
+        "hreflang": "en-US"
+    }],
+    "inputs": {
+         "points": {
+            "title": "Points (GeoJSON)",
+            "description": "GeoJSON: GeometryCollection of MultiPoint items (WGS84)-",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["GeoJSON", "wgs84", "MultiPoint"]
+        },
+        "geometry_only": {
+            "title": "Get only GeoJSON GeometryCollection?",
+            "description": "Specify whether to return only a GeoJSON GeometryCollection (in this case, LineStrings), instead of a GeoJSON FeatureCollection containing additional properties. Please write \"true\" or \"false\".",
+            "schema": {"enum": ["true", "false"]},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["GeoJSON", "GeometryCollection", "FeatureCollection"]
+        },
+        "add_segment_ids": {
+            "title": "Add segment ids?",
+            "description": "Specify whether to add the subcatchment ids of each segment along the path to the GeoJSON Feature's properties. Please write \"true\" or \"false\".",
+            "schema": {"enum": ["true", "false"]},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "comment": {
+            "title": "Comment",
+            "description": "Arbitrary string that will not be processed but returned, for user\"s convenience.",
+            "schema": {"type": "string"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["comment"]
+        }
+    },
+    "outputs": {
+        "paths_matrix": {
+            "title": "Shortest paths between the points",
+            "description": "Shortest paths between the provided locations, as a matrix, stored as JSON. Possibly not ideal. Wprk in progress. Routing is done via Dijkstra algorithm. Subcatchment ids and strahler order of each line segment along the way are included.",
+            "schema": {
+                "type": "object",
+                "contentMediaType": "application/json"
+            }
+        }
+    },
+    "example": {
+        "inputs": {
+            "points": {
+                "type": "MultiPoint",
+                "coordinates_wontwork": [
+                    [10.0, 53.0],
+                    [11.0, 52.0]
+                ],
+                "coordinates": [
+                    [9.937520027160646, 54.69422745526058],
+                    [9.9217, 54.6917],
+                    [9.9312, 54.6933]
+                ]
+            },
+            "comment": "located in schlei area"
+        }
+    }
+}
