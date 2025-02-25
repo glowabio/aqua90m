@@ -1,3 +1,7 @@
+import json
+import logging
+LOGGER = logging.getLogger(__name__)
+
 def return_hyperlink(output_name, requested_outputs):
 
     if requested_outputs is None:
