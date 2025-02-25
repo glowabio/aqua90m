@@ -3,15 +3,16 @@ import logging
 LOGGER = logging.getLogger(__name__)
 
 
-def get_dijkstra_ids(conn, subc_id_start, subc_id_end, reg_id, basin_id):
+def get_dijkstra_ids_one(conn, subc_id_start, subc_id_end, reg_id, basin_id):
     '''
     INPUT: subc_ids (start and end)
     OUTPUT: subc_ids (the entire path, incl. start and end)
     '''
 
     ### Define query:
-    query = '''
-    SELECT edge
+    ### Construct SQL query:
+    query = 'SELECT edge' # We are only interested in the subc_id of each line segment along the path.
+    query += '''
     FROM pgr_dijkstra('
         SELECT
         subc_id AS id,
@@ -21,7 +22,8 @@ def get_dijkstra_ids(conn, subc_id_start, subc_id_end, reg_id, basin_id):
         FROM hydro.stream_segments
         WHERE reg_id = {reg_id}
         AND basin_id = {basin_id}',
-        {subc_id_start}, {subc_id_end},
+        {start_subc_id},
+        {end_subc_id},
         directed := false);
     '''.format(reg_id = reg_id, basin_id = basin_id, subc_id_start = subc_id_start, subc_id_end = subc_id_end)
     query = query.replace("\n", " ")
@@ -37,19 +39,16 @@ def get_dijkstra_ids(conn, subc_id_start, subc_id_end, reg_id, basin_id):
     ### Get results and construct GeoJSON:
     LOGGER.debug('Iterating over the result rows...')
     all_ids = [subc_id_start] # Adding start segment, as it is not included in database return!
-    i = 0
     while (True):
-        i += 1
         row = cursor.fetchone()
+        if row is None: break
+        edge = row[0]
 
-        if row is None:
-            break
-
-        if row[0] == -1: # pgr_dijkstra returns -1 as the last row...
+        if edge == -1: # pgr_dijkstra returns -1 as the last edge...
             pass
 
         else:
-            all_ids.append(row[0]) # these are already integer!
+            all_ids.append(edge) # these are already integer!
 
     return all_ids
 
