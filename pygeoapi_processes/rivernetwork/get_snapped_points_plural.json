@@ -1,0 +1,68 @@
+{
+    "version": "0.0.1",
+    "id": "get-snapped-points-plural",
+    "use_case": "hydrography90m",
+    "title": {"en": "Get corrected coordinates: Snapped to nearest stream segment."},
+    "description": {
+        "en": "Return pairs of coordinates that were snapped to the nearest stream segments as GeoJSON points. Also return the stream segment as a GeoJSON LineString, and basin id, region id, subcatchment id."
+    },
+    "jobControlOptions": ["sync-execute", "async-execute"],
+    "keywords": ["subcatchment", "GeoFRESH", "stream", "stream-segment", "geojson", "hydrography90m"],
+    "links": [{
+        "type": "text/html",
+        "rel": "about",
+        "title": "GeoFRESH website",
+        "href": "https://geofresh.org/",
+        "hreflang": "en-US"
+    },
+    {
+        "type": "text/html",
+        "rel": "about",
+        "title": "On Stream segments (Hydrography90m)",
+        "href": "https://hydrography.org/hydrography90m/hydrography90m_layers",
+        "hreflang": "en-US"
+    }],
+    "inputs": {
+        "points": {
+            "title": "Points (GeoJSON)",
+            "description": "GeoJSON: GeometryCollection of MultiPoint items (WGS84)-",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["GeoJSON", "wgs84", "MultiPoint"]
+        },
+        "comment": {
+            "title": "Comment",
+            "description": "Arbitrary string that will not be processed but returned, for user\"s convenience.",
+            "schema": {"type": "string"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["comment"]
+        }
+    },
+    "outputs": {
+        "snapped_points": {
+            "title": "Snapped Points (GeoJSON)",
+            "description": "GeoJSON FeatureCollection, containing the snapped points (as Points), the local stream segment (as a LineString, including Strahler Order), the local subcatchment (as a Polygon, including Strahler Order), and a connecting line from the given point to the snapped point (as a LineString).",
+            "schema": {
+                "type": "object",
+                "contentMediaType": "application/json"
+            }
+        }
+    },
+    "example": {
+        "inputs": {
+            "points": {
+                "type": "MultiPoint",
+                "coordinates": [
+                    [9.937520027160646, 54.69422745526058],
+                    [9.9217, 54.6917],
+                    [9.9312, 54.6933]
+                ]
+            },
+            "comment": "located in schlei area"
+        }
+    }
+}
