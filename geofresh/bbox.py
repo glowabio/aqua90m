@@ -5,7 +5,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def get_bbox_feature(conn, subc_ids, basin_id, reg_id, add_subc_ids = False):
-    bbox_simplegeom = get_bbox_polygon(conn, subc_ids, basin_id, reg_id)
+    bbox_simplegeom = get_bbox_simplegeom(conn, subc_ids, basin_id, reg_id)
     bbox_feature = {
         "type": "Feature",
         "geometry": bbox_simplegeom,
@@ -131,5 +131,5 @@ if __name__ == "__main__":
     basin_id = 1292547
     reg_id = 58
     print('\nSTART RUNNING FUNCTION:')
-    res = get_bbox_polygon(conn, subc_ids, basin_id, reg_id)
+    res = get_bbox_simplegeom(conn, subc_ids, basin_id, reg_id)
     print('RESULT:\n%s' % res)

@@ -3,7 +3,6 @@ import logging
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 LOGGER = logging.getLogger(__name__)
 
-import argparse
 import os
 import sys
 import traceback
@@ -11,8 +10,9 @@ import json
 import psycopg2
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
 import pygeoapi.process.aqua90m.geofresh.upstream_subcids as upstream_subcids
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
 import pygeoapi.process.aqua90m.geofresh.dissolved as dissolved
+import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
+from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection_object_config
 
 
 '''
@@ -24,7 +24,7 @@ curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" 
     "lon": 9.931555,
     "lat": 54.695070,
     "get_type": "polygon",
-    "comment": "schlei-bei-rabenholz"
+    "comment": "schlei-near-rabenholz"
     }
 }'
 
@@ -81,16 +81,22 @@ class UpstreamDissolvedGetter(BaseProcessor):
         super().__init__(processor_def, PROCESS_METADATA)
         self.supports_outputs = True # Maybe before super() ?
         self.job_id = None
+        self.config = None
         # To support requested outputs, such as transmissionMode
         # https://github.com/geopython/pygeoapi/blob/fef8df120ec52121236be0c07022490803a47b92/pygeoapi/process/manager/base.py#L253
 
-
-    def __repr__(self):
-        return f'<UpstreamDissolvedGetter> {self.name}'
+        # Set config:
+        config_file_path = os.environ.get('AQUA90M_CONFIG_FILE', "./config.json")
+        with open(config_file_path, 'r') as config_file:
+            self.config = json.load(config_file)
 
 
     def set_job_id(self, job_id: str):
         self.job_id = job_id
+
+
+    def __repr__(self):
+        return f'<UpstreamDissolvedGetter> {self.name}'
 
 
     def execute(self, data, outputs=None):
@@ -99,15 +105,30 @@ class UpstreamDissolvedGetter(BaseProcessor):
         LOGGER.info('Outputs: %s' % outputs)
 
         try:
-            return self._execute(data, outputs)
+            conn = get_connection_object_config(self.config)
+            res = self._execute(data, outputs, conn)
+            LOGGER.debug('Closing connection...')
+            conn.close()
+            LOGGER.debug('Closing connection... Done.')
+            return res
+
+        except psycopg2.Error as e3:
+            conn.close()
+            err = f"{type(e3).__module__.removesuffix('.errors')}:{type(e3).__name__}: {str(e3).rstrip()}"
+            error_message = 'Database error: %s (%s)' % (err, str(e3))
+            LOGGER.error(error_message)
+            raise ProcessorExecuteError(user_msg = error_message)
+
         except Exception as e:
-            LOGGER.error(e)
+            conn.close()
+            LOGGER.error('During process execution, this happened: %s' % e)
             print(traceback.format_exc())
-            raise ProcessorExecuteError(e)
+            raise ProcessorExecuteError(e) # TODO: Can we feed e into ProcessExecuteError?
 
-    def _execute(self, data, requested_outputs):
+    def _execute(self, data, requested_outputs, conn):
 
-        # TODO: Must change behaviour based on content of requested_outputs
+        # TODO: Must change behaviour based on content of requested_outputs.
+        # So far, I ignore them...
         LOGGER.debug('Content of requested_outputs: %s' % requested_outputs)
 
         # User inputs
@@ -121,161 +142,106 @@ class UpstreamDissolvedGetter(BaseProcessor):
         # Parse booleans...
         get_json_directly = (get_json_directly.lower() == 'true')
 
-        # Get config
-        config_file_path = os.environ.get('AQUA90M_CONFIG_FILE', "./config.json")
-        with open(config_file_path, 'r') as config_file:
-            config = json.load(config_file)
+        # Overall goal: Get the upstream polygon (as one dissolved)!
+        LOGGER.info('START: Getting upstream dissolved polygon for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
 
-        geofresh_server = config['geofresh_server']
-        geofresh_port = config['geofresh_port']
-        database_name = config['database_name']
-        database_username = config['database_username']
-        database_password = config['database_password']
-        use_tunnel = config.get('use_tunnel')
-        ssh_username = config.get('ssh_username')
-        ssh_password = config.get('ssh_password')
-        localhost = config.get('localhost')
+        # Get reg_id, basin_id, subc_id, upstream_catchment_ids
+        subc_id, basin_id, reg_id = basic_queries.get_subc_id_basin_id_reg_id(
+            conn, LOGGER, lon, lat, subc_id)
+        upstream_catchment_ids = upstream_subcids.get_upstream_catchment_ids_incl_itself(
+            conn, subc_id, basin_id, reg_id)
 
-        error_message = None
+        # Get geometry (three types)
+        LOGGER.debug('...Getting upstream catchment dissolved polygon for subc_id: %s' % subc_id)
+        geojson_object = {}
+        if get_type.lower() == 'polygon':
+            geojson_object = dissolved.get_dissolved_simplegeom(
+                conn, upstream_catchment_ids, basin_id, reg_id)
+            LOGGER.debug('END: Received simple polygon : %s' % str(geojson_object)[0:50])
 
-        try:
-            conn = get_connection_object(geofresh_server, geofresh_port,
-                database_name, database_username, database_password,
-                use_tunnel=use_tunnel, ssh_username=ssh_username, ssh_password=ssh_password)
-        except sshtunnel.BaseSSHTunnelForwarderError as e1:
-            error_message = str(e1)
+        elif get_type.lower() == 'feature':
+            geojson_object = dissolved.get_dissolved_feature(
+                conn, upstream_catchment_ids, basin_id, reg_id, add_subc_ids = False)
+            if comment is not None:
+                geojson_object["properties"]["comment"] = comment
+            LOGGER.debug('END: Received feature : %s' % str(geojson_object)[0:50])
+       
+        elif get_type.lower() == 'featurecollection':
+            dissolved_feature = dissolved.get_dissolved_feature(
+                conn, upstream_catchment_ids, basin_id, reg_id, add_subc_ids = False)
 
-        try:
-            # Overall goal: Get the upstream polygon (as one dissolved)!
-            LOGGER.info('START: Getting upstream dissolved polygon for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
-
-            # Get reg_id, basin_id, subc_id, upstream_catchment_ids
-            subc_id, basin_id, reg_id = basic_queries.get_subc_id_basin_id_reg_id(
-                conn, LOGGER, lon, lat, subc_id)
-            upstream_catchment_ids = upstream_subcids.get_upstream_catchment_ids_incl_itself(
-                conn, subc_id, basin_id, reg_id)
-
-            # Get geometry (three types)
-            LOGGER.debug('...Getting upstream catchment dissolved polygon for subc_id: %s' % subc_id)
-            geojson_object = {}
-            if get_type.lower() == 'polygon':
-                geojson_object = dissolved.get_dissolved_simplegeom(
-                    conn, upstream_catchment_ids, basin_id, reg_id)
-                LOGGER.debug('END: Received simple polygon : %s' % str(geojson_object)[0:50])
-
-            elif get_type.lower() == 'feature':
-                geojson_object = dissolved.get_dissolved_feature(
-                    conn, upstream_catchment_ids, basin_id, reg_id, add_subc_ids = False)
-                if comment is not None:
-                    geojson_object["properties"]["comment"] = comment
-                LOGGER.debug('END: Received feature : %s' % str(geojson_object)[0:50])
-           
-            elif get_type.lower() == 'featurecollection':
-                dissolved_feature = dissolved.get_dissolved_feature(
-                    conn, upstream_catchment_ids, basin_id, reg_id, add_subc_ids = False)
-
-                # Create point:
-                point_feature = {
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [lon, lat]
-                    },
-                    "properties": {
-                        "subc_id": subc_id
-                    }
+            # Create point:
+            point_feature = {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [lon, lat]
+                },
+                "properties": {
+                    "subc_id": subc_id
                 }
+            }
 
-                # Assemble GeoJSON Feature Collection
-                # (point and dissolved upstream catchment):
-                geojson_object = {
-                    "type": "FeatureCollection",
-                    "features": [dissolved_feature, point_feature],
-                }
-                if comment is not None:
-                    geojson_object["comment"] = comment
-                LOGGER.debug('END: Received feature collection: %s' % str(geojson_object)[0:50])
+            # Assemble GeoJSON Feature Collection
+            # (point and dissolved upstream catchment):
+            geojson_object = {
+                "type": "FeatureCollection",
+                "features": [dissolved_feature, point_feature],
+            }
+            if comment is not None:
+                geojson_object["comment"] = comment
+            LOGGER.debug('END: Received feature collection: %s' % str(geojson_object)[0:50])
 
-            else:
-                err_msg = "Input parameter 'get_type' can only be one of Polygon or Feature or FeatureCollection!"
-                LOGGER.error(err_msg)
-                raise ProcessorExecuteError(user_msg=err_msg)
+        else:
+            err_msg = "Input parameter 'get_type' can only be one of Polygon or Feature or FeatureCollection!"
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(user_msg=err_msg)
 
-                
-        except ValueError as e2:
-            error_message = str(e2)
-            conn.close()
-            raise ValueError(e2)
-
-        except psycopg2.Error as e3:
-            err = f"{type(e3).__module__.removesuffix('.errors')}:{type(e3).__name__}: {str(e3).rstrip()}"
-            LOGGER.error(err)
-            error_message = str(e3)
-            error_message = str(err)
-            error_message = 'Database error. '
-            #if conn: conn.rollback()
-
-
-        LOGGER.debug('Closing connection...')
-        conn.close()
-        LOGGER.debug('Closing connection... Done.')
 
 
         ################
         ### Results: ###
         ################
 
-        if error_message is None:
-            outputs_dict = {}
+        outputs_dict = {}
 
-            # If the client requests a URL, we store it to file and pass the href:
-            # This part is implemented to enable the AIP.
-            #
-            # The code is based on commit e74d1e2, "First attempt at considering requested_outputs in return behaviour",
-            # but then I noticed that I treat the requested_outputs fundamentally wrong.
-            # This code here is now an attempt to provide the AIP with a version that does not
-            # change its behaviour, but that is not fundamentally wrong about requested_outputs.
-            # The other get_output_dissolved.py version may evolve, which may disrupt the Beta AIP.
-            if not get_json_directly:
-                LOGGER.debug('Client requested an URL in the response.')
+        # If the client requests a URL, we store it to file and pass the href:
+        # This part is implemented to enable the AIP.
+        #
+        # The code is based on commit e74d1e2, "First attempt at considering requested_outputs in return behaviour",
+        # but then I noticed that I treat the requested_outputs fundamentally wrong.
+        # This code here is now an attempt to provide the AIP with a version that does not
+        # change its behaviour, but that is not fundamentally wrong about requested_outputs.
+        # The other get_output_dissolved.py version may evolve, which may disrupt the Beta AIP.
+        if not get_json_directly:
+            LOGGER.debug('Client requested an URL in the response.')
 
-                # Store file
-                downloadfilename = 'polygon-%s.json' % self.job_id
-                downloadfilepath = config['download_dir']+downloadfilename
-                LOGGER.debug('Writing process result to file: %s' % downloadfilepath)
-                with open(downloadfilepath, 'w', encoding='utf-8') as downloadfile:
-                    json.dump(geojson_object, downloadfile, ensure_ascii=False, indent=4)
+            # Store file
+            downloadfilename = 'polygon-%s.json' % self.job_id
+            downloadfilepath = self.config['download_dir']+downloadfilename
+            LOGGER.debug('Writing process result to file: %s' % downloadfilepath)
+            with open(downloadfilepath, 'w', encoding='utf-8') as downloadfile:
+                json.dump(geojson_object, downloadfile, ensure_ascii=False, indent=4)
 
-                # Create download link:
-                downloadlink = config['download_url'] + downloadfilename
+            # Create download link:
+            downloadlink = self.config['download_url'] + downloadfilename
 
-                # Build response containing the link
-                output_name = 'polygon'
-                response_object = {
-                    "outputs": {
-                        "polygon": {
-                        'title': self.metadata['outputs'][output_name]['title'],
-                        'description': self.metadata['outputs'][output_name]['description'],
-                            "href": downloadlink
-                        }
+            # Build response containing the link
+            output_name = 'polygon'
+            response_object = {
+                "outputs": {
+                    "polygon": {
+                    'title': self.metadata['outputs'][output_name]['title'],
+                    'description': self.metadata['outputs'][output_name]['description'],
+                        "href": downloadlink
                     }
                 }
-                LOGGER.debug('Built response including link: %s' % response_object)
-                return 'application/json', response_object
+            }
+            LOGGER.debug('Built response including link: %s' % response_object)
+            return 'application/json', response_object
 
-            else: # If the client explicitly requests JSON!
-                LOGGER.debug('Client requested JSON response. Returning GeoJSON directly.')
-                return 'application/json', geojson_object
+        else: # If the client explicitly requests JSON!
+            LOGGER.debug('Client requested JSON response. Returning GeoJSON directly.')
+            return 'application/json', geojson_object
 
-
-        else:
-            output = { # TODO check syntax here!
-                'error_message': 'getting upstream polygon (dissolved) failed.',
-                'details': error_message}
-
-            if comment is not None:
-                output['comment'] = comment
-
-            LOGGER.warning('Getting upstream polygon (dissolved) failed. Returning error message.')
-            return 'application/json', output
 

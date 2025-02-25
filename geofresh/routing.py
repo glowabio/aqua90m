@@ -64,7 +64,7 @@ def get_dijkstra_ids_one(conn, start_subc_id, end_subc_id, reg_id, basin_id):
 
     ### Get results and construct GeoJSON:
     LOGGER.debug('Iterating over the result rows...')
-    all_ids = [subc_id_start] # Adding start segment, as it is not included in database return!
+    all_ids = [start_subc_id] # Adding start segment, as it is not included in database return!
     while (True):
         row = cursor.fetchone()
         if row is None: break

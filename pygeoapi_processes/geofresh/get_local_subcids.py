@@ -21,7 +21,7 @@ curl -X POST "http://localhost:5000/processes/get-local-subcids/execution" \
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
-    "comment": "schlei-bei-rabenholz"
+    "comment": "schlei-near-rabenholz"
     }
 }'
 

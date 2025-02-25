@@ -23,7 +23,7 @@ curl -X POST "http://localhost:5000/processes/get-upstream-subcids/execution" \
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
-    "comment": "schlei-bei-rabenholz"
+    "comment": "schlei-near-rabenholz"
     }
 }'
 
@@ -120,11 +120,13 @@ class UpstreamSubcidGetter(BaseProcessor):
             "upstream_ids": upstream_ids
         }
 
+        # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
         if utils.return_hyperlink('upstream_ids', requested_outputs):
-            return 'application/json', utils.store_to_json_file('upstream_ids',
-                output. self.metadata, self.job_id,
-                self.config['download_dir'], self.config['download_url'])
-
+            output_dict_with_url =  utils.store_to_json_file('upstream_ids',
+                output, self.metadata, self.job_id,
+                self.config['download_dir'],
+                self.config['download_url'])
+            return 'application/json', output_dict_with_url
         else:
             return 'application/json', output
 

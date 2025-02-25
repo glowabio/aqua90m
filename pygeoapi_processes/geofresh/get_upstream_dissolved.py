@@ -3,7 +3,6 @@ import logging
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 LOGGER = logging.getLogger(__name__)
 
-import argparse
 import os
 import sys
 import traceback
@@ -25,7 +24,7 @@ curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" 
     "lon": 9.931555,
     "lat": 54.695070,
     "geometry_only": "true",
-    "comment": "schlei-bei-rabenholz"
+    "comment": "schlei-near-rabenholz"
     }
 }'
 
@@ -137,6 +136,7 @@ class UpstreamDissolvedGetter(BaseProcessor):
             if comment is not None:
                 dissolved_simplegeom['comment'] = comment
 
+            # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             if utils.return_hyperlink('polygon', requested_outputs):
                 output_dict_with_url =  utils.store_to_json_file('polygon', dissolved_simplegeom,
                     self.metadata, self.job_id,
@@ -162,6 +162,7 @@ class UpstreamDissolvedGetter(BaseProcessor):
             if comment is not None:
                 dissolved_feature['properties']['comment'] = comment
 
+            # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             if utils.return_hyperlink('polygon', requested_outputs):
                 output_dict_with_url =  utils.store_to_json_file('polygon', dissolved_feature,
                     self.metadata, self.job_id,

@@ -25,7 +25,7 @@ curl -X POST "http://localhost:5000/processes/get-upstream-streamsegments/execut
     "lon": 9.931555,
     "lat": 54.695070,
     "geometry_only": "true",
-    "comment": "schlei-bei-rabenholz"
+    "comment": "schlei-near-rabenholz"
     }
 }'
 
@@ -38,7 +38,7 @@ curl -X POST "http://localhost:5000/processes/get-upstream-streamsegments/execut
     "lat": 54.695070,
     "geometry_only": "false",
     "add_upstream_ids": "true",
-    "comment": "schlei-bei-rabenholz"
+    "comment": "schlei-near-rabenholz"
     }
 }'
 
@@ -151,6 +151,7 @@ class UpstreamStreamSegmentsGetter(BaseProcessor):
             if comment is not None:
                 geometry_coll['comment'] = comment
 
+            # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             if utils.return_hyperlink('upstream_stream_segments', requested_outputs):
                 output_dict_with_url =  utils.store_to_json_file('polygons', geometry_coll,
                     self.metadata, self.job_id,
@@ -188,6 +189,7 @@ class UpstreamStreamSegmentsGetter(BaseProcessor):
             if comment is not None:
                 feature_coll['comment'] = comment
 
+            # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             if utils.return_hyperlink('upstream_stream_segments', requested_outputs):
                 output_dict_with_url =  utils.store_to_json_file('polygons', feature_coll,
                     self.metadata, self.job_id,

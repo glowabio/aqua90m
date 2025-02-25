@@ -25,7 +25,7 @@ curl -X POST "http://localhost:5000/pygeoapi-dev/processes/get-upstream-subcatch
     "lon": 9.931555,
     "lat": 54.695070,
     "geometry_only": "true",
-    "comment": "schlei-bei-rabenholz"
+    "comment": "schlei-near-rabenholz"
     }
 }'
 
@@ -38,7 +38,7 @@ curl -X POST "http://localhost:5000/pygeoapi-dev/processes/get-upstream-subcatch
     "lat": 54.695070,
     "geometry_only": "false",
     "add_upstream_ids": "true",
-    "comment": "schlei-bei-rabenholz"
+    "comment": "schlei-near-rabenholz"
     }
 }'
 
@@ -137,6 +137,7 @@ class UpstreamSubcatchmentGetter(BaseProcessor):
             if comment is not None:
                 geometry_coll['comment'] = comment
 
+            # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             if utils.return_hyperlink('polygons', requested_outputs):
                 output_dict_with_url =  utils.store_to_json_file('polygons', geometry_coll,
                     self.metadata, self.job_id,
@@ -159,6 +160,7 @@ class UpstreamSubcatchmentGetter(BaseProcessor):
             if comment is not None:
                 feature_coll['comment'] = comment
 
+            # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             if utils.return_hyperlink('polygons', requested_outputs):
                 output_dict_with_url =  utils.store_to_json_file('polygons',
                     feature_coll, self.metadata, self.job_id,

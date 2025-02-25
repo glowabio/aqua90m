@@ -55,7 +55,7 @@ curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plura
                 }
             ]
         },
-        "comment": "schlei-bei-rabenholz"
+        "comment": "schlei-near-rabenholz"
     }
 }'
 
@@ -67,7 +67,7 @@ curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plura
 --data '{
     "inputs": {
         "lonlatstring": "10.698832912677716,53.51710727672125;12.80898022975407,52.42187129944509;11.915323076217902,52.730867141970464;16.651903948708565,48.27779486850176;19.201146608148463,47.12192880511424;24.432498016999062,61.215505889934434",
-        "comment": "schlei-bei-rabenholz"
+        "comment": "schlei-near-rabenholz"
     }
 }'
 
@@ -280,7 +280,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
 
 
         if output_json is not None:
-            output['comment'] = comment
+            output_json['comment'] = comment
 
         # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
         # In this case, storing a JSON file is totally overdone! But for consistency's sake...

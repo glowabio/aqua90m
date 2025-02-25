@@ -22,7 +22,7 @@ curl -X POST "http://localhost:5000/processes/get-snapped-points/execution" \
     "lon": 9.931555,
     "lat": 54.695070,
     "geometry_only": "true",
-    "comment": "schlei-bei-rabenholz"
+    "comment": "schlei-near-rabenholz"
     }
 }'
 
@@ -34,7 +34,7 @@ curl -X POST "http://localhost:5000/processes/get-snapped-points/execution" \
     "lon": 9.931555,
     "lat": 54.695070,
     "geometry_only": "false",
-    "comment": "schlei-bei-rabenholz"
+    "comment": "schlei-near-rabenholz"
     }
 }'
 
@@ -126,6 +126,7 @@ class SnappedPointsGetter(BaseProcessor):
             if comment is not None:
                 snappedpoint_simplegeom['comment'] = comment
 
+            # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             if utils.return_hyperlink('snapped_point', requested_outputs):
                 output_dict_with_url =  utils.store_to_json_file('snapped_point', snappedpoint_simplegeom,
                     self.metadata, self.job_id,
@@ -147,6 +148,7 @@ class SnappedPointsGetter(BaseProcessor):
             if comment is not None:
                 snappedpoint_feature['properties']['comment'] = comment
 
+            # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             if utils.return_hyperlink('snapped_point', requested_outputs):
                 output_dict_with_url =  utils.store_to_json_file('snapped_point', snappedpoint_feature,
                     self.metadata, self.job_id,

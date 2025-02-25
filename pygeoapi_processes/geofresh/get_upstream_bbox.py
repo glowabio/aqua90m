@@ -3,7 +3,6 @@ import logging
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 LOGGER = logging.getLogger(__name__)
 
-import argparse
 import os
 import sys
 import traceback
@@ -65,6 +64,7 @@ class UpstreamBboxGetter(BaseProcessor):
         with open(config_file_path, 'r') as config_file:
             self.config = json.load(config_file)
 
+
     def set_job_id(self, job_id: str):
         self.job_id = job_id
 
@@ -86,11 +86,9 @@ class UpstreamBboxGetter(BaseProcessor):
         try:
             conn = get_connection_object_config(self.config)
             res = self._execute(data, outputs, conn)
-
             LOGGER.debug('Closing connection...')
             conn.close()
             LOGGER.debug('Closing connection... Done.')
-
             return res
 
         except psycopg2.Error as e3:
@@ -141,6 +139,7 @@ class UpstreamBboxGetter(BaseProcessor):
             if comment is not None:
                 bbox_simplegeom['comment'] = comment
 
+            # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             if utils.return_hyperlink('bbox', requested_outputs):
                 output_dict_with_url =  utils.store_to_json_file('bbox', bbox_simplegeom,
                     self.metadata, self.job_id,
@@ -167,6 +166,7 @@ class UpstreamBboxGetter(BaseProcessor):
             if comment is not None:
                 bbox_feature['properties']['comment'] = comment
 
+            # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             if utils.return_hyperlink('bbox', requested_outputs):
                 output_dict_with_url =  utils.store_to_json_file('bbox', bbox_feature,
                     self.metadata, self.job_id,
