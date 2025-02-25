@@ -236,70 +236,6 @@ def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id):
     return upstream_catchment_subcids
 
 
-def get_snapped_point_simple(conn, lon, lat, subc_id, basin_id, reg_id):
-    """
-    Example result:
-    2, {"type": "Point", "coordinates": [9.931555, 54.69625]}, {"type": "LineString", "coordinates": [[9.929583333333333, 54.69708333333333], [9.930416666666668, 54.69625], [9.932083333333335, 54.69625], [9.933750000000002, 54.694583333333334], [9.934583333333334, 54.694583333333334]]}
-
-    """
-    name = "get_snapped_point_simple"
-    LOGGER.debug("ENTERING: %s for point: lon=%s, lat=%s (subc_id %s)" % (name, lon, lat, subc_id))
-    
-    # Getting info from database:
-    """
-    SELECT seg.strahler,
-    ST_AsText(ST_LineInterpolatePoint(seg.geom, ST_LineLocatePoint(seg.geom, ST_SetSRID(ST_MakePoint(9.931555, 54.695070),4326)))),
-    ST_AsText(seg.geom)
-    FROM hydro.stream_segments seg WHERE seg.subc_id = 506251252;
-
-    Result:
-     strahler |        st_astext         |                                                                                    st_astext                                                                                    
-    ----------+--------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-            2 | POINT(9.931555 54.69625) | LINESTRING(9.929583333333333 54.69708333333333,9.930416666666668 54.69625,9.932083333333335 54.69625,9.933750000000002 54.694583333333334,9.934583333333334 54.694583333333334)
-    (1 row)
-    """
-
-    query = """
-    SELECT 
-    strahler,
-    ST_AsText(ST_LineInterpolatePoint(geom, ST_LineLocatePoint(geom, ST_SetSRID(ST_MakePoint({longitude}, {latitude}),4326)))),
-    ST_AsText(geom)
-    FROM hydro.stream_segments
-    WHERE subc_id = {subc_id}
-    AND basin_id = {basin_id}
-    AND reg_id = {reg_id}
-    """.format(subc_id = subc_id, longitude = lon, latitude = lat, basin_id = basin_id, reg_id = reg_id)
-    query = query.replace("\n", " ")
-
-    result_row = get_only_row(execute_query(conn, query), name)
-    if result_row is None:
-        LOGGER.warning("%s: Received result_row None for point: lon=%s, lat=%s (subc_id %s). This is weird. Any point should be snappable, right?" % (name, lon, lat, subc_id))
-        err_msg = "Weird: Could not snap point lon=%s, lat=%s" % (lon, lat) 
-        LOGGER.error(err_msg)
-        raise ValueError(err_msg)
-        # Or return features with empty geometries:
-        # This geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
-        # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
-        #snappedpoint_geojson = None
-        #streamsegment_geojson = None
-        #strahler = None
-
-    else:
-        LOGGER.debug('Extracting from database...')
-        strahler = result_row[0]
-        snappedpoint_wkt = result_row[1]
-        streamsegment_wkt = result_row[2]
-        LOGGER.debug('Transforming to GeoJSON...')
-        snappedpoint_point = geomet.wkt.loads(snappedpoint_wkt)
-        streamsegment_linestring = geomet.wkt.loads(streamsegment_wkt)
-        #LOGGER.debug("This is the snapped point for point: lon=%s, lat=%s (subc_id %s): %s" % (lon, lat, subc_id, snappedpoint_geojson))
-        #LOGGER.debug("This is the stream segment for point: lon=%s, lat=%s (subc_id %s): %s" % (lon, lat, subc_id, streamsegment_geojson))
-        #lon_snap = snappedpoint_geojson["coordinates"][0]
-        #lat_snap = snappedpoint_geojson["coordinates"][1]
-        LOGGER.debug("LEAVING: %s for point: lon=%s, lat=%s (subc_id %s)" % (name, lon, lat, subc_id))
-        return strahler, snappedpoint_point, streamsegment_linestring
-
-
 ###########################
 ### database connection ###
 ###########################
@@ -513,12 +449,6 @@ if __name__ == "__main__":
     upstream_ids = get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id)
     print("\nRESULT UPSTREAM IDS:\n%s" % upstream_ids)
     
-    print("\n(4) strahler, snapped point, stream segment: ")
-    strahler, point_snappedpoint, linestring_streamsegment = get_snapped_point_simple(conn, lon, lat, subc_id, basin_id, reg_id)
-    print("\nRESULT STRAHLER: %s" % strahler)
-    print("RESULT SNAPPED (Geometry/Point):\n%s" % point_snappedpoint)
-    print("\nRESULT SEGMENT (Geometry/Linestring):\n%s" % linestring_streamsegment)
-
 
     ###################################
     ### dijkstra between two points ###
