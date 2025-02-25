@@ -7,11 +7,27 @@ import os
 import json
 LOGGER = logging.getLogger(__name__)
 
-
-
 ###########################
 ### database connection ###
 ###########################
+
+def is_database_off(config_file_path = None):
+    # TODO Test!
+
+    # Read value from config file, if available:
+    if config_file_path is None:
+        config_file_path = os.environ.get('AQUA90M_CONFIG_FILE', "./config.json")
+    try:
+        DATABASE_OFF = False
+        with open(config_file_path, 'r') as config_file:
+            config = json.load(config_file)
+            DATABASE_OFF = config["DATABASE_OFF"]
+    except FileNotFoundError as e:
+        LOGGER.info("Database-Emergency-Off not configured (config file not found), using default (%s)." % DATABASE_OFF)
+    except KeyError as e:
+        LOGGER.info("Database-Emergency-Off not configured (config file does not contain item), using default (%s)." % DATABASE_OFF)
+
+    return DATABASE_OFF
 
 
 def open_ssh_tunnel(ssh_host, ssh_username, ssh_password, remote_host, remote_port, verbose=False):
@@ -38,9 +54,37 @@ def open_ssh_tunnel(ssh_host, ssh_username, ssh_password, remote_host, remote_po
     return tunnel
 
 
+def get_connection_object_config(config):
+
+    geofresh_server = config['geofresh_server']
+    geofresh_port = config['geofresh_port']
+    database_name = config['database_name']
+    database_username = config['database_username']
+    database_password = config['database_password']
+    use_tunnel = config.get('use_tunnel')
+    ssh_username = config.get('ssh_username')
+    ssh_password = config.get('ssh_password')
+    localhost = config.get('localhost')
+
+    try:
+        conn = get_connection_object(geofresh_server, geofresh_port,
+            database_name, database_username, database_password,
+            use_tunnel=use_tunnel, ssh_username=ssh_username, ssh_password=ssh_password)
+    except sshtunnel.BaseSSHTunnelForwarderError as e1:
+        LOGGER.error('SSH Tunnel Error: %s' % str(e1))
+        raise e1
+
+    return conn
+
+
 def connect_to_db(geofresh_server, db_port, database_name, database_username, database_password):
     # This blocks! Cannot run KeyboardInterrupt
     LOGGER.debug("Connecting to db...")
+    
+    if is_database_off():
+        LOGGER.error("Database was switched off via DATABASE_OFF in config.")
+        raise ValueError("Compute service switched off for maintenance reasons. Sorry.")
+    
     conn = psycopg2.connect(
        database=database_name,
        user=database_username,
@@ -133,7 +177,7 @@ if __name__ == "__main__":
     # In production, they would be called from the pygeoapi processes.
     #
     # source /home/mbuurman/work/pyg_geofresh/venv/bin/activate
-    # python /home/mbuurman/work/pyg_geofresh/pygeoapi/pygeoapi/process/geofresh/py_query_db.py 9.931555 54.695070 dbpw pw
+    # python /home/mbuurman/work/pyg_geofresh/pygeoapi/pygeoapi/process/geofresh/database_connection.py 9.931555 54.695070 dbpw pw
     #    where dbpw is the database passwort for postgresql, can be found in ~/.pgpass if you have access.
     #    where pw is your personal LDAP password for the ssh tunnel.
 
@@ -188,13 +232,13 @@ if __name__ == "__main__":
     lon = 9.931555
 
     # Run all queries:
-    print("\n(1) reg_id: ")
-    reg_id = get_reg_id(conn, lon, lat)
-    print("\nRESULT REG_ID: %s" % reg_id)
+    #print("\n(1) reg_id: ")
+    #reg_id = get_reg_id(conn, lon, lat)
+    #print("\nRESULT REG_ID: %s" % reg_id)
 
-    print("\n(2) subc_id, basin_id: ")
-    subc_id, basin_id = get_subc_id_basin_id(conn, lon, lat, reg_id)
-    print("\nRESULT BASIN_ID, SUBC_ID: %s, %s" % (basin_id, subc_id))
+    #print("\n(2) subc_id, basin_id: ")
+    #subc_id, basin_id = get_subc_id_basin_id(conn, lon, lat, reg_id)
+    #print("\nRESULT BASIN_ID, SUBC_ID: %s, %s" % (basin_id, subc_id))
     
     
 

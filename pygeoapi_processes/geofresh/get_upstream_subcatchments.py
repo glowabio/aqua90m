@@ -11,8 +11,9 @@ import json
 import psycopg2
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries 
 import pygeoapi.process.aqua90m.geofresh.upstream_subcids as upstream_subcids
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
 import pygeoapi.process.aqua90m.geofresh.get_polygons as get_polygons
+import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
+from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection_object_config
 
 
 '''
@@ -80,7 +81,7 @@ class UpstreamSubcatchmentGetter(BaseProcessor):
         LOGGER.info('Requested outputs: %s' % outputs)
 
         try:
-            conn = self.get_db_connection()
+            conn = get_connection_object_config(self.config)
             res = self._execute(data, outputs, conn)
 
             LOGGER.debug('Closing connection...')
@@ -136,8 +137,12 @@ class UpstreamSubcatchmentGetter(BaseProcessor):
             if comment is not None:
                 geometry_coll['comment'] = comment
 
-            if self.return_hyperlink('polygons', requested_outputs):
-                return 'application/json', self.store_to_json_file('polygons', geometry_coll)
+            if utils.return_hyperlink('polygons', requested_outputs):
+                output_dict_with_url =  utils.store_to_json_file('polygons', geometry_coll,
+                    self.metadata, self.job_id,
+                    self.config['download_dir'],
+                    self.config['download_url'])
+                return 'application/json', output_dict_with_url
             else:
                 return 'application/json', geometry_coll
 
@@ -154,71 +159,11 @@ class UpstreamSubcatchmentGetter(BaseProcessor):
             if comment is not None:
                 feature_coll['comment'] = comment
 
-            if self.return_hyperlink('polygons', requested_outputs):
-                return 'application/json', self.store_to_json_file('polygons', feature_coll)
+            if utils.return_hyperlink('polygons', requested_outputs):
+                output_dict_with_url =  utils.store_to_json_file('polygons',
+                    feature_coll, self.metadata, self.job_id,
+                    self.config['download_dir'],
+                    self.config['download_url'])
+                return 'application/json', output_dict_with_url
             else:
                 return 'application/json', feature_coll
-
-
-    def return_hyperlink(self, output_name, requested_outputs):
-
-        if requested_outputs is None:
-            return False
-
-        if 'transmissionMode' in requested_outputs.keys():
-            if requested_outputs['transmissionMode'] == 'reference':
-                return True
-
-        if output_name in requested_outputs.keys():
-            if 'transmissionMode' in requested_outputs[output_name]:
-                if requested_outputs[output_name]['transmissionMode'] == 'reference':
-                    return True
-
-        return False
-
-
-    def store_to_json_file(self, output_name, json_object):
-
-        # Store to file
-        downloadfilename = 'outputs-%s-%s.json' % (self.metadata['id'], self.job_id)
-        downloadfilepath = self.config['download_dir']+downloadfilename
-        LOGGER.debug('Writing process result to file: %s' % downloadfilepath)
-        with open(downloadfilepath, 'w', encoding='utf-8') as downloadfile:
-            json.dump(json_object, downloadfile, ensure_ascii=False, indent=4)
-
-        # Create download link:
-        downloadlink = self.config['download_url'] + downloadfilename
-
-        # Create output to pass back to user
-        outputs_dict = {
-            'title': self.metadata['outputs'][output_name]['title'],
-            'description': self.metadata['outputs'][output_name]['description'],
-            'href': downloadlink
-        }
-
-        return outputs_dict
-
-
-    def get_db_connection(self):
-
-        config = self.config
-
-        geofresh_server = config['geofresh_server']
-        geofresh_port = config['geofresh_port']
-        database_name = config['database_name']
-        database_username = config['database_username']
-        database_password = config['database_password']
-        use_tunnel = config.get('use_tunnel')
-        ssh_username = config.get('ssh_username')
-        ssh_password = config.get('ssh_password')
-        localhost = config.get('localhost')
-
-        try:
-            conn = get_connection_object(geofresh_server, geofresh_port,
-                database_name, database_username, database_password,
-                use_tunnel=use_tunnel, ssh_username=ssh_username, ssh_password=ssh_password)
-        except sshtunnel.BaseSSHTunnelForwarderError as e1:
-            LOGGER.error('SSH Tunnel Error: %s' % str(e1))
-            raise e1
-
-        return conn

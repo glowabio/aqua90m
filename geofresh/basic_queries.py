@@ -277,8 +277,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format='%(name)s:%(lineno)s - %(levelname)5s - %(message)s')
     logging.getLogger("paramiko").setLevel(logging.WARNING)
 
-    from py_query_db import connect_to_db
-    from py_query_db import get_connection_object
+    from database_connection import connect_to_db
+    from database_connection import get_connection_object
 
     # Get config
     config_file_path = "./config.json"
