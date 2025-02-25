@@ -494,7 +494,6 @@ if __name__ == '__main__':
         'geometries': [TODO]
     }
 
-
     config = json.loads('/home/.../config.json')
 
     conn = get_db_connection(config)
