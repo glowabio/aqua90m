@@ -47,6 +47,9 @@ curl -X POST "http://localhost:5000/processes/get-snapped-points/execution" \
     }
 }'
 
+# TODO: FUTURE: If we ever snap to stream segments outside of the immediate subcatchment,
+# need to adapt some stuff in this process...
+
 '''
 
 # Process metadata and description
@@ -145,12 +148,20 @@ class SnappedPointsGetterPlus(BaseProcessor):
             feature_coll = snapping.get_snapped_point_feature_coll(
                 conn, lon, lat, subc_id, basin_id, reg_id)
 
+            # Get strahler order (all features of the above collection contain strahler order):
+            strahler = feature_coll["features"][0]["properties"]["strahler"]
+
             # Get local subcatchment polygon too
             temp_feature_coll = get_polygons.get_subcatchment_polygons_feature_coll(
                 conn, [subc_id], basin_id, reg_id)
             subcatchment_feature = temp_feature_coll["features"][0]
             subcatchment_feature['properties']['subc_id'] = subc_id
             subcatchment_feature['properties']['strahler'] = strahler
+            subcatchment_feature['properties']['basin_id'] = basin_id
+            subcatchment_feature['properties']['reg_id'] = reg_id
+            subcatchment_feature['properties']['lon_original'] = lon
+            subcatchment_feature['properties']['lat_original'] = lat
+            subcatchment_feature['properties']['description'] = "sub_catchment containing the snapped point."
             feature_coll["features"].append(subcatchment_feature)
 
             if comment is not None:

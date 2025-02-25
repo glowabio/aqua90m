@@ -37,6 +37,9 @@ curl -X POST "http://localhost:5000/processes/get-snapped-points/execution" \
     "comment": "schlei-bei-rabenholz"
     }
 }'
+
+# TODO: FUTURE: If we ever snap to stream segments outside of the immediate subcatchment,
+# need to adapt some stuff in this process...
 '''
 
 # Process metadata and description

@@ -3,6 +3,8 @@ import geomet.wkt
 import logging
 LOGGER = logging.getLogger(__name__)
 
+# TODO: FUTURE: If we ever snap to stream segments outside of the immediate subcatchment,
+# need to adapt some stuff in this process...
 
 def get_snapped_point_geometry_coll(conn, lon, lat, subc_id, basin_id, reg_id):
     return _get_snapped_point_plus(conn, lon, lat, subc_id, basin_id, reg_id, make_feature = False)
@@ -82,6 +84,10 @@ def _get_snapped_point_plus(conn, lon, lat, subc_id, basin_id, reg_id, make_feat
         return geometry_coll
 
     if make_feature:
+        # TODO: Rethink. Redundant: Currently, all features get the same properties.
+        # We could add them to the FeatureCollection, but then they are not
+        # part of the official GeoJSON, as FeatureCollections do not have
+        # "properties".
 
         snappedpoint_feature = {
             "type": "Feature",
