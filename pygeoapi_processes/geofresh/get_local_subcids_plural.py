@@ -7,13 +7,10 @@ import traceback
 import json
 import psycopg2
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
+import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
+import pygeoapi.process.aqua90m.utils.geojsonhelpers as geojsonhelpers
+from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
 
-try:
-    import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
-    from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
-except ModuleNotFoundError:
-    import geofresh.basic_queries as basic_queries
-    from geofresh.py_query_db import get_connection_object
 
 
 '''
@@ -214,7 +211,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
         LOGGER.info('Requested outputs: %s' % outputs)
 
         try:
-            conn = get_db_connection(self.config)
+            conn = self.get_db_connection()
             res = self._execute(data, outputs, conn)
 
             LOGGER.debug('Closing connection...')
@@ -244,8 +241,8 @@ class LocalSubcidGetterPlural(BaseProcessor):
         # ... or values in a comma separated string, or in CSV: # Still WIP TODO
         csv = data.get('csv', None)
         lonlatstring = data.get('lonlatstring', None)
-        colname_lat = data.get('colname_lat', 'lat')
-        colname_lon = data.get('colname_lat', 'lon')
+        #colname_lat = data.get('colname_lat', 'lat')
+        #colname_lon = data.get('colname_lat', 'lon')
         #subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
         comment = data.get('comment') # optional
 
@@ -253,66 +250,10 @@ class LocalSubcidGetterPlural(BaseProcessor):
         ### Package all points as GeoJSON GeometryCollection ###
         ########################################################
 
-        # We collect all points as GeoJSON:
-        all_points = {
-            'type': 'GeometryCollection',
-            'geometries': []
-        }
-
-        # Quick and dirty: Points are provided as pairs in string:
-        if lonlatstring is not None:
-            LOGGER.debug('Found lon,lat pairs: %s' % lonlatstring)
-
-            lonlat = lonlatstring.split(';')
-            num_pairs = 0
-            for coordinate_pair in lonlat:
-                lon, lat = coordinate_pair.split(',')
-                all_points['geometries'].append({'type':'Point', 'coordinates':[lon, lat]})
-                LOGGER.debug('Added: %s' % {'type':'Point', 'coordinates':[lon, lat]})
-                num_pairs += 1
-
-            LOGGER.info('Found %s lon,lat pairs...' % num_pairs)
-
-        # Points are provided in CSV columns:
-        elif csv is not None:
-            pass
-            LOGGER.error('Not implemented!!')
-            raise ProcessorExecuteError('Not implemented!!')
-
-            '''
-            # In which format do we get it? Just as string I guess...
-            # Add the received input to temp dir:
-            output_temp_dir = WIP TODO
-            input_temp_path = output_temp_dir+os.sep+'someInputsWIP.csv'
-            with open(input_temp_path, 'w') as inputfile:
-                inputfile.write(csv)
-                # TODO Clean up csv files!
-            '''
-            
-
-        elif points_geojson is not None:
-
-            if points_geojson['type'] == 'GeometryCollection':
-                
-                for point in points_geojson['geometries']:
-                    if not point['type'] == 'Point':
-                        err_msg = 'Geometries in GeometryCollection have to be points, not: %s' % feature['type']
-                        LOGGER.error(err_msg)
-                        raise ProcessorExecuteError(err_msg)
-                
-                all_points = points_geojson
-
-            elif points_geojson['type'] == 'FeatureCollection':
-
-                for feature in points_geojson['features']:
-                    if not feature['geometry']['type'] == 'Point':
-                        err_msg = 'Features in FeatureCollection have to be points, not: %s' % feature['type']
-                        LOGGER.error(err_msg)
-                        raise ProcessorExecuteError(err_msg)
-
-                    all_points['geometries'].append(feature['geometry'])
-
-
+        all_points = geojsonhelpers.any_points_to_MultiPointCollection(LOGGER,
+            points_geojson = points_geojson,
+            lonlatstring = lonlatstring,
+            csv = csv)
 
         '''
         * Check bbox --> Europe, America, ...? Possible regional units!
@@ -339,13 +280,6 @@ class LocalSubcidGetterPlural(BaseProcessor):
         Or better, get polygon per reg_id / basin_id / subc_id ? GeoFRESH contains these, but then use them directly for subsetting?
         '''
 
-        # Note: This is not GeoJSON (on purpose), as we did not look for geometry yet.
-        #output = {
-        #    "subc_ids":   ', '.join(str(i) for i in set(subc_ids)),
-        #    "region_ids": ', '.join(str(i) for i in set(reg_ids)),
-        #    "basin_ids":  ', '.join(str(i) for i in set(basin_ids)),
-        #    "everything": everything
-        #}
 
         if comment is not None:
             output['comment'] = comment
@@ -396,54 +330,28 @@ class LocalSubcidGetterPlural(BaseProcessor):
         return outputs_dict
 
 
-def get_db_connection(config):
+    def get_db_connection(self):
 
-    geofresh_server = config['geofresh_server']
-    geofresh_port = config['geofresh_port']
-    database_name = config['database_name']
-    database_username = config['database_username']
-    database_password = config['database_password']
-    use_tunnel = config.get('use_tunnel')
-    ssh_username = config.get('ssh_username')
-    ssh_password = config.get('ssh_password')
-    localhost = config.get('localhost')
+        config = self.config
 
-    try:
-        conn = get_connection_object(geofresh_server, geofresh_port,
-            database_name, database_username, database_password,
-            use_tunnel=use_tunnel, ssh_username=ssh_username, ssh_password=ssh_password)
-    except sshtunnel.BaseSSHTunnelForwarderError as e1:
-        LOGGER.error('SSH Tunnel Error: %s' % str(e1))
-        raise e1
+        geofresh_server = config['geofresh_server']
+        geofresh_port = config['geofresh_port']
+        database_name = config['database_name']
+        database_username = config['database_username']
+        database_password = config['database_password']
+        use_tunnel = config.get('use_tunnel')
+        ssh_username = config.get('ssh_username')
+        ssh_password = config.get('ssh_password')
+        localhost = config.get('localhost')
 
-    return conn
+        try:
+            conn = get_connection_object(geofresh_server, geofresh_port,
+                database_name, database_username, database_password,
+                use_tunnel=use_tunnel, ssh_username=ssh_username, ssh_password=ssh_password)
+        except sshtunnel.BaseSSHTunnelForwarderError as e1:
+            LOGGER.error('SSH Tunnel Error: %s' % str(e1))
+            raise e1
 
+        return conn
 
-
-
-if __name__ == '__main__':
-    # TODO Move this to a different module!!!
-    print("In module products __package__, __name__ ==", __package__, __name__)
-
-    points_geojson = {
-        'type': 'GeometryCollection',
-        'geometries': [TODO]
-    }
-
-    config = json.loads('/home/.../config.json')
-
-    conn = get_db_connection(config)
-
-    reg_ids, basin_ids, subc_ids, everything = get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson)
-
-    # Note: This is not GeoJSON (on purpose), as we did not look for geometry yet.
-    output = {
-        "subc_ids":   ', '.join(str(i) for i in set(subc_ids)),
-        "region_ids": ', '.join(str(i) for i in set(reg_ids)),
-        "basin_ids":  ', '.join(str(i) for i in set(basin_ids)),
-        "everything": everything
-    }
-
-    print('HERE WE GO:\n%s' % output)
-    print('DONNEEEE')
 
