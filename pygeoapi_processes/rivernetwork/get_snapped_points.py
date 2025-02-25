@@ -10,12 +10,33 @@ import json
 import psycopg2
 from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_subc_id_basin_id_reg_id
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_snapped_point_simple
+import pygeoapi.process.aqua90m.geofresh.snapping as snapping
 
 '''
-curl -X POST "https://aqua.igb-berlin.de/pygeoapi/processes/get-snapped-points/execution" -H "Content-Type: application/json" -d "{\"inputs\":{ \"lon\": 9.931555, \"lat\": 54.695070, \"comment\":\"Schlei\"}}"
-curl -X POST "https://aqua.igb-berlin.de/pygeoapi/processes/get-snapped-points/execution" -H "Content-Type: application/json" -d "{\"inputs\":{ \"lon\": 9.931555, \"lat\": 54.695070, \"comment\":\"Schlei\", \"geometry_only\": \"true\"}}"
 
+# Request a simple Geometry (Point) (just one, not a collection):
+curl -X POST "http://localhost:5000/processes/get-snapped-points/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "geometry_only": "true",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
+
+# Request a Feature (Point) (just one, not a collection):
+curl -X POST "http://localhost:5000/processes/get-snapped-points/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "geometry_only": "false",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
 '''
 
 # Process metadata and description
@@ -90,46 +111,38 @@ class SnappedPointsGetter(BaseProcessor):
         LOGGER.info('START: Getting snapped point for lon, lat: %s, %s (or subc_id NONE)' % (lon, lat))
         subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, None)
 
-        # Get snapped points:
-        LOGGER.debug('... Now, getting snapped point for subc_id (as simple geometries): %s' % subc_id)
-        strahler, snappedpoint, streamsegment = get_snapped_point_simple(
-            conn, lon, lat, subc_id, basin_id, reg_id)
-
         # Return geometry only:
         if geometry_only:
+
+            # Get snapped point:
+            LOGGER.debug('... Now, getting snapped point for subc_id (as simple geometry): %s' % subc_id)
+            snappedpoint_simplegeom = snapping.get_snapped_point_simplegeom(
+                conn, lon, lat, subc_id, basin_id, reg_id)
             
             if comment is not None:
-                snappedpoint['comment'] = comment
+                snappedpoint_simplegeom['comment'] = comment
 
             if self.return_hyperlink('snapped_point', requested_outputs):
-                return 'application/json', self.store_to_json_file('snapped_point', snappedpoint)
+                return 'application/json', self.store_to_json_file('snapped_point', snappedpoint_simplegeom)
             else:
-                return 'application/json', snappedpoint
+                return 'application/json', snappedpoint_simplegeom
 
 
         # Return Feature, incl. ids, strahler and original lonlat:
         if not geometry_only:
 
-            feature = {
-                "type": "Feature",
-                "geometry": snappedpoint,
-                "properties": {
-                    "subcatchment_id": subc_id,
-                    "strahler": strahler,
-                    "basin_id": basin_id,
-                    "reg_id": reg_id,
-                    "lon_original": lon,
-                    "lat_original": lat,
-                }
-            }
+            # Get snapped point:
+            LOGGER.debug('... Now, getting snapped point for subc_id (as simple geometry): %s' % subc_id)
+            snappedpoint_feature = snapping.get_snapped_point_feature(
+                conn, lon, lat, subc_id, basin_id, reg_id)
 
             if comment is not None:
-                feature['properties']['comment'] = comment
+                snappedpoint_feature['properties']['comment'] = comment
 
             if self.return_hyperlink('snapped_point', requested_outputs):
-                return 'application/json', self.store_to_json_file('snapped_point', feature)
+                return 'application/json', self.store_to_json_file('snapped_point', snappedpoint_feature)
             else:
-                return 'application/json', feature
+                return 'application/json', snappedpoint_feature
 
 
     def return_hyperlink(self, output_name, requested_outputs):

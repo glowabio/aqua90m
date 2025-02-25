@@ -11,8 +11,9 @@ import json
 import psycopg2
 import pygeoapi.process.aqua90m.geofresh.upstream_helpers as helpers
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_snapped_point_simple
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_polygon_for_subcid_simple
+import pygeoapi.process.aqua90m.geofresh.snapping as snapping
+
 
 '''
 Note:
@@ -21,7 +22,30 @@ This should be replaced by using the normal get_snapped_point.py with parameter 
 but then I need to change my test HTML client, which currently only can make different process calls
 by using different process id, and not by adding parameters.
 
-curl -X POST "https://aqua.igb-berlin.de/pygeoapi/processes/get-snapped-point/execution" -H "Content-Type: application/json" -d "{\"inputs\":{ \"lon\": 9.931555, \"lat\": 54.695070, \"comment\":\"Nordoestliche Schlei, bei Rabenholz\"}}"
+
+# Request a GeometryCollection (Point, 2x LineString):
+curl -X POST "http://localhost:5000/processes/get-snapped-points/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "geometry_only": "true",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
+
+# Request a FeatureCollection (Point, 2x LineString, Polygon):
+curl -X POST "http://localhost:5000/processes/get-snapped-points/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "geometry_only": "false",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
 
 '''
 
@@ -98,29 +122,13 @@ class SnappedPointsGetterPlus(BaseProcessor):
         subc_id, basin_id, reg_id = helpers.get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, None)
 
         # Get snapped point:
-        LOGGER.debug('... Now, getting snapped point for subc_id (as simple geometries): %s' % subc_id)
-        strahler, snappedpoint, streamsegment = get_snapped_point_simple(
-            conn, lon, lat, subc_id, basin_id, reg_id)
-
-        # Extract snapped coordinates:
-        snap_lon = snappedpoint["coordinates"][0]
-        snap_lat = snappedpoint["coordinates"][1]
-
-        # Make connecting line:
-        connecting_line = {
-            "type": "LineString",
-            "coordinates":[[lon,lat],[snap_lon,snap_lat]]
-        }
-
-        # Get local subcatchment polygon too
-        subcatchment_simple = get_polygon_for_subcid_simple(conn, subc_id, basin_id, reg_id)
+        LOGGER.debug('... Now, getting snapped point and friends for subc_id: %s' % subc_id)
 
         # Return only geometry:
         if geometry_only:
-            geometry_coll = {
-                "type": "GeometryCollection",
-                "geometries": [snappedpoint, streamsegment, connecting_line]
-            }
+
+            geometry_coll = snapping.get_snapped_point_geometry_coll(
+                conn, lon, lat, subc_id, basin_id, reg_id)
 
             if comment is not None:
                 geometry_coll['comment'] = comment
@@ -134,55 +142,22 @@ class SnappedPointsGetterPlus(BaseProcessor):
         # Return feature collection:
         if not geometry_only:
 
-            # Make feature from snapped point:
-            snappedpoint_feature = {
-                "type": "Feature",
-                "geometry": snappedpoint,
-                "properties": {
-                    "subcatchment_id": subc_id,
-                    "basin_id": basin_id,
-                    "reg_id": reg_id,
-                    "lon_original": lon,
-                    "lat_original": lat,
-                }
-            }
+            feature_coll = snapping.get_snapped_point_feature_coll(
+                conn, lon, lat, subc_id, basin_id, reg_id)
 
-            # Make feature from snapped point:
-            streamsegment_feature = {
-                "type": "Feature",
-                "geometry": streamsegment,
-                "properties": {
-                    "subcatchment_id": subc_id,
-                    "basin_id": basin_id,
-                    "reg_id": reg_id,
-                    "strahler_order": strahler
-                }
-            }
-
-            # Make feature from subcatchment polygon:
+            # Get local subcatchment polygon too
+            subcatchment_simple = get_polygon_for_subcid_simple(conn, subc_id, basin_id, reg_id)
             subcatchment_feature = {
                 "type": "Feature",
                 "geometry": subcatchment_simple,
                 "properties": {
-                    "subcatchment_id": subc_id,
+                    "subc_id": subc_id,
                     "basin_id": basin_id,
                     "reg_id": reg_id,
-                    "strahler_order": strahler
+                    "strahler": strahler
                 }
             }
-
-            # Make feature from connecting line:
-            connecting_line_feature = {
-                "type": "Feature",
-                "properties": {"description": "connecting line"},
-                "geometry": connecting_line
-            }
-
-            # Create FeatureCollection:
-            feature_coll = {
-                "type": "FeatureCollection",
-                "features": [snappedpoint_feature, streamsegment_feature, connecting_line_feature, subcatchment_feature]
-            }
+            feature_coll["features"].append(subcatchment_feature)
 
             if comment is not None:
                 feature_coll['comment'] = comment
