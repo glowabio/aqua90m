@@ -29,7 +29,7 @@ curl -X POST "http://localhost:5000/processes/get-upstream-bbox/execution" \
     }
 }'
 
-# Request a Feature (polygon):
+# Request a Feature (Polygon) (just one, not a collection):
 curl -X POST "http://localhost:5000/processes/get-upstream-bbox/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -128,13 +128,13 @@ class UpstreamBboxGetter(BaseProcessor):
         subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, subc_id)
         upstream_ids = get_upstream_catchment_ids(conn, subc_id, basin_id, reg_id, LOGGER)
 
-        # Get bounding box:
-        bbox_geojson = get_bbox_polygon.get_bbox_polygon(
-            conn, upstream_ids, basin_id, reg_id)
-        # This geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
-        # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
-
         if geometry_only:
+
+            # Get bounding box:
+            bbox_simplegeom = get_bbox_polygon.get_bbox_polygon(
+                conn, upstream_ids, basin_id, reg_id)
+            # This geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
+            # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
 
             if comment is not None:
                 bbox_simplegeom['comment'] = comment
@@ -146,24 +146,20 @@ class UpstreamBboxGetter(BaseProcessor):
 
         if not geometry_only:
 
-            # Generate feature:
+            # Get bounding box:
+            # This geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
+            # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
+            bbox_feature = get_bbox_polygon.get_bbox_feature(
+                conn, upstream_ids, basin_id, reg_id, add_subc_ids = add_upstream_ids)
+
+
+            # Add some info to the Feature:
             # TODO: Should we include the requested lon and lat? Maybe as a point? Then FeatureCollection?
-            bbox_feature = {
-                "type": "Feature",
-                "geometry": bbox_simplegeom,
-                "properties": {
-                    "description": "Bounding box of the upstream catchment of subcatchment %s" % subc_id,
-                    "subc_id": subc_id, # TODO how to name it?
-                    "basin_id": basin_id,
-                    "reg_id": reg_id
-                }
-            }
+            bbox_feature["description"] = "Bounding box of the upstream catchment of subcatchment %s" % subc_id
+            bbox_feature["bbox_of_upstream_catchment_of"] = subc_id
 
             if comment is not None:
                 bbox_feature['properties']['comment'] = comment
-
-            if add_upstream_ids:
-                bbox_feature['properties']['upstream_ids'] = upstream_ids
 
             if self.return_hyperlink('bbox', requested_outputs):
                 return 'application/json', self.store_to_json_file('bbox', bbox_feature)

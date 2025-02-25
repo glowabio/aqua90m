@@ -30,7 +30,6 @@ curl -X POST "http://localhost:5000/processes/get-upstream-streamsegments/execut
 }'
 
 # Request a FeatureCollection (LineStrings):
-
 curl -X POST "http://localhost:5000/processes/get-upstream-streamsegments/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -175,6 +174,7 @@ class UpstreamStreamSegmentsGetter(BaseProcessor):
                 feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(
                     conn, upstream_ids, basin_id, reg_id, add_subc_ids = add_upstream_ids)
 
+            # Add some info to the FeatureCollection:
             feature_coll["part_of_upstream_catchment_of"] = subc_id
 
             LOGGER.debug('END: Received FeatureCollection: %s' % str(feature_coll)[0:50])

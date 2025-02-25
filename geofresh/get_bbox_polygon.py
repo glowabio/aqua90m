@@ -4,6 +4,24 @@ import logging
 LOGGER = logging.getLogger(__name__)
 
 
+def get_bbox_feature(conn, subc_ids, basin_id, reg_id, add_subc_ids = False):
+    bbox_simplegeom = get_bbox_polygon(conn, subc_ids, basin_id, reg_id)
+    bbox_feature = {
+        "type": "Feature",
+        "geometry": bbox_simplegeom,
+        "properties": {
+            "basin_id": basin_id,
+            "reg_id": reg_id,
+            "subc_ids": subc_ids
+        }
+    }
+
+    if add_subc_ids:
+        bbox_feature["subc_ids"] = subc_ids
+
+    return bbox_feature
+
+
 def get_bbox_polygon(conn, subc_ids, basin_id, reg_id):
     """
     Returns GeoJSON Geometry (can be None / null)!
