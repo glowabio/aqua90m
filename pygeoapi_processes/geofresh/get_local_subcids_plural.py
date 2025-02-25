@@ -1,21 +1,17 @@
 import logging
 LOGGER = logging.getLogger(__name__)
 
-import argparse
 import os
 import sys
 import traceback
 import json
 import psycopg2
-
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 
 try:
     import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
     from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
 except ModuleNotFoundError:
-    #from aqua90m.geofresh.basic_queries import get_subc_id_basin_id_reg_id
-    #from aqua90m.geofresh.py_query_db import get_connection_object
     import geofresh.basic_queries as basic_queries
     from geofresh.py_query_db import get_connection_object
 
@@ -190,7 +186,7 @@ metadata_title_and_path = script_title_and_path.replace('.py', '.json')
 PROCESS_METADATA = json.load(open(metadata_title_and_path))
 
 
-class LocalSubcidPluralGetter(BaseProcessor):
+class LocalSubcidGetterPlural(BaseProcessor):
 
     def __init__(self, processor_def):
         super().__init__(processor_def, PROCESS_METADATA)
@@ -209,7 +205,7 @@ class LocalSubcidPluralGetter(BaseProcessor):
 
 
     def __repr__(self):
-        return f'<LocalSubcidGetter> {self.name}'
+        return f'<LocalSubcidGetterPlural> {self.name}'
 
 
     def execute(self, data, outputs=None):
@@ -243,12 +239,13 @@ class LocalSubcidPluralGetter(BaseProcessor):
 
     def _execute(self, data, requested_outputs, conn):
 
-        # User inputs
+        # User inputs: GeoJSON...
+        points_geojson = data.get('points_geojson', None)
+        # ... or values in a comma separated string, or in CSV: # Still WIP TODO
         csv = data.get('csv', None)
         lonlatstring = data.get('lonlatstring', None)
         colname_lat = data.get('colname_lat', 'lat')
         colname_lon = data.get('colname_lat', 'lon')
-        points_geojson = data.get('points_geojson', None)
         #subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
         comment = data.get('comment') # optional
 
@@ -329,7 +326,7 @@ class LocalSubcidPluralGetter(BaseProcessor):
         ### Get info point by point ###
         ###############################
 
-        reg_ids, basin_ids, subc_ids, everything = get_subc_id_basin_id_reg_id_for_all(
+        output = basic_queries.get_subc_id_basin_id_reg_id_for_all(
             conn, LOGGER, all_points)
 
         ################
@@ -343,12 +340,12 @@ class LocalSubcidPluralGetter(BaseProcessor):
         '''
 
         # Note: This is not GeoJSON (on purpose), as we did not look for geometry yet.
-        output = {
-            "subc_ids":   ', '.join(str(i) for i in set(subc_ids)),
-            "region_ids": ', '.join(str(i) for i in set(reg_ids)),
-            "basin_ids":  ', '.join(str(i) for i in set(basin_ids)),
-            "everything": everything
-        }
+        #output = {
+        #    "subc_ids":   ', '.join(str(i) for i in set(subc_ids)),
+        #    "region_ids": ', '.join(str(i) for i in set(reg_ids)),
+        #    "basin_ids":  ', '.join(str(i) for i in set(basin_ids)),
+        #    "everything": everything
+        #}
 
         if comment is not None:
             output['comment'] = comment
@@ -422,67 +419,6 @@ def get_db_connection(config):
     return conn
 
 
-def get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson):
-    # TODO: This is not super efficient, but the quickest to implement :) TODO
-    dummy = None
-    everything = {}
-    basin_ids = []
-    reg_ids = []
-    subc_ids = []
-    num = len(points_geojson['geometries'])
-    for point in points_geojson['geometries']:
-        lon, lat = point['coordinates']
-        print('Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
-        subc_id, basin_id, reg_id = basic_queries.get_subc_id_basin_id_reg_id(
-            conn, LOGGER, lon, lat, dummy)
-        print('TYPES: %s %s %s' % (type(reg_id), type(basin_id), type(subc_id)))
-        print('VALUES: %s %s %s' % (reg_id, basin_id, subc_id))
-        reg_ids.append(str(reg_id))
-        basin_ids.append(str(basin_id))
-        subc_ids.append(str(subc_id))
-
-        if not reg_id in everything:
-            everything[reg_id] = {basin_id: {subc_id: [point]}}
-        else:
-            if not basin_id in everything[reg_id]:
-                everything[reg_id][basin_id] = {subc_id: [point]}
-            else:
-                if not subc_id in everything[reg_id][basin_id]:
-                    everything[reg_id][basin_id][subc_id] = [point]
-                else:
-                    everything[reg_id][basin_id][subc_id].append(point)
-
-
-    # Extensive logging...
-    LOGGER.info('Of %s points, ...')
-    
-    # Stats reg_id...
-    if len(set(reg_ids)) == 1:
-        LOGGER.info('... all %s points fall into regional unit with reg_id %s' % (num, reg_ids[0]))
-    else:
-        reg_id_counts = {reg_id: reg_ids.count(reg_id) for reg_id in reg_ids}
-        for reg_id in set(reg_ids):
-            LOGGER.info('... %s points fall into regional unit with reg_id %s' % (reg_id_counts[reg_id], reg_id))
-    
-    # Stats basin_id...
-    if len(set(basin_ids)) == 1:
-        LOGGER.info('... all %s points fall into drainage basin with basin_id %s' % (num, basin_ids[0]))
-    else:
-        #basin_id_counts = {basin_id:basin_ids.count(i) for basin_id in basin_ids}
-        basin_id_counts = {basin_id: basin_ids.count(basin_id) for basin_id in basin_ids}
-        for basin_id in set(basin_ids):
-            LOGGER.info('... %s points fall into drainage basin with basin_id %s' % (basin_id_counts[basin_id], basin_id))
-
-    # Stats subc_id...
-    if len(set(subc_ids)) == 1:
-        LOGGER.info('... all %s points fall into subcatchment with subc_id %s' % (num, subc_ids[0]))
-    else:
-        #subc_id_counts = {subc_id:subc_ids.count(i) for subc_id in subc_ids}
-        subc_id_counts = {subc_id: subc_ids.count(subc_id) for subc_id in subc_ids}
-        for subc_id in set(subc_ids):
-            LOGGER.info('... %s points fall into subcatchment with subc_id %s' % (subc_id_counts[subc_id], subc_id))
-
-    return reg_ids, basin_ids, subc_ids, everything
 
 
 if __name__ == '__main__':

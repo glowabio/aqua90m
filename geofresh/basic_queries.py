@@ -190,6 +190,83 @@ def get_subc_id_basin_id_reg_id_from_subc_id(conn, subc_id, LOGGER):
     return subc_id, basin_id, reg_id
 
 
+#################################
+### for many points at a time ###
+#################################
+
+def get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson):
+
+    dummy = None
+    everything = {}
+    basin_ids = []
+    reg_ids = []
+    subc_ids = []
+    num = len(points_geojson['geometries'])
+
+    # Iterate over points and call "get_subc_id_basin_id_reg_id" for each point:
+    # TODO: This is not super efficient, but the quickest to implement :)
+    for point in points_geojson['geometries']:
+        lon, lat = point['coordinates']
+        LOGGER.debug('Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
+        subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(
+            conn, LOGGER, lon, lat, dummy)
+        LOGGER.debug('TYPES: %s %s %s' % (type(reg_id), type(basin_id), type(subc_id)))
+        LOGGER.debug('VALUES: %s %s %s' % (reg_id, basin_id, subc_id))
+        reg_ids.append(str(reg_id))
+        basin_ids.append(str(basin_id))
+        subc_ids.append(str(subc_id))
+
+        if not reg_id in everything:
+            everything[reg_id] = {basin_id: {subc_id: [point]}}
+        else:
+            if not basin_id in everything[reg_id]:
+                everything[reg_id][basin_id] = {subc_id: [point]}
+            else:
+                if not subc_id in everything[reg_id][basin_id]:
+                    everything[reg_id][basin_id][subc_id] = [point]
+                else:
+                    everything[reg_id][basin_id][subc_id].append(point)
+
+
+    # Extensive logging...
+    LOGGER.info('Of %s points, ...')
+
+    # Stats reg_id...
+    if len(set(reg_ids)) == 1:
+        LOGGER.info('... all %s points fall into regional unit with reg_id %s' % (num, reg_ids[0]))
+    else:
+        reg_id_counts = {reg_id: reg_ids.count(reg_id) for reg_id in reg_ids}
+        for reg_id in set(reg_ids):
+            LOGGER.info('... %s points fall into regional unit with reg_id %s' % (reg_id_counts[reg_id], reg_id))
+
+    # Stats basin_id...
+    if len(set(basin_ids)) == 1:
+        LOGGER.info('... all %s points fall into drainage basin with basin_id %s' % (num, basin_ids[0]))
+    else:
+        #basin_id_counts = {basin_id:basin_ids.count(i) for basin_id in basin_ids}
+        basin_id_counts = {basin_id: basin_ids.count(basin_id) for basin_id in basin_ids}
+        for basin_id in set(basin_ids):
+            LOGGER.info('... %s points fall into drainage basin with basin_id %s' % (basin_id_counts[basin_id], basin_id))
+
+    # Stats subc_id...
+    if len(set(subc_ids)) == 1:
+        LOGGER.info('... all %s points fall into subcatchment with subc_id %s' % (num, subc_ids[0]))
+    else:
+        #subc_id_counts = {subc_id:subc_ids.count(i) for subc_id in subc_ids}
+        subc_id_counts = {subc_id: subc_ids.count(subc_id) for subc_id in subc_ids}
+        for subc_id in set(subc_ids):
+            LOGGER.info('... %s points fall into subcatchment with subc_id %s' % (subc_id_counts[subc_id], subc_id))
+
+    # Note: This is not GeoJSON (on purpose), as we did not look for geometry yet.
+    output = {
+        "subc_ids":   ', '.join(str(i) for i in set(subc_ids)),
+        "region_ids": ', '.join(str(i) for i in set(reg_ids)),
+        "basin_ids":  ', '.join(str(i) for i in set(basin_ids)),
+        "everything": everything
+    }
+
+    return output
+
 
 
 if __name__ == "__main__":
@@ -259,4 +336,38 @@ if __name__ == "__main__":
     lon = 9.931555
     lat = 54.695070
     res = get_subc_id_basin_id_reg_id(conn, LOGGER, lon = lon, lat = lat, subc_id = None)
+    print('RESULT: %s %s %s' % (res[0], res[1], res[2]))
+
+    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all (using Multipoint)')
+    points_geojson = {
+        "type": "GeometryCollection",
+        "geometries": [
+            {
+                "type": "Point",
+                "coordinates": [ 10.698832912677716, 53.51710727672125 ]
+            },
+            {
+                "type": "Point",
+                "coordinates": [ 12.80898022975407, 52.42187129944509 ]
+            },
+            {
+                "type": "Point",
+                "coordinates": [ 11.915323076217902, 52.730867141970464 ]
+            },
+            {
+                "type": "Point",
+                "coordinates": [ 16.651903948708565, 48.27779486850176 ]
+            },
+            {
+                "type": "Point",
+                "coordinates": [ 19.201146608148463, 47.12192880511424 ]
+            },
+            {
+                "type": "Point",
+                "coordinates": [ 24.432498016999062, 61.215505889934434 ]
+            }
+        ]
+    }
+    res = get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson)
     print('RESULT:\n%s' % res)
+
