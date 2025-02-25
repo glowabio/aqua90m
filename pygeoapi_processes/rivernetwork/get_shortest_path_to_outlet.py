@@ -9,7 +9,7 @@ import sys
 import traceback
 import json
 import psycopg2
-import pygeoapi.process.aqua90m.geofresh.upstream_helpers as helpers
+import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
 import pygeoapi.process.aqua90m.geofresh.routing as routing
 import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
@@ -118,7 +118,8 @@ class ShortestPathToOutletGetter(BaseProcessor):
         # Overall goal: Get the dijkstra shortest path (as linestrings)!
         LOGGER.info('START: Getting dijkstra shortest path for lon %s, lat %s (or subc_id %s) to sea' % (
             lon_start, lat_start, subc_id1))
-        subc_id1, basin_id1, reg_id1 = helpers.get_subc_id_basin_id_reg_id(conn, LOGGER, lon_start, lat_start, subc_id1)
+        subc_id1, basin_id1, reg_id1 = basic_queries.get_subc_id_basin_id_reg_id(
+            conn, LOGGER, lon_start, lat_start, subc_id1)
 
         # Outlet has minus basin_id as subc_id!
         subc_id2 = -basin_id1

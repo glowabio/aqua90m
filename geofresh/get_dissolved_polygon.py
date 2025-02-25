@@ -4,7 +4,6 @@ import logging
 LOGGER = logging.getLogger(__name__)
 
 
-#def get_upstream_catchment_dissolved_feature(conn, subc_id, upstream_ids, basin_id, reg_id, **kwargs):
 def get_dissolved_feature(conn, subc_ids, basin_id, reg_id, add_subc_ids = False):
 
     dissolved_simplegeom = get_dissolved_simplegeom(conn, subc_ids, basin_id, reg_id)
@@ -26,7 +25,6 @@ def get_dissolved_feature(conn, subc_ids, basin_id, reg_id, add_subc_ids = False
     return dissolved_feature
 
 
-#def get_upstream_catchment_dissolved_geometry(conn, subc_id, upstream_ids, basin_id, reg_id):
 def get_dissolved_simplegeom(conn, subc_ids, basin_id, reg_id):
     """
     Example result:

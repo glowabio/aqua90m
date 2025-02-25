@@ -9,7 +9,7 @@ import sys
 import traceback
 import json
 import psycopg2
-import pygeoapi.process.aqua90m.geofresh.upstream_helpers as helpers
+import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
 import pygeoapi.process.aqua90m.geofresh.get_polygons as get_polygons
 import pygeoapi.process.aqua90m.geofresh.snapping as snapping
@@ -122,7 +122,8 @@ class SnappedPointsGetterPlus(BaseProcessor):
 
         # Get reg_id, basin_id, subc_id, upstream_ids
         LOGGER.info('START: Getting snapped point for lon, lat: %s, %s (or subc_id NONE)' % (lon, lat))
-        subc_id, basin_id, reg_id = helpers.get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, None)
+        subc_id, basin_id, reg_id = basic_queries.get_subc_id_basin_id_reg_id(
+            conn, LOGGER, lon, lat, None)
 
         # Get snapped point:
         LOGGER.debug('... Now, getting snapped point and friends for subc_id: %s' % subc_id)

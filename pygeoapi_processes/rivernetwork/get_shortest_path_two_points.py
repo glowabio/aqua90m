@@ -9,7 +9,7 @@ import sys
 import traceback
 import json
 import psycopg2
-import pygeoapi.process.aqua90m.geofresh.upstream_helpers as helpers
+import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
 import pygeoapi.process.aqua90m.geofresh.routing as routing
 import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
@@ -126,8 +126,10 @@ class ShortestPathTwoPointsGetter(BaseProcessor):
             lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end))
 
         # Get reg_id, basin_id, subc_id
-        subc_id1, basin_id1, reg_id1 = helpers.get_subc_id_basin_id_reg_id(conn, LOGGER, lon_start, lat_start, subc_id_start)
-        subc_id2, basin_id2, reg_id2 = helpers.get_subc_id_basin_id_reg_id(conn, LOGGER, lon_end, lat_end, subc_id_end)
+        subc_id1, basin_id1, reg_id1 = basic_queries.get_subc_id_basin_id_reg_id(
+            conn, LOGGER, lon_start, lat_start, subc_id_start)
+        subc_id2, basin_id2, reg_id2 = basic_queries.get_subc_id_basin_id_reg_id(
+            conn, LOGGER, lon_end, lat_end, subc_id_end)
 
         # Check if same region and basin?
         # TODO: Can we route via the sea then??

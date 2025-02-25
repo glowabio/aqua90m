@@ -9,7 +9,7 @@ import sys
 import traceback
 import json
 import psycopg2
-from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_subc_id_basin_id_reg_id
+import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
 import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
 
@@ -112,7 +112,8 @@ class LocalStreamSegmentsGetter(BaseProcessor):
         geometry_only = (geometry_only.lower() == 'true')
 
         LOGGER.info('Retrieving stream segment for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
-        subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, subc_id)
+        subc_id, basin_id, reg_id = basic_queries.get_subc_id_basin_id_reg_id(
+            conn, LOGGER, lon, lat, subc_id)
         
         # Get only geometry:
         if geometry_only:

@@ -11,12 +11,12 @@ import psycopg2
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 
 try:
-    from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_subc_id_basin_id_reg_id
+    import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
     from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
 except ModuleNotFoundError:
-    #from aqua90m.geofresh.upstream_helpers import get_subc_id_basin_id_reg_id
+    #from aqua90m.geofresh.basic_queries import get_subc_id_basin_id_reg_id
     #from aqua90m.geofresh.py_query_db import get_connection_object
-    from geofresh.upstream_helpers import get_subc_id_basin_id_reg_id
+    import geofresh.basic_queries as basic_queries
     from geofresh.py_query_db import get_connection_object
 
 
@@ -329,7 +329,8 @@ class LocalSubcidPluralGetter(BaseProcessor):
         ### Get info point by point ###
         ###############################
 
-        reg_ids, basin_ids, subc_ids, everything = get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, all_points)
+        reg_ids, basin_ids, subc_ids, everything = basic_queries.get_subc_id_basin_id_reg_id_for_all(
+            conn, LOGGER, all_points)
 
 
 
