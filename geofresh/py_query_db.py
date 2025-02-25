@@ -7,10 +7,6 @@ import os
 import json
 LOGGER = logging.getLogger(__name__)
 
-# global variable:
-MAX_NUM_UPSTREAM_CATCHMENTS = None
-
-
 
 ###################################
 ### get results from SQL result ###
@@ -150,90 +146,6 @@ def get_subc_id_basin_id(conn, lon, lat, reg_id):
     # Returning it...
     LOGGER.debug('LEAVING: %s for lon=%s, lat=%s --> subc_id %s, basin_id %s' % (name, lon, lat, subc_id, basin_id))
     return subc_id, basin_id 
-
-
-###################################
-### get results from SQL result ###
-### GeoJSON                     ###
-###################################
-
-def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id):
-    name = "get_upstream_catchment_ids_incl_itself"
-    LOGGER.info("ENTERING: %s for subc_id: %s" % (name, subc_id))
-
-    # Getting info from database:
-    """
-    This one cuts the graph into connected components, by removing
-    the segment-of-interest itself. As a result, its subcatchment
-    is included in the result, and may have to be removed.
-
-    Example query:
-    SELECT 506251252, array_agg(node)::bigint[] AS nodes FROM pgr_connectedComponents('
-        SELECT basin_id, subc_id AS id, subc_id AS source, target, length AS cost
-        FROM hydro.stream_segments WHERE reg_id = 58 AND basin_id = 1292547 AND subc_id != 506251252
-    ') WHERE component > 0 GROUP BY component;
-
-    Result:
-     ?column?  |                        nodes                        
-    -----------+-----------------------------------------------------
-     506251252 | {506250459,506251015,506251126,506251252,506251712}
-    (1 row)
-    """
-
-    query = '''
-    SELECT {subc_id}, array_agg(node)::bigint[] AS nodes 
-    FROM pgr_connectedComponents('
-        SELECT
-        basin_id,
-        subc_id AS id,
-        subc_id AS source,
-        target,
-        length AS cost
-        FROM hydro.stream_segments
-        WHERE reg_id = {reg_id}
-        AND basin_id = {basin_id}
-        AND subc_id != {subc_id}
-    ') WHERE component > 0 GROUP BY component;
-    '''.format(subc_id = subc_id, reg_id = reg_id, basin_id = basin_id)
-    query = query.replace("\n", " ")
-    query = query.replace("    ", "")
-    query = query.strip()
-    result_row = get_only_row(execute_query(conn, query), name)
-
-    # If no upstream catchments are returned:
-    if result_row is None:
-        LOGGER.info('No upstream catchment returned. Assuming this is a headwater. Returning just the local catchment itself.')
-        return [subc_id]
-
-    # Getting the info from the database:
-    upstream_catchment_subcids = result_row[1]
-
-    # superfluous warning:
-    subc_id_returned = result_row[0]
-    if not int(subc_id) == int(subc_id_returned):
-        msg = "WARNING: Wrong subc_id! Provided: %s, returned: %s." % (subc_id, subc_id_returned)
-        LOGGER.error(msg)
-        raise ValueError(msg)
-
-    # Adding the subcatchment itself if it not returned:
-    if not subc_id in upstream_catchment_subcids:
-        upstream_catchment_subcids.append(subc_id)
-        LOGGER.info('FYI: The database did not return the local subcatchment itself in the list of upstream subcatchments, so added it.')
-    else:
-        LOGGER.debug('FYI: The database returned the local subcatchment itself in the list of upstream subcatchments, which is fine.')
-
-    # Stop any computations with more than x upstream catchments!
-    # TODO: Allow returning them, but then nothing else!
-    max_num = get_max_upstream_catchments()
-    if len(upstream_catchment_subcids) > max_num:
-        LOGGER.warning('Limiting queries to %s upstream subcatchments' % max_num)
-        LOGGER.info("LEAVING EMPTY: %s for subc_id (found %s upstream ids): %s" % (name, len(upstream_catchment_subcids), subc_id))
-        #return []
-        raise ValueError('Found %s subcatchments, but temporarily, calculations over %s subcatchments are not done.' % 
-            (len(upstream_catchment_subcids), max_num))
-
-    LOGGER.info("LEAVING: %s for subc_id (found %s upstream ids): %s" % (name, len(upstream_catchment_subcids), subc_id))
-    return upstream_catchment_subcids
 
 
 ###########################
@@ -445,9 +357,6 @@ if __name__ == "__main__":
     subc_id, basin_id = get_subc_id_basin_id(conn, lon, lat, reg_id)
     print("\nRESULT BASIN_ID, SUBC_ID: %s, %s" % (basin_id, subc_id))
     
-    print("\n(3) upstream catchment ids: ")
-    upstream_ids = get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id)
-    print("\nRESULT UPSTREAM IDS:\n%s" % upstream_ids)
     
 
     ###################################

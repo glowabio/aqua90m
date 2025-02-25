@@ -88,7 +88,6 @@ class UpstreamSubcidGetter(BaseProcessor):
             raise ProcessorExecuteError(e) # TODO: Can we feed e into ProcessExecuteError?
 
 
-
     def _execute(self, data, requested_outputs, conn):
 
         # User inputs
@@ -103,7 +102,8 @@ class UpstreamSubcidGetter(BaseProcessor):
         # Get reg_id, basin_id, subc_id, upstream_ids
         subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, subc_id)
 
-        upstream_ids = get_upstream_catchment_ids(conn, subc_id, basin_id, reg_id, LOGGER)
+        upstream_ids = get_upstream_subcids.get_upstream_catchment_ids_incl_itself(
+            conn, subc_id, basin_id, reg_id)
         LOGGER.debug('END: Received ids : %s' % upstream_ids)
 
         ################

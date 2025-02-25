@@ -67,11 +67,3 @@ def get_subc_id_basin_id_reg_id_from_subc_id(conn, subc_id, LOGGER):
     return subc_id, basin_id, reg_id
 
 
-def get_upstream_catchment_ids(conn, subc_id, basin_id, reg_id, LOGGER):
-
-    # Get upstream catchment subc_ids
-    LOGGER.debug('... Getting upstream catchment for subc_id: %s' % subc_id)
-    upstream_catchment_subcids = get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id)
-
-    return upstream_catchment_subcids
-

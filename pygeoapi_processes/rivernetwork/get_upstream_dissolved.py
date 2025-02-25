@@ -10,8 +10,8 @@ import traceback
 import json
 import psycopg2
 from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_subc_id_basin_id_reg_id
-from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_upstream_catchment_ids
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
+import pygeoapi.process.aqua90m.geofresh.get_upstream_subcids as get_upstream_subcids
 import pygeoapi.process.aqua90m.geofresh.get_dissolved_polygon as get_dissolved_polygon
 
 
@@ -124,7 +124,8 @@ class UpstreamDissolvedGetter(BaseProcessor):
         subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, subc_id)
 
         # Get upstream id
-        upstream_ids = get_upstream_catchment_ids(conn, subc_id, basin_id, reg_id, LOGGER)
+        upstream_ids = get_upstream_subcids.get_upstream_catchment_ids_incl_itself(
+            conn, subc_id, basin_id, reg_id)
 
         # Return only geometry:
         if geometry_only:
