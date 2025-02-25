@@ -157,110 +157,6 @@ def get_subc_id_basin_id(conn, lon, lat, reg_id):
 ### GeoJSON                     ###
 ###################################
 
-
-def get_upstream_catchment_dissolved_feature_coll(conn, subc_id, upstream_ids, lonlat, basin_id, reg_id, **kwargs):
-    name = "get_upstream_catchment_dissolved_feature_coll"
-    LOGGER.debug('ENTERING: %s for subc_id %s' % (name, subc_id))
-    feature_dissolved_upstream = get_upstream_catchment_dissolved_feature(conn, subc_id, upstream_ids, basin_id, reg_id, **kwargs)
-    # This feature's geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
-    # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
-
-    # Assembling GeoJSON Feature for the Point:
-    feature_point = {
-        "type": "Feature",
-        "geometry": {
-            "type": "Point",
-            "coordinates": [lonlat[0], lonlat[1]]
-        },
-        "properties": kwargs
-    }
-
-    # Assembling GeoJSON Feature Collection (point and dissolved upstream catchment):
-    feature_coll = {
-        "type": "FeatureCollection",
-        "features": [feature_dissolved_upstream, feature_point]
-    }
-
-    LOGGER.debug('LEAVING: %s for subc_id %s --> Feature collection' % (name, subc_id))
-    return feature_coll
-
-
-def get_upstream_catchment_dissolved_feature(conn, subc_id, upstream_ids, basin_id, reg_id, **kwargs):
-    name = "get_upstream_catchment_dissolved_feature"
-    LOGGER.debug('ENTERING: %s for subc_id %s' % (name, subc_id))
-    geometry_polygon = get_upstream_catchment_dissolved_geometry(conn, subc_id, upstream_ids, basin_id, reg_id)
-    # This geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
-    # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
-
-    feature_dissolved_upstream = {
-        "type": "Feature",
-        "geometry": geometry_polygon,
-        "properties": {
-            "description": "Polygon of the upstream catchment of subcatchment %s" % subc_id,
-            "num_upstream_catchments": len(upstream_ids),
-            "upstream_subc_ids": upstream_ids,
-            "downstream_subc_id": subc_id,
-        }
-    }
-
-    if len(kwargs) > 0:
-        feature_dissolved_upstream["properties"].update(kwargs)
-
-    LOGGER.debug('LEAVING: %s for subc_id %s --> Feature (dissolved)' % (name, subc_id))
-    return feature_dissolved_upstream
-
-
-def get_upstream_catchment_dissolved_geometry(conn, subc_id, upstream_ids, basin_id, reg_id):
-    """
-    Example result:
-    {"type": "Polygon", "coordinates": [[[9.916666666666668, 54.7025], [9.913333333333334, 54.7025], [9.913333333333334, 54.705], [9.915000000000001, 54.705], [9.915833333333333, 54.705], [9.915833333333333, 54.70583333333333], [9.916666666666668, 54.70583333333333], [9.916666666666668, 54.705], [9.918333333333335, 54.705], [9.918333333333335, 54.704166666666666], [9.919166666666667, 54.704166666666666], [9.919166666666667, 54.70333333333333], [9.920833333333334, 54.70333333333333], [9.920833333333334, 54.704166666666666], [9.924166666666668, 54.704166666666666], [9.925, 54.704166666666666], [9.925, 54.705], [9.926666666666668, 54.705], [9.9275, 54.705], [9.9275, 54.70583333333333], [9.928333333333335, 54.70583333333333], [9.928333333333335, 54.70333333333333], [9.929166666666667, 54.70333333333333], [9.929166666666667, 54.7025], [9.931666666666667, 54.7025], [9.931666666666667, 54.7], [9.930833333333334, 54.7], [9.930833333333334, 54.69833333333333], [9.930000000000001, 54.69833333333333], [9.929166666666667, 54.69833333333333], [9.929166666666667, 54.6975], [9.929166666666667, 54.696666666666665], [9.928333333333335, 54.696666666666665], [9.928333333333335, 54.695], [9.9275, 54.695], [9.9275, 54.693333333333335], [9.928333333333335, 54.693333333333335], [9.928333333333335, 54.69166666666666], [9.9275, 54.69166666666666], [9.9275, 54.69083333333333], [9.926666666666668, 54.69083333333333], [9.926666666666668, 54.69], [9.925833333333333, 54.69], [9.925, 54.69], [9.925, 54.68833333333333], [9.922500000000001, 54.68833333333333], [9.922500000000001, 54.69083333333333], [9.921666666666667, 54.69083333333333], [9.921666666666667, 54.69166666666666], [9.919166666666667, 54.69166666666666], [9.919166666666667, 54.692499999999995], [9.918333333333335, 54.692499999999995], [9.918333333333335, 54.693333333333335], [9.9175, 54.693333333333335], [9.9175, 54.695], [9.918333333333335, 54.695], [9.918333333333335, 54.69833333333333], [9.9175, 54.69833333333333], [9.9175, 54.700833333333335], [9.9175, 54.70166666666667], [9.916666666666668, 54.70166666666667], [9.916666666666668, 54.7025]]]}
-    """
-    name = "get_upstream_catchment_dissolved_geometry"
-    LOGGER.debug('ENTERING: %s for subcid %s' % (name, subc_id))
-
-    if len(upstream_ids) == 0:
-        LOGGER.info('No upstream ids, so cannot even query! Returning none.')
-        LOGGER.warning('No upstream ids. Cannot get dissolved upstream catchment.')
-        return None # Returning null geometry!
-        # A geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
-        # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
-    
-    # Get info from the database:
-    """
-    Example query:
-    SELECT ST_AsText(ST_MemUnion(geom)) FROM sub_catchments WHERE subc_id IN (506250459, 506251015, 506251126, 506251712);
-
-    Example result:
-                                                         st_astext                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
-    -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    POLYGON((9.916666666666668 54.7025,9.913333333333334 54.7025,9.913333333333334 54.705,9.915000000000001 54.705,9.915833333333333 54.705,9.915833333333333 54.70583333333333,9.916666666666668 54.70583333333333,9.916666666666668 54.705,9.918333333333335 54.705,9.918333333333335 54.704166666666666,9.919166666666667 54.704166666666666,9.919166666666667 54.70333333333333,9.920833333333334 54.70333333333333,9.920833333333334 54.704166666666666,9.924166666666668 54.704166666666666,9.925 54.704166666666666,9.925 54.705,9.926666666666668 54.705,9.9275 54.705,9.9275 54.70583333333333,9.928333333333335 54.70583333333333,9.928333333333335 54.70333333333333,9.929166666666667 54.70333333333333,9.929166666666667 54.7025,9.931666666666667 54.7025,9.931666666666667 54.7,9.930833333333334 54.7,9.930833333333334 54.69833333333333,9.930000000000001 54.69833333333333,9.929166666666667 54.69833333333333,9.929166666666667 54.6975,9.929166666666667 54.696666666666665,9.928333333333335 54.696666666666665,9.928333333333335 54.695,9.9275 54.695,9.9275 54.693333333333335,9.928333333333335 54.693333333333335,9.928333333333335 54.69166666666666,9.9275 54.69166666666666,9.9275 54.69083333333333,9.926666666666668 54.69083333333333,9.926666666666668 54.69,9.925833333333333 54.69,9.925 54.69,9.925 54.68833333333333,9.922500000000001 54.68833333333333,9.922500000000001 54.69083333333333,9.921666666666667 54.69083333333333,9.921666666666667 54.69166666666666,9.919166666666667 54.69166666666666,9.919166666666667 54.692499999999995,9.918333333333335 54.692499999999995,9.918333333333335 54.693333333333335,9.9175 54.693333333333335,9.9175 54.695,9.918333333333335 54.695,9.918333333333335 54.69833333333333,9.9175 54.69833333333333,9.9175 54.700833333333335,9.9175 54.70166666666667,9.916666666666668 54.70166666666667,9.916666666666668 54.7025))
-    (1 row)
-    """
-
-    relevant_ids = ", ".join([str(elem) for elem in upstream_ids])
-    # e.g. 506250459, 506251015, 506251126, 506251712
-
-    query = """
-    SELECT ST_AsText(ST_MemUnion(geom))
-    FROM sub_catchments
-    WHERE subc_id IN ({relevant_ids})
-    AND reg_id = {reg_id}
-    AND basin_id = {basin_id}
-    """.format(relevant_ids = relevant_ids, basin_id = basin_id, reg_id = reg_id)
-    result_row = get_only_row(execute_query(conn, query), name)
-    if result_row is None:
-        LOGGER.warning('Received result_row None! This is weird. Existing upstream ids should have geometries.')
-        err_msg = "Weird: No area (polygon) found in database for upstream catchments of subcatchment %s" % subc_id
-        LOGGER.error(err_msg)
-        raise ValueError(err_msg)
-
-    # Assemble GeoJSON:
-    dissolved_wkt = result_row[0]
-    dissolved_geojson = geomet.wkt.loads(dissolved_wkt)
-    LOGGER.debug('LEAVING: %s for subcid %s' % (name, subc_id))
-    return dissolved_geojson
-
-
 def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id):
     name = "get_upstream_catchment_ids_incl_itself"
     LOGGER.info("ENTERING: %s for subc_id: %s" % (name, subc_id))
@@ -623,20 +519,6 @@ if __name__ == "__main__":
     print("RESULT SNAPPED (Geometry/Point):\n%s" % point_snappedpoint)
     print("\nRESULT SEGMENT (Geometry/Linestring):\n%s" % linestring_streamsegment)
 
-    print("\n(8a): dissolved polygon as geometry/polygon")
-    dissolved_polygon = get_upstream_catchment_dissolved_geometry(
-        conn, subc_id, upstream_ids, basin_id, reg_id)
-    print("\nRESULT DISSOLVED (Geometry/Polygon): \n%s" % dissolved_polygon)
-
-    print("\n(8b): dissolved polygon as feature")
-    dissolved_feature = get_upstream_catchment_dissolved_feature(
-        conn, subc_id, upstream_ids, basin_id, reg_id, bla='test')
-    print("\nRESULT DISSOLVED (Feature/Polygon)): \n%s" % dissolved_feature)
-
-    print("\n(8c): dissolved polygon as feature coll")
-    dissolved_feature_coll = get_upstream_catchment_dissolved_feature_coll(
-        conn, subc_id, upstream_ids, (lon, lat), basin_id, reg_id, bla='test')
-    print("\nRESULT DISSOLVED (FeatureCollection/Polygon): \n%s" % dissolved_feature_coll)
 
     ###################################
     ### dijkstra between two points ###

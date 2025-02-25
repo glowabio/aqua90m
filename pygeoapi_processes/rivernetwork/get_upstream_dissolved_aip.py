@@ -12,19 +12,60 @@ import psycopg2
 from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_subc_id_basin_id_reg_id
 from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_upstream_catchment_ids
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_upstream_catchment_dissolved_feature
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_upstream_catchment_dissolved_geometry
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_upstream_catchment_dissolved_feature_coll
-
-
+import pygeoapi.process.aqua90m.geofresh.get_dissolved_polygon as get_dissolved_polygon
 
 
 '''
-# Small:
-curl -X POST "https://aqua.igb-berlin.de/pygeoapi/processes/get-upstream-dissolved/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lon\": 9.931555, \"lat\": 54.695070, \"get_type\":\"Feature\",  \"comment\":\"Nordoestliche Schlei bei Rabenholz\"}}"
+# Request a URL to simple Geometry (Polygon) (just one, not a collection):
+curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "get_type": "polygon",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
 
-# Large: Mitten in der Elbe: 53.537158298376575, 9.99475350366553
-curl -X POST "https://aqua.igb-berlin.de/pygeoapi/processes/get-upstream-dissolved/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lon\": 9.994753, \"lat\": 53.537158, \"comment\":\"Mitten inner Elbe bei Hamburg\"}}"
+# Request (directly) a simple Geometry (Polygon) (just one, not a collection):
+curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "get_type": "polygon",
+    "get_json_directly": "true",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
+
+# Request a URL to Feature (Polygon) (just one, not a collection):
+curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "get_type": "feature",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
+
+# Request a URL to FeatureCollection (Polygon):
+curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "get_type": "featurecollection",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
+
+# Large: In the middle of river Elbe: 53.537158298376575, 9.99475350366553
 '''
 
 
@@ -116,20 +157,41 @@ class UpstreamDissolvedGetter(BaseProcessor):
             LOGGER.debug('...Getting upstream catchment dissolved polygon for subc_id: %s' % subc_id)
             geojson_object = {}
             if get_type.lower() == 'polygon':
-                geojson_object = get_upstream_catchment_dissolved_geometry(
-                    conn, subc_id, upstream_catchment_ids, basin_id, reg_id)
+                geojson_object = get_dissolved_polygon.get_dissolved_simplegeom(
+                    conn, upstream_catchment_ids, basin_id, reg_id)
                 LOGGER.debug('END: Received simple polygon : %s' % str(geojson_object)[0:50])
 
             elif get_type.lower() == 'feature':
-                geojson_object = get_upstream_catchment_dissolved_feature(
-                    conn, subc_id, upstream_catchment_ids,
-                    basin_id, reg_id, comment=comment)
+                geojson_object = get_dissolved_polygon.get_dissolved_feature(
+                    conn, upstream_catchment_ids, basin_id, reg_id, add_subc_ids = False)
+                if comment is not None:
+                    geojson_object["properties"]["comment"] = comment
                 LOGGER.debug('END: Received feature : %s' % str(geojson_object)[0:50])
            
             elif get_type.lower() == 'featurecollection':
-                geojson_object = get_upstream_catchment_dissolved_feature_coll(
-                    conn, subc_id, upstream_catchment_ids, (lon, lat),
-                    basin_id, reg_id, comment=comment)
+                dissolved_feature = get_dissolved_polygon.get_dissolved_feature(
+                    conn, upstream_catchment_ids, basin_id, reg_id, add_subc_ids = False)
+
+                # Create point:
+                point_feature = {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [lon, lat]
+                    },
+                    "properties": {
+                        "subc_id": subc_id
+                    }
+                }
+
+                # Assemble GeoJSON Feature Collection
+                # (point and dissolved upstream catchment):
+                geojson_object = {
+                    "type": "FeatureCollection",
+                    "features": [dissolved_feature, point_feature],
+                }
+                if comment is not None:
+                    geojson_object["comment"] = comment
                 LOGGER.debug('END: Received feature collection: %s' % str(geojson_object)[0:50])
 
             else:
@@ -164,9 +226,6 @@ class UpstreamDissolvedGetter(BaseProcessor):
         if error_message is None:
             outputs_dict = {}
 
-            if comment is not None: # TODO this is double!
-                geojson_object['comment'] = comment
-
             # If the client requests a URL, we store it to file and pass the href:
             # This part is implemented to enable the AIP.
             #
@@ -180,14 +239,12 @@ class UpstreamDissolvedGetter(BaseProcessor):
 
                 # Store file
                 downloadfilename = 'polygon-%s.json' % self.job_id
-                #downloadfilepath = '/var/www/nginx/download'+os.sep+downloadfilename
                 downloadfilepath = config['download_dir']+downloadfilename
                 LOGGER.debug('Writing process result to file: %s' % downloadfilepath)
                 with open(downloadfilepath, 'w', encoding='utf-8') as downloadfile:
                     json.dump(geojson_object, downloadfile, ensure_ascii=False, indent=4)
 
                 # Create download link:
-                #downloadlink = 'https://aqua.igb-berlin.de/download/'+downloadfilename
                 downloadlink = config['download_url'] + downloadfilename
 
                 # Build response containing the link

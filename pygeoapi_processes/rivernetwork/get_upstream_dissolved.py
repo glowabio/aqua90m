@@ -12,18 +12,37 @@ import psycopg2
 from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_subc_id_basin_id_reg_id
 from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_upstream_catchment_ids
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_upstream_catchment_dissolved_feature
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_upstream_catchment_dissolved_geometry
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_upstream_catchment_dissolved_feature_coll
+import pygeoapi.process.aqua90m.geofresh.get_dissolved_polygon as get_dissolved_polygon
+
 
 
 '''
+# Request a simple Geometry (Polygon) (just one, not a collection):
+curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "geometry_only": "true",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
 
-# Small:
-curl -X POST "https:/aqua.igb-berlin.de/pygeoapi/processes/get-upstream-dissolved/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lon\": 9.931555, \"lat\": 54.695070, \"comment\": \"Nordoestliche Schlei bei Rabenholz\", \"add_upstream_ids\": \"true\"}}"
+# Request a Feature (Polygon) (just one, not a collection):
+curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "geometry_only": "false",
+    "add_upstream_ids": "true",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
 
-# Large: Mitten in der Elbe: 53.537158298376575, 9.99475350366553
-curl -X POST "https:/aqua.igb-berlin.de/pygeoapi/processes/get-upstream-dissolved/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lon\": 9.994753, \"lat\": 53.537158, \"comment\": \"Mitten inner Elbe bei Hamburg\", \"geometry_only\": \"true\"}}"
+# Large: In the middle of river Elbe: 53.537158298376575, 9.99475350366553
 '''
 
 
@@ -107,48 +126,40 @@ class UpstreamDissolvedGetter(BaseProcessor):
         # Get upstream id
         upstream_ids = get_upstream_catchment_ids(conn, subc_id, basin_id, reg_id, LOGGER)
 
-        # Get geometry
-        LOGGER.debug('...Getting upstream catchment dissolved polygon for subc_id: %s' % subc_id)
-        polygon_simple = get_upstream_catchment_dissolved_geometry(
-            conn, subc_id, upstream_ids, basin_id, reg_id)
-
         # Return only geometry:
         if geometry_only:
 
+            dissolved_simplegeom = get_dissolved_polygon.get_dissolved_simplegeom(
+                conn, upstream_ids, basin_id, reg_id)
+
             if comment is not None:
-                polygon_simple['comment'] = comment
+                dissolved_simplegeom['comment'] = comment
 
             if self.return_hyperlink('polygon', requested_outputs):
-                return 'application/json', self.store_to_json_file('polygon', polygon_simple)
+                return 'application/json', self.store_to_json_file('polygon', dissolved_simplegeom)
             else:
-                return 'application/json', polygon_simple
+                return 'application/json', dissolved_simplegeom
 
 
         # Return Feature:
         if not geometry_only:
 
+            dissolved_feature = get_dissolved_polygon.get_dissolved_feature(
+                conn, upstream_ids, basin_id, reg_id, add_subc_ids = add_upstream_ids)
+
+            # Add some info to Feature:
             # TODO: Should we include the requested lon and lat? Maybe as a point? Then FeatureCollection?
-            feature = {
-                "type": "Feature",
-                "geometry": polygon_simple,
-                "properties": {
-                    "description": "Dissolved upstream catchment of subcatchment %s" % subc_id,
-                    "subc_id": subc_id,
-                    "basin_id": basin_id,
-                    "reg_id": reg_id
-                }
-            }
+            dissolved_feature["description"] = "Dissolved upstream catchment of subcatchment %s" % subc_id
+            dissolved_feature["dissolved_upstream_catchment_of"] = subc_id
+            dissolved_feature["num_dissolved_sub_catchments"] = len(upstream_ids)
 
             if comment is not None:
-                feature['properties']['comment'] = comment
-
-            if add_upstream_ids:
-                feature["properties"]["upstream_ids"] = upstream_ids
+                dissolved_feature['properties']['comment'] = comment
 
             if self.return_hyperlink('polygon', requested_outputs):
-                return 'application/json', self.store_to_json_file('polygon', feature)
+                return 'application/json', self.store_to_json_file('polygon', dissolved_feature)
             else:
-                return 'application/json', feature
+                return 'application/json', dissolved_feature
 
 
     def return_hyperlink(self, output_name, requested_outputs):
