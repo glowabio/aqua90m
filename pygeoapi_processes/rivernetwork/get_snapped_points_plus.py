@@ -11,7 +11,7 @@ import json
 import psycopg2
 import pygeoapi.process.aqua90m.geofresh.upstream_helpers as helpers
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_polygon_for_subcid_simple
+import pygeoapi.process.aqua90m.geofresh.get_polygons as get_polygons
 import pygeoapi.process.aqua90m.geofresh.snapping as snapping
 
 
@@ -146,17 +146,11 @@ class SnappedPointsGetterPlus(BaseProcessor):
                 conn, lon, lat, subc_id, basin_id, reg_id)
 
             # Get local subcatchment polygon too
-            subcatchment_simple = get_polygon_for_subcid_simple(conn, subc_id, basin_id, reg_id)
-            subcatchment_feature = {
-                "type": "Feature",
-                "geometry": subcatchment_simple,
-                "properties": {
-                    "subc_id": subc_id,
-                    "basin_id": basin_id,
-                    "reg_id": reg_id,
-                    "strahler": strahler
-                }
-            }
+            temp_feature_coll = get_polygons.get_subcatchment_polygons_feature_coll(
+                conn, [subc_id], basin_id, reg_id)
+            subcatchment_feature = temp_feature_coll["features"][0]
+            subcatchment_feature['properties']['subc_id'] = subc_id
+            subcatchment_feature['properties']['strahler'] = strahler
             feature_coll["features"].append(subcatchment_feature)
 
             if comment is not None:
