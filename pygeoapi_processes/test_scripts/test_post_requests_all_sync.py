@@ -39,7 +39,7 @@ Local catchment:
 
 Routing:
   4  get_shortest_path_to_outlet.py
-  5  get_shortest_path_two_points.py
+  5  get_shortest_path_between_points.py
   5b get_shortest_path_between_points_plural.py
 
 Upstream catchment:

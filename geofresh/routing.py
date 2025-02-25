@@ -137,12 +137,23 @@ def get_dijkstra_ids_many(conn, subc_ids, reg_id, basin_id):
             LOGGER.debug('Start %s to end %s, add this id %s' % (start_id, end_id, this_id))
 
     LOGGER.debug("Iterating over results... DONE.")
-    LOGGER.debug("JSON result: %s" % results_json)
+    #LOGGER.debug("JSON result: %s" % results_json) # quite big!
 
     return results_json
 
 
 def get_dijkstra_distance_one(conn, start_subc_id, end_subc_id, reg_id, basin_id):
+    # This simply returns one number!
+
+    '''
+    The distance between two points (507291111, 507292222) is just a number.
+
+    Expressed like a matrix below, it would look like this (totally overdone):
+    {
+      '507291111': {'507291111': 0,     '507292222': 771.3, },
+      '507292222': {'507291111': 771.3, '507292222': 0}
+
+    '''
 
     ### Construct SQL query:
     query = 'SELECT edge, agg_cost'
@@ -170,17 +181,32 @@ def get_dijkstra_distance_one(conn, start_subc_id, end_subc_id, reg_id, basin_id
     cursor.execute(query)
 
     ### Iterating over the result rows:
+    dist = None
     while True:
         row = cursor.fetchone()
         if row is None: break
         #edge = row[0]
         #agg_cost = row[1]
         if row[0] == -1: # pgr_dijkstra returns -1 as the last edge...
-            return row[1]
+            dist = row[1]
+
+    return dist
 
 
 def get_dijkstra_distance_many(conn, subc_ids, reg_id, basin_id):
     # TODO What if not in one basin?
+
+    '''
+    Example output: It's a JSONified matrix!
+    {
+      '507294699': {'507294699': 0,                 '507282720': 77136.30451583862, '507199553': 46228.42241668701, '507332148': 14313.99643707275, '507290955': 74875.18420028687},
+      '507282720': {'507294699': 77136.30451583862, '507282720': 0,                 '507199553': 64695.14314651489, '507332148': 78088.08876419067, '507290955': 123218.3441696167},
+      '507199553': {'507294699': 46228.42241668701, '507282720': 64695.14314651489, '507199553': 0,                 '507332148': 47180.20666503906, '507290955': 92310.46207046509},
+      '507332148': {'507294699': 14313.99643707275, '507282720': 78088.08876419067, '507199553': 47180.20666503906, '507332148': 0,                 '507290955': 75826.96844863892},
+      '507290955': {'507294699': 74875.18420028687, '507282720': 123218.3441696167, '507199553': 92310.46207046509, '507332148': 75826.96844863892, '507290955': 0}
+    }
+
+    '''
 
     ### Construct SQL query:
     nodes = 'ARRAY[%s]' % ','.join(str(x) for x in subc_ids)
@@ -213,9 +239,9 @@ def get_dijkstra_distance_many(conn, subc_ids, reg_id, basin_id):
     # TODO: JSON may not be the ideal type for returning a matrix!
     results = {}
     for start_id in subc_ids:
-        results[start_id] = {}
+        results[str(start_id)] = {}
         for end_id in subc_ids:
-            results[start_id][end_id] = 0
+            results[str(start_id)][str(end_id)] = 0
 
     ### Iterating over the result rows:
     while True:
@@ -227,7 +253,7 @@ def get_dijkstra_distance_many(conn, subc_ids, reg_id, basin_id):
             start_id  = row[1]
             end_id    = row[2]    
             agg_cost  = row[3]        
-            results[start_id][end_id] = agg_cost
+            results[str(start_id)][str(end_id)] = agg_cost
             LOGGER.debug('Start %s to end %s, accumulated length %s' % 
                 (start_id, end_id, agg_cost))
 
@@ -287,7 +313,7 @@ if __name__ == "__main__":
     ### One ###
     ###########
 
-    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_one')
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_one (just returns 5 ids)')
     res = get_dijkstra_ids_one(conn, subc_id_start, subc_id_end, reg_id, basin_id)
     print('RESULT:\n%s' % res)
 
@@ -302,10 +328,12 @@ if __name__ == "__main__":
     import get_linestrings
 
     # GeometryColl
+    print('\nSTART PACKAGING IN GEOJSON...')
     geom_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll(conn, res, basin_id, reg_id)
     print('\nRESULT (GeometryCollection):\n%s' % geom_coll)
 
     # Feature Coll
+    print('\nSTART PACKAGING IN GEOJSON...')
     feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(conn, res, basin_id, reg_id)
     print('\nRESULT (FeatureCollection/LineStrings):\n%s' % feature_coll)
 
@@ -320,11 +348,11 @@ if __name__ == "__main__":
 
     print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_one')
     res = get_dijkstra_ids_one(conn, subc_id_start, subc_id_end, reg_id, basin_id)
-    print('RESULT: IDS: %s' % res)
+    print('RESULT: IDS: %s' % res) # just the list of ids
 
-    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_one')
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_one')
     res = get_dijkstra_distance_one(conn, subc_id_start, subc_id_end, reg_id, basin_id)
-    print('RESULT: DISTANCE: %s' % res)
+    print('RESULT: DISTANCE: %s' % res) # just a number!
 
     ############
     ### Many ###
@@ -335,9 +363,10 @@ if __name__ == "__main__":
     other3 = 507290955
     subc_ids = [subc_id_start, subc_id_end, other1, other2, other3]
 
-    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_many')
-    res = get_dijkstra_ids_many(conn, subc_ids, reg_id, basin_id)
-    print('RESULT: IDS: %s' % res)
+    if False: # this writes a lot of output!
+        print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_many')
+        res = get_dijkstra_ids_many(conn, subc_ids, reg_id, basin_id)
+        print('RESULT: IDS: %s' % res)
 
     print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_many')
     res = get_dijkstra_distance_many(conn, subc_ids, reg_id, basin_id)
