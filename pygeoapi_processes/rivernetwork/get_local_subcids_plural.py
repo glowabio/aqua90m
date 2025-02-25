@@ -21,7 +21,7 @@ except ModuleNotFoundError:
 
 
 '''
-
+# Request plain JSON (not GeoJSON: Cannot request Feature/Geometry, does not apply)
 # Input points: GeoJSON
 curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plural/execution' \
 --header 'Content-Type: application/json' \
@@ -62,18 +62,19 @@ curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plura
                 }
             ]
         },
-        "comment": "Nordoestliche Schlei, bei Rabenholz"
+        "comment": "schlei-bei-rabenholz"
     }
 }'
 
 
+# Request plain JSON (not GeoJSON: Cannot request Feature/Geometry, does not apply)
 # Input points: Lonlat string
 curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plural/execution' \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
         "lonlatstring": "10.698832912677716,53.51710727672125;12.80898022975407,52.42187129944509;11.915323076217902,52.730867141970464;16.651903948708565,48.27779486850176;19.201146608148463,47.12192880511424;24.432498016999062,61.215505889934434",
-        "comment": "Nordoestliche Schlei, bei Rabenholz"
+        "comment": "schlei-bei-rabenholz"
     }
 }'
 
@@ -154,7 +155,7 @@ Example result:
             }
         }
     },
-    "comment":"Nordoestliche Schlei, bei Rabenholz"
+    "comment": "schlei-bei-rabenholz"
 }
 
 TODO: Maybe rather:
@@ -486,6 +487,7 @@ def get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson):
 
 
 if __name__ == '__main__':
+    # TODO Move this to a different module!!!
     print("In module products __package__, __name__ ==", __package__, __name__)
 
     points_geojson = {

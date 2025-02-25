@@ -15,12 +15,19 @@ from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
 
 
 '''
-# Small:
-curl -X POST "https:/aqua.igb-berlin.de/pygeoapi/processes/get-upstream-subcids/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lon\": 9.931555, \"lat\": 54.695070, \"comment\":\"Nordoestliche Schlei bei Rabenholz\"}}"
+# Request plain JSON (not GeoJSON: Cannot request Feature/Geometry, does not apply)
+curl -X POST "http://localhost:5000/processes/get-upstream-subcids/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
 
-# Large: Mitten in der Elbe: 53.537158298376575, 9.99475350366553
-curl -X POST "https:/aqua.igb-berlin.de/pygeoapi/processes/get-upstream-subcids/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lon\": 9.994753, \"lat\": 53.537158, \"comment\": \"Mitten inner Elbe bei Hamburg\"}}"
 
+# Large: In the middle of river Elbe: 53.537158298376575, 9.99475350366553
 '''
 
 # Process metadata and description

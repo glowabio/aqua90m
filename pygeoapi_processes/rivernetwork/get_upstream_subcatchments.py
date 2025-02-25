@@ -16,7 +16,19 @@ import pygeoapi.process.aqua90m.geofresh.get_polygons as get_polygons
 
 
 '''
+# Request a GeometryCollection (Polygons):
+curl -X POST "http://localhost:5000/pygeoapi-dev/processes/get-upstream-subcatchments/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "geometry_only": "true",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
 
+# Request a FeatureCollection (Polygons):
 curl -X POST "http://localhost:5000/pygeoapi-dev/processes/get-upstream-subcatchments/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -29,20 +41,7 @@ curl -X POST "http://localhost:5000/pygeoapi-dev/processes/get-upstream-subcatch
     }
 }'
 
-curl -X POST "http://localhost:5000/pygeoapi-dev/processes/get-upstream-subcatchments/execution" \
---header "Content-Type: application/json" \
---data '{
-  "inputs": {
-    "lon": 9.931555,
-    "lat": 54.695070,
-    "geometry_only": "true",
-    "comment": "schlei-bei-rabenholz"
-    }
-}'
-
 # Large: Mitten in der Elbe: 53.537158298376575, 9.99475350366553
-
-
 '''
 
 # Process metadata and description

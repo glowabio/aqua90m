@@ -13,8 +13,17 @@ from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_subc_id_basin
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
 
 '''
-curl -X POST "https://aqua.igb-berlin.de/pygeoapi/processes/get-local-subcids/execution" -H "Content-Type: application/json" -d "{\"inputs\":{\"lon\": 9.931555, \"lat\": 54.695070, \"comment\":\"Nordoestliche Schlei, bei Rabenholz\"}}"
 
+# Request plain JSON (not GeoJSON: Cannot request Feature/Geometry, does not apply)
+curl -X POST "http://localhost:5000/processes/get-local-subcids/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
 
 '''
 

@@ -17,19 +17,33 @@ import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
 
 '''
 
-# Small:
+# Request a GeometryCollection (LineStrings):
 curl -X POST "http://localhost:5000/processes/get-upstream-streamsegments/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
-    "comment": "schlei-bei-rabenholz",
-    "add_upstream_ids": "true"
+    "geometry_only": "true",
+    "comment": "schlei-bei-rabenholz"
     }
 }'
 
-# Large: Mitten in der Elbe: 53.537158298376575, 9.99475350366553
+# Request a FeatureCollection (LineStrings):
+
+curl -X POST "http://localhost:5000/processes/get-upstream-streamsegments/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "geometry_only": "false",
+    "add_upstream_ids": "true",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
+
+# Large: In the middle of Elbe river: 53.537158298376575, 9.99475350366553
 
 '''
 
@@ -139,7 +153,7 @@ class UpstreamStreamSegmentsGetter(BaseProcessor):
             if self.return_hyperlink('upstream_stream_segments', requested_outputs):
                 return 'application/json', self.store_to_json_file('upstream_stream_segments', geometry_coll)
             else:
-                return 'application/json', feature_coll
+                return 'application/json', geometry_coll
 
 
         # Get FeatureCollection

@@ -17,6 +17,7 @@ import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
 
 
 '''
+# Request a GeometryCollection (LineStrings):
 curl -X POST "http://localhost:5000/processes/get-shortest-path-two-points/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -29,6 +30,7 @@ curl -X POST "http://localhost:5000/processes/get-shortest-path-two-points/execu
     }
 }'
 
+# Request a FeatureCollection (LineStrings):
 curl -X POST "http://localhost:5000/processes/get-shortest-path-two-points/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -38,8 +40,8 @@ curl -X POST "http://localhost:5000/processes/get-shortest-path-two-points/execu
     "lon_end": 9.9217,
     "lat_end": 54.6917,
     "geometry_only": "false",
-    "comment": "test",
-    "add_segment_ids": "true"
+    "add_segment_ids": "true",
+    "comment": "test"
     }
 }'
 '''

@@ -17,16 +17,19 @@ import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
 
 
 '''
+# Request a GeometryCollection (LineStrings):
 curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "lon": 9.937520027160646,
     "lat": 54.69422745526058,
-    "geometry_only": "true"
+    "geometry_only": "true",
+    "comment": "bla"
     }
 }'
 
+# Request a FeatureCollection (LineStrings):
 curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -34,8 +37,8 @@ curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execut
     "lon": 9.937520027160646,
     "lat": 54.69422745526058,
     "geometry_only": "false",
-    "comment": "test",
-    "add_downstream_ids": "true"
+    "add_downstream_ids": "true",
+    "comment": "bla"
     }
 }'
 '''
@@ -141,12 +144,13 @@ class ShortestPathToOutletGetter(BaseProcessor):
         if not geometry_only:
 
             feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(
-                conn, segment_ids, basin_id1, reg_id1, add_subc_ids = add_segment_ids)
+                conn, segment_ids, basin_id1, reg_id1, add_subc_ids = add_downstream_ids)
         
             # Add some info to the FeatureCollection:
             feature_coll["description"] = "Downstream path from subcatchment %s to the outlet of its basin." % subc_id1
             feature_coll["subc_id"] = subc_id1 # TODO how to name the point from where we route to outlet?
             feature_coll["outlet_id"] = subc_id2
+            feature_coll["downstream_path_of"] = subc_id1
             # TODO: Should we include the requested lon and lat? Maybe as a point?
             
             if comment is not None:

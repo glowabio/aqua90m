@@ -11,8 +11,8 @@ import json
 import psycopg2
 import pygeoapi.process.aqua90m.geofresh.upstream_helpers as helpers
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
-from pygeoapi.process.aqua90m.geofresh.py_query_db import get_polygon_for_subcid_simple
 import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
+import pygeoapi.process.aqua90m.geofresh.get_polygons as get_polygons
 
 
 
@@ -23,19 +23,7 @@ This should be replaced by using the normal get_stream_segment.py with parameter
 but then I need to change my test HTML client, which currently only can make different process calls
 by using different process id, and not by adding parameters.
 
-# Request returning a Feature:
-curl -X POST "http://localhost:5000/processes/get-local-streamsegments-subcatchments/execution" \
---header "Content-Type: application/json" \
---data '{
-  "inputs": {
-    "lon": 9.931555,
-    "lat": 54.695070,
-    "geometry_only": "false",
-    "comment": "schlei-bei-rabenholz"
-    }
-}'
-
-# Request, returning a simple geometry (linestring):
+# Request a GeometryCollection (LineStrings):
 curl -X POST "http://localhost:5000/processes/get-local-streamsegments-subcatchments/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -43,6 +31,18 @@ curl -X POST "http://localhost:5000/processes/get-local-streamsegments-subcatchm
     "lon": 9.931555,
     "lat": 54.695070,
     "geometry_only": "true",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
+
+# Request a FeatureCollection (LineStrings):
+curl -X POST "http://localhost:5000/processes/get-local-streamsegments-subcatchments/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "geometry_only": "false",
     "comment": "schlei-bei-rabenholz"
     }
 }'
@@ -123,21 +123,21 @@ class LocalStreamSegmentSubcatchmentGetter(BaseProcessor):
         LOGGER.info('Getting stream segment and subcatchment for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
         subc_id, basin_id, reg_id = helpers.get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, subc_id)
 
-        # Get subcatchment polygon, as GeoJSON Polygon:
-        LOGGER.debug('... Now, getting subcatchment polygon for subc_id: %s' % subc_id)
-        subcatchment_simple = get_polygon_for_subcid_simple(conn, subc_id, basin_id, reg_id)
-
         # Return only geometry:
         if geometry_only:
 
             LOGGER.debug('... Now, getting stream segment for subc_id: %s' % subc_id)
             geometry_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll(conn, [subc_id], basin_id, reg_id)
-            streamsegment_simple = geometry_coll["geometries"][0]
+            streamsegment_simplegeom = geometry_coll["geometries"][0]
+
+            LOGGER.debug('... Now, getting subcatchment polygon for subc_id: %s' % subc_id)
+            geometry_coll = get_polygons.get_subcatchment_polygons_geometry_coll(conn, [subc_id], basin_id, reg_id)
+            subcatchment_simplegeom = geometry_coll["geometries"][0]
 
             # Make GeometryCollection from both:
             geometry_coll = {
                 "type": "GeometryCollection",
-                "geometries": [streamsegment_simple, subcatchment_simple]
+                "geometries": [streamsegment_simplegeom, subcatchment_simplegeom]
             }
 
             if comment is not None:
@@ -154,21 +154,16 @@ class LocalStreamSegmentSubcatchmentGetter(BaseProcessor):
 
             LOGGER.debug('...Now, getting stream segment (incl. strahler order) for subc_id: %s' % subc_id)
             feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(conn, [subc_id], basin_id, reg_id)
-            feature_streamsegment = feature_coll["features"][0]
+            streamsegment_feature = feature_coll["features"][0]
 
-            # Make GeoJSON Feature from subcatchment:
-            feature_subcatchment = {
-                "type": "Feature",
-                "geometry": subcatchment_simple,
-                "properties": {
-                    "subcatchment_id": subc_id,
-                }
-            }
+            LOGGER.debug('... Now, getting subcatchment polygon for subc_id: %s' % subc_id)
+            feature_coll = get_polygons.get_subcatchment_polygons_feature_coll(conn, [subc_id], basin_id, reg_id)
+            subcatchment_feature = feature_coll["features"][0]
 
             # Make FeatureCollection from both:
             feature_coll = {
                 "type": "FeatureCollection",
-                "features": [feature_streamsegment, feature_subcatchment],
+                "features": [streamsegment_feature, subcatchment_feature],
                 "basin_id": basin_id,
                 "reg_id": reg_id
             }

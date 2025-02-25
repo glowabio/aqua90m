@@ -12,23 +12,37 @@ import psycopg2
 from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_subc_id_basin_id_reg_id
 from pygeoapi.process.aqua90m.geofresh.upstream_helpers import get_upstream_catchment_ids
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
-import pygeoapi.process.aqua90m.geofresh.get_bbox_polygon
+import pygeoapi.process.aqua90m.geofresh.get_bbox_polygon as get_bbox_polygon
 
 
 
 '''
+# Request a simple Geometry (Polygon) (just one, not a collection):
 curl -X POST "http://localhost:5000/processes/get-upstream-bbox/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
-    "comment": "schlei-bei-rabenholz",
+    "geometry_only": "true",
+    "comment": "schlei-bei-rabenholz"
     }
 }'
 
-# Large: Mitten in der ELbe: 53.537158298376575, 9.99475350366553
+# Request a Feature (polygon):
+curl -X POST "http://localhost:5000/processes/get-upstream-bbox/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "geometry_only": "false",
+    "add_upstream_ids": "true",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
 
+# Large: In the middle of river Elbe: 53.537158298376575, 9.99475350366553
 '''
 
 # Process metadata and description
@@ -115,7 +129,7 @@ class UpstreamBboxGetter(BaseProcessor):
         upstream_ids = get_upstream_catchment_ids(conn, subc_id, basin_id, reg_id, LOGGER)
 
         # Get bounding box:
-        bbox_geojson = pygeoapi.process.aqua90m.geofresh.get_bbox_polygon.get_bbox_polygon(
+        bbox_geojson = get_bbox_polygon.get_bbox_polygon(
             conn, upstream_ids, basin_id, reg_id)
         # This geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
         # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
@@ -123,20 +137,20 @@ class UpstreamBboxGetter(BaseProcessor):
         if geometry_only:
 
             if comment is not None:
-                bbox_geojson['comment'] = comment
+                bbox_simplegeom['comment'] = comment
 
             if self.return_hyperlink('bbox', requested_outputs):
-                return 'application/json', self.store_to_json_file('bbox', bbox_geojson)
+                return 'application/json', self.store_to_json_file('bbox', bbox_simplegeom)
             else:
-                return 'application/json', bbox_geojson
+                return 'application/json', bbox_simplegeom
 
         if not geometry_only:
 
             # Generate feature:
             # TODO: Should we include the requested lon and lat? Maybe as a point? Then FeatureCollection?
-            feature = {
+            bbox_feature = {
                 "type": "Feature",
-                "geometry": bbox_geojson,
+                "geometry": bbox_simplegeom,
                 "properties": {
                     "description": "Bounding box of the upstream catchment of subcatchment %s" % subc_id,
                     "subc_id": subc_id, # TODO how to name it?
@@ -146,15 +160,15 @@ class UpstreamBboxGetter(BaseProcessor):
             }
 
             if comment is not None:
-                feature['properties']['comment'] = comment
+                bbox_feature['properties']['comment'] = comment
 
             if add_upstream_ids:
-                feature['properties']['upstream_ids'] = upstream_ids
+                bbox_feature['properties']['upstream_ids'] = upstream_ids
 
             if self.return_hyperlink('bbox', requested_outputs):
-                return 'application/json', self.store_to_json_file('bbox', feature)
+                return 'application/json', self.store_to_json_file('bbox', bbox_feature)
             else:
-                return 'application/json', feature
+                return 'application/json', bbox_feature
 
 
     def return_hyperlink(self, output_name, requested_outputs):

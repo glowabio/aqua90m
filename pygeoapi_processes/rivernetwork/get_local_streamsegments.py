@@ -15,8 +15,19 @@ import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
 
 
 '''
+# Request a simple Geometry (LineString) (just one, not a collection):
+curl -X POST "http://localhost:5000/processes/get-local-streamsegments/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "geometry_only": "true",
+    "comment": "schlei-bei-rabenholz"
+    }
+}'
 
-# Request returning a Feature:
+# Request a Feature (LineString) (just one, not a collection):
 curl -X POST "http://localhost:5000/processes/get-local-streamsegments/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -28,17 +39,6 @@ curl -X POST "http://localhost:5000/processes/get-local-streamsegments/execution
     }
 }'
 
-# Request, returning a simple geometry (linestring):
-curl -X POST "http://localhost:5000/processes/get-local-streamsegments/execution" \
---header "Content-Type: application/json" \
---data '{
-  "inputs": {
-    "lon": 9.931555,
-    "lat": 54.695070,
-    "geometry_only": "true",
-    "comment": "schlei-bei-rabenholz"
-    }
-}'
 '''
 
 # Process metadata and description
@@ -119,15 +119,15 @@ class LocalStreamSegmentsGetter(BaseProcessor):
 
             LOGGER.debug('Now, getting stream segment for subc_id: %s' % subc_id)
             geometry_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll(conn, [subc_id], basin_id, reg_id)
-            streamsegment = geometry_coll["geometries"][0]
+            streamsegment_simplegeom = geometry_coll["geometries"][0]
         
             if comment is not None:
-                streamsegment['comment'] = comment
+                streamsegment_simplegeom['comment'] = comment
 
-            if self.return_hyperlink('snapped_point', requested_outputs):
-                return 'application/json', self.store_to_json_file('stream_segment', streamsegment)
+            if self.return_hyperlink('snapped_point', requested_outputs): # TODO WIP WRONG?
+                return 'application/json', self.store_to_json_file('stream_segment', streamsegment_simplegeom)
             else:
-                return 'application/json', streamsegment
+                return 'application/json', streamsegment_simplegeom
 
 
         # Get Feature:
@@ -135,15 +135,15 @@ class LocalStreamSegmentsGetter(BaseProcessor):
 
             LOGGER.debug('Now, getting stream segment (incl. strahler order) for subc_id: %s' % subc_id)
             feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(conn, [subc_id], basin_id, reg_id)
-            streamsegment = feature_coll["features"][0]
+            streamsegment_feature = feature_coll["features"][0]
 
             if comment is not None:
-                streamsegment['properties']['comment'] = comment
+                streamsegment_feature['properties']['comment'] = comment
 
             if self.return_hyperlink('snapped_point', requested_outputs):
-                return 'application/json', self.store_to_json_file('stream_segment', feature)
+                return 'application/json', self.store_to_json_file('stream_segment', streamsegment_feature)
             else:
-                return 'application/json', streamsegment
+                return 'application/json', streamsegment_feature
 
 
     def return_hyperlink(self, output_name, requested_outputs):
