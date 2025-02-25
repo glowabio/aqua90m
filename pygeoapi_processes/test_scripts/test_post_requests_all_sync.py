@@ -342,10 +342,10 @@ else:
     sys.exit(1)
 
 
-######################################
-### 5 get-shortest-path-two-points ###
-######################################
-name = 'get-shortest-path-two-points'
+##########################################
+### 5 get-shortest-path-between-points ###
+##########################################
+name = 'get-shortest-path-between-points'
 print('\n##### Calling %s... #####' % name)
 url = base_url+'/processes/%s/execution' % name
 inputs = {
@@ -373,10 +373,10 @@ else:
     print('Failed. Stopping...')
     sys.exit(1)
 
-##############################################
-### 5b get-shortest-path-two-points-plural ###
-#############################################
-name = 'get-shortest-path-two-points-plural'
+##################################################
+### 5b get-shortest-path-between-points-plural ###
+##################################################
+name = 'get-shortest-path-between-points-plural'
 print('\n##### Calling %s... #####' % name)
 url = base_url+'/processes/%s/execution' % name
 inputs = {

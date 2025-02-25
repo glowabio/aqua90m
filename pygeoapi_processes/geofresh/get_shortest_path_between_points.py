@@ -19,7 +19,7 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 '''
 # Request a GeometryCollection (LineStrings):
-curl -X POST "http://localhost:5000/processes/get-shortest-path-two-points/execution" \
+curl -X POST "http://localhost:5000/processes/get-shortest-path-between-points/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -32,7 +32,7 @@ curl -X POST "http://localhost:5000/processes/get-shortest-path-two-points/execu
 }'
 
 # Request a FeatureCollection (LineStrings):
-curl -X POST "http://localhost:5000/processes/get-shortest-path-two-points/execution" \
+curl -X POST "http://localhost:5000/processes/get-shortest-path-between-points/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -54,7 +54,7 @@ metadata_title_and_path = script_title_and_path.replace('.py', '.json')
 PROCESS_METADATA = json.load(open(metadata_title_and_path))
 
 
-class ShortestPathTwoPointsGetter(BaseProcessor):
+class ShortestPathBetweenPointsGetter(BaseProcessor):
 
     def __init__(self, processor_def):
         super().__init__(processor_def, PROCESS_METADATA)
@@ -72,7 +72,7 @@ class ShortestPathTwoPointsGetter(BaseProcessor):
 
 
     def __repr__(self):
-        return f'<ShortestPathTwoPointsGetter> {self.name}'
+        return f'<ShortestPathBetweenPointsGetter> {self.name}'
 
 
     def execute(self, data, outputs=None):

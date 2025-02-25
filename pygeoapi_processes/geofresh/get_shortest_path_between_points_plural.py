@@ -18,7 +18,7 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 '''
 # Request some JSON, to be improved (TODO):
-curl -X POST "http://localhost:5000/processes/get-shortest-path-two-points-plural/execution" \
+curl -X POST "http://localhost:5000/processes/get-shortest-path-between-points-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -44,7 +44,7 @@ metadata_title_and_path = script_title_and_path.replace('.py', '.json')
 PROCESS_METADATA = json.load(open(metadata_title_and_path))
 
 
-class ShortestPathTwoPointsGetterPlural(BaseProcessor):
+class ShortestPathBetweenPointsGetterPlural(BaseProcessor):
 
     def __init__(self, processor_def):
         super().__init__(processor_def, PROCESS_METADATA)
@@ -62,7 +62,7 @@ class ShortestPathTwoPointsGetterPlural(BaseProcessor):
 
 
     def __repr__(self):
-        return f'<ShortestPathTwoPointsGetterPlural> {self.name}'
+        return f'<ShortestPathBetweenPointsGetterPlural> {self.name}'
 
 
     def execute(self, data, outputs=None):
