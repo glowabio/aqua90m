@@ -4,13 +4,13 @@ import geomet.wkt
 LOGGER = logging.getLogger(__name__)
 
 try:
-    import utils
+    from ..utils import extent_helpers as extent_helpers
 except ModuleNotFoundError:
-    import pygeoapi.process.aqua90m.geofresh.utils as utils
+    import pygeoapi.process.aqua90m.utils.extent_helpers as extent_helpers
 
 def get_reg_id(conn, lon, lat):
 
-    utils.check_outside_europe(lon, lat) # may raise ValueError!
+    extent_helpers.check_outside_europe(lon, lat) # may raise ValueError!
 
     ### Define query:
     """

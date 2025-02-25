@@ -8,7 +8,7 @@ import json
 import psycopg2
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
-import pygeoapi.process.aqua90m.utils.geojsonhelpers as geojsonhelpers
+import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
 from pygeoapi.process.aqua90m.geofresh.py_query_db import get_connection_object
 
 
@@ -250,7 +250,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
         ### Package all points as GeoJSON GeometryCollection ###
         ########################################################
 
-        all_points = geojsonhelpers.any_points_to_MultiPointCollection(LOGGER,
+        all_points = geojson_helpers.any_points_to_MultiPointCollection(LOGGER,
             points_geojson = points_geojson,
             lonlatstring = lonlatstring,
             csv = csv)
