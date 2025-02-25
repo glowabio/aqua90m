@@ -1,4 +1,5 @@
 import json
+import os
 import logging
 import geomet.wkt
 LOGGER = logging.getLogger(__name__)

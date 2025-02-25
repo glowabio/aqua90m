@@ -3,7 +3,10 @@ import logging
 import geomet.wkt
 LOGGER = logging.getLogger(__name__)
 
-import utils
+try:
+    import utils
+except ModuleNotFoundError:
+    import pygeoapi.process.aqua90m.geofresh.utils as utils
 
 def get_reg_id(conn, lon, lat):
 

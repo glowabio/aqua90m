@@ -329,11 +329,8 @@ class LocalSubcidPluralGetter(BaseProcessor):
         ### Get info point by point ###
         ###############################
 
-        reg_ids, basin_ids, subc_ids, everything = basic_queries.get_subc_id_basin_id_reg_id_for_all(
+        reg_ids, basin_ids, subc_ids, everything = get_subc_id_basin_id_reg_id_for_all(
             conn, LOGGER, all_points)
-
-
-
 
         ################
         ### Results: ###
@@ -426,7 +423,7 @@ def get_db_connection(config):
 
 
 def get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson):
-    # TODO: This is not super efficient, but the quickest to implement :)
+    # TODO: This is not super efficient, but the quickest to implement :) TODO
     dummy = None
     everything = {}
     basin_ids = []
@@ -436,7 +433,8 @@ def get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson):
     for point in points_geojson['geometries']:
         lon, lat = point['coordinates']
         print('Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
-        subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(conn, LOGGER, lon, lat, dummy)
+        subc_id, basin_id, reg_id = basic_queries.get_subc_id_basin_id_reg_id(
+            conn, LOGGER, lon, lat, dummy)
         print('TYPES: %s %s %s' % (type(reg_id), type(basin_id), type(subc_id)))
         print('VALUES: %s %s %s' % (reg_id, basin_id, subc_id))
         reg_ids.append(str(reg_id))
