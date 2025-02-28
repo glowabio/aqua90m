@@ -228,16 +228,21 @@ def get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson):
         basin_ids.append(str(basin_id))
         subc_ids.append(str(subc_id))
 
-        if not reg_id in everything:
-            everything[reg_id] = {basin_id: {subc_id: [point]}}
+        s_reg_id = str(reg_id)
+        s_basin_id = str(basin_id)
+        s_subc_id = str(subc_id)
+
+        if not s_reg_id in everything:
+            everything[s_reg_id] = {s_basin_id: {s_subc_id: [point]}}
+            # Note: Keys must be strings, otherwise pygeapi cannot store the structure into file...
         else:
-            if not basin_id in everything[reg_id]:
-                everything[reg_id][basin_id] = {subc_id: [point]}
+            if not s_basin_id in everything[s_reg_id]:
+                everything[s_reg_id][s_basin_id] = {s_subc_id: [point]}
             else:
-                if not subc_id in everything[reg_id][basin_id]:
-                    everything[reg_id][basin_id][subc_id] = [point]
+                if not s_subc_id in everything[s_reg_id][s_basin_id]:
+                    everything[s_reg_id][s_basin_id][s_subc_id] = [point]
                 else:
-                    everything[reg_id][basin_id][subc_id].append(point)
+                    everything[s_reg_id][s_basin_id][s_subc_id].append(point)
 
 
     # Extensive logging...
