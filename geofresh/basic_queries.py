@@ -150,7 +150,11 @@ def get_subc_id_basin_id_reg_id(conn, LOGGER, lon = None, lat = None, subc_id = 
 def get_subc_id_basin_id_reg_id_from_lon_lat(conn, lon, lat, LOGGER):
 
     # Get reg_id
-    reg_id = get_reg_id(conn, lon, lat)
+    try:
+        reg_id = get_reg_id(conn, lon, lat)
+    except ValueError as e:
+        LOGGER.debug('No reg_id found: %s' % e)
+        return None, None, None
     
     if reg_id is None: # Might be in the ocean!
         error_message = "Caught an error that should have been caught before! (reg_id = None)!"
@@ -212,6 +216,14 @@ def get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson):
             conn, LOGGER, lon, lat, dummy)
         LOGGER.debug('TYPES: %s %s %s' % (type(reg_id), type(basin_id), type(subc_id)))
         LOGGER.debug('VALUES: %s %s %s' % (reg_id, basin_id, subc_id))
+
+        if (reg_id is None and basin_id is None and subc_id is None):
+            # For example, when point falls into ocean...
+            # TODO: What to return? null/NA? "unknown"? Or leave out?
+            reg_id = "ocean"
+            basin_id = "ocean"
+            subc_id = "ocean"
+
         reg_ids.append(str(reg_id))
         basin_ids.append(str(basin_id))
         subc_ids.append(str(subc_id))
