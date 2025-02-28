@@ -30,7 +30,7 @@ curl -X POST "http://localhost:5000/processes/get-local-streamsegments-subcatchm
     "lon": 9.931555,
     "lat": 54.695070,
     "geometry_only": "true",
-    "comment": "schlei-bei-rabenholz"
+    "comment": "schlei-near-rabenholz"
     }
 }'
 

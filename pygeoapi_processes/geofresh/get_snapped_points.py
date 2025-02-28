@@ -141,7 +141,7 @@ class SnappedPointsGetter(BaseProcessor):
         if not geometry_only:
 
             # Get snapped point:
-            LOGGER.debug('... Now, getting snapped point for subc_id (as simple geometry): %s' % subc_id)
+            LOGGER.debug('... Now, getting snapped point for subc_id (as feature): %s' % subc_id)
             snappedpoint_feature = snapping.get_snapped_point_feature(
                 conn, lon, lat, subc_id, basin_id, reg_id)
 

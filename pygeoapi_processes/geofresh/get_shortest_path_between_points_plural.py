@@ -126,6 +126,7 @@ class ShortestPathBetweenPointsGetterPlural(BaseProcessor):
         all_reg_ids = []
         all_basin_ids = []
         for lon, lat in points['coordinates']:
+            # TODO: Loop may not be most efficient!
             LOGGER.debug('Now getting subc_id, basin_id, reg_id for lon %s, lat %s' % (lon, lat))
             subc_id, basin_id, reg_id = basic_queries.get_subc_id_basin_id_reg_id(
                 conn, LOGGER, lon, lat, None)
@@ -160,8 +161,6 @@ class ShortestPathBetweenPointsGetterPlural(BaseProcessor):
         #    raise ProcessorExecuteError(user_msg=err_msg)
 
         # Get subc_ids of the whole connection...
-        # TODO: From here on, I think it is exactly the same code as getting downstream
-        # to sea! So: Modularize and import!
         #LOGGER.debug('Getting network connection for subc_id: start = %s, end = %s' % (subc_id1, subc_id2))
         #segment_ids = routing.get_dijkstra_ids_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
         some_json_result = routing.get_dijkstra_ids_many(conn, all_subc_ids, reg_id, basin_id)
