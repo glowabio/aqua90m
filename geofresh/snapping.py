@@ -528,3 +528,24 @@ if __name__ == "__main__":
     end = time.time()
     print('TIME: %s' % (end - start))
     print('RESULT: %s' % res)
+
+    input_points_geojson = {
+        "type": "MultiPoint",
+        "coordinates": [
+            [9.931555, 54.695070],
+            [9.921555, 54.295070],
+            [47.630, 13.90],
+            [50.250, 9.50],
+            [9.931555, 54.695070],
+            [9.921555, 54.295070],
+            [47.630, 13.90],
+            [50.250, 9.50]
+        ]
+    }
+
+    print('\nSTART RUNNING FUNCTION: get_snapped_point_feature_coll_plural, some more points...')
+    start = time.time()
+    res = get_snapped_point_feature_coll_plural(conn, input_points_geojson)
+    end = time.time()
+    print('TIME: %s' % (end - start))
+    print('RESULT: %s' % res)
