@@ -303,12 +303,13 @@ def _create_temp_table_of_user_points(cursor, tablename, input_points_geojson):
     query_index = "CREATE INDEX IF NOT EXISTS temp_test_geom_user_idx ON {tablename} USING gist (geom_user);".format(tablename=tablename)
     cursor.execute(query_index)
 
-    ## Add reg_id and subc_id:
+    ## Add reg_id:
     query_reg = "UPDATE {tablename} SET reg_id = reg.reg_id FROM regional_units reg WHERE st_intersects({tablename}.geom_user, reg.geom);".format(tablename = tablename)
     cursor.execute(query_reg)
+
+    ## Add sub_id:
     query_sub_bas = "UPDATE {tablename} SET subc_id = sub.subc_id, basin_id = sub.basin_id FROM sub_catchments sub WHERE st_intersects({tablename}.geom_user, sub.geom) AND {tablename}.reg_id = sub.reg_id;".format(tablename = tablename)
     cursor.execute(query_sub_bas)
-    #cursor.execute(query_create + query_insert + query_reg + query_sub_bas)
 
     LOGGER.debug('Creating temporary table "%s"... DONE.' % tablename)
 
