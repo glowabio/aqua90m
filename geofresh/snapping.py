@@ -313,19 +313,35 @@ def _create_temp_table_of_user_points(cursor, tablename, input_points_geojson):
     _end = time.time()
     LOGGER.debug('**************** query_index: %s' % (_end - _start))
 
-    ## Add reg_id:
-    query_reg = "UPDATE {tablename} SET reg_id = reg.reg_id FROM regional_units reg WHERE st_intersects({tablename}.geom_user, reg.geom);".format(tablename = tablename)
+    ## Add reg_id to temp table, get it returned:
+    query_reg = "UPDATE {tablename} SET reg_id = reg.reg_id FROM regional_units reg WHERE st_intersects({tablename}.geom_user, reg.geom) RETURNING {tablename}.reg_id;".format(tablename = tablename)
     _start = time.time()
     cursor.execute(query_reg)
     _end = time.time()
     LOGGER.debug('**************** query_reg: %s' % (_end - _start))
 
+    ## Retrieve reg_id, for next query:
+    LOGGER.debug('Retrieving reg_ids (RETURNING from UPDATE query)...')
+    reg_id_set = set()
+    while (True):
+        row = cursor.fetchone()
+        if row is None: break
+        LOGGER.debug('  Retrieved: %s' % str(row[0]))
+        reg_id_set.add(row[0])
+    LOGGER.debug('Set of reg_ids: %s' % reg_id_set)
+
     ## Add sub_id:
-    query_sub_bas = "UPDATE {tablename} SET subc_id = sub.subc_id, basin_id = sub.basin_id FROM sub_catchments sub WHERE st_intersects({tablename}.geom_user, sub.geom) AND {tablename}.reg_id = sub.reg_id;".format(tablename = tablename)
+    ## Run a separate query for each:
     _start = time.time()
-    cursor.execute(query_sub_bas)
+    for current_reg_id in reg_id_set:
+        LOGGER.debug('Running query for reg_id: %s' % current_reg_id)
+        __start = time.time()
+        query_sub_bas = "UPDATE {tablename} SET subc_id = sub.subc_id, basin_id = sub.basin_id FROM sub_catchments{reg_id} sub WHERE st_intersects({tablename}.geom_user, sub.geom);".format(tablename = tablename, reg_id = current_reg_id)
+        __end = time.time()
+        print('**************** query_sub_bas for %s: %s' % (current_reg_id, __end - __start))
+        cursor.execute(query_sub_bas)
     _end = time.time()
-    LOGGER.debug('**************** query_sub_bas: %s' % (_end - _start))
+    LOGGER.debug('**************** query_sub_bas (all): %s' % (_end - _start))
 
     LOGGER.debug('Creating temporary table "%s"... DONE.' % tablename)
 
