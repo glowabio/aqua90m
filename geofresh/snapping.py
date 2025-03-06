@@ -1,5 +1,6 @@
 import json
 import uuid
+import time
 import geomet.wkt
 import logging
 LOGGER = logging.getLogger(__name__)
@@ -289,7 +290,10 @@ def _create_temp_table_of_user_points(cursor, tablename, input_points_geojson):
     ## Run the create query:
     ## Note: At first, we ran them all at once, but for measuring performance we now
     ## send them separately, and it does not make things much slower.
+    _start = time.time()
     cursor.execute(query_create)
+    _end = time.time()
+    LOGGER.debug('**************** TIME query_create: %s' % (_end - _start))
 
     ## Insert the user values
     tmp = []
@@ -297,19 +301,31 @@ def _create_temp_table_of_user_points(cursor, tablename, input_points_geojson):
         tmp.append("({lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))".format(lon=lon, lat=lat))
 
     query_insert = "INSERT INTO {tablename}(lon, lat, geom_user) VALUES {values};".format(tablename=tablename, values=", ".join(tmp))
+    _start = time.time()
     cursor.execute(query_insert)
+    _end = time.time()
+    LOGGER.debug('**************** query_insert: %s' % (_end - _start))
 
     # Adding index:
     query_index = "CREATE INDEX IF NOT EXISTS temp_test_geom_user_idx ON {tablename} USING gist (geom_user);".format(tablename=tablename)
+    _start = time.time()
     cursor.execute(query_index)
+    _end = time.time()
+    LOGGER.debug('**************** query_index: %s' % (_end - _start))
 
     ## Add reg_id:
     query_reg = "UPDATE {tablename} SET reg_id = reg.reg_id FROM regional_units reg WHERE st_intersects({tablename}.geom_user, reg.geom);".format(tablename = tablename)
+    _start = time.time()
     cursor.execute(query_reg)
+    _end = time.time()
+    LOGGER.debug('**************** query_reg: %s' % (_end - _start))
 
     ## Add sub_id:
     query_sub_bas = "UPDATE {tablename} SET subc_id = sub.subc_id, basin_id = sub.basin_id FROM sub_catchments sub WHERE st_intersects({tablename}.geom_user, sub.geom) AND {tablename}.reg_id = sub.reg_id;".format(tablename = tablename)
+    _start = time.time()
     cursor.execute(query_sub_bas)
+    _end = time.time()
+    LOGGER.debug('**************** query_sub_bas: %s' % (_end - _start))
 
     LOGGER.debug('Creating temporary table "%s"... DONE.' % tablename)
 
@@ -337,7 +353,10 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
     # TODO: Add ST_AsText(seg.geom) if you want the linestring!
     query = query.replace("\n", " ")
     LOGGER.debug('Querying database with snapping query...')
+    _start = time.time()
     cursor.execute(query)
+    _end = time.time()
+    LOGGER.debug('**************** Querying temporary table: %s' % (_end - _start))
     LOGGER.debug('Querying database with snapping query... DONE.')
 
     ## Now iterate over result rows:
@@ -443,19 +462,31 @@ if __name__ == "__main__":
     reg_id = 58
 
     print('\nSTART RUNNING FUNCTION: get_snapped_point_simplegeom')
+    start = time.time()
     res = get_snapped_point_simplegeom(conn, lon, lat, subc_id, basin_id, reg_id)
+    end = time.time()
+    print('TIME: %s' % (end - start))
     print('RESULT:\n%s' % res)
 
     print('\nSTART RUNNING FUNCTION: get_snapped_point_feature')
+    start = time.time()
     res = get_snapped_point_feature(conn, lon, lat, subc_id, basin_id, reg_id)
+    end = time.time()
+    print('TIME: %s' % (end - start))
     print('RESULT:\n%s' % res)
 
     print('\nSTART RUNNING FUNCTION: get_snapped_point_feature_coll')
+    start = time.time()
     res = get_snapped_point_feature_coll(conn, lon, lat, subc_id, basin_id, reg_id)
+    end = time.time()
+    print('TIME: %s' % (end - start))
     print('RESULT:\n%s' % res)
 
     print('\nSTART RUNNING FUNCTION: get_snapped_point_feature_coll')
+    start = time.time()
     res = get_snapped_point_feature_coll(conn, lon, lat, subc_id, basin_id, reg_id)
+    end = time.time()
+    print('TIME: %s' % (end - start))
     print('RESULT:\n%s' % res)
 
     ############
@@ -492,5 +523,8 @@ if __name__ == "__main__":
     }
     '''
     print('\nSTART RUNNING FUNCTION: get_snapped_point_feature_coll_plural')
+    start = time.time()
     res = get_snapped_point_feature_coll_plural(conn, input_points_geojson)
+    end = time.time()
+    print('TIME: %s' % (end - start))
     print('RESULT: %s' % res)
