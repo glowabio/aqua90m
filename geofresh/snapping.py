@@ -331,18 +331,12 @@ def _create_temp_table_of_user_points(cursor, tablename, input_points_geojson):
     LOGGER.debug('Set of reg_ids: %s' % reg_id_set)
 
     ## Add sub_id:
-    ## Run a separate query for each:
     _start = time.time()
-    for current_reg_id in reg_id_set:
-        LOGGER.debug('Running query for reg_id: %s' % current_reg_id)
-        __start = time.time()
-        query_sub_bas = "UPDATE {tablename} SET subc_id = sub.subc_id, basin_id = sub.basin_id FROM sub_catchments{reg_id} sub WHERE st_intersects({tablename}.geom_user, sub.geom);".format(tablename = tablename, reg_id = current_reg_id)
-        __end = time.time()
-        print('**************** query_sub_bas for %s: %s' % (current_reg_id, __end - __start))
-        cursor.execute(query_sub_bas)
+    reg_ids_string = ", ".join([str(elem) for elem in reg_id_set])
+    query_sub_bas = "UPDATE {tablename} SET subc_id = sub.subc_id, basin_id = sub.basin_id FROM sub_catchments sub WHERE st_intersects({tablename}.geom_user, sub.geom) AND sub.reg_id IN ({reg_ids}) ;".format(tablename = tablename, reg_ids = reg_ids_string)
+    cursor.execute(query_sub_bas)
     _end = time.time()
-    LOGGER.debug('**************** query_sub_bas (all): %s' % (_end - _start))
-
+    LOGGER.debug('**************** query_sub_bas: %s' % (_end - _start))
     LOGGER.debug('Creating temporary table "%s"... DONE.' % tablename)
 
 
