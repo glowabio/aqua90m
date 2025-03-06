@@ -271,11 +271,20 @@ def get_snapped_point_simplegeom(conn, lon, lat, subc_id, basin_id, reg_id):
 ### Many points at a time ###
 #############################
 
-def _create_temp_table_of_user_points(cursor, tablename, input_points_geojson):
+def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
 
+#def _create_temp_table_of_user_points(cursor, tablename, input_points_geojson):
+
+
+    cursor = conn.cursor()
+
+    #######################
+    ## Create temp table ##
+    #######################
+
+    # TODO WIP numeric or decimal or ...?
+    tablename = 'snapping_{uuid}'.format(uuid = str(uuid.uuid4()).replace('-', ''))
     LOGGER.debug('Creating temporary table "%s"...' % tablename)
-
-    ## Create temp table: # TODO WIP numeric or decimal or ...?
     query_create = """
     CREATE TEMP TABLE {tablename} (
     lon decimal,
@@ -339,15 +348,12 @@ def _create_temp_table_of_user_points(cursor, tablename, input_points_geojson):
     LOGGER.debug('**************** query_sub_bas: %s' % (_end - _start))
     LOGGER.debug('Creating temporary table "%s"... DONE.' % tablename)
 
+    ############################
+    ## Run the snapping query ##
+    ############################
 
-def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
-
-    tablename = 'snapping_{uuid}'.format(uuid = str(uuid.uuid4()).replace('-', ''))
-    cursor = conn.cursor()
-    _create_temp_table_of_user_points(cursor, tablename, input_points_geojson)
-
-    ## Run the snapping query
-    ## (which does not write anything into the database):
+    ## This does not write anything into the database:
+    reg_ids_string = ", ".join([str(elem) for elem in reg_id_set])
     query = '''
     SELECT
     poi.lon,
@@ -358,8 +364,8 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
     seg.strahler,
     ST_AsText(ST_LineInterpolatePoint(seg.geom, ST_LineLocatePoint(seg.geom, poi.geom_user)))
     FROM hydro.stream_segments seg, {tablename} poi
-    WHERE seg.subc_id = poi.subc_id AND seg.reg_id = poi.reg_id;
-    '''.format(tablename = tablename)
+    WHERE seg.subc_id = poi.subc_id AND seg.reg_id IN ({reg_ids});
+    '''.format(tablename = tablename, reg_ids = reg_ids_string)
     # TODO: Add ST_AsText(seg.geom) if you want the linestring!
     query = query.replace("\n", " ")
     LOGGER.debug('Querying database with snapping query...')
