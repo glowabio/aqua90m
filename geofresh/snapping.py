@@ -299,6 +299,10 @@ def _create_temp_table_of_user_points(cursor, tablename, input_points_geojson):
     query_insert = "INSERT INTO {tablename}(lon, lat, geom_user) VALUES {values};".format(tablename=tablename, values=", ".join(tmp))
     cursor.execute(query_insert)
 
+    # Adding index:
+    query_index = "CREATE INDEX IF NOT EXISTS temp_test_geom_user_idx ON {tablename} USING gist (geom_user);".format(tablename=tablename)
+    cursor.execute(query_index)
+
     ## Add reg_id and subc_id:
     query_reg = "UPDATE {tablename} SET reg_id = reg.reg_id FROM regional_units reg WHERE st_intersects({tablename}.geom_user, reg.geom);".format(tablename = tablename)
     cursor.execute(query_reg)
