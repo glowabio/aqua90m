@@ -314,7 +314,7 @@ def _create_temp_table_of_user_points(cursor, tablename, input_points_geojson):
     LOGGER.debug('**************** query_index: %s' % (_end - _start))
 
     ## Add reg_id to temp table, get it returned:
-    query_reg = "UPDATE {tablename} SET reg_id = reg.reg_id FROM regional_units reg WHERE st_intersects({tablename}.geom_user, reg.geom) RETURNING {tablename}.reg_id;".format(tablename = tablename)
+    query_reg = "WITH updater AS (UPDATE {tablename} SET reg_id = reg.reg_id FROM regional_units reg WHERE st_intersects({tablename}.geom_user, reg.geom) RETURNING {tablename}.reg_id) SELECT DISTINCT reg_id FROM updater;".format(tablename = tablename)
     _start = time.time()
     cursor.execute(query_reg)
     _end = time.time()
