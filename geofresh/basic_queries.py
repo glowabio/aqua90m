@@ -98,6 +98,7 @@ def get_subc_id_basin_id(conn, lon, lat, reg_id):
 
 
 def get_basin_id_reg_id(conn, subc_id):
+    # TODO: We need this in plural for geofresh.get_env90m_data_for_subcids.py
 
     ### Define query:
     query = """
@@ -388,3 +389,28 @@ if __name__ == "__main__":
     res = get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson)
     print('RESULT:\n%s' % res)
 
+
+    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all (using Multipoint)')
+    # All three points in same reg_id (58), basin_id (1294020) and subc_id (506853766)
+    points_geojson = {
+        "type": "GeometryCollection",
+        "geometries": [
+            {
+                "type": "Point",
+                "coordinates": [ 10.041155219078064, 53.07006147583069 ]
+            },
+            {
+                "type": "Point",
+                "coordinates": [ 10.042726993560791, 53.06911450500803 ]
+            },
+            {
+                "type": "Point",
+                "coordinates": [ 10.039894580841064, 53.06869677412868 ]
+            }
+        ]
+    }
+    res = get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson)
+    print('RESULT:\n%s' % res)
+
+
+    
