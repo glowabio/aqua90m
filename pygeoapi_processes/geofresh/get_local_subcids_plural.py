@@ -25,32 +25,32 @@ curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plura
             "features": [
                 {
                     "type": "Feature",
-                    "properties": {},
+                    "properties": {"site_id": 1},
                     "geometry": { "coordinates": [ 10.698832912677716, 53.51710727672125 ], "type": "Point" }
                 },
                 {
                     "type": "Feature",
-                    "properties": {},
+                    "properties": {"site_id": 2},
                     "geometry": { "coordinates": [ 12.80898022975407, 52.42187129944509 ], "type": "Point" }
                 },
                 {
                     "type": "Feature",
-                    "properties": {},
+                    "properties": {"site_id": 3},
                     "geometry": { "coordinates": [ 11.915323076217902, 52.730867141970464 ], "type": "Point" }
                 },
                 {
                     "type": "Feature",
-                    "properties": {},
+                    "properties": {"site_id": 4},
                     "geometry": { "coordinates": [ 16.651903948708565, 48.27779486850176 ], "type": "Point" }
                 },
                 {
                     "type": "Feature",
-                    "properties": {},
+                    "properties": {"site_id": 5},
                     "geometry": { "coordinates": [ 19.201146608148463, 47.12192880511424 ], "type": "Point" }
                 },
                 {
                     "type": "Feature",
-                    "properties": {},
+                    "properties": {"site_id": 6},
                     "geometry": { "coordinates": [ 24.432498016999062, 61.215505889934434 ], "type": "Point" }
                 }
             ]
@@ -248,7 +248,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
         ### Package all points as GeoJSON GeometryCollection ###
         ########################################################
 
-        all_points = geojson_helpers.any_points_to_MultiPointGeometryCollection(LOGGER,
+        all_points = geojson_helpers.any_points_to_MultiPointFeatureCollection(LOGGER,
             points_geojson = points_geojson,
             lonlatstring = lonlatstring,
             csv = csv)

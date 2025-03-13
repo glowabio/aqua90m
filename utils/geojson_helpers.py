@@ -94,6 +94,7 @@ def any_points_to_MultiPointFeatureCollection(LOGGER,
             if len(split_parts) == 3:
                 lon, lat, site_id = split_parts
                 all_without_site_id = False
+                # TODO: Do we need to check whether site_id is unique?
             elif len(split_parts) == 2:
                 lon, lat = split_parts
                 site_id = None
@@ -158,7 +159,6 @@ def any_points_to_MultiPointFeatureCollection(LOGGER,
                 MultiPoint_featurecoll['features'].append(feature)
 
         elif points_geojson['type'] == 'FeatureCollection':
-            # TEST THIS TODO!
 
             MultiPoint_featurecoll = points_geojson
 
@@ -170,9 +170,9 @@ def any_points_to_MultiPointFeatureCollection(LOGGER,
                     LOGGER.error(err_msg)
                     raise ValueError(err_msg)
 
-
                 if 'site_id' in feature['properties']:
                     all_without_site_id = False
+                    # TODO: Do we need to check whether site_id is unique?
                 else:
                     any_without_site_id = True
                     err_msg = 'No site_id in feature: %s' % feature
