@@ -1,0 +1,71 @@
+{
+    "version": "0.0.1",
+    "id": "get-env90m",
+    "use_case": "hydrography90m",
+    "title": {"en": "Get Env90m data for subcatchment"},
+    "description": {
+        "en": "Retrieve environmental data (Environment90m dataset) for a list of subcatchments."
+    },
+    "jobControlOptions": ["sync-execute", "async-execute"],
+    "keywords": ["subcatchment", "upstream", "GeoFRESH", "hydrography90m"],
+    "links": [{
+        "type": "text/html",
+        "rel": "about",
+        "title": "GeoFRESH website",
+        "href": "https://geofresh.org/",
+        "hreflang": "en-US"
+    },
+    {
+        "type": "text/html",
+        "rel": "about",
+        "title": "On Subcatchment Ids (Hydrography90m)",
+        "href": "https://hydrography.org/hydrography90m/hydrography90m_layers",
+        "hreflang": "en-US"
+    }],
+    "inputs": {
+        "subc_ids": {
+            "title": "Subcatchment Ids",
+            "description": "Subcatchment Ids (list)",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["Hydrography90m"]
+        },
+        "variables": {
+            "title": "Env90m Variables",
+            "description": "List of variable names.",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["GeoFRESH", "Environment90m"]
+        },
+        "comment": {
+            "title": "Comment",
+            "description": "Arbitrary string that will not be processed but returned, for user\"s convenience.",
+            "schema": {"type": "string"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["comment"]
+        }
+    },
+    "outputs": {
+        "env90m": {
+            "title": "Env90m data",
+            "description": "JSON stuff.",
+            "schema": {
+                "type": "object",
+                "contentMediaType": "application/json"
+            }
+        }
+    },
+    "example": {
+        "inputs": {
+            "subc_ids": [506250459, 506251015, 506251126, 506251712],
+            "variables": ["bio1", "bio7", "c20", "flow_ltm"],
+            "comment": "no idea where this is"
+        }
+    }
+}
