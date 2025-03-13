@@ -127,6 +127,13 @@ class UpstreamStreamSegmentsGetter(BaseProcessor):
         upstream_ids = upstream_subcids.get_upstream_catchment_ids_incl_itself(
             conn, subc_id, basin_id, reg_id)
 
+        # Cumulative length as JSON:
+        # TODO: We could include this into the query for the FeatureCollection,
+        # instead of querying the database twice. But for now, it works.
+        LOGGER.debug("Querying for cumulative length...")
+        cum_length_by_strahler = get_linestrings.get_accum_length_by_strahler(conn, upstream_ids)
+        LOGGER.debug("Querying for cumulative length DONE: %s" % cum_length_by_strahler)
+
         # Log interesting cases:
         if len(upstream_ids) == 0:
             LOGGER.warning('No upstream ids. Cannot get upstream linestrings .')
@@ -173,6 +180,8 @@ class UpstreamStreamSegmentsGetter(BaseProcessor):
                     "features": [],
                     "basin_id": basin_id,
                     "reg_id": reg_id,
+                    "cumulative_length": 0,
+                    "cumulative_length_by_strahler": 0
                 }
 
             else:
@@ -183,6 +192,8 @@ class UpstreamStreamSegmentsGetter(BaseProcessor):
 
             # Add some info to the FeatureCollection:
             feature_coll["part_of_upstream_catchment_of"] = subc_id
+            feature_coll["cumulative_length"] = cum_length_by_strahler["all_strahler_orders"],
+            feature_coll["cumulative_length_by_strahler"] = cum_length_by_strahler
 
             LOGGER.debug('END: Received FeatureCollection: %s' % str(feature_coll)[0:50])
 
