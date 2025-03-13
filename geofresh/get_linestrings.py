@@ -3,6 +3,7 @@ import logging
 import geomet.wkt
 LOGGER = logging.getLogger(__name__)
 
+
 def get_streamsegment_linestrings_geometry_coll(conn, subc_ids, basin_id, reg_id):
 
     ### Define query:
@@ -142,6 +143,74 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id,
         feature_coll["subc_ids"] = subc_ids
 
     return feature_coll
+
+
+def get_accum_length_by_strahler(conn, subc_ids):
+    # TODO: Maybe just add this to one of the above...? Or might users want
+    # the cumulative length without requesting the geometries?
+
+    # Define query:
+    relevant_ids = ", ".join([str(elem) for elem in subc_ids])
+    query = '''
+    SELECT length, strahler
+    FROM stream_segments
+    WHERE subc_id IN ({relevant_ids})
+    '''.format(relevant_ids = relevant_ids)
+
+    # Query database:
+    cursor = conn.cursor()
+    LOGGER.debug('Querying database...')
+    cursor.execute(query)
+    LOGGER.debug('Querying database... DONE.')
+
+    # Iterate over result rows
+    cum_length = 0
+    length_by_strahler = {}
+    while (True):
+        row = cursor.fetchone()
+        if row is None:
+            break
+
+        length = row[0]
+        strahler = row[1]
+        cum_length += length
+        LOGGER.debug('Length of this segment: %s, cum %s, strahler %s' % (length, cum_length, strahler))
+        if str(strahler) in length_by_strahler:
+            length_by_strahler[str(strahler)] += length
+        else:
+            length_by_strahler[str(strahler)] = length
+
+    length_by_strahler["all_strahler_orders"] = cum_length
+    LOGGER.debug('Returning dict: %s' % length_by_strahler)
+    return length_by_strahler
+
+
+def get_accum_length(conn, subc_ids):
+
+    relevant_ids = ", ".join([str(elem) for elem in subc_ids])
+    query = '''
+    SELECT length
+    FROM stream_segments
+    WHERE subc_id IN ({relevant_ids})
+    '''.format(relevant_ids = relevant_ids)
+
+    ### Query database:
+    cursor = conn.cursor()
+    LOGGER.debug('Querying database...')
+    cursor.execute(query)
+    LOGGER.debug('Querying database... DONE.')
+
+    ### Iterate over results
+    cum_length = 0
+    while (True):
+        row = cursor.fetchone()
+        if row is None:
+            break
+
+        cum_length += row[0]
+        LOGGER.debug('Length of this segment: %s, cum: %s' % (row[0], cum_length))
+
+    return cum_length
 
 
 if __name__ == "__main__":
