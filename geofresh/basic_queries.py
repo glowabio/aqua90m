@@ -200,18 +200,36 @@ def get_subc_id_basin_id_reg_id_from_subc_id(conn, subc_id, LOGGER):
 #################################
 
 def get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson):
+    ## This returns a weird statistic:
+    #    output = {
+    #    "subc_ids":   <comma-separated list>,
+    #    "region_ids": <comma-separated list>,
+    #    "basin_ids":  <comma-separated list>,
+    #    "everything": { nested structure... }
+    #}
 
     dummy = None
     everything = {}
     basin_ids = []
     reg_ids = []
     subc_ids = []
-    num = len(points_geojson['geometries'])
 
     # Iterate over points and call "get_subc_id_basin_id_reg_id" for each point:
     # TODO: This is not super efficient, but the quickest to implement :)
-    for point in points_geojson['geometries']:
-        lon, lat = point['coordinates']
+    if 'geometries' in points_geojson:
+        iterate_over = points_geojson['geometries']
+        num = len(points_geojson['geometries'])
+    if 'features' in points_geojson:
+        iterate_over = points_geojson['features']
+        num = len(points_geojson['features'])
+
+    for point in iterate_over: # either point or feature...
+
+        if 'properties' in point:
+            lon, lat = point['geometry']['coordinates']
+        elif 'coordinates' in point:
+            lon, lat = point['coordinates']
+
         LOGGER.debug('Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
         subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(
             conn, LOGGER, lon, lat, dummy)

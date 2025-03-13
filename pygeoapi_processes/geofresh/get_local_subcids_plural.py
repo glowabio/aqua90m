@@ -60,6 +60,35 @@ curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plura
 }'
 
 
+curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plural/execution' \
+--header 'Content-Type: application/json' \
+--data '{
+    "inputs": {
+        "points_geojson": {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {"site_id": 1},
+                    "geometry": { "coordinates": [ 10.041155219078064, 53.07006147583069 ], "type": "Point" }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {"site_id": 2},
+                    "geometry": { "coordinates": [ 10.042726993560791, 53.06911450500803 ], "type": "Point" }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {"site_id": 3},
+                    "geometry": { "coordinates": [ 10.039894580841064, 53.06869677412868 ], "type": "Point" }
+                }
+            ]
+        },
+        "comment": "schlei-near-rabenholz"
+    }
+}'
+
+
 # Request plain JSON (not GeoJSON: Cannot request Feature/Geometry, does not apply)
 # Input points: Lonlat string
 curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plural/execution' \
