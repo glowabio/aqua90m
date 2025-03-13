@@ -248,7 +248,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
         ### Package all points as GeoJSON GeometryCollection ###
         ########################################################
 
-        all_points = geojson_helpers.any_points_to_MultiPointCollection(LOGGER,
+        all_points = geojson_helpers.any_points_to_MultiPointGeometryCollection(LOGGER,
             points_geojson = points_geojson,
             lonlatstring = lonlatstring,
             csv = csv)
