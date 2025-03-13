@@ -1,5 +1,12 @@
 <!--#https://www.geeksforgeeks.org/using-leaflet-js-to-show-maps-in-a-webpage/-->
 
+<!-- TODO: -->
+<!-- Reclick on a marker, need to change behaviour...  -->
+<!-- Add download data as xyz button -->
+<!-- Always show stream segment and its strahler? -->
+<!-- Polygons: Show strahler order as colour! -->
+<!-- Add login, more subcatchments?? -->
+
 <!DOCTYPE html>
 <html>
 
@@ -33,7 +40,7 @@ integrity=
       <option data-pairs="one" value="get-upstream-bbox">Upstream bounding box</option>
       <option data-pairs="one" value="get-upstream-dissolved-cont">Upstream catchment (one large polygon)</option>
       <option data-pairs="one" value="get-upstream-subcatchments">Upstream catchment (individual polygons)</option>
-      <option data-pairs="one" value="get-upstream-streamsegments">Upstream stream segments</option>
+      <option data-pairs="one" value="get-upstream-streamsegments" selected="selected">Upstream stream segments</option>
     </optgroup>
     <optgroup label="local">
       <option data-pairs="one" value="get-local-streamsegments">Local stream segment</option>
@@ -46,7 +53,7 @@ integrity=
       <option data-pairs="two" value="get-shortest-path-between-points">Shortest path from point to point</option>
     </optgroup>
   </select>
-  <label><input type="checkbox" id="stylingStrahlerToggle">Style depending on <strong>strahler</strong> order</label>
+  <label><input type="checkbox" id="stylingStrahlerToggle" checked>Style depending on <strong>strahler</strong> order</label>
   <div>(please choose!)...</div>
   <p>
     <span class="greynote">Note: Computing may take some time, depending on catchment size!</span>
@@ -117,11 +124,12 @@ integrity=
     </tr>
   </table>
   <!-- Behaviour is defined programmatically further below -->
-  <p><button id="customLonlatButton">Use these values!</button></p>
+  <p><button id="customLonlatButton">Use these values!</button> (The result will be displayed in the map above)</p>
 
 
   <!-- Example buttons -->
   <h3>...or use these examples:</h3>
+  <p>(The result will be displayed in the map above):</p>
   <table>
     <tr>
       <td><button id="example1" thislon="not set" thislat="not set">not set</button></td>
@@ -595,6 +603,7 @@ integrity=
           console.log('Zoomed to layer...');
           clickMarker.closePopup();
 
+          // TODO: Move web page to map!
           // Write GeoJSON into field so that user can copy-paste it:
           var prettyResponse = JSON.stringify(xhrPygeo.response, null, 2); // spacing level = 2
           document.getElementById("displayGeoJSON").innerHTML = prettyResponse;
