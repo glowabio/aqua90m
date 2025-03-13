@@ -145,7 +145,7 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id,
     return feature_coll
 
 
-def get_accum_length_by_strahler(conn, subc_ids):
+def get_accum_length_by_strahler(conn, subc_ids, basin_id, reg_id):
     # TODO: Maybe just add this to one of the above...? Or might users want
     # the cumulative length without requesting the geometries?
 
@@ -155,7 +155,9 @@ def get_accum_length_by_strahler(conn, subc_ids):
     SELECT length, strahler
     FROM stream_segments
     WHERE subc_id IN ({relevant_ids})
-    '''.format(relevant_ids = relevant_ids)
+    AND reg_id = {reg_id}
+    AND basin_id = {basin_id}
+    '''.format(relevant_ids = relevant_ids, basin_id = basin_id, reg_id = reg_id)
 
     # Query database:
     cursor = conn.cursor()
@@ -185,14 +187,16 @@ def get_accum_length_by_strahler(conn, subc_ids):
     return length_by_strahler
 
 
-def get_accum_length(conn, subc_ids):
+def get_accum_length(conn, subc_ids, basin_id, reg_id):
 
     relevant_ids = ", ".join([str(elem) for elem in subc_ids])
     query = '''
     SELECT length
     FROM stream_segments
     WHERE subc_id IN ({relevant_ids})
-    '''.format(relevant_ids = relevant_ids)
+    AND reg_id = {reg_id}
+    AND basin_id = {basin_id}
+    '''.format(relevant_ids = relevant_ids, basin_id = basin_id, reg_id = reg_id)
 
     ### Query database:
     cursor = conn.cursor()
@@ -262,4 +266,12 @@ if __name__ == "__main__":
     
     print('\nSTART RUNNING FUNCTION: get_streamsegment_linestrings_feature_coll')
     res = get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id, add_subc_ids=True)
+    print('RESULT:\n%s' % res)
+
+    print('\nSTART RUNNING FUNCTION: get_accum_length_by_strahler')
+    res = get_accum_length_by_strahler(conn, subc_ids, basin_id, reg_id)
+    print('RESULT:\n%s' % res)
+
+    print('\nSTART RUNNING FUNCTION: get_accum_length_by_strahler')
+    res = get_accum_length(conn, subc_ids, basin_id, reg_id)
     print('RESULT:\n%s' % res)

@@ -7,6 +7,7 @@ LOGGER = logging.getLogger(__name__)
 # global variable:
 MAX_NUM_UPSTREAM_CATCHMENTS = None
 
+
 def get_max_upstream_catchments(config_file_path = None):
 
     global MAX_NUM_UPSTREAM_CATCHMENTS
@@ -127,8 +128,6 @@ if __name__ == "__main__":
 
     # Get config
     config_file_path = "./config.json"
-    # NOT COMMIT:
-    config_file_path = "./config.NOTCOMMIT.geofreshprod.json"
     with open(config_file_path, 'r') as config_file:
         config = json.load(config_file)
         geofresh_server = config['geofresh_server']

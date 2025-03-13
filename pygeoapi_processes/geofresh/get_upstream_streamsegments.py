@@ -131,7 +131,8 @@ class UpstreamStreamSegmentsGetter(BaseProcessor):
         # TODO: We could include this into the query for the FeatureCollection,
         # instead of querying the database twice. But for now, it works.
         LOGGER.debug("Querying for cumulative length...")
-        cum_length_by_strahler = get_linestrings.get_accum_length_by_strahler(conn, upstream_ids)
+        cum_length_by_strahler = get_linestrings.get_accum_length_by_strahler(
+            conn, upstream_ids, basin_id, reg_id)
         LOGGER.debug("Querying for cumulative length DONE: %s" % cum_length_by_strahler)
 
         # Log interesting cases:
