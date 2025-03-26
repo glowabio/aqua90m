@@ -220,15 +220,18 @@ def get_subc_id_basin_id_reg_id_for_all_1(conn, LOGGER, points_geojson):
     reg_ids = []
     subc_ids = []
 
+    # Check GeoJSON validity, and define what to iterate over:
+    if points_geojson['type'] == 'GeometryCollection':
+        geojson_helpers.check_is_geometry_collection_points(points_geojson)
+        iterate_over = points_geojson['geometries']
+        num = len(iterate_over)
+    elif points_geojson['type'] == 'FeatureCollection':
+        geojson_helpers.check_is_feature_collection_points(points_geojson)
+        iterate_over = points_geojson['features']
+        num = len(iterate_over)
+
     # Iterate over points and call "get_subc_id_basin_id_reg_id" for each point:
     # TODO: This is not super efficient, but the quickest to implement :)
-    if 'geometries' in points_geojson:
-        iterate_over = points_geojson['geometries']
-        num = len(points_geojson['geometries'])
-    if 'features' in points_geojson:
-        iterate_over = points_geojson['features']
-        num = len(points_geojson['features'])
-
     for point in iterate_over: # either point or feature...
 
         # Get coordinates from input:
@@ -327,15 +330,18 @@ def get_subc_id_basin_id_reg_id_for_all_2(conn, LOGGER, points_geojson):
     # In case no site_id is provided, use "None":
     site_id = None
 
+    # Check GeoJSON validity, and define what to iterate over:
+    if points_geojson['type'] == 'GeometryCollection':
+        geojson_helpers.check_is_geometry_collection_points(points_geojson)
+        iterate_over = points_geojson['geometries']
+        num = len(iterate_over)
+    elif points_geojson['type'] == 'FeatureCollection':
+        geojson_helpers.check_is_feature_collection_points(points_geojson)
+        iterate_over = points_geojson['features']
+        num = len(iterate_over)
+
     # Iterate over points and call "get_subc_id_basin_id_reg_id" for each point:
     # TODO: This is not super efficient, but the quickest to implement :)
-    if 'geometries' in points_geojson:
-        iterate_over = points_geojson['geometries']
-        num = len(points_geojson['geometries'])
-    if 'features' in points_geojson:
-        iterate_over = points_geojson['features']
-        num = len(points_geojson['features'])
-
     for point in iterate_over: # either point or feature...
 
         # Get coordinates from input:
