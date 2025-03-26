@@ -33,9 +33,9 @@ def get_reg_id(conn, lon, lat):
 
     ### Query database:
     cursor = conn.cursor()
-    LOGGER.debug('Querying database...')
+    LOGGER.log(5, 'Querying database...')
     cursor.execute(query)
-    LOGGER.debug('Querying database... DONE.')
+    LOGGER.log(5, 'Querying database... DONE.')
 
     ### Get results and construct GeoJSON:
     row = cursor.fetchone()
@@ -79,9 +79,9 @@ def get_subc_id_basin_id(conn, lon, lat, reg_id):
 
     ### Query database:
     cursor = conn.cursor()
-    LOGGER.debug('Querying database...')
+    LOGGER.log(5, 'Querying database...')
     cursor.execute(query)
-    LOGGER.debug('Querying database... DONE.')
+    LOGGER.log(5, 'Querying database... DONE.')
 
     ### Get results:
     row = cursor.fetchone()
@@ -110,9 +110,9 @@ def get_basin_id_reg_id(conn, subc_id):
 
     ### Query database:
     cursor = conn.cursor()
-    LOGGER.debug('Querying database...')
+    LOGGER.log(5, 'Querying database...')
     cursor.execute(query)
-    LOGGER.debug('Querying database... DONE.')
+    LOGGER.log(5, 'Querying database... DONE.')
 
     ### Get results and construct GeoJSON:
     row = cursor.fetchone()
@@ -156,6 +156,7 @@ def get_subc_id_basin_id_reg_id_from_lon_lat(conn, lon, lat, LOGGER):
     except ValueError as e:
         LOGGER.debug('No reg_id found: %s' % e)
         return None, None, None
+        # TODO: Falls into ocean case is here!
     
     if reg_id is None: # Might be in the ocean!
         error_message = "Caught an error that should have been caught before! (reg_id = None)!"
@@ -200,7 +201,10 @@ def get_subc_id_basin_id_reg_id_from_subc_id(conn, subc_id, LOGGER):
 #################################
 
 def get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson):
-    ## This returns a weird statistic:
+    # Input: GeoJSON
+    # Output: JSON
+    #
+    # This returns a weird statistic:
     #    output = {
     #    "subc_ids":   <comma-separated list>,
     #    "region_ids": <comma-separated list>,
@@ -208,8 +212,9 @@ def get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson):
     #    "everything": { nested structure... }
     #}
 
-    dummy = None
+    # Create JSON object to be filled and returned:
     everything = {}
+    # Create lists to be filled just for logging the results:
     basin_ids = []
     reg_ids = []
     subc_ids = []
@@ -225,28 +230,29 @@ def get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson):
 
     for point in iterate_over: # either point or feature...
 
+        # Get coordinates from input:
         if 'properties' in point:
             lon, lat = point['geometry']['coordinates']
         elif 'coordinates' in point:
             lon, lat = point['coordinates']
+        else:
+            err_msg = "Input is not valid GeoJSON Point or Point-Feature: %s" % point
+            raise ValueError(err_msg)
 
+        # Query database:
         LOGGER.debug('Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
         subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(
-            conn, LOGGER, lon, lat, dummy)
-        LOGGER.debug('TYPES: %s %s %s' % (type(reg_id), type(basin_id), type(subc_id)))
-        LOGGER.debug('VALUES: %s %s %s' % (reg_id, basin_id, subc_id))
+            conn, LOGGER, lon, lat, None)
 
+        # Database returns None, e.g. when point falls into ocean:
+        # TODO: What to return? null/NA? "unknown"? Or leave out?
         if (reg_id is None and basin_id is None and subc_id is None):
-            # For example, when point falls into ocean...
-            # TODO: What to return? null/NA? "unknown"? Or leave out?
             reg_id = "ocean"
             basin_id = "ocean"
             subc_id = "ocean"
 
-        reg_ids.append(str(reg_id))
-        basin_ids.append(str(basin_id))
-        subc_ids.append(str(subc_id))
-
+        # Collect results in dict:
+        # site_id is included by returning the points, so if the point includes a site_id, it is returned.
         s_reg_id = str(reg_id)
         s_basin_id = str(basin_id)
         s_subc_id = str(subc_id)
@@ -263,9 +269,22 @@ def get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson):
                 else:
                     everything[s_reg_id][s_basin_id][s_subc_id].append(point)
 
+        # This is not really needed, just for logging:
+        reg_ids.append(str(reg_id))
+        basin_ids.append(str(basin_id))
+        subc_ids.append(str(subc_id))
 
-    # Extensive logging...
-    LOGGER.info('Of %s points, ...')
+    # Finished collecting the results, now make output JSON object:
+    # Note: This is not GeoJSON (on purpose), as we did not look for geometry yet.
+    output = {
+        "subc_ids":   ', '.join(str(i) for i in set(subc_ids)),
+        "region_ids": ', '.join(str(i) for i in set(reg_ids)),
+        "basin_ids":  ', '.join(str(i) for i in set(basin_ids)),
+        "everything": everything
+    }
+
+    # Extensive logging of stats:
+    LOGGER.info('Of %s points, ...' % num)
 
     # Stats reg_id...
     if len(set(reg_ids)) == 1:
@@ -275,32 +294,21 @@ def get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson):
         for reg_id in set(reg_ids):
             LOGGER.info('... %s points fall into regional unit with reg_id %s' % (reg_id_counts[reg_id], reg_id))
 
-    # Stats basin_id...
     if len(set(basin_ids)) == 1:
         LOGGER.info('... all %s points fall into drainage basin with basin_id %s' % (num, basin_ids[0]))
     else:
-        #basin_id_counts = {basin_id:basin_ids.count(i) for basin_id in basin_ids}
         basin_id_counts = {basin_id: basin_ids.count(basin_id) for basin_id in basin_ids}
         for basin_id in set(basin_ids):
             LOGGER.info('... %s points fall into drainage basin with basin_id %s' % (basin_id_counts[basin_id], basin_id))
 
-    # Stats subc_id...
     if len(set(subc_ids)) == 1:
         LOGGER.info('... all %s points fall into subcatchment with subc_id %s' % (num, subc_ids[0]))
     else:
-        #subc_id_counts = {subc_id:subc_ids.count(i) for subc_id in subc_ids}
         subc_id_counts = {subc_id: subc_ids.count(subc_id) for subc_id in subc_ids}
         for subc_id in set(subc_ids):
             LOGGER.info('... %s points fall into subcatchment with subc_id %s' % (subc_id_counts[subc_id], subc_id))
 
-    # Note: This is not GeoJSON (on purpose), as we did not look for geometry yet.
-    output = {
-        "subc_ids":   ', '.join(str(i) for i in set(subc_ids)),
-        "region_ids": ', '.join(str(i) for i in set(reg_ids)),
-        "basin_ids":  ', '.join(str(i) for i in set(basin_ids)),
-        "everything": everything
-    }
-
+    # Return result
     return output
 
 
@@ -341,9 +349,9 @@ if __name__ == "__main__":
     #database_username, database_password)
     LOGGER.debug('Connecting to database... DONE.')
 
-    ####################
-    ### Run function ###
-    ####################
+    #############################
+    ### Run function singular ###
+    #############################
 
     print('\nSTART RUNNING FUNCTION: get_reg_id')
     lon = 9.931555
@@ -374,7 +382,10 @@ if __name__ == "__main__":
     res = get_subc_id_basin_id_reg_id(conn, LOGGER, lon = lon, lat = lat, subc_id = None)
     print('RESULT: %s %s %s' % (res[0], res[1], res[2]))
 
-    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all (using Multipoint)')
+    ###########################
+    ### Run function plural ###
+    ###########################
+
     points_geojson = {
         "type": "GeometryCollection",
         "geometries": [
@@ -404,13 +415,9 @@ if __name__ == "__main__":
             }
         ]
     }
-    res = get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson)
-    print('RESULT:\n%s' % res)
 
-
-    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all (using Multipoint)')
     # All three points in same reg_id (58), basin_id (1294020) and subc_id (506853766)
-    points_geojson = {
+    points_geojson_all_same = {
         "type": "GeometryCollection",
         "geometries": [
             {
@@ -427,8 +434,70 @@ if __name__ == "__main__":
             }
         ]
     }
+
+    points_geojson_with_siteid = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [ 10.698832912677716, 53.51710727672125 ]
+                },
+                "properties": { "site_id": "a" }
+            },
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [ 12.80898022975407, 52.42187129944509 ]
+                },
+                "properties": { "site_id": "b" }
+            },
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [ 11.915323076217902, 52.730867141970464 ]
+                },
+                "properties": { "site_id": "c" }
+            },
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [ 16.651903948708565, 48.27779486850176 ]
+                },
+                "properties": { "site_id": "d" }
+            },
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [ 19.201146608148463, 47.12192880511424 ]
+                },
+                "properties": { "site_id": "e" }
+            },
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [ 24.432498016999062, 61.215505889934434 ]
+                },
+                "properties": { "site_id": "f" }
+            }
+        ]
+    }
+
+    # Input: GeoJSON, output JSON
+    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all (using Multipoint)')
     res = get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson)
     print('RESULT:\n%s' % res)
 
+    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all (with site_id)')
+    res = get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson)
+    print('RESULT:\n%s' % res)
 
-    
+    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all (all in same region)')
+    res = get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson_all_same)
+    print('RESULT:\n%s' % res)
