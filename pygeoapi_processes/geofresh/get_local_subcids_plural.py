@@ -294,7 +294,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
         ### Get info point by point ###
         ###############################
 
-        output_json = basic_queries.get_subc_id_basin_id_reg_id_for_all(
+        output_json = basic_queries.get_subc_id_basin_id_reg_id_for_all_1(
             conn, LOGGER, all_points)
 
         ################

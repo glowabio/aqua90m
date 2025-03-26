@@ -201,7 +201,7 @@ def get_subc_id_basin_id_reg_id_from_subc_id(conn, subc_id, LOGGER):
 ### for many points at a time ###
 #################################
 
-def get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson):
+def get_subc_id_basin_id_reg_id_for_all_1(conn, LOGGER, points_geojson):
     # Input: GeoJSON
     # Output: JSON
     #
@@ -650,16 +650,16 @@ if __name__ == "__main__":
     }
 
     # Input: GeoJSON, output JSON
-    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all (using Multipoint)')
-    res = get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson)
+    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all_1 (using Multipoint)')
+    res = get_subc_id_basin_id_reg_id_for_all_1(conn, LOGGER, points_geojson)
     print('RESULT:\n%s' % res)
 
-    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all (with site_id)')
-    res = get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson)
+    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all_1 (with site_id)')
+    res = get_subc_id_basin_id_reg_id_for_all_1(conn, LOGGER, points_geojson)
     print('RESULT:\n%s' % res)
 
-    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all (all in same region)')
-    res = get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson_all_same)
+    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all_1 (all in same region)')
+    res = get_subc_id_basin_id_reg_id_for_all_1(conn, LOGGER, points_geojson_all_same)
     print('RESULT:\n%s' % res)
 
     # Input: GeoJSON, output dataframe
