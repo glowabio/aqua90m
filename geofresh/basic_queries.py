@@ -1,6 +1,7 @@
 import json
 import logging
 import geomet.wkt
+import pandas as pd
 LOGGER = logging.getLogger(__name__)
 
 try:
@@ -313,6 +314,165 @@ def get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson):
 
 
 
+def get_subc_id_basin_id_reg_id_for_all_2(conn, LOGGER, points_geojson):
+    # Input: GeoJSON
+    # Output: Pandas Dataframe
+
+    # Create list to be filled and converted to Pandas dataframe:
+    everything = []
+    # Create lists to be filled just for logging the results:
+    basin_ids = []
+    reg_ids = []
+    subc_ids = []
+    # In case no site_id is provided, use "None":
+    site_id = None
+
+    # Iterate over points and call "get_subc_id_basin_id_reg_id" for each point:
+    # TODO: This is not super efficient, but the quickest to implement :)
+    if 'geometries' in points_geojson:
+        iterate_over = points_geojson['geometries']
+        num = len(points_geojson['geometries'])
+    if 'features' in points_geojson:
+        iterate_over = points_geojson['features']
+        num = len(points_geojson['features'])
+
+    for point in iterate_over: # either point or feature...
+
+        # Get coordinates from input:
+        if 'properties' in point:
+            lon, lat = point['geometry']['coordinates']
+            site_id = point['properties']['site_id']
+        elif 'coordinates' in point:
+            lon, lat = point['coordinates']
+        else:
+            err_msg = "Input is not valid GeoJSON Point or Point-Feature: %s" % point
+            raise ValueError(err_msg)
+
+        # Query database:
+        LOGGER.debug('Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
+        subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(
+            conn, LOGGER, lon, lat, None)
+
+        # Database returns None, e.g. when point falls into ocean:
+        # TODO: What to return? null/NA? "unknown"? Or leave out?
+        if (reg_id is None and basin_id is None and subc_id is None):
+            reg_id = "ocean"
+            basin_id = "ocean"
+            subc_id = "ocean"
+
+        # Collect results in list:
+        everything.append([site_id, reg_id, basin_id, subc_id])
+
+        # This is not really needed, just for logging:
+        reg_ids.append(str(reg_id))
+        basin_ids.append(str(basin_id))
+        subc_ids.append(str(subc_id))
+
+    # Finished collecting the results, now make pandas dataframe:
+    dataframe = pd.DataFrame(everything, columns=['site_id', 'reg_id', 'basin_id', 'subc_id'])
+
+    # Extensive logging of stats:
+    LOGGER.info('Of %s points, ...' % num)
+
+    if len(set(reg_ids)) == 1:
+        LOGGER.info('... all %s points fall into regional unit with reg_id %s' % (num, reg_ids[0]))
+    else:
+        reg_id_counts = {reg_id: reg_ids.count(reg_id) for reg_id in reg_ids}
+        for reg_id in set(reg_ids):
+            LOGGER.info('... %s points fall into regional unit with reg_id %s' % (reg_id_counts[reg_id], reg_id))
+
+    if len(set(basin_ids)) == 1:
+        LOGGER.info('... all %s points fall into drainage basin with basin_id %s' % (num, basin_ids[0]))
+    else:
+        basin_id_counts = {basin_id: basin_ids.count(basin_id) for basin_id in basin_ids}
+        for basin_id in set(basin_ids):
+            LOGGER.info('... %s points fall into drainage basin with basin_id %s' % (basin_id_counts[basin_id], basin_id))
+
+    if len(set(subc_ids)) == 1:
+        LOGGER.info('... all %s points fall into subcatchment with subc_id %s' % (num, subc_ids[0]))
+    else:
+        subc_id_counts = {subc_id: subc_ids.count(subc_id) for subc_id in subc_ids}
+        for subc_id in set(subc_ids):
+            LOGGER.info('... %s points fall into subcatchment with subc_id %s' % (subc_id_counts[subc_id], subc_id))
+
+    # Return result
+    return dataframe
+
+
+
+def get_subc_id_basin_id_reg_id_for_all_3(conn, LOGGER, input_dataframe):
+    # Input: Pandas Dataframe
+    # Output: Pandas Dataframe
+
+    # Create list to be filled and converted to Pandas dataframe:
+    everything = []
+    site_id = None # in case none is provided.
+    basin_ids = []
+    reg_ids = []
+    subc_ids = []
+
+    # Iterate over points and call "get_subc_id_basin_id_reg_id" for each point:
+    # TODO: This is not super efficient, but the quickest to implement :)
+    # TODO: Read this for alternatives to iteration: https://stackoverflow.com/questions/16476924/how-can-i-iterate-over-rows-in-a-pandas-dataframe
+    num = input_dataframe.shape[0]
+    for row in input_dataframe.itertuples(index=False):
+
+        # Get coordinates from input:
+        lon = row.lon
+        lat = row.lat
+        site_id = row.site_id
+
+        # Query database:
+        LOGGER.debug('Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
+        subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(
+            conn, LOGGER, lon, lat, None)
+
+        # Database returns None, e.g. when point falls into ocean:
+        # TODO: What to return? null/NA? "unknown"? Or leave out?
+        if (reg_id is None and basin_id is None and subc_id is None):
+            reg_id = "ocean"
+            basin_id = "ocean"
+            subc_id = "ocean"
+
+        # Collect results in list:
+        everything.append([site_id, reg_id, basin_id, subc_id])
+
+        # This is not really needed, just for logging:
+        reg_ids.append(str(reg_id))
+        basin_ids.append(str(basin_id))
+        subc_ids.append(str(subc_id))
+
+    # Finished collecting the results, now make pandas dataframe:
+    dataframe = pd.DataFrame(everything, columns=['site_id', 'reg_id', 'basin_id', 'subc_id'])
+
+    # Extensive logging of stats:
+    LOGGER.info('Of %s points, ...' % num)
+
+    if len(set(reg_ids)) == 1:
+        LOGGER.info('... all %s points fall into regional unit with reg_id %s' % (num, reg_ids[0]))
+    else:
+        reg_id_counts = {reg_id: reg_ids.count(reg_id) for reg_id in reg_ids}
+        for reg_id in set(reg_ids):
+            LOGGER.info('... %s points fall into regional unit with reg_id %s' % (reg_id_counts[reg_id], reg_id))
+
+    if len(set(basin_ids)) == 1:
+        LOGGER.info('... all %s points fall into drainage basin with basin_id %s' % (num, basin_ids[0]))
+    else:
+        basin_id_counts = {basin_id: basin_ids.count(basin_id) for basin_id in basin_ids}
+        for basin_id in set(basin_ids):
+            LOGGER.info('... %s points fall into drainage basin with basin_id %s' % (basin_id_counts[basin_id], basin_id))
+
+    if len(set(subc_ids)) == 1:
+        LOGGER.info('... all %s points fall into subcatchment with subc_id %s' % (num, subc_ids[0]))
+    else:
+        subc_id_counts = {subc_id: subc_ids.count(subc_id) for subc_id in subc_ids}
+        for subc_id in set(subc_ids):
+            LOGGER.info('... %s points fall into subcatchment with subc_id %s' % (subc_id_counts[subc_id], subc_id))
+
+    # Return result
+    return dataframe
+
+
 if __name__ == "__main__":
 
     # Logging
@@ -500,4 +660,32 @@ if __name__ == "__main__":
 
     print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all (all in same region)')
     res = get_subc_id_basin_id_reg_id_for_all(conn, LOGGER, points_geojson_all_same)
+    print('RESULT:\n%s' % res)
+
+    # Input: GeoJSON, output dataframe
+    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all_2 (input: json, output: dataframe)')
+    res = get_subc_id_basin_id_reg_id_for_all_2(conn, LOGGER, points_geojson)
+    print('RESULT:\n%s' % res)
+
+    # Input: GeoJSON, output dataframe, with site_id!
+    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all_2 (input: json with site_id, output: dataframe)')
+    res = get_subc_id_basin_id_reg_id_for_all_2(conn, LOGGER, points_geojson_with_siteid)
+    print('RESULT:\n%s' % res)
+
+    ## Input: dataframe, output dataframe, with site_id!
+    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all_3 (input: dataframe, output: dataframe)')
+    example_dataframe = pd.DataFrame(
+        [
+            ['aa', 10.041155219078064, 53.07006147583069],
+            ['bb', 10.042726993560791, 53.06911450500803],
+            ['cc', 10.039894580841064, 53.06869677412868],
+            ['a',  10.698832912677716, 53.51710727672125],
+            ['b',  12.80898022975407,  52.42187129944509],
+            ['c',  11.915323076217902, 52.730867141970464],
+            ['d',  16.651903948708565, 48.27779486850176],
+            ['e',  19.201146608148463, 47.12192880511424],
+            ['f',  24.432498016999062, 61.215505889934434]
+        ], columns=['site_id', 'lon', 'lat']
+    )
+    res = get_subc_id_basin_id_reg_id_for_all_3(conn, LOGGER, example_dataframe)
     print('RESULT:\n%s' % res)
