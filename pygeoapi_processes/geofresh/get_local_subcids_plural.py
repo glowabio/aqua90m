@@ -5,6 +5,7 @@ import os
 import sys
 import traceback
 import json
+import pandas as pd
 import psycopg2
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
@@ -263,62 +264,79 @@ class LocalSubcidGetterPlural(BaseProcessor):
 
     def _execute(self, data, requested_outputs, conn):
 
-        # User inputs: GeoJSON...
+        # User inputs:
+        # GeoJSON, posted directly
         points_geojson = data.get('points_geojson', None)
-        # ... or values in a comma separated string, or in CSV: # Still WIP TODO
-        csv = data.get('csv', None)
-        lonlatstring = data.get('lonlatstring', None)
-        #colname_lat = data.get('colname_lat', 'lat')
-        #colname_lon = data.get('colname_lat', 'lon')
-        #subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
+        # GeoJSON, to be downloaded via URL:
+        points_geojson = data.get('points_geojson_url', None)
+        # CSV, to be downloaded via URL
+        csv_url = data.get('csv_url', None)
+        colname_lon = data.get('colname_lon', 'lon')
+        colname_lat = data.get('colname_lon', 'lat')
+        colname_site_id = data.get('colname_site_id', 'site_id')
+        # Optional comment:
         comment = data.get('comment') # optional
 
-        ########################################################
-        ### Package all points as GeoJSON GeometryCollection ###
-        ########################################################
 
-        all_points = geojson_helpers.any_points_to_MultiPointFeatureCollection(LOGGER,
-            points_geojson = points_geojson,
-            lonlatstring = lonlatstring,
-            csv = csv)
-
-        '''
-        * Check bbox --> Europe, America, ...? Possible regional units!
-        * Run spatial intersection with basins, for each possible regional unit, one after the other, until match?
-        * Now we have the basin!
-        * Return basin... All requested data for the entire basin? Prepare shapes?
-        * Do we also return all subc_ids? All requested data for only those subc_ids?
-        '''
-
-        ###############################
-        ### Get info point by point ###
-        ###############################
-
-        output_json = basic_queries.get_subc_id_basin_id_reg_id_for_all_1(
-            conn, LOGGER, all_points)
-
-        ################
-        ### Results: ###
-        ################
-
-        '''
-        TODO: Next step, we need bbox per reg_id / per basin_id / per subc_id...
-        Then, subset using that bbox.
-        Or better, get polygon per reg_id / basin_id / subc_id ? GeoFRESH contains these, but then use them directly for subsetting?
-        '''
+        ## Potential outputs:
+        output_json = None
+        output_df = None
 
 
-        if output_json is not None:
+        ## Download GeoJSON if user provided URL:
+        if points_geojson_url is not None:
+            resp = requests.get(points_geojson_url)
+            if not resp.status_code == 200:
+                err_msg = 'Failed to download GeoJSON (HTTP %s) from %s.' % (resp.status_code, points_geojson_url)
+                LOGGER.error(err_msg)
+                raise Value(err_msg)
+            points_geojson = resp.json()
+
+        ## Handle GeoJSON case:
+        if points_geojson is not None:
+            output_json = basic_queries.get_subc_id_basin_id_reg_id_for_all_1(
+                conn, LOGGER, points_geojson)
+
+        ## Handle CSV case:
+        elif csv_url is not None:
+            input_df = pd.read_csv(csv_url)
+            output_df = get_subc_id_basin_id_reg_id_for_all_3(conn, LOGGER, input_df):
+
+        else:
+            err_msg = 'Please provide either GeoJSON or CSV data.'
+            LOGGER.error(err_msg)
+            raise Value(err_msg)
+
+
+        #####################
+        ### Return result ###
+        #####################
+
+        do_return_link = utils.return_hyperlink('local_ids', requested_outputs)
+
+        ## Return CSV:
+        if output_df is not None:
+            if do_return_link:
+                output_dict_with_url =  utils.store_to_csv_file('subc_id', output_df,
+                    self.metadata, self.job_id,
+                    self.config['download_dir'],
+                    self.config['download_url'])
+                return 'application/json', output_dict_with_url
+            else:
+                err_msg = 'Not implemented return CSV data directly.'
+                LOGGER.error(err_msg)
+                raise Value(err_msg)
+
+        ## Return JSON:
+        elif output_json is not None:
             output_json['comment'] = comment
 
-        # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
-        # In this case, storing a JSON file is totally overdone! But for consistency's sake...
-        if utils.return_hyperlink('subc_id', requested_outputs):
-            output_dict_with_url =  utils.store_to_json_file('subc_id', output_json,
-                self.metadata, self.job_id,
-                self.config['download_dir'],
-                self.config['download_url'])
-            return 'application/json', output_dict_with_url
-        else:
-            return 'application/json', output_json
+            if do_return_link
+                output_dict_with_url =  utils.store_to_json_file('local_ids', output_json,
+                    self.metadata, self.job_id,
+                    self.config['download_dir'],
+                    self.config['download_url'])
+                return 'application/json', output_dict_with_url
 
+            else:
+                return 'application/json', output_json

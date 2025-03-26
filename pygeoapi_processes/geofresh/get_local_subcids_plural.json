@@ -34,9 +34,20 @@
             "metadata": null,
             "keywords": ["coordinates", "wgs84"]
         },
-        "lonlatstring": {
+        "points_geojson_url": {
+            "title": "Coordinates (GeoJSON)",
+            "description": "WGS84 Coordinates of the locations to be queried as a GeoJSON GeometryCollection or FeatureCollection. Please pass a URL, not the values.",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["coordinates", "wgs84"]
+        },
+        "csv_url": {
             "title": "Coordinates (String)",
-            "description": "WGS84 Coordinates of the locations to be queried as a semicolon-separated string of the format \"10.698832912677716,53.51710727672125;12.80898022975407,52.42187129944509\" (coordinate pair separated by comma, pairs separated from each other by semicolon).",
+            "description": "WGS84 Coordinates of the locations to be queried as a CSV file (comma or semicolon both works).",
             "schema": {
                 "type": "string"
             },
@@ -56,33 +67,9 @@
         }
     },
     "outputs": {
-        "subc_ids": {
-            "title": "Subcatchment Ids",
-            "description": "Subcatchment Ids of the stream segments in which the provided coordinates fall, as a list.",
-            "schema": {
-                "type": "object",
-                "contentMediaType": "application/json"
-            }
-        },
-        "region_ids": {
-            "title": "Regional Unit Ids",
-            "description": "Regional Unit Ids of the stream segments in which the provided coordinates fall, as a list.",
-            "schema": {
-                "type": "object",
-                "contentMediaType": "application/json"
-            }
-        },
-        "basin_ids": {
-            "title": "Basin Ids",
-            "description": "Basin Ids of the river basins in which the provided coordinates fall, as a list.",
-            "schema": {
-                "type": "object",
-                "contentMediaType": "application/json"
-            }
-        },
-        "everything": {
+        "local_ids": {
             "title": "Regional Unit Ids, Basin Ids and Subcatchment Ids",
-            "description": "All ids as a hierarchical dictionary/JSON structure, so it is visible which point falls into which subcatchment, basin and regional unit. TODO: Maybe make that dictionary more understandable.",
+            "description": "All ids, so it is visible which point falls into which subcatchment, basin and regional unit. Available as CSV file or as as a nested JSON structure. TODO: Maybe make that dictionary more understandable.",
             "schema": {
                 "type": "object",
                 "contentMediaType": "application/json"
