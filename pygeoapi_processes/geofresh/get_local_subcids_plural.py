@@ -24,6 +24,8 @@ curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plura
 --data '{
     "inputs": {
         "csv_url": "https://nimbus.igb-berlin.de/index.php/s/SnDSamy56sLWs2s/download/spdata.csv",
+        "colname_lat": "latitude",
+        "colname_lon": "longitude",
         "comment": "schlei-near-rabenholz"
     },
     "outputs": {
@@ -263,6 +265,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
             LOGGER.debug('Closing connection...')
             conn.close()
             LOGGER.debug('Closing connection... Done.')
+            LOGGER.info('DONE: %s (job %s).' % (self.metadata['id'], self.job_id))
             return res
 
         except psycopg2.Error as e3:
@@ -289,7 +292,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
         # CSV, to be downloaded via URL
         csv_url = data.get('csv_url', None)
         colname_lon = data.get('colname_lon', 'lon')
-        colname_lat = data.get('colname_lon', 'lat')
+        colname_lat = data.get('colname_lat', 'lat')
         colname_site_id = data.get('colname_site_id', 'site_id')
         # Optional comment:
         comment = data.get('comment') # optional
@@ -345,7 +348,8 @@ class LocalSubcidGetterPlural(BaseProcessor):
                         input_df = pd.read_csv(mytempfilename)
                         mytempfile.close()
 
-            output_df = basic_queries.get_subc_id_basin_id_reg_id_for_all_3(conn, LOGGER, input_df)
+            output_df = basic_queries.get_subc_id_basin_id_reg_id_for_all_3(
+                conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
 
         else:
             err_msg = 'Please provide either GeoJSON or CSV data.'
