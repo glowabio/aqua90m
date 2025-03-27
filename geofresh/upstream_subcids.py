@@ -108,8 +108,6 @@ def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id):
     max_num = get_max_upstream_catchments()
     if len(upstream_catchment_subcids) > max_num:
         LOGGER.warning('Limiting queries to %s upstream subcatchments' % max_num)
-        LOGGER.info("LEAVING EMPTY: %s for subc_id (found %s upstream ids): %s" % (name, len(upstream_catchment_subcids), subc_id))
-        #return []
         raise ValueError('Found %s subcatchments, but temporarily, calculations over %s subcatchments are not done.' % 
             (len(upstream_catchment_subcids), max_num))
 
@@ -165,14 +163,15 @@ if __name__ == "__main__":
     res = get_max_upstream_catchments(config_file_path = config_file_path)
     print('RESULT:\n%s' % res)
 
-    one_subc_id = 506250459 # headwater
-    one_subc_id = 506251015 # headwater
-    one_subc_id = 506251712 # headwater
-    print('\nSTART RUNNING FUNCTION: get_upstream_catchment_ids_incl_itself')
-    res = get_upstream_catchment_ids_incl_itself(conn, one_subc_id, basin_id, reg_id)
+
+    print('\nSTART RUNNING FUNCTION: get_upstream_catchment_ids_incl_itself (for three headwaters)')
+    res = get_upstream_catchment_ids_incl_itself(conn, 506250459, basin_id, reg_id)
+    print('RESULT:\n%s' % res)
+    res = get_upstream_catchment_ids_incl_itself(conn, 506251015, basin_id, reg_id)
+    print('RESULT:\n%s' % res)
+    res = get_upstream_catchment_ids_incl_itself(conn, 506251712, basin_id, reg_id)
     print('RESULT:\n%s' % res)
 
-    one_subc_id = 506251126 # returns 3 subc_ids
-    print('\nSTART RUNNING FUNCTION: get_upstream_catchment_ids_incl_itself')
-    res = get_upstream_catchment_ids_incl_itself(conn, one_subc_id, basin_id, reg_id)
+    print('\nSTART RUNNING FUNCTION: get_upstream_catchment_ids_incl_itself (returns three)')
+    res = get_upstream_catchment_ids_incl_itself(conn, 506251126, basin_id, reg_id)
     print('RESULT:\n%s' % res)

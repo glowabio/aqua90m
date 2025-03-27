@@ -16,13 +16,24 @@ LOGGER = logging.getLogger(__name__)
 ###########################
 
 def get_snapped_point_geometry_coll(conn, lon, lat, subc_id, basin_id, reg_id):
+    # Just a wrapper!
+    # INPUT: subc_id
+    # OUTPUT: GeometryCollection (point, stream segment, connecting line)
     return _get_snapped_point_plus(conn, lon, lat, subc_id, basin_id, reg_id, make_feature = False)
 
+
 def get_snapped_point_feature_coll(conn, lon, lat, subc_id, basin_id, reg_id):
+    # Just a wrapper!
+    # INPUT: subc_id
+    # OUTPUT: FeatureCollection (point, stream segment, connecting line)
     return _get_snapped_point_plus(conn, lon, lat, subc_id, basin_id, reg_id, make_feature = True)
 
 
 def _get_snapped_point_plus(conn, lon, lat, subc_id, basin_id, reg_id, make_feature = False):
+    # INPUT: subc_id
+    # OUTPUT: FeatureCollection or GeometryCollection (point, stream segment, connecting line)
+    LOGGER.debug('Snapping point in subcatchment %s, basin %s, region %s ("mit alles")' % (subc_id, basin_id, reg_id))
+
     ### Define query:
     """
     Example query:
@@ -145,10 +156,14 @@ def _get_snapped_point_plus(conn, lon, lat, subc_id, basin_id, reg_id, make_feat
         }
         return feature_coll
 
-    return snappedpoint_feature
+    return None # GeoJSON has been returned before!
 
 
 def get_snapped_point_feature(conn, lon, lat, subc_id, basin_id, reg_id):
+    # INPUT: subc_id
+    # OUTPUT: Feature (Point)
+
+    LOGGER.debug('Snapping point in subcatchment %s, basin %s, region %s (just the Feature)' % (subc_id, basin_id, reg_id))
 
     ### Define query:
     """
@@ -216,6 +231,11 @@ def get_snapped_point_feature(conn, lon, lat, subc_id, basin_id, reg_id):
 
 
 def get_snapped_point_simplegeom(conn, lon, lat, subc_id, basin_id, reg_id):
+    # INPUT: subc_id
+    # OUTPUT: Geometry (Point)
+
+    LOGGER.debug('Snapping point in subcatchment %s, basin %s, region %s (just the Geometry)' % (subc_id, basin_id, reg_id))
+
     """
     Example result:
     2, {"type": "Point", "coordinates": [9.931555, 54.69625]}, {"type": "LineString", "coordinates": [[9.929583333333333, 54.69708333333333], [9.930416666666668, 54.69625], [9.932083333333335, 54.69625], [9.933750000000002, 54.694583333333334], [9.934583333333334, 54.694583333333334]]}
@@ -274,9 +294,8 @@ def get_snapped_point_simplegeom(conn, lon, lat, subc_id, basin_id, reg_id):
 #############################
 
 def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
-
-#def _create_temp_table_of_user_points(cursor, tablename, input_points_geojson):
-
+    # INPUT: subc_id
+    # OUTPUT: FeatureCollection (Point)
 
     cursor = conn.cursor()
 
@@ -310,7 +329,7 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
     tmp = []
     for lon, lat in input_points_geojson["coordinates"]:
         tmp.append("({lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))".format(lon=lon, lat=lat))
-
+    LOGGER.debug('Inserting into temporary table "%s"...' % tablename)
     query_insert = "INSERT INTO {tablename}(lon, lat, geom_user) VALUES {values};".format(tablename=tablename, values=", ".join(tmp))
     _start = time.time()
     cursor.execute(query_insert)
@@ -318,6 +337,7 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
     LOGGER.log(logging.TRACE, '**** TIME ************ query_insert: %s' % (_end - _start))
 
     # Adding index:
+    LOGGER.debug('Creating index for temporary table "%s"...' % tablename)
     query_index = "CREATE INDEX IF NOT EXISTS temp_test_geom_user_idx ON {tablename} USING gist (geom_user);".format(tablename=tablename)
     _start = time.time()
     cursor.execute(query_index)
@@ -325,6 +345,7 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
     LOGGER.log(logging.TRACE, '**** TIME ************ query_index: %s' % (_end - _start))
 
     ## Add reg_id to temp table, get it returned:
+    LOGGER.debug('Update reg_id (st_intersects) in temporary table "%s"...' % tablename)
     query_reg = "WITH updater AS (UPDATE {tablename} SET reg_id = reg.reg_id FROM regional_units reg WHERE st_intersects({tablename}.geom_user, reg.geom) RETURNING {tablename}.reg_id) SELECT DISTINCT reg_id FROM updater;".format(tablename = tablename)
     _start = time.time()
     cursor.execute(query_reg)
@@ -342,8 +363,9 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
     LOGGER.debug('Set of reg_ids: %s' % reg_id_set)
 
     ## Add sub_id:
-    _start = time.time()
+    LOGGER.debug('Update subc_id, basin_id (st_intersects) in temporary table "%s"...' % tablename)
     reg_ids_string = ", ".join([str(elem) for elem in reg_id_set])
+    _start = time.time()
     query_sub_bas = "UPDATE {tablename} SET subc_id = sub.subc_id, basin_id = sub.basin_id FROM sub_catchments sub WHERE st_intersects({tablename}.geom_user, sub.geom) AND sub.reg_id IN ({reg_ids}) ;".format(tablename = tablename, reg_ids = reg_ids_string)
     cursor.execute(query_sub_bas)
     _end = time.time()
@@ -356,7 +378,7 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
 
     ## This does not write anything into the database:
     reg_ids_string = ", ".join([str(elem) for elem in reg_id_set])
-    query = '''
+    query_snap = '''
     SELECT
     poi.lon,
     poi.lat,
@@ -369,10 +391,10 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
     WHERE seg.subc_id = poi.subc_id AND seg.reg_id IN ({reg_ids});
     '''.format(tablename = tablename, reg_ids = reg_ids_string)
     # TODO: Add ST_AsText(seg.geom) if you want the linestring!
-    query = query.replace("\n", " ")
+    query_snap = query_snap.replace("\n", " ")
     LOGGER.debug('Querying database with snapping query...')
     _start = time.time()
-    cursor.execute(query)
+    cursor.execute(query_snap)
     _end = time.time()
     LOGGER.log(logging.TRACE, '**** TIME ************ query_snap: %s' % (_end - _start))
     LOGGER.debug('Querying database with snapping query... DONE.')
@@ -492,9 +514,9 @@ if __name__ == "__main__":
     print('TIME: %s' % (end - start))
     print('RESULT:\n%s' % res)
 
-    print('\nSTART RUNNING FUNCTION: get_snapped_point_feature_coll')
+    print('\nSTART RUNNING FUNCTION: get_snapped_point_geometry_coll')
     start = time.time()
-    res = get_snapped_point_feature_coll(conn, lon, lat, subc_id, basin_id, reg_id)
+    res = get_snapped_point_geometry_coll(conn, lon, lat, subc_id, basin_id, reg_id)
     end = time.time()
     print('TIME: %s' % (end - start))
     print('RESULT:\n%s' % res)

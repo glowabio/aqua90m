@@ -101,8 +101,6 @@ if __name__ == "__main__":
 
     # Get config
     config_file_path = "./config.json"
-    # NOT COMMIT:
-    config_file_path = "./config.NOTCOMMIT.geofreshprod.json"
     with open(config_file_path, 'r') as config_file:
         config = json.load(config_file)
         geofresh_server = config['geofresh_server']
@@ -124,7 +122,7 @@ if __name__ == "__main__":
         ssh_username=ssh_username, ssh_password=ssh_password)
     #conn = connect_to_db(geofresh_server, geofresh_port, database_name,
     #database_username, database_password)
-    LOGGER.log(logging.TRACE'Connecting to database... DONE.')
+    LOGGER.log(logging.TRACE, 'Connecting to database... DONE.')
 
     ####################
     ### Run function ###

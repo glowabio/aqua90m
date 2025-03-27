@@ -147,12 +147,12 @@ def get_subc_id_basin_id_reg_id(conn, LOGGER, lon = None, lat = None, subc_id = 
 
     # If user provided subc_id, then use it!
     if subc_id is not None:
-        LOGGER.debug('Getting subcatchment, region and basin id for subc_id: %s' % subc_id)
+        LOGGER.log(logging.TRACE, 'Getting subcatchment, region and basin id for subc_id: %s' % subc_id)
         subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id_from_subc_id(conn, subc_id, LOGGER)
 
     # Standard case: User provided lon and lat!
     elif lon is not None and lat is not None:
-            LOGGER.debug('Getting subcatchment, region and basin id for lon, lat: %s, %s' % (lon, lat))
+            LOGGER.log(logging.TRACE, 'Getting subcatchment, region and basin id for lon, lat: %s, %s' % (lon, lat))
             lon = float(lon)
             lat = float(lat)
             subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id_from_lon_lat(conn, lon, lat, LOGGER)
@@ -186,7 +186,7 @@ def get_subc_id_basin_id_reg_id_from_lon_lat(conn, lon, lat, LOGGER):
     if basin_id is None:
         LOGGER.error('No basin_id id found for lon %s, lat %s !' % (lon, lat))
     
-    LOGGER.debug('... Subcatchment has subc_id %s, basin_id %s, reg_id %s.' % (subc_id, basin_id, reg_id))
+    LOGGER.log(logging.TRACE, '... Subcatchment has subc_id %s, basin_id %s, reg_id %s.' % (subc_id, basin_id, reg_id))
 
     return subc_id, basin_id, reg_id
 
@@ -206,7 +206,7 @@ def get_subc_id_basin_id_reg_id_from_subc_id(conn, subc_id, LOGGER):
         LOGGER.error(error_message)
         raise ValueError(error_message)
     
-    LOGGER.debug('Subcatchment has subc_id %s, basin_id %s, reg_id %s.' % (subc_id, basin_id, reg_id))
+    LOGGER.log(logging.TRACE, 'Subcatchment has subc_id %s, basin_id %s, reg_id %s.' % (subc_id, basin_id, reg_id))
 
     return subc_id, basin_id, reg_id
 
@@ -218,6 +218,7 @@ def get_subc_id_basin_id_reg_id_from_subc_id(conn, subc_id, LOGGER):
 def get_subc_id_basin_id_reg_id_for_all_1(conn, LOGGER, points_geojson):
     # Input: GeoJSON
     # Output: JSON
+    # TODO: When input is FeatureCollection, make site_id mandatory?
     #
     # This returns a weird statistic:
     #    output = {
@@ -226,6 +227,7 @@ def get_subc_id_basin_id_reg_id_for_all_1(conn, LOGGER, points_geojson):
     #    "basin_ids":  <comma-separated list>,
     #    "everything": { nested structure... }
     #}
+    # TODO: Instead, return the same GeoJSON, but with added properties.
 
     # Create JSON object to be filled and returned:
     everything = {}
@@ -246,6 +248,7 @@ def get_subc_id_basin_id_reg_id_for_all_1(conn, LOGGER, points_geojson):
 
     # Iterate over points and call "get_subc_id_basin_id_reg_id" for each point:
     # TODO: This is not super efficient, but the quickest to implement :)
+    LOGGER.debug('Getting subcatchment for %s lon, lat pairs...' % num)
     for point in iterate_over: # either point or feature...
 
         # Get coordinates from input:
@@ -258,7 +261,7 @@ def get_subc_id_basin_id_reg_id_for_all_1(conn, LOGGER, points_geojson):
             raise ValueError(err_msg)
 
         # Query database:
-        LOGGER.debug('Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
+        LOGGER.log(logging.TRACE, 'Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
         subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(
             conn, LOGGER, lon, lat, None)
 
@@ -356,6 +359,7 @@ def get_subc_id_basin_id_reg_id_for_all_2(conn, LOGGER, points_geojson):
 
     # Iterate over points and call "get_subc_id_basin_id_reg_id" for each point:
     # TODO: This is not super efficient, but the quickest to implement :)
+    LOGGER.debug('Getting subcatchment for %s lon, lat pairs...' % num)
     for point in iterate_over: # either point or feature...
 
         # Get coordinates from input:
@@ -369,7 +373,7 @@ def get_subc_id_basin_id_reg_id_for_all_2(conn, LOGGER, points_geojson):
             raise ValueError(err_msg)
 
         # Query database:
-        LOGGER.debug('Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
+        LOGGER.log(logging.TRACE, 'Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
         subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(
             conn, LOGGER, lon, lat, None)
 
@@ -435,6 +439,8 @@ def get_subc_id_basin_id_reg_id_for_all_3(conn, LOGGER, input_dataframe, colname
     # TODO: This is not super efficient, but the quickest to implement :)
     # TODO: Read this for alternatives to iteration: https://stackoverflow.com/questions/16476924/how-can-i-iterate-over-rows-in-a-pandas-dataframe
     num = input_dataframe.shape[0]
+    LOGGER.debug('Getting subcatchment for %s lon, lat pairs...' % num)
+
     for row in input_dataframe.itertuples(index=False):
 
         # Get coordinates from input:
@@ -447,7 +453,7 @@ def get_subc_id_basin_id_reg_id_for_all_3(conn, LOGGER, input_dataframe, colname
         site_id = getattr(row, colname_site_id)
 
         # Query database:
-        LOGGER.debug('Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
+        LOGGER.log(logging.TRACE, 'Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
         subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(
             conn, LOGGER, lon, lat, None)
 
@@ -515,8 +521,8 @@ if __name__ == "__main__":
     verbose = True
     #logging.TRACE = 5
     #logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)5s - %(message)s')
-    #logging.basicConfig(level=logging.DEBUG, format='%(name)s:%(lineno)s - %(levelname)5s - %(message)s')
-    logging.basicConfig(level=logging.TRACE, format='%(name)s:%(lineno)s - %(levelname)5s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(name)s:%(lineno)s - %(levelname)5s - %(message)s')
+    #logging.basicConfig(level=logging.TRACE, format='%(name)s:%(lineno)s - %(levelname)5s - %(message)s')
     logging.getLogger("paramiko").setLevel(logging.WARNING)
 
     from database_connection import connect_to_db
