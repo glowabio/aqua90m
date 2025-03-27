@@ -21,8 +21,7 @@ def return_hyperlink(output_name, requested_outputs):
 def store_to_json_file(output_name, json_object, job_metadata, job_id, download_dir, download_url):
 
     # Store to file
-    # TODO: Downloadfilename would be the same if one job had several outputs!
-    downloadfilename = 'outputs-%s-%s.json' % (job_metadata['id'], job_id)
+    downloadfilename = 'outputs-%s-%s-%s.json' % (output_name, job_metadata['id'], job_id)
     downloadfilepath = download_dir+downloadfilename
     LOGGER.debug('Writing process result to json file: %s' % downloadfilepath)
     with open(downloadfilepath, 'w', encoding='utf-8') as downloadfile:
@@ -44,8 +43,7 @@ def store_to_json_file(output_name, json_object, job_metadata, job_id, download_
 def store_to_csv_file(output_name, pandas_df, job_metadata, job_id, download_dir, download_url):
 
     # Store to file
-    # TODO: Downloadfilename would be the same if one job had several outputs!
-    downloadfilename = 'outputs-%s-%s.csv' % (job_metadata['id'], job_id)
+    downloadfilename = 'outputs-%s-%s-%s.csv' % (output_name, job_metadata['id'], job_id)
     downloadfilepath = download_dir+downloadfilename
     LOGGER.debug('Writing process result to csv file: %s' % downloadfilepath)
     pandas_df.to_csv(downloadfilepath, sep=';', encoding='utf-8', index=False, header=True)
