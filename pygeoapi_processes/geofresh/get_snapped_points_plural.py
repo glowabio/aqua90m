@@ -15,11 +15,23 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 
 '''
+
 curl -X POST "http://localhost:5000/pygeoapi/processes/get-snapped-points-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
-    "points": {
+    "csv_url": "https://..."
+  },
+  "outputs": {
+    "transmissionMode": "reference"
+  } 
+}'
+
+curl -X POST "http://localhost:5000/pygeoapi/processes/get-snapped-points-plural/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "points_geojson": {
       "type": "MultiPoint",
       "coordinates": [
         [9.937520027160646, 54.69422745526058],
@@ -91,32 +103,130 @@ class SnappedPointsGetterPlural(BaseProcessor):
     def _execute(self, data, requested_outputs, conn):
 
         # User inputs
-        input_points_geojson = data.get('points')
-        geometry_only = data.get('geometry_only', 'false')
+        #input_points_geojson = data.get('points')
+        #geometry_only = data.get('geometry_only', 'false')
+        #comment = data.get('comment') # optional
+
+        # User inputs:
+        # GeoJSON, posted directly
+        points_geojson = data.get('points_geojson', None)
+        # GeoJSON, to be downloaded via URL:
+        points_geojson_url = data.get('points_geojson_url', None)
+        # CSV, to be downloaded via URL
+        csv_url = data.get('csv_url', None)
+        colname_lon = data.get('colname_lon', 'lon')
+        colname_lat = data.get('colname_lat', 'lat')
+        colname_site_id = data.get('colname_site_id', 'site_id')
+        # Optional comment:
         comment = data.get('comment') # optional
 
-        # Parse booleans
-        geometry_only = (geometry_only.lower() == 'true')
 
-        if geometry_only:
-            raise ProcessorExecuteError("Not implemented yet, please set geometry_only to False.")
-            # TODO: Not implemented yet: Returning snapped points as simple geometry, instead of Feature.
+        ## Potential outputs:
+        output_json = None
+        output_df = None
 
-        if not geometry_only:
-            feature_coll = snapping.get_snapped_points_1(conn, input_points_geojson)
-            LOGGER.debug('Received feature collection: %s' % feature_coll)
 
-            # Add comment:
-            if comment is not None:
-                feature_coll['comment'] = comment
+        ## Download GeoJSON if user provided URL:
+        if points_geojson_url is not None:
+            try:
+                LOGGER.debug('Try downloading input GeoJSON from: %s' % points_geojson_url)
+                resp = requests.get(points_geojson_url)
+            except requests.exceptions.SSLError as e:
+                LOGGER.warning('SSL error when downloading input data from %s: %s' % (points_geojson_url, e))
+                if ('nimbus.igb-berlin.de' in points_geojson_url and
+                    'nimbus.igb-berlin.de' in str(e) and
+                    'certificate verify failed' in str(e)):
+                    resp = requests.get(points_geojson_url, verify=False)
 
-            # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
-            if utils.return_hyperlink('snapped_points', requested_outputs):
-                output_dict_with_url =  utils.store_to_json_file('snapped_points', feature_coll,
+            if not resp.status_code == 200:
+                err_msg = 'Failed to download GeoJSON (HTTP %s) from %s.' % (resp.status_code, points_geojson_url)
+                LOGGER.error(err_msg)
+                raise Value(err_msg)
+            points_geojson = resp.json()
+
+        ## Handle GeoJSON case:
+        if points_geojson is not None:
+
+            # If a FeatureCollections is passed, check whether the property "site_id" (or similar)
+            # is present in every feature:
+            if points_geojson['type'] == 'FeatureCollection':
+                geojson_helpers.check_feature_collection_property(points_geojson, colname_site_id)
+
+            # Query database:
+            # WIP TEST
+            output_json = snapping.get_snapped_points_1(conn, points_geojson, colname_site_id = colname_site_id):
+
+        ## Handle CSV case:
+        elif csv_url is not None:
+            LOGGER.debug('Accessing input CSV from: %s' % csv_url)
+            try:
+                input_df = pd.read_csv(csv_url)
+                LOGGER.debug('Accessing input CSV... Done.')
+
+            # Files stored on Nimbus: We get SSL error:
+            except urllib.error.URLError as e:
+                LOGGER.warning('SSL error when downloading input CSV from %s: %s' % (csv_url, e))
+                if ('nimbus.igb-berlin.de' in csv_url and
+                    'certificate verify failed' in str(e)):
+                    LOGGER.debug('Will download input CSV with verify=False to a tempfile.')
+                    resp = requests.get(csv_url, verify=False)
+                    if resp.status_code == 200:
+                        mytempfile = tempfile.NamedTemporaryFile()
+                        mytempfile.write(resp.content)
+                        mytempfile.flush()
+                        mytempfilename = mytempfile.name
+                        LOGGER.debug("CSV file stored to tempfile successfully: %s" % mytempfilename)
+                        input_df = pd.read_csv(mytempfilename)
+                        mytempfile.close()
+                    else:
+                        err_msg = 'Could not download CSV input data from %s (HTTP %s)' % (csv_url, resp.status_code)
+                        LOGGER.error(err_msg)
+                        raise ValueError(err_msg)
+
+            # Query database:
+            output_df = snapping.get_snapped_points_2(conn, input_df, colname_lon, colname_lat, colname_site_id):
+
+        else:
+            err_msg = 'Please provide either GeoJSON (points_geojson, points_geojson_url) or CSV data (csv_url).'
+            LOGGER.error(err_msg)
+            raise Value(err_msg)
+
+
+
+        #####################
+        ### Return result ###
+        #####################
+
+        do_return_link = utils.return_hyperlink('snapped_points', requested_outputs)
+
+        ## Return CSV:
+        if output_df is not None:
+            if do_return_link:
+                output_dict_with_url =  utils.store_to_csv_file('snapped_points', output_df,
+                    self.metadata, self.job_id,
+                    self.config['download_dir'],
+                    self.config['download_url'])
+
+                output_dict_with_url['comment'] = comment
+
+                return 'application/json', output_dict_with_url
+            else:
+                err_msg = 'Not implemented return CSV data directly.'
+                LOGGER.error(err_msg)
+                raise Value(err_msg)
+
+        ## Return JSON:
+        elif output_json is not None:
+            output_json['comment'] = comment
+
+            if do_return_link:
+                output_dict_with_url =  utils.store_to_json_file('snapped_points', output_json,
                     self.metadata, self.job_id,
                     self.config['download_dir'],
                     self.config['download_url'])
                 return 'application/json', output_dict_with_url
+
             else:
-                return 'application/json', feature_coll
+                return 'application/json', output_json
+
 

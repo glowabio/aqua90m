@@ -23,14 +23,36 @@
         "hreflang": "en-US"
     }],
     "inputs": {
-        "points": {
+        "points_geojson": {
             "title": "Points (GeoJSON)",
-            "description": "GeoJSON: GeometryCollection of MultiPoint items (WGS84)-",
+            "description": "WGS84 Coordinates of the locations to be queried as a GeoJSON FeatureCollection (or GeometryCollection or MultiPoint). Please pass the values, not a URL.",
             "schema": {"type": "string"},
             "minOccurs": 1,
             "maxOccurs": 1,
             "metadata": null,
             "keywords": ["GeoJSON", "wgs84", "MultiPoint"]
+        },
+        "points_geojson_url": {
+            "title": "Coordinates (GeoJSON)",
+            "description": "WGS84 Coordinates of the locations to be queried as a GeoJSON GeometryCollection (or FeatureCollection or MultiPoint). Please pass a URL, not the values.",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["coordinates", "wgs84"]
+        },
+        "csv_url": {
+            "title": "Coordinates (String)",
+            "description": "WGS84 Coordinates of the locations to be queried as a CSV file (comma or semicolon both works). Please pass a URL, not the file contents.",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["coordinates", "wgs84"]
         },
         "comment": {
             "title": "Comment",
@@ -44,7 +66,7 @@
     },
     "outputs": {
         "snapped_points": {
-            "title": "Snapped Points (GeoJSON)",
+            "title": "Snapped Points (GeoJSON or CSV)",
             "description": "GeoJSON FeatureCollection, containing the snapped points (as Points), the local stream segment (as a LineString, including Strahler Order), the local subcatchment (as a Polygon, including Strahler Order), and a connecting line from the given point to the snapped point (as a LineString).",
             "schema": {
                 "type": "object",
