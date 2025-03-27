@@ -1,10 +1,12 @@
 import psycopg2
 import sys
-import logging
 import sshtunnel
 import geomet.wkt
 import os
 import json
+import logging
+logging.TRACE = 5
+logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
 
 ###########################
@@ -48,9 +50,9 @@ def open_ssh_tunnel(ssh_host, ssh_username, ssh_password, remote_host, remote_po
         ssh_password = ssh_password,
         remote_bind_address=(remote_host, remote_port)
     )
-    LOGGER.debug("Starting SSH tunnel...")
+    LOGGER.log(logging.TRACE, "Starting SSH tunnel...")
     tunnel.start()
-    LOGGER.debug("Starting SSH tunnel... done.")
+    LOGGER.log(logging.TRACE, "Starting SSH tunnel... done.")
     return tunnel
 
 
@@ -79,7 +81,7 @@ def get_connection_object_config(config):
 
 def connect_to_db(geofresh_server, db_port, database_name, database_username, database_password):
     # This blocks! Cannot run KeyboardInterrupt
-    LOGGER.debug("Connecting to db...")
+    LOGGER.log(logging.TRACE, "Connecting to db...")
     
     if is_database_off():
         LOGGER.error("Database was switched off via DATABASE_OFF in config.")
@@ -92,7 +94,7 @@ def connect_to_db(geofresh_server, db_port, database_name, database_username, da
        host=geofresh_server,
        port= str(db_port)
     )
-    LOGGER.debug("Connecting to db... done.")
+    LOGGER.log(logging.TRACE, "Connecting to db... done.")
     return conn
 
 
@@ -112,13 +114,14 @@ def get_connection_object(geofresh_server, geofresh_port,
 
 
 def execute_query(conn, query):
-    LOGGER.debug("Executing query...")
+    LOGGER.log(logging.TRACE, "Executing query...")
     cursor = conn.cursor()
     cursor.execute(query)
     return cursor
 
 
 def get_rows(cursor, num_rows, comment='unspecified function'):
+    # TODO is this still used really?
     LOGGER.debug('get-rows (%s) for %s' % (num_rows, comment))
     i = 0
     return_rows = []
@@ -141,6 +144,7 @@ def get_rows(cursor, num_rows, comment='unspecified function'):
 
 
 def get_only_row(cursor, comment='unspecified function'):
+    # TODO is this still used really?
     LOGGER.debug('get-only-row for function %s' % comment)
     i = 0
     return_row = None

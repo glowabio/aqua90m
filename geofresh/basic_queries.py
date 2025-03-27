@@ -1,5 +1,7 @@
 import json
 import logging
+logging.TRACE = 5
+logging.addLevelName(5, "TRACE")
 import geomet.wkt
 import pandas as pd
 LOGGER = logging.getLogger(__name__)
@@ -34,9 +36,9 @@ def get_reg_id(conn, lon, lat):
 
     ### Query database:
     cursor = conn.cursor()
-    LOGGER.log(5, 'Querying database...')
+    LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
-    LOGGER.log(5, 'Querying database... DONE.')
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
     ### Get results and construct GeoJSON:
     row = cursor.fetchone()
@@ -80,9 +82,9 @@ def get_subc_id_basin_id(conn, lon, lat, reg_id):
 
     ### Query database:
     cursor = conn.cursor()
-    LOGGER.log(5, 'Querying database...')
+    LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
-    LOGGER.log(5, 'Querying database... DONE.')
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
     ### Get results:
     row = cursor.fetchone()
@@ -111,9 +113,9 @@ def get_basin_id_reg_id(conn, subc_id):
 
     ### Query database:
     cursor = conn.cursor()
-    LOGGER.log(5, 'Querying database...')
+    LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
-    LOGGER.log(5, 'Querying database... DONE.')
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
     ### Get results and construct GeoJSON:
     row = cursor.fetchone()
@@ -288,29 +290,29 @@ def get_subc_id_basin_id_reg_id_for_all_1(conn, LOGGER, points_geojson):
     }
 
     # Extensive logging of stats:
-    LOGGER.info('Of %s points, ...' % num)
+    LOGGER.log(logging.TRACE, 'Of %s points, ...' % num)
 
     # Stats reg_id...
     if len(set(reg_ids)) == 1:
-        LOGGER.info('... all %s points fall into regional unit with reg_id %s' % (num, reg_ids[0]))
+        LOGGER.log(logging.TRACE, '... all %s points fall into regional unit with reg_id %s' % (num, reg_ids[0]))
     else:
         reg_id_counts = {reg_id: reg_ids.count(reg_id) for reg_id in reg_ids}
         for reg_id in set(reg_ids):
-            LOGGER.info('... %s points fall into regional unit with reg_id %s' % (reg_id_counts[reg_id], reg_id))
+            LOGGER.log(logging.TRACE, '... %s points fall into regional unit with reg_id %s' % (reg_id_counts[reg_id], reg_id))
 
     if len(set(basin_ids)) == 1:
-        LOGGER.info('... all %s points fall into drainage basin with basin_id %s' % (num, basin_ids[0]))
+        LOGGER.log(logging.TRACE, '... all %s points fall into drainage basin with basin_id %s' % (num, basin_ids[0]))
     else:
         basin_id_counts = {basin_id: basin_ids.count(basin_id) for basin_id in basin_ids}
         for basin_id in set(basin_ids):
-            LOGGER.info('... %s points fall into drainage basin with basin_id %s' % (basin_id_counts[basin_id], basin_id))
+            LOGGER.log(logging.TRACE, '... %s points fall into drainage basin with basin_id %s' % (basin_id_counts[basin_id], basin_id))
 
     if len(set(subc_ids)) == 1:
-        LOGGER.info('... all %s points fall into subcatchment with subc_id %s' % (num, subc_ids[0]))
+        LOGGER.log(logging.TRACE, '... all %s points fall into subcatchment with subc_id %s' % (num, subc_ids[0]))
     else:
         subc_id_counts = {subc_id: subc_ids.count(subc_id) for subc_id in subc_ids}
         for subc_id in set(subc_ids):
-            LOGGER.info('... %s points fall into subcatchment with subc_id %s' % (subc_id_counts[subc_id], subc_id))
+            LOGGER.log(logging.TRACE, '... %s points fall into subcatchment with subc_id %s' % (subc_id_counts[subc_id], subc_id))
 
     # Return result
     return output
@@ -378,28 +380,28 @@ def get_subc_id_basin_id_reg_id_for_all_2(conn, LOGGER, points_geojson):
     dataframe = pd.DataFrame(everything, columns=['site_id', 'reg_id', 'basin_id', 'subc_id'])
 
     # Extensive logging of stats:
-    LOGGER.log(5, 'Of %s points, ...' % num)
+    LOGGER.log(logging.TRACE, 'Of %s points, ...' % num)
 
     if len(set(reg_ids)) == 1:
-        LOGGER.log(5, '... all %s points fall into regional unit with reg_id %s' % (num, reg_ids[0]))
+        LOGGER.log(logging.TRACE, '... all %s points fall into regional unit with reg_id %s' % (num, reg_ids[0]))
     else:
         reg_id_counts = {reg_id: reg_ids.count(reg_id) for reg_id in reg_ids}
         for reg_id in set(reg_ids):
-            LOGGER.log(5, '... %s points fall into regional unit with reg_id %s' % (reg_id_counts[reg_id], reg_id))
+            LOGGER.log(logging.TRACE, '... %s points fall into regional unit with reg_id %s' % (reg_id_counts[reg_id], reg_id))
 
     if len(set(basin_ids)) == 1:
-        LOGGER.log(5, '... all %s points fall into drainage basin with basin_id %s' % (num, basin_ids[0]))
+        LOGGER.log(logging.TRACE, '... all %s points fall into drainage basin with basin_id %s' % (num, basin_ids[0]))
     else:
         basin_id_counts = {basin_id: basin_ids.count(basin_id) for basin_id in basin_ids}
         for basin_id in set(basin_ids):
-            LOGGER.log(5, '... %s points fall into drainage basin with basin_id %s' % (basin_id_counts[basin_id], basin_id))
+            LOGGER.log(logging.TRACE, '... %s points fall into drainage basin with basin_id %s' % (basin_id_counts[basin_id], basin_id))
 
     if len(set(subc_ids)) == 1:
-        LOGGER.log(5, '... all %s points fall into subcatchment with subc_id %s' % (num, subc_ids[0]))
+        LOGGER.log(logging.TRACE, '... all %s points fall into subcatchment with subc_id %s' % (num, subc_ids[0]))
     else:
         subc_id_counts = {subc_id: subc_ids.count(subc_id) for subc_id in subc_ids}
         for subc_id in set(subc_ids):
-            LOGGER.log(5, '... %s points fall into subcatchment with subc_id %s' % (subc_id_counts[subc_id], subc_id))
+            LOGGER.log(logging.TRACE, '... %s points fall into subcatchment with subc_id %s' % (subc_id_counts[subc_id], subc_id))
 
     # Return result
     return dataframe
@@ -456,28 +458,28 @@ def get_subc_id_basin_id_reg_id_for_all_3(conn, LOGGER, input_dataframe, colname
     dataframe = pd.DataFrame(everything, columns=['site_id', 'reg_id', 'basin_id', 'subc_id'])
 
     # Extensive logging of stats:
-    LOGGER.info('Of %s points, ...' % num)
+    LOGGER.log(logging.TRACE, 'Of %s points, ...' % num)
 
     if len(set(reg_ids)) == 1:
-        LOGGER.info('... all %s points fall into regional unit with reg_id %s' % (num, reg_ids[0]))
+        LOGGER.log(logging.TRACE, '... all %s points fall into regional unit with reg_id %s' % (num, reg_ids[0]))
     else:
         reg_id_counts = {reg_id: reg_ids.count(reg_id) for reg_id in reg_ids}
         for reg_id in set(reg_ids):
-            LOGGER.info('... %s points fall into regional unit with reg_id %s' % (reg_id_counts[reg_id], reg_id))
+            LOGGER.log(logging.TRACE, '... %s points fall into regional unit with reg_id %s' % (reg_id_counts[reg_id], reg_id))
 
     if len(set(basin_ids)) == 1:
-        LOGGER.info('... all %s points fall into drainage basin with basin_id %s' % (num, basin_ids[0]))
+        LOGGER.log(logging.TRACE, '... all %s points fall into drainage basin with basin_id %s' % (num, basin_ids[0]))
     else:
         basin_id_counts = {basin_id: basin_ids.count(basin_id) for basin_id in basin_ids}
         for basin_id in set(basin_ids):
-            LOGGER.info('... %s points fall into drainage basin with basin_id %s' % (basin_id_counts[basin_id], basin_id))
+            LOGGER.log(logging.TRACE, '... %s points fall into drainage basin with basin_id %s' % (basin_id_counts[basin_id], basin_id))
 
     if len(set(subc_ids)) == 1:
-        LOGGER.info('... all %s points fall into subcatchment with subc_id %s' % (num, subc_ids[0]))
+        LOGGER.log(logging.TRACE, '... all %s points fall into subcatchment with subc_id %s' % (num, subc_ids[0]))
     else:
         subc_id_counts = {subc_id: subc_ids.count(subc_id) for subc_id in subc_ids}
         for subc_id in set(subc_ids):
-            LOGGER.info('... %s points fall into subcatchment with subc_id %s' % (subc_id_counts[subc_id], subc_id))
+            LOGGER.log(logging.TRACE, '... %s points fall into subcatchment with subc_id %s' % (subc_id_counts[subc_id], subc_id))
 
     # Return result
     return dataframe
@@ -487,8 +489,10 @@ if __name__ == "__main__":
 
     # Logging
     verbose = True
+    #logging.TRACE = 5
     #logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)5s - %(message)s')
-    logging.basicConfig(level=logging.DEBUG, format='%(name)s:%(lineno)s - %(levelname)5s - %(message)s')
+    #logging.basicConfig(level=logging.DEBUG, format='%(name)s:%(lineno)s - %(levelname)5s - %(message)s')
+    logging.basicConfig(level=logging.TRACE, format='%(name)s:%(lineno)s - %(levelname)5s - %(message)s')
     logging.getLogger("paramiko").setLevel(logging.WARNING)
 
     from database_connection import connect_to_db

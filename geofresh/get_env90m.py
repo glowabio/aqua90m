@@ -1,6 +1,8 @@
 import json
-import logging
 import geomet.wkt
+import logging
+logging.TRACE = 5
+logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
 
 '''
@@ -191,7 +193,7 @@ def get_env90m_variables_by_subcid(conn, subc_ids, reg_id, variables):
         column_names_str = ", ".join([str(elem) for elem in column_names_list])
 
         ## Create SQL query:
-        LOGGER.debug("Now querying table %s for columns %s" % (table_name, column_names_list))
+        LOGGER.log(logging.TRACE, "Now querying table %s for columns %s" % (table_name, column_names_list))
         query = '''
         SELECT 
         subc_id, {column_names}
@@ -204,12 +206,12 @@ def get_env90m_variables_by_subcid(conn, subc_ids, reg_id, variables):
 
         ### Query database:
         cursor = conn.cursor()
-        LOGGER.debug('Querying database...')
+        LOGGER.log(logging.TRACE, 'Querying database...')
         cursor.execute(query)
-        LOGGER.debug('Querying database... DONE.')
+        LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
         ### Get results and construct JSON:
-        LOGGER.debug('Iterating over the result rows, constructing JSON...')
+        LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing JSON...')
 
         ## Iterate over all result rows / all subcatchments 
         while (True):
@@ -218,20 +220,20 @@ def get_env90m_variables_by_subcid(conn, subc_ids, reg_id, variables):
                 break
 
             subc_id = row[0]
-            LOGGER.debug("Subcatchment: %s" % subc_id)
-            LOGGER.debug("Result row: %s - %s" % (column_names_str, row))
+            LOGGER.log(logging.TRACE, "Subcatchment: %s" % subc_id)
+            LOGGER.log(logging.TRACE, "Result row: %s - %s" % (column_names_str, row))
             if not str(subc_id) in json_result:
                 json_result[str(subc_id)] = {}
 
             ## The next indices are the other variables
             row_index = 1
             for col_name in column_names_list:
-                LOGGER.debug("   Col %s: %s" % (col_name, row[row_index]))
+                LOGGER.log(logging.TRACE, "   Col %s: %s" % (col_name, row[row_index]))
                 json_result[str(subc_id)][col_name] = row[row_index]
                 row_index += 1
 
 
-    LOGGER.debug('THIS IS THE RESULT: %s' % json_result)
+    LOGGER.log(logging.TRACE, 'Overall result: %s' % json_result)
     return json_result
 
 
@@ -243,6 +245,7 @@ if __name__ == "__main__":
     verbose = True
     #logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)5s - %(message)s')
     logging.basicConfig(level=logging.DEBUG, format='%(name)s:%(lineno)s - %(levelname)5s - %(message)s')
+    #logging.basicConfig(level=logging.TRACE, format='%(name)s:%(lineno)s - %(levelname)5s - %(message)s')
     logging.getLogger("paramiko").setLevel(logging.WARNING)
 
     from database_connection import connect_to_db

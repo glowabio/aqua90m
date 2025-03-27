@@ -3,6 +3,8 @@ import uuid
 import time
 import geomet.wkt
 import logging
+logging.TRACE = 5
+logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
 
 # TODO: FUTURE: If we ever snap to stream segments outside of the immediate subcatchment,
@@ -48,13 +50,13 @@ def _get_snapped_point_plus(conn, lon, lat, subc_id, basin_id, reg_id, make_feat
     AND reg_id = {reg_id}
     '''.format(subc_id = subc_id, longitude = lon, latitude = lat, basin_id = basin_id, reg_id = reg_id)
     query = query.replace("\n", " ")
-    LOGGER.debug("QUUUUERY: %s" % query)
+    LOGGER.log(logging.TRACE, "SQL query: %s" % query)
 
     ### Query database:
     cursor = conn.cursor()
-    LOGGER.debug('Querying database...')
+    LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
-    LOGGER.debug('Querying database... DONE.')
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
     ### Get results and construct GeoJSON:
 
@@ -175,9 +177,9 @@ def get_snapped_point_feature(conn, lon, lat, subc_id, basin_id, reg_id):
 
     ### Query database:
     cursor = conn.cursor()
-    LOGGER.debug('Querying database...')
+    LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
-    LOGGER.debug('Querying database... DONE.')
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
     ### Get results and construct GeoJSON:
 
@@ -245,9 +247,9 @@ def get_snapped_point_simplegeom(conn, lon, lat, subc_id, basin_id, reg_id):
 
     ### Query database:
     cursor = conn.cursor()
-    LOGGER.debug('Querying database...')
+    LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
-    LOGGER.debug('Querying database... DONE.')
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
     ### Get results and construct GeoJSON:
 
@@ -302,7 +304,7 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
     _start = time.time()
     cursor.execute(query_create)
     _end = time.time()
-    LOGGER.debug('**************** TIME query_create: %s' % (_end - _start))
+    LOGGER.log(logging.TRACE, '**** TIME ************ query_create: %s' % (_end - _start))
 
     ## Insert the user values
     tmp = []
@@ -313,29 +315,29 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
     _start = time.time()
     cursor.execute(query_insert)
     _end = time.time()
-    LOGGER.debug('**************** query_insert: %s' % (_end - _start))
+    LOGGER.log(logging.TRACE, '**** TIME ************ query_insert: %s' % (_end - _start))
 
     # Adding index:
     query_index = "CREATE INDEX IF NOT EXISTS temp_test_geom_user_idx ON {tablename} USING gist (geom_user);".format(tablename=tablename)
     _start = time.time()
     cursor.execute(query_index)
     _end = time.time()
-    LOGGER.debug('**************** query_index: %s' % (_end - _start))
+    LOGGER.log(logging.TRACE, '**** TIME ************ query_index: %s' % (_end - _start))
 
     ## Add reg_id to temp table, get it returned:
     query_reg = "WITH updater AS (UPDATE {tablename} SET reg_id = reg.reg_id FROM regional_units reg WHERE st_intersects({tablename}.geom_user, reg.geom) RETURNING {tablename}.reg_id) SELECT DISTINCT reg_id FROM updater;".format(tablename = tablename)
     _start = time.time()
     cursor.execute(query_reg)
     _end = time.time()
-    LOGGER.debug('**************** query_reg: %s' % (_end - _start))
+    LOGGER.log(logging.TRACE, '**** TIME ************ query_reg: %s' % (_end - _start))
 
     ## Retrieve reg_id, for next query:
-    LOGGER.debug('Retrieving reg_ids (RETURNING from UPDATE query)...')
+    LOGGER.log(logging.TRACE, 'Retrieving reg_ids (RETURNING from UPDATE query)...')
     reg_id_set = set()
     while (True):
         row = cursor.fetchone()
         if row is None: break
-        LOGGER.debug('  Retrieved: %s' % str(row[0]))
+        LOGGER.log(logging.TRACE, '  Retrieved: %s' % str(row[0]))
         reg_id_set.add(row[0])
     LOGGER.debug('Set of reg_ids: %s' % reg_id_set)
 
@@ -345,8 +347,8 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
     query_sub_bas = "UPDATE {tablename} SET subc_id = sub.subc_id, basin_id = sub.basin_id FROM sub_catchments sub WHERE st_intersects({tablename}.geom_user, sub.geom) AND sub.reg_id IN ({reg_ids}) ;".format(tablename = tablename, reg_ids = reg_ids_string)
     cursor.execute(query_sub_bas)
     _end = time.time()
-    LOGGER.debug('**************** query_sub_bas: %s' % (_end - _start))
-    LOGGER.debug('Creating temporary table "%s"... DONE.' % tablename)
+    LOGGER.log(logging.TRACE, '**** TIME ************ query_sub_bas: %s' % (_end - _start))
+    LOGGER.log(logging.TRACE, 'Creating temporary table "%s"... DONE.' % tablename)
 
     ############################
     ## Run the snapping query ##
@@ -372,11 +374,11 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
     _start = time.time()
     cursor.execute(query)
     _end = time.time()
-    LOGGER.debug('**************** Querying temporary table: %s' % (_end - _start))
+    LOGGER.log(logging.TRACE, '**** TIME ************ query_snap: %s' % (_end - _start))
     LOGGER.debug('Querying database with snapping query... DONE.')
 
     ## Now iterate over result rows:
-    LOGGER.debug('Iterating over the result rows, constructing GeoJSON...')
+    LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
     features = []
     while (True):
         row = cursor.fetchone()
@@ -412,8 +414,7 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
             }
         })
 
-
-    LOGGER.debug('Iterating over the result rows, constructing GeoJSON... DONE.')
+    LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON... DONE.')
 
     if len(features) == 0:
         raise ValueError("No features...")
@@ -428,7 +429,7 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
     query_drop = "DROP TABLE IF EXISTS {tablename};".format(tablename = tablename)
     cursor.execute(query_drop)
 
-    LOGGER.debug('Returning GeoJSON: %s' % feature_coll)
+    LOGGER.log(logging.TRACE, 'Returning GeoJSON: %s' % feature_coll)
     return feature_coll
 
 
@@ -466,7 +467,7 @@ if __name__ == "__main__":
         ssh_username=ssh_username, ssh_password=ssh_password)
     #conn = connect_to_db(geofresh_server, geofresh_port, database_name,
     #database_username, database_password)
-    LOGGER.debug('Connecting to database... DONE.')
+    LOGGER.log(logging.TRACE, 'Connecting to database... DONE.')
 
     ####################
     ### Run function ###

@@ -1,6 +1,8 @@
 import json
 import geomet.wkt
 import logging
+logging.TRACE = 5
+logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
 
 
@@ -63,9 +65,9 @@ def get_dissolved_simplegeom(conn, subc_ids, basin_id, reg_id):
 
     ### Query database:
     cursor = conn.cursor()
-    LOGGER.debug('Querying database...')
+    LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
-    LOGGER.debug('Querying database... DONE.')
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
     ### Get results and construct GeoJSON:
 
@@ -117,7 +119,7 @@ if __name__ == "__main__":
         ssh_username=ssh_username, ssh_password=ssh_password)
     #conn = connect_to_db(geofresh_server, geofresh_port, database_name,
     #database_username, database_password)
-    LOGGER.debug('Connecting to database... DONE.')
+    LOGGER.log(logging.TRACE, 'Connecting to database... DONE.')
 
     ####################
     ### Run function ###

@@ -1,6 +1,8 @@
 import json
-import logging
 import geomet.wkt
+import logging
+logging.TRACE = 5
+logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
 
 
@@ -34,12 +36,12 @@ def get_streamsegment_linestrings_geometry_coll(conn, subc_ids, basin_id, reg_id
 
     ### Query database:
     cursor = conn.cursor()
-    LOGGER.debug('Querying database...')
+    LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
-    LOGGER.debug('Querying database... DONE.')
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
     ### Get results and construct GeoJSON:
-    LOGGER.debug('Iterating over the result rows, constructing GeoJSON...')
+    LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
     linestrings_geojson = []
     while (True):
         row = cursor.fetchone()
@@ -98,12 +100,12 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id,
 
     ### Query database:
     cursor = conn.cursor()
-    LOGGER.debug('Querying database...')
+    LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
-    LOGGER.debug('Querying database... DONE.')
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
     ### Get results and construct GeoJSON:
-    LOGGER.debug('Iterating over the result rows, constructing GeoJSON...')
+    LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
     features_geojson = []
     while (True):
         row = cursor.fetchone()
@@ -161,9 +163,9 @@ def get_accum_length_by_strahler(conn, subc_ids, basin_id, reg_id):
 
     # Query database:
     cursor = conn.cursor()
-    LOGGER.debug('Querying database...')
+    LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
-    LOGGER.debug('Querying database... DONE.')
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
     # Iterate over result rows
     cum_length = 0
@@ -176,14 +178,14 @@ def get_accum_length_by_strahler(conn, subc_ids, basin_id, reg_id):
         length = row[0]
         strahler = row[1]
         cum_length += length
-        LOGGER.debug('Length of this segment: %s, cum %s, strahler %s' % (length, cum_length, strahler))
+        LOGGER.log(logging.TRACE, 'Length of this segment: %s, cum %s, strahler %s' % (length, cum_length, strahler))
         if str(strahler) in length_by_strahler:
             length_by_strahler[str(strahler)] += length
         else:
             length_by_strahler[str(strahler)] = length
 
     length_by_strahler["all_strahler_orders"] = cum_length
-    LOGGER.debug('Returning dict: %s' % length_by_strahler)
+    LOGGER.log(logging.TRACE, 'Returning dict: %s' % length_by_strahler)
     return length_by_strahler
 
 
@@ -200,9 +202,9 @@ def get_accum_length(conn, subc_ids, basin_id, reg_id):
 
     ### Query database:
     cursor = conn.cursor()
-    LOGGER.debug('Querying database...')
+    LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
-    LOGGER.debug('Querying database... DONE.')
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
     ### Iterate over results
     cum_length = 0
@@ -212,7 +214,7 @@ def get_accum_length(conn, subc_ids, basin_id, reg_id):
             break
 
         cum_length += row[0]
-        LOGGER.debug('Length of this segment: %s, cum: %s' % (row[0], cum_length))
+        LOGGER.log(logging.TRACE, 'Length of this segment: %s, cum: %s' % (row[0], cum_length))
 
     return cum_length
 
@@ -222,7 +224,8 @@ if __name__ == "__main__":
     # Logging
     verbose = True
     #logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)5s - %(message)s')
-    logging.basicConfig(level=logging.DEBUG, format='%(name)s:%(lineno)s - %(levelname)5s - %(message)s')
+    #logging.basicConfig(level=logging.DEBUG, format='%(name)s:%(lineno)s - %(levelname)5s - %(message)s')
+    logging.basicConfig(level=logging.TRACE, format='%(name)s:%(lineno)s - %(levelname)5s - %(message)s')
     logging.getLogger("paramiko").setLevel(logging.WARNING)
 
     from database_connection import connect_to_db
@@ -251,7 +254,7 @@ if __name__ == "__main__":
         ssh_username=ssh_username, ssh_password=ssh_password)
     #conn = connect_to_db(geofresh_server, geofresh_port, database_name,
     #database_username, database_password)
-    LOGGER.debug('Connecting to database... DONE.')
+    LOGGER.log(logging.TRACE, 'Connecting to database... DONE.')
 
     ####################
     ### Run function ###

@@ -1,7 +1,9 @@
 import json
 import os
-import logging
 import geomet.wkt
+import logging
+logging.TRACE = 5
+logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
 
 # global variable:
@@ -12,7 +14,7 @@ def get_max_upstream_catchments(config_file_path = None):
 
     global MAX_NUM_UPSTREAM_CATCHMENTS
     if MAX_NUM_UPSTREAM_CATCHMENTS is not None:
-        LOGGER.debug("MAX_NUM_UPSTREAM_CATCHMENTS set already, returning it!")
+        LOGGER.log(logging.TRACE, "MAX_NUM_UPSTREAM_CATCHMENTS set already, returning it!")
         return MAX_NUM_UPSTREAM_CATCHMENTS
 
     # If it was not set yet, set it and return it:
@@ -78,9 +80,9 @@ def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id):
 
     ### Query database:
     cursor = conn.cursor()
-    LOGGER.debug('Querying database...')
+    LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
-    LOGGER.debug('Querying database... DONE.')
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
     ### Get results:
     row = cursor.fetchone()

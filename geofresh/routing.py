@@ -1,5 +1,7 @@
 import json
 import logging
+logging.TRACE = 5
+logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
 
 
@@ -58,12 +60,12 @@ def get_dijkstra_ids_one(conn, start_subc_id, end_subc_id, reg_id, basin_id):
 
     ### Query database:
     cursor = conn.cursor()
-    LOGGER.debug('Querying database...')
+    LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
-    LOGGER.debug('Querying database... DONE.')
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
     ### Get results and construct GeoJSON:
-    LOGGER.debug('Iterating over the result rows...')
+    LOGGER.log(logging.TRACE, 'Iterating over the result rows...')
     all_ids = [start_subc_id] # Adding start segment, as it is not included in database return!
     while (True):
         row = cursor.fetchone()
@@ -102,14 +104,14 @@ def get_dijkstra_ids_many(conn, subc_ids, reg_id, basin_id):
     query = query.replace("\n", " ")
     query = query.replace("    ", "")
     query = query.strip()
-    LOGGER.info("SQL query: %s" % query)
+    LOGGER.log(logging.TRACE, "SQL query: %s" % query)
     # SQL query: SELECT edge FROM pgr_dijkstra(' SELECT   subc_id AS id,   subc_id AS source,   target,   length AS cost   FROM hydro.stream_segments   WHERE reg_id = 58   AND basin_id = 1294020', ARRAY[507294699,507282720,507199553,507332148,507290955], ARRAY[507294699,507282720,507199553,507332148,507290955], directed := false);
     
     ### Query database:
     cursor = conn.cursor()
-    LOGGER.debug('Querying database...')
+    LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
-    LOGGER.debug('Querying database... DONE.')
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
     ### Construct result matrix:
     # TODO: JSON may not be the ideal type for returning a matrix!
@@ -120,8 +122,8 @@ def get_dijkstra_ids_many(conn, subc_ids, reg_id, basin_id):
             results_json[str(start_id)][str(end_id)] = [start_id] # TODO: check: Have to add start id?
 
     ### Iterating over the result rows:
-    LOGGER.debug("Template for results: %s" % results_json)
-    LOGGER.debug("Iterating over results...")
+    LOGGER.log(logging.TRACE, "Template for results: %s" % results_json)
+    LOGGER.log(logging.TRACE, "Iterating over results...")
     while True:
         row = cursor.fetchone()
         if row is None: break
@@ -134,10 +136,10 @@ def get_dijkstra_ids_many(conn, subc_ids, reg_id, basin_id):
             pass
         else:
             results_json[str(start_id)][str(end_id)].append(this_id)
-            LOGGER.debug('Start %s to end %s, add this id %s' % (start_id, end_id, this_id))
+            LOGGER.log(logging.TRACE, 'Start %s to end %s, add this id %s' % (start_id, end_id, this_id))
 
-    LOGGER.debug("Iterating over results... DONE.")
-    #LOGGER.debug("JSON result: %s" % results_json) # quite big!
+    LOGGER.log(logging.TRACE, "Iterating over results... DONE.")
+    #LOGGER.log(logging.TRACE, "JSON result: %s" % results_json) # quite big!
 
     return results_json
 
@@ -174,11 +176,13 @@ def get_dijkstra_distance_one(conn, start_subc_id, end_subc_id, reg_id, basin_id
     query = query.replace("\n", " ")
     query = query.replace("    ", "")
     query = query.strip()
-    LOGGER.info("SQL query: %s" % query)
+    LOGGER.log(logging.TRACE, "SQL query: %s" % query)
 
     ### Query database:
     cursor = conn.cursor()
+    LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
     ### Iterating over the result rows:
     dist = None
@@ -228,7 +232,7 @@ def get_dijkstra_distance_many(conn, subc_ids, reg_id, basin_id):
     query = query.replace("\n", " ")
     query = query.replace("    ", "")
     query = query.strip()
-    LOGGER.info("SQL query: %s" % query)
+    LOGGER.log(logging.TRACE, "SQL query: %s" % query)
     # SQL query: SELECT edge FROM pgr_dijkstra(' SELECT   subc_id AS id,   subc_id AS source,   target,   length AS cost   FROM hydro.stream_segments   WHERE reg_id = 58   AND basin_id = 1294020', ARRAY[507294699,507282720,507199553,507332148,507290955], ARRAY[507294699,507282720,507199553,507332148,507290955], directed := false);
     
     ### Query database:
@@ -254,7 +258,7 @@ def get_dijkstra_distance_many(conn, subc_ids, reg_id, basin_id):
             end_id    = row[2]    
             agg_cost  = row[3]        
             results[str(start_id)][str(end_id)] = agg_cost
-            LOGGER.debug('Start %s to end %s, accumulated length %s' % 
+            LOGGER.log(logging.TRACE, 'Start %s to end %s, accumulated length %s' % 
                 (start_id, end_id, agg_cost))
 
     return results
