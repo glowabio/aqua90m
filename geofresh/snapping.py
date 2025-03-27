@@ -2,10 +2,25 @@ import json
 import uuid
 import time
 import geomet.wkt
+import pandas as pd
 import logging
 logging.TRACE = 5
 logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
+
+try:
+    # If the package is installed in local python PATH:
+    import aqua90m.utils.geojson_helpers as geojson_helpers
+except ModuleNotFoundError as e1:
+    try:
+        # If we are using this from pygeoapi:
+        import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
+    except ModuleNotFoundError as e2:
+        msg = 'Module not found: '+e1.name+'. If this is being run from' + \
+              ' command line, the aqua90m directory has to be added to ' + \
+              ' PATH for python to find it.'
+        print(msg)
+        LOGGER.debug(msg)
 
 # TODO: FUTURE: If we ever snap to stream segments outside of the immediate subcatchment,
 # need to adapt some stuff in this process...
@@ -293,8 +308,39 @@ def get_snapped_point_simplegeom(conn, lon, lat, subc_id, basin_id, reg_id):
 ### Many points at a time ###
 #############################
 
-def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
-    # INPUT: subc_id
+def get_snapped_points_1(conn, points_geojson, colname_site_id = None):
+    # Just a wrapper
+    # INPUT: GeoJSON (Multipoint)
+    # OUTPUT: FeatureCollection (Point)
+
+    # Check GeoJSON validity, and define what to iterate over:
+    if points_geojson['type'] == 'GeometryCollection':
+        geojson_helpers.check_is_geometry_collection_points(points_geojson)
+        iterate_over = points_geojson['geometries']
+        num = len(iterate_over)
+    elif points_geojson['type'] == 'FeatureCollection':
+        geojson_helpers.check_is_feature_collection_points(points_geojson)
+        if colname_site_id is None:
+            err_msg = "Please provide the property name where the site id is provided."
+            LOGGER.error(err_msg)
+            raise ValueError(err_msg)
+        iterate_over = points_geojson['features']
+        num = len(iterate_over)
+
+    return get_snapped_point_xy(conn, geojson = points_geojson, colname_site_id = colname_site_id)
+
+def get_snapped_points_2(conn, input_df, colname_lon, colname_lat, colname_site_id):
+    # Just a wrapper
+    # INPUT: Pandas dataframe
+    # OUTPUT: Pandas dataframe
+    return get_snapped_point_xy(conn,
+        dataframe = input_df,
+        colname_lon = colname_lon,
+        colname_lat = colname_lat,
+        colname_site_id = colname_site_id)
+
+def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, colname_lat=None, colname_site_id=None):
+    # INPUT: GeoJSON (Multipoint)
     # OUTPUT: FeatureCollection (Point)
 
     cursor = conn.cursor()
@@ -304,10 +350,12 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
     #######################
 
     # TODO WIP numeric or decimal or ...?
+    # TODO: Is varchar a good type for expected site_ids?
     tablename = 'snapping_{uuid}'.format(uuid = str(uuid.uuid4()).replace('-', ''))
     LOGGER.debug('Creating temporary table "%s"...' % tablename)
     query_create = """
     CREATE TEMP TABLE {tablename} (
+    site_id varchar(100),
     lon decimal,
     lat decimal,
     subc_id integer,
@@ -325,12 +373,45 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
     _end = time.time()
     LOGGER.log(logging.TRACE, '**** TIME ************ query_create: %s' % (_end - _start))
 
-    ## Insert the user values
+    ## Collect the user values
     tmp = []
-    for lon, lat in input_points_geojson["coordinates"]:
-        tmp.append("({lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))".format(lon=lon, lat=lat))
+
+    ## Collect the user values from dataframe:
+    if dataframe is not None:
+        for row in dataframe.itertuples(index=False):
+            lon = getattr(row, colname_lon)
+            lat = getattr(row, colname_lat)
+            site_id = getattr(row, colname_site_id)
+            tmp.append("('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))".format(site_id=site_id, lon=lon, lat=lat))
+
+    ## Collect the user values from GeoJSON:
+    elif geojson is not None:
+        if geojson['type'] == 'MultiPoint':
+            site_id = 'none' # TODO Maybe fill with NULL values, or not create that column if it is not needed? 
+            for lon, lat in geojson["coordinates"]:
+                tmp.append("('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))".format(site_id=site_id, lon=lon, lat=lat))
+        elif geojson['type'] == 'GeometryCollection':
+            site_id = 'none'
+            for point in geojson['geometries']:
+                lon, lat = point['coordinates']
+                tmp.append("('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))".format(site_id=site_id, lon=lon, lat=lat))
+        elif geojson['type'] == 'FeatureCollection':
+            for point in geojson['features']:
+                lon, lat = point['geometry']['coordinates']
+                site_id = point['properties'][colname_site_id]
+                tmp.append("('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))".format(site_id=site_id, lon=lon, lat=lat))
+        else:
+            err_msg = 'Cannot recognize GeoJSON object!'
+            LOGGER.error(err_msg)
+            raise ValueError(err_msg)
+    else:
+        err_msg = 'Cannot recognize input object!'
+        LOGGER.error(err_msg)
+        raise ValueError(err_msg)
+
+    ## Insert the user values
     LOGGER.debug('Inserting into temporary table "%s"...' % tablename)
-    query_insert = "INSERT INTO {tablename}(lon, lat, geom_user) VALUES {values};".format(tablename=tablename, values=", ".join(tmp))
+    query_insert = "INSERT INTO {tablename} (site_id, lon, lat, geom_user) VALUES {values};".format(tablename=tablename, values=", ".join(tmp))
     _start = time.time()
     cursor.execute(query_insert)
     _end = time.time()
@@ -386,7 +467,8 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
     poi.basin_id,
     poi.reg_id,
     seg.strahler,
-    ST_AsText(ST_LineInterpolatePoint(seg.geom, ST_LineLocatePoint(seg.geom, poi.geom_user)))
+    ST_AsText(ST_LineInterpolatePoint(seg.geom, ST_LineLocatePoint(seg.geom, poi.geom_user))),
+    poi.site_id
     FROM hydro.stream_segments seg, {tablename} poi
     WHERE seg.subc_id = poi.subc_id AND seg.reg_id IN ({reg_ids});
     '''.format(tablename = tablename, reg_ids = reg_ids_string)
@@ -400,59 +482,98 @@ def get_snapped_point_feature_coll_plural(conn, input_points_geojson):
     LOGGER.debug('Querying database with snapping query... DONE.')
 
     ## Now iterate over result rows:
-    LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
-    features = []
-    while (True):
-        row = cursor.fetchone()
-        if row is None: break
+    result_to_be_returned = None
+    # If input was GeoJSON, we return output as GeoJSON:
+    if geojson is not None:
 
-        # Extract values from row:
-        lon = float(row[0])
-        lat = float(row[1])
-        subc_id = row[2]
-        basin_id = row[3]
-        reg_id = row[4]
-        strahler = row[5]
-        snappedpoint_wkt = row[6]
-        #streamsegment_wkt = row[7]
+        LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
+        features = []
+        while (True):
+            row = cursor.fetchone()
+            if row is None: break
 
-        # Convert to GeoJSON:
-        snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
-        #streamsegment_linestring = geomet.wkt.loads(streamsegment_wkt)
+            # Extract values from row:
+            lon = float(row[0])
+            lat = float(row[1])
+            subc_id = row[2]
+            basin_id = row[3]
+            reg_id = row[4]
+            strahler = row[5]
+            snappedpoint_wkt = row[6]
+            site_id = row[7]
+            #streamsegment_wkt = row[7]
 
-        # Construct Feature, incl. ids, strahler and original lonlat:
-        # TODO: If all are in same reg_id and basin, we could remove those
-        # attributes from here...
-        features.append({
-            "type": "Feature",
-            "geometry": snappedpoint_simplegeom,
-            "properties": {
-                "subc_id": subc_id,
-                "strahler": strahler,
-                "basin_id": basin_id,
-                "reg_id": reg_id,
-                "lon_original": lon,
-                "lat_original": lat,
-            }
-        })
+            # Convert to GeoJSON:
+            snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
+            #streamsegment_linestring = geomet.wkt.loads(streamsegment_wkt)
 
-    LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON... DONE.')
+            # Construct Feature, incl. ids, strahler and original lonlat:
+            # TODO: If all are in same reg_id and basin, we could remove those
+            # attributes from here...
+            # TODO: If the input was a Geometry or GeometryCollection, we have no site_id!
+            features.append({
+                "type": "Feature",
+                "geometry": snappedpoint_simplegeom,
+                "properties": {
+                    "site_id": site_id,
+                    "subc_id": subc_id,
+                    "strahler": strahler,
+                    "basin_id": basin_id,
+                    "reg_id": reg_id,
+                    "lon_original": lon,
+                    "lat_original": lat,
+                }
+            })
+        LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON... DONE.')
 
-    if len(features) == 0:
-        raise ValueError("No features...")
+        if len(features) == 0:
+            raise ValueError("No features...")
 
-    feature_coll = {
-        "type": "FeatureCollection",
-        "features": features
-    }
+        feature_coll = {
+            "type": "FeatureCollection",
+            "features": features
+        }
+        LOGGER.log(logging.TRACE, 'Generated GeoJSON: %s' % feature_coll)
+        result_to_be_returned = feature_coll
+
+    # If input was dataframe, we return output as dataframe:
+    elif dataframe is not None:
+        # Create list to be filled and converted to Pandas dataframe:
+        everything = []
+        while (True):
+            row = cursor.fetchone()
+            if row is None: break
+
+            # Extract values from row:
+            lon = float(row[0])
+            lat = float(row[1])
+            subc_id = row[2]
+            basin_id = row[3]
+            reg_id = row[4]
+            strahler = row[5]
+            snappedpoint_wkt = row[6]
+            site_id = row[7]
+            #streamsegment_wkt = row[7]
+            snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
+            lon_snapped = snappedpoint_simplegeom['coordinates'][0]
+            lat_snapped = snappedpoint_simplegeom['coordinates'][1]
+            everything.append([site_id, lon_snapped, lat_snapped, subc_id, strahler, reg_id, basin_id, subc_id, lon, lat])
+
+
+        output_dataframe = pd.DataFrame(everything, columns=[
+            'site_id', 'lon', 'lat', 'subc_id', 'strahler', 'reg_id', 'basin_id', 'subc_id', 'lon_original', 'lat_original'
+        ])
+        result_to_be_returned = output_dataframe
+
+
+
 
     ## Drop temp table:
     LOGGER.debug('Dropping temporary table "%s".' % tablename)
     query_drop = "DROP TABLE IF EXISTS {tablename};".format(tablename = tablename)
     cursor.execute(query_drop)
 
-    LOGGER.log(logging.TRACE, 'Returning GeoJSON: %s' % feature_coll)
-    return feature_coll
+    return result_to_be_returned
 
 
 if __name__ == "__main__":
@@ -465,6 +586,17 @@ if __name__ == "__main__":
 
     from database_connection import connect_to_db
     from database_connection import get_connection_object
+
+    try:
+        # If the package is properly installed, thus it is findable by python on PATH:
+        import aqua90m.utils.geojson_helpers as geojson_helpers
+    except ModuleNotFoundError:
+        # If we are calling this script from the aqua90m parent directory via
+        # "python aqua90m/geofresh/basic_queries.py", we have to make it available on PATH:
+        import sys, os
+        sys.path.append(os.getcwd())
+        import aqua90m.utils.geojson_helpers as geojson_helpers
+
 
     # Get config
     config_file_path = "./config.json"
@@ -491,9 +623,9 @@ if __name__ == "__main__":
     #database_username, database_password)
     LOGGER.log(logging.TRACE, 'Connecting to database... DONE.')
 
-    ####################
-    ### Run function ###
-    ####################
+    ######################################
+    ### Run function for single points ###
+    ######################################
     lon = 9.931555
     lat = 54.695070
     subc_id = 506251252
@@ -528,9 +660,11 @@ if __name__ == "__main__":
     print('TIME: %s' % (end - start))
     print('RESULT:\n%s' % res)
 
-    ############
-    ### Many ###
-    ############
+
+    ####################################
+    ### Run function for many points ###
+    ### input GeoJSON                ###
+    ####################################
 
     input_points_geojson = {
         "type": "MultiPoint",
@@ -539,31 +673,10 @@ if __name__ == "__main__":
             [9.921555, 54.295070]
         ]
     }
-    '''
-    TODO: SHould we allow people to pass in FeatureCollections, and try to keep the properties?
-    input_points_geojson = {
-        "type": "FeatureCollection",
-        "features": [{
-           "type": "Feature",
-           "geometry": { "type": "Point", "coordinates": [9.931555, 54.695070]},
-           "properties": {
-               "species_name": "Hase",
-               "species_id": "007"
-           }
-        },
-        {
-           "type": "Feature",
-           "geometry": { "type": "Point", "coordinates": [9.921555, 54.295070]},
-           "properties": {
-               "species_name": "Delphin",
-               "species_id": "008"
-           }
-        }]
-    }
-    '''
-    print('\nSTART RUNNING FUNCTION: get_snapped_point_feature_coll_plural')
+
+    print('\nSTART RUNNING FUNCTION: get_snapped_points_1')
     start = time.time()
-    res = get_snapped_point_feature_coll_plural(conn, input_points_geojson)
+    res = get_snapped_points_1(conn, input_points_geojson)
     end = time.time()
     print('TIME: %s' % (end - start))
     print('RESULT: %s' % res)
@@ -582,9 +695,81 @@ if __name__ == "__main__":
         ]
     }
 
-    print('\nSTART RUNNING FUNCTION: get_snapped_point_feature_coll_plural, some more points...')
+    print('\nSTART RUNNING FUNCTION: get_snapped_points_1, some more points...')
     start = time.time()
-    res = get_snapped_point_feature_coll_plural(conn, input_points_geojson)
+    res = get_snapped_points_1(conn, input_points_geojson)
+    end = time.time()
+    print('TIME: %s' % (end - start))
+    print('RESULT: %s' % res)
+
+    input_points_geojson = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+               "type": "Feature",
+               "geometry": { "type": "Point", "coordinates": [9.931555, 54.695070]},
+               "properties": {
+                   "my_site": "bla1",
+                   "species_name": "Hase",
+                   "species_id": "007"
+               }
+            },
+            {
+               "type": "Feature",
+               "geometry": { "type": "Point", "coordinates": [9.921555, 54.295070]},
+               "properties": {
+                   "my_site": "bla2",
+                   "species_name": "Delphin",
+                   "species_id": "008"
+               }
+            }
+        ]
+    }
+
+    print('\nSTART RUNNING FUNCTION: get_snapped_points_1, FeatureCollection...')
+    start = time.time()
+    res = get_snapped_points_1(conn, input_points_geojson, "my_site")
+    end = time.time()
+    print('TIME: %s' % (end - start))
+    print('RESULT: %s' % res)
+
+    input_points_geojson = {
+        "type": "GeometryCollection",
+        "geometries": [
+            {
+               "type": "Point",
+               "coordinates": [9.931555, 54.695070]
+            },
+            {
+               "type": "Point",
+               "coordinates": [9.921555, 54.295070]
+            }
+        ]
+    }
+
+    print('\nSTART RUNNING FUNCTION: get_snapped_points_1, GeometryCollection...')
+    start = time.time()
+    res = get_snapped_points_1(conn, input_points_geojson)
+    end = time.time()
+    print('TIME: %s' % (end - start))
+    print('RESULT: %s' % res)
+
+    print('\nSTART RUNNING FUNCTION: get_snapped_points_2, data_frame...')
+    example_dataframe = pd.DataFrame(
+        [
+            ['aa', 10.041155219078064, 53.07006147583069],
+            ['bb', 10.042726993560791, 53.06911450500803],
+            ['cc', 10.039894580841064, 53.06869677412868],
+            ['a',  10.698832912677716, 53.51710727672125],
+            ['b',  12.80898022975407,  52.42187129944509],
+            ['c',  11.915323076217902, 52.730867141970464],
+            ['d',  16.651903948708565, 48.27779486850176],
+            ['e',  19.201146608148463, 47.12192880511424],
+            ['f',  24.432498016999062, 61.215505889934434]
+        ], columns=['my_site', 'lon', 'lat']
+    )
+    start = time.time()
+    res = get_snapped_points_2(conn, example_dataframe, 'lon', 'lat', 'my_site')
     end = time.time()
     print('TIME: %s' % (end - start))
     print('RESULT: %s' % res)

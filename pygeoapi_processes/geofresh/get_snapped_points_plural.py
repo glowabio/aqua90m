@@ -103,7 +103,7 @@ class SnappedPointsGetterPlural(BaseProcessor):
             # TODO: Not implemented yet: Returning snapped points as simple geometry, instead of Feature.
 
         if not geometry_only:
-            feature_coll = snapping.get_snapped_point_feature_coll_plural(conn, input_points_geojson)
+            feature_coll = snapping.get_snapped_points_1(conn, input_points_geojson)
             LOGGER.debug('Received feature collection: %s' % feature_coll)
 
             # Add comment:
