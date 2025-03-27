@@ -7,9 +7,21 @@ import pandas as pd
 LOGGER = logging.getLogger(__name__)
 
 try:
-    from ..utils import extent_helpers as extent_helpers
-except ModuleNotFoundError:
-    import pygeoapi.process.aqua90m.utils.extent_helpers as extent_helpers
+    # If the package is installed in local python PATH:
+    import aqua90m.utils.extent_helpers as extent_helpers
+    import aqua90m.utils.geojson_helpers as geojson_helpers
+except ModuleNotFoundError as e1:
+    try:
+        # If we are using this from pygeoapi:
+        import pygeoapi.process.aqua90m.utils.extent_helpers as extent_helpers
+        import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
+    except ModuleNotFoundError as e2:
+        msg = 'Module not found: '+e1.name+'. If this is being run from' + \
+              ' command line, the aqua90m directory has to be added to ' + \
+              ' PATH for python to find it.'
+        print(msg)
+        LOGGER.debug(msg)
+
 
 def get_reg_id(conn, lon, lat):
 
@@ -486,6 +498,18 @@ def get_subc_id_basin_id_reg_id_for_all_3(conn, LOGGER, input_dataframe, colname
 
 
 if __name__ == "__main__":
+
+    try:
+        # If the package is properly installed, thus it is findable by python on PATH:
+        import aqua90m.utils.extent_helpers as extent_helpers
+        import aqua90m.utils.geojson_helpers as geojson_helpers
+    except ModuleNotFoundError:
+        # If we are calling this script from the aqua90m parent directory via
+        # "python aqua90m/geofresh/basic_queries.py", we have to make it available on PATH:
+        import sys, os
+        sys.path.append(os.getcwd())
+        import aqua90m.utils.extent_helpers as extent_helpers
+        import aqua90m.utils.geojson_helpers as geojson_helpers
 
     # Logging
     verbose = True
