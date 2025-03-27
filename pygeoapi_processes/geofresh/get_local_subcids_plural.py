@@ -336,18 +336,19 @@ class LocalSubcidGetterPlural(BaseProcessor):
 
         ## Handle CSV case:
         elif csv_url is not None:
-            LOGGER.debug('Try accessing input CSV from: %s' % csv_url)
+            LOGGER.debug('Accessing input CSV from: %s' % csv_url)
             try:
                 input_df = pd.read_csv(csv_url)
+                LOGGER.debug('Accessing input CSV... Done.')
 
             # Files stored on Nimbus: We get SSL error:
             except urllib.error.URLError as e:
-                LOGGER.warning('SSL error when downloading input data from %s: %s' % (csv_url, e))
+                LOGGER.warning('SSL error when downloading input CSV from %s: %s' % (csv_url, e))
                 if ('nimbus.igb-berlin.de' in csv_url and
                     'certificate verify failed' in str(e)):
+                    LOGGER.debug('Will download input CSV with verify=False to a tempfile.')
                     resp = requests.get(csv_url, verify=False)
                     if resp.status_code == 200:
-                        LOGGER.debug('CSV CONTENNNTTT %s' % resp.content)
                         mytempfile = tempfile.NamedTemporaryFile()
                         mytempfile.write(resp.content)
                         mytempfile.flush()
@@ -355,12 +356,17 @@ class LocalSubcidGetterPlural(BaseProcessor):
                         LOGGER.debug("CSV file stored to tempfile successfully: %s" % mytempfilename)
                         input_df = pd.read_csv(mytempfilename)
                         mytempfile.close()
+                    else:
+                        err_msg = 'Could not download CSV input data from %s (HTTP %s)' % (csv_url, resp.status_code)
+                        LOGGER.error(err_msg)
+                        raise ValueError(err_msg)
 
+            # Query database:
             output_df = basic_queries.get_subc_id_basin_id_reg_id_for_all_3(
                 conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
 
         else:
-            err_msg = 'Please provide either GeoJSON or CSV data.'
+            err_msg = 'Please provide either GeoJSON (points_geojson, points_geojson_url) or CSV data (csv_url).'
             LOGGER.error(err_msg)
             raise Value(err_msg)
 

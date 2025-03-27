@@ -42,6 +42,22 @@ curl -X POST "http://localhost:5000/pygeoapi-dev/processes/get-upstream-subcatch
     }
 }'
 
+# Request a FeatureCollection (Polygons) as URL:
+curl -X POST "http://localhost:5000/pygeoapi-dev/processes/get-upstream-subcatchments/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "geometry_only": "false",
+    "add_upstream_ids": "true",
+    "comment": "schlei-near-rabenholz"
+    },
+  "outputs": {
+    "transmissionMode": "reference"
+  }
+}'
+
 # Large: Mitten in der Elbe: 53.537158298376575, 9.99475350366553
 '''
 
