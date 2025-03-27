@@ -7,14 +7,31 @@ import traceback
 import json
 import pandas as pd
 import psycopg2
+import requests
+import tempfile
+import urllib
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
-import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
 import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
 from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection_object_config
 
 
 '''
+
+# Request with CSV input and CSV output:
+curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plural/execution' \
+--header 'Content-Type: application/json' \
+--data '{
+    "inputs": {
+        "csv_url": "https://nimbus.igb-berlin.de/index.php/s/SnDSamy56sLWs2s/download/spdata.csv",
+        "comment": "schlei-near-rabenholz"
+    },
+    "outputs": {
+        "transmissionMode": "reference"
+    }
+}'
+
+
 # Request plain JSON (not GeoJSON: Cannot request Feature/Geometry, does not apply)
 # Input points: GeoJSON
 curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plural/execution' \
@@ -268,7 +285,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
         # GeoJSON, posted directly
         points_geojson = data.get('points_geojson', None)
         # GeoJSON, to be downloaded via URL:
-        points_geojson = data.get('points_geojson_url', None)
+        points_geojson_url = data.get('points_geojson_url', None)
         # CSV, to be downloaded via URL
         csv_url = data.get('csv_url', None)
         colname_lon = data.get('colname_lon', 'lon')
@@ -285,6 +302,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
 
         ## Download GeoJSON if user provided URL:
         if points_geojson_url is not None:
+            LOGGER.debug('Try downloading input GeoJSON from: %s' % points_geojson_url)
             resp = requests.get(points_geojson_url)
             if not resp.status_code == 200:
                 err_msg = 'Failed to download GeoJSON (HTTP %s) from %s.' % (resp.status_code, points_geojson_url)
@@ -299,8 +317,9 @@ class LocalSubcidGetterPlural(BaseProcessor):
 
         ## Handle CSV case:
         elif csv_url is not None:
+            LOGGER.debug('Try accessing input CSV from: %s' % csv_url)
             input_df = pd.read_csv(csv_url)
-            output_df = get_subc_id_basin_id_reg_id_for_all_3(conn, LOGGER, input_df):
+            output_df = basic_queries.get_subc_id_basin_id_reg_id_for_all_3(conn, LOGGER, input_df)
 
         else:
             err_msg = 'Please provide either GeoJSON or CSV data.'
@@ -317,10 +336,13 @@ class LocalSubcidGetterPlural(BaseProcessor):
         ## Return CSV:
         if output_df is not None:
             if do_return_link:
-                output_dict_with_url =  utils.store_to_csv_file('subc_id', output_df,
+                output_dict_with_url =  utils.store_to_csv_file('local_ids', output_df,
                     self.metadata, self.job_id,
                     self.config['download_dir'],
                     self.config['download_url'])
+
+                output_dict_with_url['comment'] = comment
+
                 return 'application/json', output_dict_with_url
             else:
                 err_msg = 'Not implemented return CSV data directly.'
@@ -331,7 +353,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
         elif output_json is not None:
             output_json['comment'] = comment
 
-            if do_return_link
+            if do_return_link:
                 output_dict_with_url =  utils.store_to_json_file('local_ids', output_json,
                     self.metadata, self.job_id,
                     self.config['download_dir'],
