@@ -25,7 +25,7 @@
     "inputs": {
         "points_geojson": {
             "title": "Coordinates (GeoJSON)",
-            "description": "WGS84 Coordinates of the locations to be queried as a GeoJSON FeatureCollection. Please pass the values, not a URL.",
+            "description": "WGS84 Coordinates of the locations to be queried as a GeoJSON GeometryCollection or FeatureCollection. Please pass the values, not a URL.",
             "schema": {
                 "type": "string"
             },
@@ -47,7 +47,7 @@
         },
         "csv_url": {
             "title": "Coordinates (String)",
-            "description": "WGS84 Coordinates of the locations to be queried as a CSV file (comma or semicolon both works).",
+            "description": "WGS84 Coordinates of the locations to be queried as a CSV file (comma or semicolon both works). Please pass a URL, not the file contents.",
             "schema": {
                 "type": "string"
             },

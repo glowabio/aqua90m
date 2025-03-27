@@ -263,9 +263,9 @@ class LocalSubcidGetterPlural(BaseProcessor):
         try:
             conn = get_connection_object_config(self.config)
             res = self._execute(data, outputs, conn)
-            LOGGER.debug('Closing connection...')
+            LOGGER.log(5, 'Closing connection...')
             conn.close()
-            LOGGER.debug('Closing connection... Done.')
+            LOGGER.log(5, 'Closing connection... Done.')
             LOGGER.info('DONE: %s (job %s).' % (self.metadata['id'], self.job_id))
             return res
 
