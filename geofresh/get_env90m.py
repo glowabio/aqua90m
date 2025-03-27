@@ -75,28 +75,58 @@ def get_env90m_variables_by_subcid(conn, subc_ids, reg_id, variables):
         soil_vars = set(['awcts', 'sndppt', 'sltppt', 'bldfie', 'histpr', 'orcdrc',
                          'crfvol', 'acdwrb', 'phihox', 'bdricm', 'cecsol',
                          'clyppt', 'bdrlog', 'slgwrb', 'wwp', 'texmht'])
-        topo_vars = set(['channel_curv_cel',    # TODO: Missing curv_seg?
-                         'channel_dist_dw_seg', # TODO: Missing dw_cel?
-                         'channel_dist_up_cel', 'channel_dist_up_seg',
-                         'channel_elv_dw_cel',  'channel_elv_dw_seg',
-                         'channel_elv_up_cel',  'channel_elv_up_seg',
-                         'channel_grad_dw_seg', # TODO: Missing grad_dw_cel?
-                         'channel_grad_up_cel', 'channel_grad_up_seg',
-                         'cti', 'cum_length', 'drwal_old', 'elev', 'elev_drop',
-                         'flow', 'flow_accum', 'flowpos', 'gradient', 'hack',
-                         'horton', 'length', 'out_dist', 'out_drop',
-                         'outlet_diff_dw_basin', 'outlet_diff_dw_scatch',
-                         'outlet_dist_dw_basin', 'outlet_dist_dw_scatch',
-                         'outlet_elev', 'scheidegger', 'shreve', 'sinusoid',
-                         'slope_curv_dw_cel', 'slope_elv_dw_cel',
-                         'slope_grad_dw_cel', 'source_elev', 'spi', 'sti',
-                         'strahler',
-                         'stream_diff_dw_near', # TODO: Missing diff_dw_farth?
-                         'stream_diff_up_farth', 'stream_diff_up_near',
-                         'stream_dist_dw_near', # TODO: Missing dist_dw_farth?
-                         'stream_dist_up_farth', 'stream_dist_up_near',
-                         'stream_dist_proximity',
-                         'stright', 'subc_id', 'topo_dim'])
+        topo_vars = [
+            'channel_curv_cel',
+            'channel_dist_dw_seg',
+            'channel_dist_up_cel',
+            'channel_dist_up_seg',
+            'channel_elv_dw_cel',
+            'channel_elv_dw_seg',
+            'channel_elv_up_cel',
+            'channel_elv_up_seg',
+            'channel_grad_dw_seg',
+            'channel_grad_up_cel',
+            'channel_grad_up_seg',
+            'cti',
+            'cum_length',
+            'drwal_old',
+            'elev',
+            'elev_drop',
+            'flow',
+            'flow_accum',
+            'flowpos',
+            'gradient',
+            'hack',
+            'horton',
+            'length',
+            'out_dist',
+            'out_drop',
+            'outlet_diff_dw_basin',
+            'outlet_diff_dw_scatch',
+            'outlet_dist_dw_basin',
+            'outlet_dist_dw_scatch',
+            'outlet_elev',
+            'scheidegger',
+            'shreve',
+            'sinusoid',
+            'slope_curv_max_dw_cel',
+            'slope_curv_min_dw_cel',
+            'slope_elv_dw_cel',
+            'slope_grad_dw_cel',
+            'source_elev',
+            'spi',
+            'sti',
+            'strahler',
+            'stream_diff_dw_near',
+            'stream_diff_up_farth',
+            'stream_diff_up_near',
+            'stream_dist_dw_near',
+            'stream_dist_proximity',
+            'stream_dist_up_farth',
+            'stream_dist_up_near',
+            'stright',
+            'topo_dim'
+        ]
         if var == "flow_ltm" or var == "flow_ltsd":
             table_name = "stats_flow1k"
         elif var in soil_vars:
@@ -117,7 +147,7 @@ def get_env90m_variables_by_subcid(conn, subc_ids, reg_id, variables):
             LOGGER.warning(err_msg)
             raise ValueError(err_msg)
 
-        # Collect var and table name:    
+        # Collect var and table name:
         if not table_name in tables_variables.keys():
             tables_variables[table_name] = [var]
         else:
@@ -147,12 +177,13 @@ def get_env90m_variables_by_subcid(conn, subc_ids, reg_id, variables):
             column_names_list = variables
         else:
             for variable in variables:
+                # Special case stats_topo: Some variables have statistics, some don't
+                # TODO: not a good solution!!!
                 if table_name == "stats_topo" and variable in ['shreve', 'hack',
                     'scheidegger', 'length', 'stright', 'sinusoid', 'cum_length',
                     'flow_accum', 'out_dist', 'source_elev', 'outlet_elev',
                     'elev_drop', 'out_drop', 'gradient', 'strahler', 'horton',
                     'topo_dim', 'drwal_old']:
-                    # TODO: not a good solution!!!
                     column_names_list.append(variable)
                 else:
                     for statistic in possible_statistics:
