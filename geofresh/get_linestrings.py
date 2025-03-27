@@ -1,5 +1,6 @@
 import json
 import geomet.wkt
+import upstream_subcids
 import logging
 logging.TRACE = 5
 logging.addLevelName(5, "TRACE")
@@ -22,6 +23,10 @@ def get_streamsegment_linestrings_geometry_coll(conn, subc_ids, basin_id, reg_id
     LINESTRING(9.924583333333334 54.69708333333333,9.925416666666667 54.69708333333333,9.926250000000001 54.697916666666664,9.927083333333334 54.697916666666664,9.927916666666668 54.69708333333333,9.929583333333333 54.69708333333333)                                                                                                                                                                   | 506251126
     LINESTRING(9.924583333333334 54.69291666666666,9.924583333333334 54.69375,9.92375 54.694583333333334,9.92375 54.69625,9.924583333333334 54.69708333333333)                                                                                                                                                                                                                                              | 506251712
     '''
+
+    upstream_subcids.too_many_upstream_catchments(len(subc_ids), 'individual stream segments')
+
+
     relevant_ids = ", ".join([str(elem) for elem in subc_ids])
     # e.g. 506250459, 506251015, 506251126, 506251712
     query = '''
@@ -86,6 +91,10 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id,
     LINESTRING(9.924583333333334 54.69708333333333,9.925416666666667 54.69708333333333,9.926250000000001 54.697916666666664,9.927083333333334 54.697916666666664,9.927916666666668 54.69708333333333,9.929583333333333 54.69708333333333)                                                                                                                                                                   | 506251126
     LINESTRING(9.924583333333334 54.69291666666666,9.924583333333334 54.69375,9.92375 54.694583333333334,9.92375 54.69625,9.924583333333334 54.69708333333333)                                                                                                                                                                                                                                              | 506251712
     '''
+
+    upstream_subcids.too_many_upstream_catchments(len(subc_ids), 'individual stream segments')
+
+
     relevant_ids = ", ".join([str(elem) for elem in subc_ids])
     # e.g. 506250459, 506251015, 506251126, 506251712
     query = '''

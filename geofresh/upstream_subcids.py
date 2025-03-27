@@ -38,6 +38,14 @@ def get_max_upstream_catchments(config_file_path = None):
     return MAX_NUM_UPSTREAM_CATCHMENTS
 
 
+def too_many_upstream_catchments(num, func_name, config_file_path = None):
+    max_num = get_max_upstream_catchments(config_file_path)
+    if num > max_num:
+        err_msg = "Exceeded limit of catchments (%s, limit = %s) for which we are allowed to request %s" % (num, max_num, func_name)
+        LOGGER.error(err_msg)
+        raise ValueError(err_msg)
+
+
 def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id):
 
     ### Define query:
@@ -104,12 +112,16 @@ def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id):
         LOGGER.debug('FYI: The database returned the local subcatchment itself in the list of upstream subcatchments, which is fine.')
 
     # Stop any computations with more than x upstream catchments!
-    # TODO: Allow returning them, but then nothing else!
+    # Instead: We allow returning them, but then nothing else! Preventing to do
+    # anything else then has to be done in the functions where this anything
+    # else would happen with the upstream catchment ids as input!
+    '''
     max_num = get_max_upstream_catchments()
     if len(upstream_catchment_subcids) > max_num:
         LOGGER.warning('Limiting queries to %s upstream subcatchments' % max_num)
         raise ValueError('Found %s subcatchments, but temporarily, calculations over %s subcatchments are not done.' % 
             (len(upstream_catchment_subcids), max_num))
+    '''
 
     return upstream_catchment_subcids
 

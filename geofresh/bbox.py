@@ -1,5 +1,6 @@
 import json
 import geomet.wkt
+import upstream_subcids
 import logging
 logging.TRACE = 5
 logging.addLevelName(5, "TRACE")
@@ -47,6 +48,8 @@ def get_bbox_simplegeom(conn, subc_ids, basin_id, reg_id):
         # unlocated Features in GeoJSON spec:
         # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
 
+    # For bbox, maybe no restriction needed!
+    #upstream_subcids.too_many_upstream_catchments(len(subc_ids), 'bounding box')
 
     ### Define query:
     """

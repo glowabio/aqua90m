@@ -1,5 +1,6 @@
 import json
 import geomet.wkt
+import upstream_subcids
 import logging
 logging.TRACE = 5
 logging.addLevelName(5, "TRACE")
@@ -58,6 +59,9 @@ def _get_subcatchment_polygons(conn, subc_ids, basin_id, reg_id, make_features =
     # Private function. Should not be used outside this module, as it returns incomplete GeoJSON.
 
     LOGGER.debug('Querying for polygons for %s subc_ids...' % len(subc_ids))
+
+    upstream_subcids.too_many_upstream_catchments(len(subc_ids), 'individual polygons')
+
 
     ### Define query:
     relevant_ids = ", ".join([str(elem) for elem in subc_ids])
