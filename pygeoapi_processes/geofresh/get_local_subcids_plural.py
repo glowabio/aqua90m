@@ -12,6 +12,7 @@ import tempfile
 import urllib
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
+import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
 import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
 from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection_object_config
 
@@ -323,6 +324,13 @@ class LocalSubcidGetterPlural(BaseProcessor):
 
         ## Handle GeoJSON case:
         if points_geojson is not None:
+
+            # If a FeatureCollections is passed, check whether the property "site_id" (or similar)
+            # is present in every feature:
+            if points_geojson['type'] == 'FeatureCollection':
+                geojson_helpers.check_feature_collection_property(points_geojson, colname_site_id)
+
+            # Query database:
             output_json = basic_queries.get_subc_id_basin_id_reg_id_for_all_1(
                 conn, LOGGER, points_geojson)
 
