@@ -515,7 +515,7 @@ def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, c
                 "type": "Feature",
                 "geometry": snappedpoint_simplegeom,
                 "properties": {
-                    "site_id": site_id,
+                    colname_site_id: site_id,
                     "subc_id": subc_id,
                     "strahler": strahler,
                     "basin_id": basin_id,
@@ -557,11 +557,15 @@ def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, c
             snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
             lon_snapped = snappedpoint_simplegeom['coordinates'][0]
             lat_snapped = snappedpoint_simplegeom['coordinates'][1]
-            everything.append([site_id, lon_snapped, lat_snapped, subc_id, strahler, reg_id, basin_id, subc_id, lon, lat])
+            everything.append([site_id, subc_id, basin_id, reg_id, strahler, lon_snapped, lon, lat_snapped, lat])
 
 
         output_dataframe = pd.DataFrame(everything, columns=[
-            'site_id', 'lon', 'lat', 'subc_id', 'strahler', 'reg_id', 'basin_id', 'subc_id', 'lon_original', 'lat_original'
+            colname_site_id,
+            'subc_id', 'basin_id', 'reg_id',
+            'strahler',
+            colname_lon+'_snapped', colname_lon+'_original',
+            colname_lat+'_snapped', colname_lat+'_original'
         ])
         result_to_be_returned = output_dataframe
 

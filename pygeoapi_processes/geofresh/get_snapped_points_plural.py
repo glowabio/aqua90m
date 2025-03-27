@@ -6,8 +6,13 @@ import os
 import sys
 import traceback
 import json
+import pandas as pd
 import psycopg2
+import requests
+import tempfile
+import urllib
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
+import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
 import pygeoapi.process.aqua90m.geofresh.snapping as snapping
 import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
 from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection_object_config
@@ -15,18 +20,25 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 
 '''
-
+INPUT: CSV
+OUTPUT: CSV
 curl -X POST "http://localhost:5000/pygeoapi/processes/get-snapped-points-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
-    "csv_url": "https://..."
+    "csv_url": "https://nimbus.igb-berlin.de/index.php/s/SnDSamy56sLWs2s/download/spdata.csv",
+    "colname_lon": "longitude",
+    "colname_lat": "latitude",
+    "colname_site_id": "site_id"
   },
   "outputs": {
     "transmissionMode": "reference"
   } 
 }'
 
+
+# INPUT: MultiPoint
+# OUTPUT: FeatureCollection
 curl -X POST "http://localhost:5000/pygeoapi/processes/get-snapped-points-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -38,6 +50,39 @@ curl -X POST "http://localhost:5000/pygeoapi/processes/get-snapped-points-plural
         [9.9217, 54.6917],
         [9.9312, 54.6933]
       ]
+    }
+  }
+}'
+
+# INPUT: FeatureCollection
+# OUTPUT: FeatureCollection
+curl -X POST "http://localhost:5000/pygeoapi/processes/get-snapped-points-plural/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "colname_site_id": "my_site",
+    "points_geojson": {
+        "type": "FeatureCollection",
+        "features": [
+            {
+               "type": "Feature",
+               "geometry": { "type": "Point", "coordinates": [9.931555, 54.695070]},
+               "properties": {
+                   "my_site": "bla1",
+                   "species_name": "Hase",
+                   "species_id": "007"
+               }
+            },
+            {
+               "type": "Feature",
+               "geometry": { "type": "Point", "coordinates": [9.921555, 54.295070]},
+               "properties": {
+                   "my_site": "bla2",
+                   "species_name": "Delphin",
+                   "species_id": "008"
+               }
+            }
+        ]
     }
   }
 }'
@@ -153,8 +198,7 @@ class SnappedPointsGetterPlural(BaseProcessor):
                 geojson_helpers.check_feature_collection_property(points_geojson, colname_site_id)
 
             # Query database:
-            # WIP TEST
-            output_json = snapping.get_snapped_points_1(conn, points_geojson, colname_site_id = colname_site_id):
+            output_json = snapping.get_snapped_points_1(conn, points_geojson, colname_site_id = colname_site_id)
 
         ## Handle CSV case:
         elif csv_url is not None:
@@ -184,7 +228,7 @@ class SnappedPointsGetterPlural(BaseProcessor):
                         raise ValueError(err_msg)
 
             # Query database:
-            output_df = snapping.get_snapped_points_2(conn, input_df, colname_lon, colname_lat, colname_site_id):
+            output_df = snapping.get_snapped_points_2(conn, input_df, colname_lon, colname_lat, colname_site_id)
 
         else:
             err_msg = 'Please provide either GeoJSON (points_geojson, points_geojson_url) or CSV data (csv_url).'
