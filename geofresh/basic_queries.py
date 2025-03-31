@@ -145,69 +145,24 @@ def get_basin_id_reg_id(conn, subc_id):
 def get_subc_id_basin_id_reg_id(conn, LOGGER, lon = None, lat = None, subc_id = None):
     # This is a wrapper
 
-    # If user provided subc_id, then use it!
+    # Non-standard case: If user provided subc_id, then use it!
     if subc_id is not None:
         LOGGER.log(logging.TRACE, 'Getting subcatchment, region and basin id for subc_id: %s' % subc_id)
-        subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id_from_subc_id(conn, subc_id, LOGGER)
+        basin_id, reg_id = get_basin_id_reg_id(conn, subc_id)
 
     # Standard case: User provided lon and lat!
     elif lon is not None and lat is not None:
-            LOGGER.log(logging.TRACE, 'Getting subcatchment, region and basin id for lon, lat: %s, %s' % (lon, lat))
-            lon = float(lon)
-            lat = float(lat)
-            subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id_from_lon_lat(conn, lon, lat, LOGGER)
+        LOGGER.log(logging.TRACE, 'Getting subcatchment, region and basin id for lon, lat: %s, %s' % (lon, lat))
+        lon = float(lon)
+        lat = float(lat)
+        reg_id = get_reg_id(conn, lon, lat)
+        subc_id, basin_id = get_subc_id_basin_id(conn, lon, lat, reg_id)
+
     else:
         error_message = 'Lon and lat (or subc_id) have to be provided! Lon: %s, lat: %s, subc_id %s' % (lon, lat, subc_id)
         raise ValueError(error_message)
 
-    return subc_id, basin_id, reg_id
-
-
-def get_subc_id_basin_id_reg_id_from_lon_lat(conn, lon, lat, LOGGER):
-
-    # Get reg_id
-    try:
-        reg_id = get_reg_id(conn, lon, lat)
-    except ValueError as e:
-        LOGGER.debug('No reg_id found: %s' % e)
-        return None, None, None
-        # TODO: Falls into ocean case is here!
-    
-    if reg_id is None: # Might be in the ocean!
-        error_message = "Caught an error that should have been caught before! (reg_id = None)!"
-        LOGGER.error(error_message)
-        raise ValueError(error_message)
-
-    # Get basin_id, subc_id
-    subc_id, basin_id = get_subc_id_basin_id(conn, lon, lat, reg_id)
-    # NameError: name 'get_subc_id_basin_id' is not defined. Did you mean: 'get_subc_id_basin_id_reg_id'?
-
-    
-    if basin_id is None:
-        LOGGER.error('No basin_id id found for lon %s, lat %s !' % (lon, lat))
-    
-    LOGGER.log(logging.TRACE, '... Subcatchment has subc_id %s, basin_id %s, reg_id %s.' % (subc_id, basin_id, reg_id))
-
-    return subc_id, basin_id, reg_id
-
-
-def get_subc_id_basin_id_reg_id_from_subc_id(conn, subc_id, LOGGER):
-
-    # Get basin_id, reg_id
-    basin_id, reg_id = get_basin_id_reg_id(conn, subc_id)
-    
-    if reg_id is None:
-        error_message = 'No reg_id id found for subc_id %s' % subc_id
-        LOGGER.error(error_message)
-        raise ValueError(error_message)
-    
-    if basin_id is None:
-        error_message = 'No basin_id id found for subc_id %s' % subc_id
-        LOGGER.error(error_message)
-        raise ValueError(error_message)
-    
     LOGGER.log(logging.TRACE, 'Subcatchment has subc_id %s, basin_id %s, reg_id %s.' % (subc_id, basin_id, reg_id))
-
     return subc_id, basin_id, reg_id
 
 
