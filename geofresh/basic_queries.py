@@ -23,7 +23,7 @@ except ModuleNotFoundError as e1:
         LOGGER.debug(msg)
 
 
-def get_reg_id(conn, lon, lat):
+def get_regid(conn, lon, lat):
 
     extent_helpers.check_outside_europe(lon, lat) # may raise ValueError!
 
@@ -66,7 +66,7 @@ def get_reg_id(conn, lon, lat):
     return reg_id
 
 
-def get_subc_id_basin_id(conn, lon, lat, reg_id):
+def get_subcid_basinid(conn, lon, lat, reg_id):
 
     ### Define query:
     """
@@ -112,7 +112,7 @@ def get_subc_id_basin_id(conn, lon, lat, reg_id):
     return subc_id, basin_id 
 
 
-def get_basin_id_reg_id(conn, subc_id):
+def get_basinid_regid(conn, subc_id):
     # TODO: We need this in plural for geofresh.get_env90m_data_for_subcids.py
 
     ### Define query:
@@ -142,21 +142,20 @@ def get_basin_id_reg_id(conn, subc_id):
     return basin_id, reg_id
 
 
-def get_subc_id_basin_id_reg_id(conn, LOGGER, lon = None, lat = None, subc_id = None):
-    # This is a wrapper
+def get_subcid_basinid_regid(conn, LOGGER, lon = None, lat = None, subc_id = None):
 
     # Non-standard case: If user provided subc_id, then use it!
     if subc_id is not None:
         LOGGER.log(logging.TRACE, 'Getting subcatchment, region and basin id for subc_id: %s' % subc_id)
-        basin_id, reg_id = get_basin_id_reg_id(conn, subc_id)
+        basin_id, reg_id = get_basinid_regid(conn, subc_id)
 
     # Standard case: User provided lon and lat!
     elif lon is not None and lat is not None:
         LOGGER.log(logging.TRACE, 'Getting subcatchment, region and basin id for lon, lat: %s, %s' % (lon, lat))
         lon = float(lon)
         lat = float(lat)
-        reg_id = get_reg_id(conn, lon, lat)
-        subc_id, basin_id = get_subc_id_basin_id(conn, lon, lat, reg_id)
+        reg_id = get_regid(conn, lon, lat)
+        subc_id, basin_id = get_subcid_basinid(conn, lon, lat, reg_id)
 
     else:
         error_message = 'Lon and lat (or subc_id) have to be provided! Lon: %s, lat: %s, subc_id %s' % (lon, lat, subc_id)
@@ -170,7 +169,7 @@ def get_subc_id_basin_id_reg_id(conn, LOGGER, lon = None, lat = None, subc_id = 
 ### for many points at a time ###
 #################################
 
-def get_subc_id_basin_id_reg_id_for_all_1(conn, LOGGER, points_geojson):
+def get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson):
     # Input: GeoJSON
     # Output: JSON
     # TODO: When input is FeatureCollection, make site_id mandatory?
@@ -201,7 +200,7 @@ def get_subc_id_basin_id_reg_id_for_all_1(conn, LOGGER, points_geojson):
         iterate_over = points_geojson['features']
         num = len(iterate_over)
 
-    # Iterate over points and call "get_subc_id_basin_id_reg_id" for each point:
+    # Iterate over points and call "get_subcid_basinid_regid" for each point:
     # TODO: This is not super efficient, but the quickest to implement :)
     LOGGER.debug('Getting subcatchment for %s lon, lat pairs...' % num)
     for point in iterate_over: # either point or feature...
@@ -217,7 +216,7 @@ def get_subc_id_basin_id_reg_id_for_all_1(conn, LOGGER, points_geojson):
 
         # Query database:
         LOGGER.log(logging.TRACE, 'Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
-        subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(
+        subc_id, basin_id, reg_id = get_subcid_basinid_regid(
             conn, LOGGER, lon, lat, None)
 
         # Database returns None, e.g. when point falls into ocean:
@@ -289,7 +288,7 @@ def get_subc_id_basin_id_reg_id_for_all_1(conn, LOGGER, points_geojson):
 
 
 
-def get_subc_id_basin_id_reg_id_for_all_2(conn, LOGGER, points_geojson):
+def get_subcid_basinid_regid_for_all_2(conn, LOGGER, points_geojson):
     # Input: GeoJSON
     # Output: Pandas Dataframe
 
@@ -312,7 +311,7 @@ def get_subc_id_basin_id_reg_id_for_all_2(conn, LOGGER, points_geojson):
         iterate_over = points_geojson['features']
         num = len(iterate_over)
 
-    # Iterate over points and call "get_subc_id_basin_id_reg_id" for each point:
+    # Iterate over points and call "get_subcid_basinid_regid" for each point:
     # TODO: This is not super efficient, but the quickest to implement :)
     LOGGER.debug('Getting subcatchment for %s lon, lat pairs...' % num)
     for point in iterate_over: # either point or feature...
@@ -329,7 +328,7 @@ def get_subc_id_basin_id_reg_id_for_all_2(conn, LOGGER, points_geojson):
 
         # Query database:
         LOGGER.log(logging.TRACE, 'Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
-        subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(
+        subc_id, basin_id, reg_id = get_subcid_basinid_regid(
             conn, LOGGER, lon, lat, None)
 
         # Database returns None, e.g. when point falls into ocean:
@@ -379,7 +378,7 @@ def get_subc_id_basin_id_reg_id_for_all_2(conn, LOGGER, points_geojson):
 
 
 
-def get_subc_id_basin_id_reg_id_for_all_3(conn, LOGGER, input_dataframe, colname_lon, colname_lat, colname_site_id):
+def get_subcid_basinid_regid_for_all_3(conn, LOGGER, input_dataframe, colname_lon, colname_lat, colname_site_id):
     # Input: Pandas Dataframe
     # Output: Pandas Dataframe
 
@@ -390,7 +389,7 @@ def get_subc_id_basin_id_reg_id_for_all_3(conn, LOGGER, input_dataframe, colname
     reg_ids = []
     subc_ids = []
 
-    # Iterate over points and call "get_subc_id_basin_id_reg_id" for each point:
+    # Iterate over points and call "get_subcid_basinid_regid" for each point:
     # TODO: This is not super efficient, but the quickest to implement :)
     # TODO: Read this for alternatives to iteration: https://stackoverflow.com/questions/16476924/how-can-i-iterate-over-rows-in-a-pandas-dataframe
     num = input_dataframe.shape[0]
@@ -409,7 +408,7 @@ def get_subc_id_basin_id_reg_id_for_all_3(conn, LOGGER, input_dataframe, colname
 
         # Query database:
         LOGGER.log(logging.TRACE, 'Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
-        subc_id, basin_id, reg_id = get_subc_id_basin_id_reg_id(
+        subc_id, basin_id, reg_id = get_subcid_basinid_regid(
             conn, LOGGER, lon, lat, None)
 
         # Database returns None, e.g. when point falls into ocean:
@@ -512,33 +511,33 @@ if __name__ == "__main__":
     ### Run function singular ###
     #############################
 
-    print('\nSTART RUNNING FUNCTION: get_reg_id')
+    print('\nSTART RUNNING FUNCTION: get_regid')
     lon = 9.931555
     lat = 54.695070
-    res = get_reg_id(conn, lon, lat)
+    res = get_regid(conn, lon, lat)
     print('RESULT: %s' % res)
 
-    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id')
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid')
     lon = 9.931555
     lat = 54.695070
     reg_id = 58
-    res = get_subc_id_basin_id(conn, lon, lat, reg_id)
+    res = get_subcid_basinid(conn, lon, lat, reg_id)
     print('RESULT: %s %s' % (res[0], res[1]))
 
-    print('\nSTART RUNNING FUNCTION: get_basin_id_reg_id')
+    print('\nSTART RUNNING FUNCTION: get_basinid_regid')
     one_subc_id = 506250459
-    res = get_basin_id_reg_id(conn, one_subc_id)
+    res = get_basinid_regid(conn, one_subc_id)
     print('RESULT: %s %s' % (res[0], res[1]))
 
-    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id (using subc_id)')
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid (using subc_id)')
     one_subc_id = 506250459
-    res = get_subc_id_basin_id_reg_id(conn, LOGGER, lon = None, lat = None, subc_id = one_subc_id)
+    res = get_subcid_basinid_regid(conn, LOGGER, lon = None, lat = None, subc_id = one_subc_id)
     print('RESULT: %s %s %s' % (res[0], res[1], res[2]))
 
-    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id (using lon, lat)')
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid (using lon, lat)')
     lon = 9.931555
     lat = 54.695070
-    res = get_subc_id_basin_id_reg_id(conn, LOGGER, lon = lon, lat = lat, subc_id = None)
+    res = get_subcid_basinid_regid(conn, LOGGER, lon = lon, lat = lat, subc_id = None)
     print('RESULT: %s %s %s' % (res[0], res[1], res[2]))
 
     ###########################
@@ -649,30 +648,30 @@ if __name__ == "__main__":
     }
 
     # Input: GeoJSON, output JSON
-    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all_1 (using Multipoint)')
-    res = get_subc_id_basin_id_reg_id_for_all_1(conn, LOGGER, points_geojson)
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_1 (using Multipoint)')
+    res = get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson)
     print('RESULT:\n%s' % res)
 
-    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all_1 (with site_id)')
-    res = get_subc_id_basin_id_reg_id_for_all_1(conn, LOGGER, points_geojson)
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_1 (with site_id)')
+    res = get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson)
     print('RESULT:\n%s' % res)
 
-    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all_1 (all in same region)')
-    res = get_subc_id_basin_id_reg_id_for_all_1(conn, LOGGER, points_geojson_all_same)
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_1 (all in same region)')
+    res = get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson_all_same)
     print('RESULT:\n%s' % res)
 
     # Input: GeoJSON, output dataframe
-    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all_2 (input: json, output: dataframe)')
-    res = get_subc_id_basin_id_reg_id_for_all_2(conn, LOGGER, points_geojson)
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_2 (input: json, output: dataframe)')
+    res = get_subcid_basinid_regid_for_all_2(conn, LOGGER, points_geojson)
     print('RESULT:\n%s' % res)
 
     # Input: GeoJSON, output dataframe, with site_id!
-    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all_2 (input: json with site_id, output: dataframe)')
-    res = get_subc_id_basin_id_reg_id_for_all_2(conn, LOGGER, points_geojson_with_siteid)
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_2 (input: json with site_id, output: dataframe)')
+    res = get_subcid_basinid_regid_for_all_2(conn, LOGGER, points_geojson_with_siteid)
     print('RESULT:\n%s' % res)
 
     ## Input: dataframe, output dataframe, with site_id!
-    print('\nSTART RUNNING FUNCTION: get_subc_id_basin_id_reg_id_for_all_3 (input: dataframe, output: dataframe)')
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_3 (input: dataframe, output: dataframe)')
     example_dataframe = pd.DataFrame(
         [
             ['aa', 10.041155219078064, 53.07006147583069],
@@ -686,5 +685,5 @@ if __name__ == "__main__":
             ['f',  24.432498016999062, 61.215505889934434]
         ], columns=['site_id', 'lon', 'lat']
     )
-    res = get_subc_id_basin_id_reg_id_for_all_3(conn, LOGGER, example_dataframe, 'lon', 'lat', 'site_id')
+    res = get_subcid_basinid_regid_for_all_3(conn, LOGGER, example_dataframe, 'lon', 'lat', 'site_id')
     print('RESULT:\n%s' % res)

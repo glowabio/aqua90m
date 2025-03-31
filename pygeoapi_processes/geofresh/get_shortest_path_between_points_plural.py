@@ -118,9 +118,9 @@ class ShortestPathBetweenPointsGetterPlural(BaseProcessor):
         #    lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end))
 
         # Get reg_id, basin_id, subc_id
-        #subc_id1, basin_id1, reg_id1 = basic_queries.get_subc_id_basin_id_reg_id(
+        #subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
         #    conn, LOGGER, lon_start, lat_start, subc_id_start)
-        #subc_id2, basin_id2, reg_id2 = basic_queries.get_subc_id_basin_id_reg_id(
+        #subc_id2, basin_id2, reg_id2 = basic_queries.get_subcid_basinid_regid(
         #    conn, LOGGER, lon_end, lat_end, subc_id_end)
         all_subc_ids = []
         all_reg_ids = []
@@ -128,7 +128,7 @@ class ShortestPathBetweenPointsGetterPlural(BaseProcessor):
         for lon, lat in points['coordinates']:
             # TODO: Loop may not be most efficient!
             LOGGER.debug('Now getting subc_id, basin_id, reg_id for lon %s, lat %s' % (lon, lat))
-            subc_id, basin_id, reg_id = basic_queries.get_subc_id_basin_id_reg_id(
+            subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
                 conn, LOGGER, lon, lat, None)
             all_subc_ids.append(subc_id)
             all_reg_ids.append(reg_id)

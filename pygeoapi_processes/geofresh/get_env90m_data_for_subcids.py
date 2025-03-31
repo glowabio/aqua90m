@@ -96,7 +96,7 @@ class Env90mGetter(BaseProcessor):
 
         reg_ids = set()
         for subc_id in subc_ids:
-            basin_id, reg_id = basic_queries.get_basin_id_reg_id(conn, subc_id)
+            basin_id, reg_id = basic_queries.get_basinid_regid(conn, subc_id)
             reg_ids.add(reg_id)
 
         if len(reg_ids) > 1:

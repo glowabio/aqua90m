@@ -94,7 +94,7 @@ class LocalSubcidGetter(BaseProcessor):
         comment = data.get('comment') # optional
 
         print('Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
-        subc_id, basin_id, reg_id = basic_queries.get_subc_id_basin_id_reg_id(
+        subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
             conn, LOGGER, lon, lat, subc_id)
 
 

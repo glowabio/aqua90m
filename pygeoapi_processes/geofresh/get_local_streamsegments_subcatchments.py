@@ -118,7 +118,7 @@ class LocalStreamSegmentSubcatchmentGetter(BaseProcessor):
 
         # Get subc_id, basin_ic, reg_id
         LOGGER.info('Getting stream segment and subcatchment for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
-        subc_id, basin_id, reg_id = basic_queries.get_subc_id_basin_id_reg_id(
+        subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
             conn, LOGGER, lon, lat, subc_id)
 
         # Return only geometry:

@@ -331,7 +331,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
                 geojson_helpers.check_feature_collection_property(points_geojson, colname_site_id)
 
             # Query database:
-            output_json = basic_queries.get_subc_id_basin_id_reg_id_for_all_1(
+            output_json = basic_queries.get_subcid_basinid_regid_for_all_1(
                 conn, LOGGER, points_geojson)
 
         ## Handle CSV case:
@@ -362,7 +362,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
                         raise ValueError(err_msg)
 
             # Query database:
-            output_df = basic_queries.get_subc_id_basin_id_reg_id_for_all_3(
+            output_df = basic_queries.get_subcid_basinid_regid_for_all_3(
                 conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
 
         else:
