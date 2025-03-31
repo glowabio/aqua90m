@@ -5,6 +5,20 @@ logging.TRACE = 5
 logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
 
+try:
+    # If the package is installed in local python PATH:
+    import aqua90m.utils.exceptions as exc
+except ModuleNotFoundError as e1:
+    try:
+        # If we are using this from pygeoapi:
+        import pygeoapi.process.aqua90m.utils.exceptions as exc
+    except ModuleNotFoundError as e2:
+        msg = 'Module not found: '+e1.name+'. If this is being run from' + \
+              ' command line, the aqua90m directory has to be added to ' + \
+              ' PATH for python to find it.'
+        print(msg)
+        LOGGER.debug(msg)
+
 '''
 # Database tables:
 stats_flow1k (mean, sd, min, max)
@@ -147,7 +161,7 @@ def get_env90m_variables_by_subcid(conn, subc_ids, reg_id, variables):
         else:
             err_msg = "WIP. Variable mistyped or not implemented: %s" % var
             LOGGER.warning(err_msg)
-            raise ValueError(err_msg)
+            raise exc.UserInputException(err_msg)
 
         # Collect var and table name:
         if not table_name in tables_variables.keys():
@@ -159,7 +173,7 @@ def get_env90m_variables_by_subcid(conn, subc_ids, reg_id, variables):
     #if len(tables_variables.keys()) > 1:
     #    err_msg = "WIP. You stated variables from several tables (%s), can only treat one table so far." % tables_variables.keys()
     #    LOGGER.warn(err_msg)
-    #    raise ValueError(err_msg)
+    #    raise exc.UserInputException(err_msg)
 
 
     ## Iterate over all tables, query:
@@ -276,6 +290,16 @@ if __name__ == "__main__":
     #database_username, database_password)
     LOGGER.debug('Connecting to database... DONE.')
 
+    try:
+        # If the package is properly installed, thus it is findable by python on PATH:
+        import aqua90m.utils.exceptions as exc
+    except ModuleNotFoundError:
+        # If we are calling this script from the aqua90m parent directory via
+        # "python aqua90m/geofresh/basic_queries.py", we have to make it available on PATH:
+        import sys, os
+        sys.path.append(os.getcwd())
+        import aqua90m.utils.exceptions as exc
+
     ####################
     ### Run function ###
     ####################
@@ -292,3 +316,10 @@ if __name__ == "__main__":
     variables = ["bio1", "bio7", "c20", "flow_ltm"]
     res = get_env90m_variables_by_subcid(conn, subc_ids, reg_id, variables)
     print('RESULT:\n%s' % res)
+
+    print('\nTEST CUSTOM EXCEPTION: get_env90m_variables_by_subcid...')
+    try:
+        res = get_env90m_variables_by_subcid(conn, subc_ids, reg_id, ['bla', 'bli', 'blu'])
+        raise RuntimeError('Should not reach here!')
+    except exc.UserInputException as e:
+        print('RESULT: Proper exception, saying: %s' % e)

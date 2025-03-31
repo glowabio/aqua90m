@@ -13,6 +13,7 @@ import tempfile
 import urllib
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
 import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
+import pygeoapi.process.aqua90m.utils.exceptions as exc
 import pygeoapi.process.aqua90m.geofresh.snapping as snapping
 import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
 from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection_object_config
@@ -186,7 +187,7 @@ class SnappedPointsGetterPlural(BaseProcessor):
             if not resp.status_code == 200:
                 err_msg = 'Failed to download GeoJSON (HTTP %s) from %s.' % (resp.status_code, points_geojson_url)
                 LOGGER.error(err_msg)
-                raise Value(err_msg)
+                raise exc.DataAccessException(err_msg)
             points_geojson = resp.json()
 
         ## Handle GeoJSON case:
@@ -225,7 +226,7 @@ class SnappedPointsGetterPlural(BaseProcessor):
                     else:
                         err_msg = 'Could not download CSV input data from %s (HTTP %s)' % (csv_url, resp.status_code)
                         LOGGER.error(err_msg)
-                        raise ValueError(err_msg)
+                        raise exc.DataAccessException(err_msg)
 
             # Query database:
             output_df = snapping.get_snapped_points_2(conn, input_df, colname_lon, colname_lat, colname_site_id)
@@ -233,7 +234,7 @@ class SnappedPointsGetterPlural(BaseProcessor):
         else:
             err_msg = 'Please provide either GeoJSON (points_geojson, points_geojson_url) or CSV data (csv_url).'
             LOGGER.error(err_msg)
-            raise Value(err_msg)
+            raise exc.UserInputException(err_msg)
 
 
 
@@ -257,7 +258,7 @@ class SnappedPointsGetterPlural(BaseProcessor):
             else:
                 err_msg = 'Not implemented return CSV data directly.'
                 LOGGER.error(err_msg)
-                raise Value(err_msg)
+                raise NotImplementedError(err_msg)
 
         ## Return JSON:
         elif output_json is not None:

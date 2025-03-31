@@ -6,6 +6,20 @@ logging.TRACE = 5
 logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
 
+try:
+    # If the package is installed in local python PATH:
+    import aqua90m.utils.exceptions as exc
+except ModuleNotFoundError as e1:
+    try:
+        # If we are using this from pygeoapi:
+        import pygeoapi.process.aqua90m.utils.exceptions as exc
+    except ModuleNotFoundError as e2:
+        msg = 'Module not found: '+e1.name+'. If this is being run from' + \
+              ' command line, the aqua90m directory has to be added to' + \
+              ' PATH for python to find it.'
+        print(msg)
+        LOGGER.debug(msg)
+
 # global variable:
 MAX_NUM_UPSTREAM_CATCHMENTS = None
 
@@ -38,12 +52,14 @@ def get_max_upstream_catchments(config_file_path = None):
     return MAX_NUM_UPSTREAM_CATCHMENTS
 
 
-def too_many_upstream_catchments(num, func_name, config_file_path = None):
+def too_many_upstream_catchments(num, func_name, config_file_path = None, fake = None):
     max_num = get_max_upstream_catchments(config_file_path)
+    if fake is not None:
+        max_num = fake
     if num > max_num:
         err_msg = "Exceeded limit of catchments (%s, limit = %s) for which we are allowed to request %s" % (num, max_num, func_name)
         LOGGER.error(err_msg)
-        raise ValueError(err_msg)
+        raise exc.GeoFreshTooManySubcatchments(err_msg)
 
 
 def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id):
@@ -119,7 +135,7 @@ def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id):
     max_num = get_max_upstream_catchments()
     if len(upstream_catchment_subcids) > max_num:
         LOGGER.warning('Limiting queries to %s upstream subcatchments' % max_num)
-        raise ValueError('Found %s subcatchments, but temporarily, calculations over %s subcatchments are not done.' % 
+        raise exc.GeoFreshTooManySubcatchments('Found %s subcatchments, but temporarily, calculations over %s subcatchments are not done.' % 
             (len(upstream_catchment_subcids), max_num))
     '''
 
@@ -137,6 +153,16 @@ if __name__ == "__main__":
 
     from database_connection import connect_to_db
     from database_connection import get_connection_object
+
+    try:
+        # If the package is properly installed, thus it is findable by python on PATH:
+        import aqua90m.utils.exceptions as exc
+    except ModuleNotFoundError:
+        # If we are calling this script from the aqua90m parent directory via
+        # "python aqua90m/geofresh/basic_queries.py", we have to make it available on PATH:
+        import sys, os
+        sys.path.append(os.getcwd())
+        import aqua90m.utils.exceptions as exc
 
     # Get config
     config_file_path = "./config.json"
@@ -175,6 +201,13 @@ if __name__ == "__main__":
     res = get_max_upstream_catchments(config_file_path = config_file_path)
     print('RESULT:\n%s' % res)
 
+    # Test throwing custom exceptions:
+    print('\nTEST CUSTOM EXCEPTION: too_many_upstream_catchments')
+    try:
+        res = too_many_upstream_catchments(20, 'dummy', config_file_path = None, fake = 2)
+        raise RuntimeError('Should not reach here!')
+    except exc.GeoFreshTooManySubcatchments as e:
+        print('RESULT: Proper exception, saying: %s' % e)
 
     print('\nSTART RUNNING FUNCTION: get_upstream_catchment_ids_incl_itself (for three headwaters)')
     res = get_upstream_catchment_ids_incl_itself(conn, 506250459, basin_id, reg_id)

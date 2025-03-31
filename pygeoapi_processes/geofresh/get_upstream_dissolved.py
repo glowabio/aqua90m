@@ -122,10 +122,12 @@ class UpstreamDissolvedGetter(BaseProcessor):
         # Get reg_id, basin_id, subc_id
         subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
             conn, LOGGER, lon, lat, subc_id)
+        LOGGER.debug('Found subc_id=%s, basin_id=%s, reg_id=%s' % (subc_id, basin_id, reg_id))
 
         # Get upstream id
         upstream_ids = upstream_subcids.get_upstream_catchment_ids_incl_itself(
             conn, subc_id, basin_id, reg_id)
+        LOGGER.debug('Found %s upstream ids' % len(upstream_ids))
 
         # Return only geometry:
         if geometry_only:

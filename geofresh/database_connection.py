@@ -85,7 +85,7 @@ def connect_to_db(geofresh_server, db_port, database_name, database_username, da
     
     if is_database_off():
         LOGGER.error("Database was switched off via DATABASE_OFF in config.")
-        raise ValueError("Compute service switched off for maintenance reasons. Sorry.")
+        raise RuntimeError("Compute service switched off for maintenance reasons. Sorry.")
     
     conn = psycopg2.connect(
        database=database_name,

@@ -1,3 +1,5 @@
+
+import aqua90m.utils.excepts as exc
 import logging
 LOGGER = logging.getLogger(__name__)
 
@@ -24,7 +26,7 @@ def check_outside_europe(lon, lat, LOGGER = None):
 
     if outside_europe:
         LOGGER.error(err_msg)
-        raise ValueError(err_msg)
+        raise exc.OutsideAreaException(err_msg)
 
     return False
 

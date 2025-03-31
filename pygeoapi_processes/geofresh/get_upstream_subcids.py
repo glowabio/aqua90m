@@ -106,7 +106,7 @@ class UpstreamSubcidGetter(BaseProcessor):
 
         upstream_ids = upstream_subcids.get_upstream_catchment_ids_incl_itself(
             conn, subc_id, basin_id, reg_id)
-        LOGGER.debug('END: Received ids : %s' % upstream_ids)
+        LOGGER.debug('END: Received %s ids : %s...' % (len(upstream_ids), upstream_ids[:10]))
 
         ################
         ### Results: ###
@@ -117,6 +117,7 @@ class UpstreamSubcidGetter(BaseProcessor):
             "subc_id": subc_id,
             "reg_id": reg_id,
             "basin_id": basin_id,
+            "num_upstream_ids": len(upstream_ids),
             "upstream_ids": upstream_ids
         }
 

@@ -10,11 +10,13 @@ try:
     # If the package is installed in local python PATH:
     import aqua90m.utils.extent_helpers as extent_helpers
     import aqua90m.utils.geojson_helpers as geojson_helpers
+    import aqua90m.utils.exceptions as exc
 except ModuleNotFoundError as e1:
     try:
         # If we are using this from pygeoapi:
         import pygeoapi.process.aqua90m.utils.extent_helpers as extent_helpers
         import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
+        import pygeoapi.process.aqua90m.utils.exceptions as exc
     except ModuleNotFoundError as e2:
         msg = 'Module not found: '+e1.name+'. If this is being run from' + \
               ' command line, the aqua90m directory has to be added to ' + \
@@ -25,7 +27,9 @@ except ModuleNotFoundError as e1:
 
 def get_regid(conn, lon, lat):
 
-    extent_helpers.check_outside_europe(lon, lat) # may raise ValueError!
+    extent_helpers.check_outside_europe(lon, lat)
+    # May throw OutsideAreaException/UserInputException
+    # TODO: Can we find a more elegant solution for this?
 
     ### Define query:
     """
@@ -55,10 +59,9 @@ def get_regid(conn, lon, lat):
     ### Get results and construct GeoJSON:
     row = cursor.fetchone()
     if row is None: # Ocean case: 
-        error_message      = 'No region id found for lon %s, lat %s! Is this in the ocean?' % (lon, lat)
-        user_error_message = 'No result found for lon %s, lat %s! Is this in the ocean?' % (round(lon, 3), round(lat, 3))
-        LOGGER.error(error_message)
-        raise ValueError(user_error_message)
+        err_msg      = 'No region id found for lon %s, lat %s! Is this in the ocean?' % (lon, lat)
+        LOGGER.error(err_msg)
+        raise exc.GeoFreshNoResultException(err_msg)
 
     else:
         reg_id = row[0]
@@ -100,11 +103,10 @@ def get_subcid_basinid(conn, lon, lat, reg_id):
 
     ### Get results:
     row = cursor.fetchone()
-    if row is None: # Ocean case:     
-        error_message = 'No subc_id and basin_id. This should have been caught before. Does this latlon fall into the ocean?'
-        user_error_message = 'No result (basin, sub_catchment) found for lon %s, lat %s! Is this in the ocean?' % (lon, lat)
-        LOGGER.error(error_message)
-        raise ValueError(user_error_message)
+    if row is None: # Ocean case:
+        err_msg = 'No subc_id and basin_id for lon, lat %s, %s. Does this latlon fall into the ocean?' % (lon, lat)
+        LOGGER.error(err_msg)
+        raise exc.GeoFreshNoResultException(err_msg)
     else:
         subc_id = row[0]
         basin_id = row[1]
@@ -132,9 +134,9 @@ def get_basinid_regid(conn, subc_id):
     ### Get results and construct GeoJSON:
     row = cursor.fetchone()
     if row is None:
-        error_message = 'No basin_id and reg_id found for subc_id %s!' % subc_id
-        LOGGER.error(error_message)
-        raise ValueError(error_message)
+        err_msg = 'No basin_id and reg_id found for subc_id %s!' % subc_id
+        LOGGER.error(err_msg)
+        raise exc.GeoFreshNoResultException(error_message)
     else:
         basin_id = row[0]
         reg_id = row[1]
@@ -158,8 +160,8 @@ def get_subcid_basinid_regid(conn, LOGGER, lon = None, lat = None, subc_id = Non
         subc_id, basin_id = get_subcid_basinid(conn, lon, lat, reg_id)
 
     else:
-        error_message = 'Lon and lat (or subc_id) have to be provided! Lon: %s, lat: %s, subc_id %s' % (lon, lat, subc_id)
-        raise ValueError(error_message)
+        err_msg = 'Lon and lat (or subc_id) have to be provided! Lon: %s, lat: %s, subc_id %s' % (lon, lat, subc_id)
+        raise UserInputException(err_msg)
 
     LOGGER.log(logging.TRACE, 'Subcatchment has subc_id %s, basin_id %s, reg_id %s.' % (subc_id, basin_id, reg_id))
     return subc_id, basin_id, reg_id
@@ -172,6 +174,7 @@ def get_subcid_basinid_regid(conn, LOGGER, lon = None, lat = None, subc_id = Non
 def get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson):
     # Input: GeoJSON
     # Output: JSON
+
     # TODO: When input is FeatureCollection, make site_id mandatory?
     #
     # This returns a weird statistic:
@@ -212,19 +215,14 @@ def get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson):
             lon, lat = point['coordinates']
         else:
             err_msg = "Input is not valid GeoJSON Point or Point-Feature: %s" % point
-            raise ValueError(err_msg)
+            raise UserInputException(err_msg)
 
         # Query database:
         LOGGER.log(logging.TRACE, 'Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
         subc_id, basin_id, reg_id = get_subcid_basinid_regid(
             conn, LOGGER, lon, lat, None)
-
-        # Database returns None, e.g. when point falls into ocean:
+        # May throw GeoFreshNoResultException e.g. when point falls into ocean:
         # TODO: What to return? null/NA? "unknown"? Or leave out?
-        if (reg_id is None and basin_id is None and subc_id is None):
-            reg_id = "ocean"
-            basin_id = "ocean"
-            subc_id = "ocean"
 
         # Collect results in dict:
         # site_id is included by returning the points, so if the point includes a site_id, it is returned.
@@ -324,12 +322,13 @@ def get_subcid_basinid_regid_for_all_2(conn, LOGGER, points_geojson):
             lon, lat = point['coordinates']
         else:
             err_msg = "Input is not valid GeoJSON Point or Point-Feature: %s" % point
-            raise ValueError(err_msg)
+            raise UserInputException(err_msg)
 
         # Query database:
         LOGGER.log(logging.TRACE, 'Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
         subc_id, basin_id, reg_id = get_subcid_basinid_regid(
             conn, LOGGER, lon, lat, None)
+        # May throw GeoFreshNoResultException, ...
 
         # Database returns None, e.g. when point falls into ocean:
         # TODO: What to return? null/NA? "unknown"? Or leave out?
@@ -463,6 +462,7 @@ if __name__ == "__main__":
         # If the package is properly installed, thus it is findable by python on PATH:
         import aqua90m.utils.extent_helpers as extent_helpers
         import aqua90m.utils.geojson_helpers as geojson_helpers
+        import aqua90m.utils.exceptions as exc
     except ModuleNotFoundError:
         # If we are calling this script from the aqua90m parent directory via
         # "python aqua90m/geofresh/basic_queries.py", we have to make it available on PATH:
@@ -470,6 +470,8 @@ if __name__ == "__main__":
         sys.path.append(os.getcwd())
         import aqua90m.utils.extent_helpers as extent_helpers
         import aqua90m.utils.geojson_helpers as geojson_helpers
+        import aqua90m.utils.exceptions as exc
+
 
     # Logging
     verbose = True

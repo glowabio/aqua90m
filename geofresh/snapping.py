@@ -11,10 +11,12 @@ LOGGER = logging.getLogger(__name__)
 try:
     # If the package is installed in local python PATH:
     import aqua90m.utils.geojson_helpers as geojson_helpers
+    import aqua90m.utils.exceptions as exc
 except ModuleNotFoundError as e1:
     try:
         # If we are using this from pygeoapi:
         import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
+        import pygeoapi.process.aqua90m.utils.exceptions as exc
     except ModuleNotFoundError as e2:
         msg = 'Module not found: '+e1.name+'. If this is being run from' + \
               ' command line, the aqua90m directory has to be added to ' + \
@@ -92,7 +94,7 @@ def _get_snapped_point_plus(conn, lon, lat, subc_id, basin_id, reg_id, make_feat
         LOGGER.warning("Received result_row None for point: lon=%s, lat=%s (subc_id %s). This is weird. Any point should be snappable, right?" % (lon, lat, subc_id))
         err_msg = "Weird: Could not snap point lon=%s, lat=%s" % (lon, lat) 
         LOGGER.error(err_msg)
-        raise ValueError(err_msg)
+        raise exc.GeoFreshNoResultException(err_msg)
         # Or return features with empty geometries:
         # This geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
         # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
@@ -219,7 +221,7 @@ def get_snapped_point_feature(conn, lon, lat, subc_id, basin_id, reg_id):
         LOGGER.warning("Received result_row None for point: lon=%s, lat=%s (subc_id %s). This is weird. Any point should be snappable, right?" % (lon, lat, subc_id))
         err_msg = "Weird: Could not snap point lon=%s, lat=%s" % (lon, lat) 
         LOGGER.error(err_msg)
-        raise ValueError(err_msg)
+        raise exc.GeoFreshNoResultException(err_msg)
         # Or return features with empty geometries:
         # This geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
         # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
@@ -294,7 +296,7 @@ def get_snapped_point_simplegeom(conn, lon, lat, subc_id, basin_id, reg_id):
         LOGGER.warning("Received result_row None for point: lon=%s, lat=%s (subc_id %s). This is weird. Any point should be snappable, right?" % (lon, lat, subc_id))
         err_msg = "Weird: Could not snap point lon=%s, lat=%s" % (lon, lat) 
         LOGGER.error(err_msg)
-        raise ValueError(err_msg)
+        raise exc.GeoFreshNoResultException(err_msg)
         # Or return features with empty geometries:
         # This geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
         # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
@@ -323,7 +325,7 @@ def get_snapped_points_1(conn, points_geojson, colname_site_id = None):
         if colname_site_id is None:
             err_msg = "Please provide the property name where the site id is provided."
             LOGGER.error(err_msg)
-            raise ValueError(err_msg)
+            raise exc.UserInputException(err_msg)
         iterate_over = points_geojson['features']
         num = len(iterate_over)
 
@@ -403,11 +405,11 @@ def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, c
         else:
             err_msg = 'Cannot recognize GeoJSON object!'
             LOGGER.error(err_msg)
-            raise ValueError(err_msg)
+            raise exc.UserInputException(err_msg)
     else:
         err_msg = 'Cannot recognize input object!'
         LOGGER.error(err_msg)
-        raise ValueError(err_msg)
+        raise exc.UserInputException(err_msg)
 
     ## Insert the user values
     LOGGER.debug('Inserting into temporary table "%s"...' % tablename)
@@ -527,7 +529,7 @@ def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, c
         LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON... DONE.')
 
         if len(features) == 0:
-            raise ValueError("No features...")
+            raise exc.UserInputException("No features...")
 
         feature_coll = {
             "type": "FeatureCollection",
@@ -594,12 +596,14 @@ if __name__ == "__main__":
     try:
         # If the package is properly installed, thus it is findable by python on PATH:
         import aqua90m.utils.geojson_helpers as geojson_helpers
+        import aqua90m.utils.exceptions as exc
     except ModuleNotFoundError:
         # If we are calling this script from the aqua90m parent directory via
         # "python aqua90m/geofresh/basic_queries.py", we have to make it available on PATH:
         import sys, os
         sys.path.append(os.getcwd())
         import aqua90m.utils.geojson_helpers as geojson_helpers
+        import aqua90m.utils.exceptions as exc
 
 
     # Get config
@@ -729,6 +733,15 @@ if __name__ == "__main__":
             }
         ]
     }
+
+
+    print('\nTEST CUSTOM EXCEPTION: get_snapped_points_1, FeatureCollection...')
+    try:
+        res = get_snapped_points_1(conn, input_points_geojson)
+        raise RuntimeError('Should not reach here!')
+    except exc.UserInputException as e:
+        print('RESULT: Proper exception, saying: %s' % e)
+
 
     print('\nSTART RUNNING FUNCTION: get_snapped_points_1, FeatureCollection...')
     start = time.time()

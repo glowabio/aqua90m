@@ -102,7 +102,7 @@ class Env90mGetter(BaseProcessor):
         if len(reg_ids) > 1:
             err_msg = "WIP: The subcatchments fall into various regional units (reg_ids: %s). Not supported yet." % reg_ids
             LOGGER.warning(err_msg)
-            raise ValueError(err_msg)
+            raise NotImplementedError(err_msg)
 
         reg_id = reg_ids.pop()
         output_json = get_env90m.get_env90m_variables_by_subcid(conn, subc_ids, reg_id, variables)

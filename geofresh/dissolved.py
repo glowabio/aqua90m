@@ -1,10 +1,24 @@
 import json
 import geomet.wkt
-import upstream_subcids
 import logging
 logging.TRACE = 5
 logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
+
+try:
+    import aqua90m.geofresh.upstream_subcids as upstream_subcids
+    import aqua90m.utils.exceptions as exc
+except ModuleNotFoundError as e1:
+    try:
+        # If we are using this from pygeoapi:
+        import pygeoapi.process.aqua90m.geofresh.upstream_subcids as upstream_subcids
+        import pygeoapi.process.aqua90m.utils.exceptions as exc
+    except ModuleNotFoundError as e2:
+        msg = 'Module not founddd: '+e1.name+'. If this is being run from' + \
+              ' command line, the aqua90m directory has to be added to' + \
+              ' PATH for python to find it.'
+        print(msg)
+        LOGGER.debug(msg)
 
 
 def get_dissolved_feature(conn, subc_ids, basin_id, reg_id, add_subc_ids = False):
@@ -55,7 +69,6 @@ def get_dissolved_simplegeom(conn, subc_ids, basin_id, reg_id):
 
     upstream_subcids.too_many_upstream_catchments(len(subc_ids), 'dissolved polygon')
 
-
     ### Define query:
     relevant_ids = ", ".join([str(elem) for elem in subc_ids])
     # e.g. 506250459, 506251015, 506251126, 506251712
@@ -80,11 +93,15 @@ def get_dissolved_simplegeom(conn, subc_ids, basin_id, reg_id):
     if row is None:
         err_msg = "Weird: No area (polygon) found in database."
         LOGGER.error(err_msg)
-        raise ValueError(err_msg)
+        raise exc.GeoFreshUnexpectedResultException(err_msg)
 
     # Assemble GeoJSON to return:
     dissolved_simplegeom = geomet.wkt.loads(row[0])
     return dissolved_simplegeom
+
+
+
+
 
 
 if __name__ == "__main__":
@@ -97,6 +114,18 @@ if __name__ == "__main__":
 
     from database_connection import connect_to_db
     from database_connection import get_connection_object
+
+    try:
+        # If the package is properly installed, thus it is findable by python on PATH:
+        import aqua90m.geofresh.upstream_subcids as upstream_subcids
+        import aqua90m.utils.exceptions as exc
+    except ModuleNotFoundError:
+        # If we are calling this script from the aqua90m parent directory via
+        # "python aqua90m/geofresh/basic_queries.py", we have to make it available on PATH:
+        import sys, os
+        sys.path.append(os.getcwd())
+        import aqua90m.geofresh.upstream_subcids as upstream_subcids
+        import aqua90m.utils.exceptions as exc
 
     # Get config
     config_file_path = "./config.json"
@@ -137,3 +166,11 @@ if __name__ == "__main__":
     print('\nSTART RUNNING FUNCTION: get_dissolved_feature')
     res = get_dissolved_feature(conn, subc_ids, basin_id, reg_id, add_subc_ids = True)
     print('RESULT:\n%s' % res)
+
+    #print('\nTEST CUSTOM EXCEPTION: get_dissolved_simplegeom...')
+    #try:
+        # Difficult to fake anything that causes the exception!
+        #res = get_dissolved_simplegeom(...)
+        #raise RuntimeError('Should not reach here!')
+    #except exc.GeoFreshUnexpectedResultException as e:
+        #print('RESULT: Proper exception, saying: %s' % e)
