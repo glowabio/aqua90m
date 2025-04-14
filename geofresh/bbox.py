@@ -1,10 +1,23 @@
 import json
 import geomet.wkt
-import upstream_subcids
 import logging
 logging.TRACE = 5
 logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
+
+try:
+    # If the package is installed in local python PATH:
+    import aqua90m.geofresh.upstream_subcids as upstream_subcids
+except ModuleNotFoundError as e1:
+    try:
+        # If we are using this from pygeoapi:
+        import pygeoapi.process.aqua90m.geofresh.upstream_subcids as upstream_subcids
+    except ModuleNotFoundError as e2:
+        msg = 'Module not found: '+e1.name+'. If this is being run from' + \
+              ' command line, the aqua90m directory has to be added to ' + \
+              ' PATH for python to find it.'
+        print(msg)
+        LOGGER.debug(msg)
 
 
 def get_bbox_feature(conn, subc_ids, basin_id, reg_id, add_subc_ids = False):
