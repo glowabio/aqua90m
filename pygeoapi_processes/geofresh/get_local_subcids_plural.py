@@ -30,6 +30,7 @@ curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plura
         "csv_url": "https://nimbus.igb-berlin.de/index.php/s/SnDSamy56sLWs2s/download/spdata.csv",
         "colname_lat": "latitude",
         "colname_lon": "longitude",
+        "colname_site_id": "site_id",
         "comment": "schlei-near-rabenholz"
     },
     "outputs": {
@@ -301,10 +302,11 @@ class LocalSubcidGetterPlural(BaseProcessor):
         # Optional comment:
         comment = data.get('comment') # optional
 
-
-        ## Potential outputs:
-        output_json = None
-        output_df = None
+        ## Check user inputs:
+        if csv_url is not None and colname_site_id is None:
+            LOGGER.error("Missing parameter: colname_site_id")
+            err_msg = "Please provide the column name of the site ids inside your csv file (parameter colname_site_id)."
+            raise ProcessorExecuteError(err_msg)
 
 
         ## Download GeoJSON if user provided URL:
@@ -324,6 +326,14 @@ class LocalSubcidGetterPlural(BaseProcessor):
                 LOGGER.error(err_msg)
                 raise exc.DataAccessException(err_msg)
             points_geojson = resp.json()
+
+        ##################
+        ### Actual ... ###
+        ##################
+
+        ## Potential outputs:
+        output_json = None
+        output_df = None
 
         ## Handle GeoJSON case:
         if points_geojson is not None:
