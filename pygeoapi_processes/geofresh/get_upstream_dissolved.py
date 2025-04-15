@@ -122,8 +122,13 @@ class UpstreamDissolvedGetter(BaseProcessor):
         LOGGER.info('START: Getting upstream dissolved polygon for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
 
         # Get reg_id, basin_id, subc_id
-        subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
-            conn, LOGGER, lon, lat, subc_id)
+        if subc_id is not None:
+            # (special case: user provided subc_id instead of lonlat!)
+            subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
+                conn, LOGGER, subc_id = subc_id)
+        else:
+            subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
+                conn, LOGGER, lon, lat)
         LOGGER.debug('Found subc_id=%s, basin_id=%s, reg_id=%s' % (subc_id, basin_id, reg_id))
 
         # Get upstream id

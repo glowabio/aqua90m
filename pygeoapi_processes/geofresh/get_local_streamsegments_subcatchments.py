@@ -120,10 +120,16 @@ class LocalStreamSegmentSubcatchmentGetter(BaseProcessor):
         # Parse booleans
         geometry_only = (geometry_only.lower() == 'true')
 
-        # Get subc_id, basin_ic, reg_id
-        LOGGER.info('Getting stream segment and subcatchment for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
-        subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
-            conn, LOGGER, lon, lat, subc_id)
+        # Get reg_id, basin_id, subc_id
+        if subc_id is not None:
+            # (special case: user provided subc_id instead of lonlat!)
+            LOGGER.info('Getting stream segment and subcatchment for subc_id %s' % subc_id)
+            subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
+                conn, LOGGER, subc_id = subc_id)
+        else:
+            LOGGER.info('Getting stream segment and subcatchment for lon, lat: %s, %s' % (lon, lat))
+            subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
+                conn, LOGGER, lon, lat)
 
         # Return only geometry:
         if geometry_only:

@@ -115,9 +115,9 @@ class SnappedPointsGetter(BaseProcessor):
         geometry_only = (geometry_only.lower() == 'true')
 
         # Get reg_id, basin_id, subc_id
-        LOGGER.info('START: Getting snapped point for lon, lat: %s, %s (or subc_id NONE)' % (lon, lat))
+        LOGGER.info('START: Getting snapped point for lon, lat: %s, %s' % (lon, lat))
         subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
-            conn, LOGGER, lon, lat, None)
+            conn, LOGGER, lon, lat)
 
         # Return geometry only:
         if geometry_only:

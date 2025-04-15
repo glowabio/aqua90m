@@ -118,10 +118,19 @@ class ShortestPathToOutletGetter(BaseProcessor):
         add_downstream_ids = (add_downstream_ids.lower() == 'true')
 
         # Overall goal: Get the dijkstra shortest path (as linestrings)!
-        LOGGER.info('START: Getting dijkstra shortest path for lon %s, lat %s (or subc_id %s) to sea' % (
-            lon_start, lat_start, subc_id1))
         subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
             conn, LOGGER, lon_start, lat_start, subc_id1)
+
+        # Get reg_id, basin_id, subc_id
+        if subc_id1 is not None:
+            # (special case: user provided subc_id instead of lonlat!)
+            LOGGER.info('START: Getting dijkstra shortest path for or subc_id %s to sea' % subc_id1)
+            subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
+                conn, LOGGER, subc_id = subc_id1)
+        else:
+            LOGGER.info('START: Getting dijkstra shortest path for lon %s, lat %s to sea' % (lon_start, lat_start))
+            subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
+                conn, LOGGER, lon_start, lat_start)
 
         # Outlet has minus basin_id as subc_id!
         subc_id2 = -basin_id1

@@ -129,10 +129,20 @@ class ShortestPathBetweenPointsGetter(BaseProcessor):
             lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end))
 
         # Get reg_id, basin_id, subc_id
-        subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
-            conn, LOGGER, lon_start, lat_start, subc_id_start)
-        subc_id2, basin_id2, reg_id2 = basic_queries.get_subcid_basinid_regid(
-            conn, LOGGER, lon_end, lat_end, subc_id_end)
+        # Point 1:
+        if subc_id_start is not None:
+            subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
+                conn, LOGGER, subc_id=subc_id_start)
+        else:
+            subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
+                conn, LOGGER, lon_start, lat_start)
+        # Point 2:
+        if subc_id_end is not None:
+            subc_id2, basin_id2, reg_id2 = basic_queries.get_subcid_basinid_regid(
+                conn, LOGGER, subc_id=subc_id_end)
+        else:
+            subc_id2, basin_id2, reg_id2 = basic_queries.get_subcid_basinid_regid(
+                conn, LOGGER, lon_end, lat_end)
 
         # Check if same region and basin?
         # TODO: Can we route via the sea then??

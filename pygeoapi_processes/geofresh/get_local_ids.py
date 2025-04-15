@@ -151,7 +151,8 @@ class LocalIdGetter(BaseProcessor):
         try:
             if input_subc_id is not None:
                 LOGGER.debug('Special case: User provided a subc_id...')
-                basin_id, reg_id = basic_queries.get_basinid_regid(conn, LOGGER, input_subc_id)
+                basin_id, reg_id = basic_queries.get_basinid_regid(
+                    conn, LOGGER, subc_id = input_subc_id)
                 LOGGER.debug('Special case: Returning reg_id (%s), basin_id (%s).' % (reg_id, basin_id))
                 subc_id = input_subc_id
 
