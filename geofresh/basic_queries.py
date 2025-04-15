@@ -24,10 +24,21 @@ except ModuleNotFoundError as e1:
         print(msg)
         LOGGER.debug(msg)
 
+def get_regid(conn, LOGGER, first, second = None):
 
-def get_regid(conn, LOGGER, lon, lat):
+    if second is not None and isinstance(first, float) and isinstance(second, float):
+        lon = first
+        lat = second
+        return get_regid_from_lonlat(conn, LOGGER, lon, lat)
 
-    extent_helpers.check_outside_europe(lon, lat)
+    if second is None and isinstance(first, int):
+        subc_id = first
+        return get_reg_id_from_subcid(conn, LOGGER, subc_id)
+
+
+def get_regid_from_lonlat(conn, LOGGER, lon, lat):
+
+    #extent_helpers.check_outside_europe(lon, lat)
     # May throw OutsideAreaException/UserInputException
     # TODO: Can we find a more elegant solution for this?
 
@@ -67,6 +78,13 @@ def get_regid(conn, LOGGER, lon, lat):
         reg_id = row[0]
 
     return reg_id
+
+
+def get_regid_from_subcid(conn, LOGGER, subc_id):
+    # This function is not really useful, it's just here for the sake for systematicness.
+    basin_id, reg_id = get_basinid_regid(conn, LOGGER, subc_id)
+    return reg_id
+
 
 
 def get_basinid(conn, LOGGER, lon, lat):
