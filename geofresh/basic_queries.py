@@ -58,7 +58,7 @@ def get_regid(conn, lon, lat):
 
     ### Get results and construct GeoJSON:
     row = cursor.fetchone()
-    if row is None: # Ocean case: 
+    if row is None: # Ocean case:
         err_msg      = 'No region id found for lon %s, lat %s! Is this in the ocean?' % (lon, lat)
         LOGGER.error(err_msg)
         raise exc.GeoFreshNoResultException(err_msg)
@@ -104,7 +104,7 @@ def get_subcid_basinid(conn, lon, lat, reg_id):
     ### Get results:
     row = cursor.fetchone()
     if row is None: # Ocean case:
-        err_msg = 'No subc_id and basin_id for lon, lat %s, %s. Does this latlon fall into the ocean?' % (lon, lat)
+        err_msg = 'No subc_id and basin_id found for lon, lat %s, %s. Is this located in the ocean?' % (lon, lat)
         LOGGER.error(err_msg)
         raise exc.GeoFreshNoResultException(err_msg)
     else:
@@ -218,11 +218,14 @@ def get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson):
             raise UserInputException(err_msg)
 
         # Query database:
-        LOGGER.log(logging.TRACE, 'Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
-        subc_id, basin_id, reg_id = get_subcid_basinid_regid(
-            conn, LOGGER, lon, lat, None)
-        # May throw GeoFreshNoResultException e.g. when point falls into ocean:
-        # TODO: What to return? null/NA? "unknown"? Or leave out?
+        try:
+            LOGGER.log(logging.TRACE, 'Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
+            subc_id, basin_id, reg_id = get_subcid_basinid_regid(
+                conn, LOGGER, lon, lat, None)
+        except exc.GeoFreshNoResultException as e:
+            # For example, if the point is in the ocean.
+            # We return None. TODO: Test how this looks in JSON!
+            reg_id = basin_id = subc_id = None
 
         # Collect results in dict:
         # site_id is included by returning the points, so if the point includes a site_id, it is returned.
@@ -406,16 +409,14 @@ def get_subcid_basinid_regid_for_all_3(conn, LOGGER, input_dataframe, colname_lo
         site_id = getattr(row, colname_site_id)
 
         # Query database:
-        LOGGER.log(logging.TRACE, 'Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
-        subc_id, basin_id, reg_id = get_subcid_basinid_regid(
-            conn, LOGGER, lon, lat, None)
-
-        # Database returns None, e.g. when point falls into ocean:
-        # TODO: What to return? null/NA? "unknown"? Or leave out?
-        if (reg_id is None and basin_id is None and subc_id is None):
-            reg_id = "ocean"
-            basin_id = "ocean"
-            subc_id = "ocean"
+        try:
+            LOGGER.log(logging.TRACE, 'Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
+            subc_id, basin_id, reg_id = get_subcid_basinid_regid(
+                conn, LOGGER, lon, lat, None)
+        except exc.GeoFreshNoResultException as e:
+            # For example, if the point is in the ocean.
+            # We return None. TODO: Test how this looks in Pandas dataframe!
+            reg_id = basin_id = subc_id = None
 
         # Collect results in list:
         everything.append([site_id, reg_id, basin_id, subc_id])
