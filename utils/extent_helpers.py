@@ -1,5 +1,5 @@
 
-import aqua90m.utils.excepts as exc
+import aqua90m.utils.exceptions as exc
 import logging
 LOGGER = logging.getLogger(__name__)
 

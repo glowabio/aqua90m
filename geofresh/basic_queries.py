@@ -136,7 +136,7 @@ def get_basinid_regid(conn, subc_id):
     if row is None:
         err_msg = 'No basin_id and reg_id found for subc_id %s!' % subc_id
         LOGGER.error(err_msg)
-        raise exc.GeoFreshNoResultException(error_message)
+        raise exc.GeoFreshUnexpectedResultException(error_message)
     else:
         basin_id = row[0]
         reg_id = row[1]
