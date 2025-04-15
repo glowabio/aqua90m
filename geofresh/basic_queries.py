@@ -24,15 +24,14 @@ except ModuleNotFoundError as e1:
         print(msg)
         LOGGER.debug(msg)
 
-def get_regid(conn, LOGGER, first, second = None):
+def get_regid(conn, LOGGER, lon=None, lat=None, subc_id=None):
 
-    if second is not None and isinstance(first, float) and isinstance(second, float):
-        lon = first
-        lat = second
+    # Standard case: User provided lon and lat!
+    if lon is not None and lat is not None:
         return get_regid_from_lonlat(conn, LOGGER, lon, lat)
 
-    if second is None and isinstance(first, int):
-        subc_id = first
+    # Non-standard case: If user provided subc_id, then use it!
+    if subc_id is not None:
         return get_reg_id_from_subcid(conn, LOGGER, subc_id)
 
 def get_regid_from_lonlat(conn, LOGGER, lon, lat):
@@ -78,7 +77,6 @@ def get_regid_from_lonlat(conn, LOGGER, lon, lat):
 
     return reg_id
 
-
 def get_regid_from_subcid(conn, LOGGER, subc_id):
     # This function is not really useful, it's just here for the sake for systematicness.
     basin_id, reg_id = get_basinid_regid(conn, LOGGER, subc_id)
@@ -86,15 +84,14 @@ def get_regid_from_subcid(conn, LOGGER, subc_id):
 
 
 
-def get_basinid_regid(conn, LOGGER, first, second = None):
+def get_basinid_regid(conn, LOGGER, lon=None, lat=None, subc_id=None)):
 
-    if second is not None and isinstance(first, float) and isinstance(second, float):
-        lon = first
-        lat = second
+    # Standard case: User provided lon and lat!
+    if lon is not None and lat is not None:
         return get_basinid_regid_from_lonlat(conn, LOGGER, lon, lat)
 
-    if second is None and isinstance(first, int):
-        subc_id = first
+    # Non-standard case: If user provided subc_id, then use it!
+    if subc_id is not None:
         return get_basinid_regid_from_subcid(conn, LOGGER, subc_id)
 
 def get_basinid_regid_from_lonlat(conn, LOGGER, lon, lat):
@@ -213,17 +210,14 @@ def get_basinid_regid_from_subcid(conn, LOGGER, subc_id):
     return basin_id, reg_id
 
 
-def get_subcid_basinid_regid(conn, LOGGER, first, second = None):
+def get_subcid_basinid_regid(conn, LOGGER, lon=None, lat=None, subc_id=None)):
 
     # Standard case: User provided lon and lat!
-    if second is not None and isinstance(first, float) and isinstance(second, float):
-        lon = first
-        lat = second
+    if lon is not None and lat is not None:
         return get_subcid_basinid_regid_from_lonlat(conn, LOGGER, lon, lat)
 
     # Non-standard case: If user provided subc_id, then use it!
-    if second is None and isinstance(first, int):
-        subc_id = first
+    if subc_id is not None:
         return get_subcid_basinid_regid_from_subcid(conn, LOGGER, subc_id)
 
 def get_subcid_basinid_regid_from_subcid(conn, LOGGER, subc_id):
