@@ -1,6 +1,7 @@
-
 import aqua90m.utils.exceptions as exc
 import logging
+logging.TRACE = 5
+logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
 
 def check_outside_europe(lon, lat, LOGGER = None):
@@ -9,7 +10,7 @@ def check_outside_europe(lon, lat, LOGGER = None):
 
     outside_europe = False
     err_msg = None
-    LOGGER.debug("CHECKING for in or outside Europe?!")
+    LOGGER.log(logging.TRACE, "CHECKING for in or outside Europe?!")
 
     if lat > 82:
         err_msg = 'Too far north to be part of Europe: %s' % lat
