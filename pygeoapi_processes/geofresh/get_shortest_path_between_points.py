@@ -17,7 +17,6 @@ import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
 from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection_object_config
 
 
-
 '''
 # Request a GeometryCollection (LineStrings):
 curl -X POST "http://localhost:5000/processes/get-shortest-path-between-points/execution" \
@@ -67,6 +66,9 @@ class ShortestPathBetweenPointsGetter(BaseProcessor):
         config_file_path = os.environ.get('AQUA90M_CONFIG_FILE', "./config.json")
         with open(config_file_path, 'r') as config_file:
             self.config = json.load(config_file)
+            self.download_dir = self.config['download_dir']
+            self.download_url = self.config['download_url']
+
 
     def set_job_id(self, job_id: str):
         self.job_id = job_id
@@ -162,8 +164,8 @@ class ShortestPathBetweenPointsGetter(BaseProcessor):
             if utils.return_hyperlink('connecting_path', requested_outputs):
                 output_dict_with_url =  utils.store_to_json_file('connecting_path', geometry_coll,
                     self.metadata, self.job_id,
-                    self.config['download_dir'],
-                    self.config['download_url'])
+                    self.download_dir,
+                    self.download_url)
                 return 'application/json', output_dict_with_url
             else:
                 return 'application/json', geometry_coll
@@ -188,8 +190,8 @@ class ShortestPathBetweenPointsGetter(BaseProcessor):
             if utils.return_hyperlink('connecting_path', requested_outputs):
                 output_dict_with_url =  utils.store_to_json_file('connecting_path', feature_coll,
                     self.metadata, self.job_id,
-                    self.config['download_dir'],
-                    self.config['download_url'])
+                    self.download_dir,
+                    self.download_url)
                 return 'application/json', output_dict_with_url
             else:
                 return 'application/json', feature_coll

@@ -249,6 +249,8 @@ class LocalSubcidGetterPlural(BaseProcessor):
         config_file_path = os.environ.get('AQUA90M_CONFIG_FILE', "./config.json")
         with open(config_file_path, 'r') as config_file:
             self.config = json.load(config_file)
+            self.download_dir = self.config['download_dir']
+            self.download_url = self.config['download_url']
 
 
     def set_job_id(self, job_id: str):
@@ -395,8 +397,8 @@ class LocalSubcidGetterPlural(BaseProcessor):
             if do_return_link:
                 output_dict_with_url =  utils.store_to_csv_file('local_ids', output_df,
                     self.metadata, self.job_id,
-                    self.config['download_dir'],
-                    self.config['download_url'])
+                    self.download_dir,
+                    self.download_url)
 
                 output_dict_with_url['comment'] = comment
 
@@ -413,8 +415,8 @@ class LocalSubcidGetterPlural(BaseProcessor):
             if do_return_link:
                 output_dict_with_url =  utils.store_to_json_file('local_ids', output_json,
                     self.metadata, self.job_id,
-                    self.config['download_dir'],
-                    self.config['download_url'])
+                    self.download_dir,
+                    self.download_url)
                 return 'application/json', output_dict_with_url
 
             else:

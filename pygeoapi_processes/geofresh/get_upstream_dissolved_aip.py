@@ -90,7 +90,8 @@ class UpstreamDissolvedGetter(BaseProcessor):
         config_file_path = os.environ.get('AQUA90M_CONFIG_FILE', "./config.json")
         with open(config_file_path, 'r') as config_file:
             self.config = json.load(config_file)
-
+            self.download_dir = self.config['download_dir']
+            self.download_url = self.config['download_url']
 
     def set_job_id(self, job_id: str):
         self.job_id = job_id
@@ -221,13 +222,13 @@ class UpstreamDissolvedGetter(BaseProcessor):
 
             # Store file
             downloadfilename = 'polygon-%s.json' % self.job_id
-            downloadfilepath = self.config['download_dir']+downloadfilename
+            downloadfilepath = self.download_dir+downloadfilename
             LOGGER.debug('Writing process result to file: %s' % downloadfilepath)
             with open(downloadfilepath, 'w', encoding='utf-8') as downloadfile:
                 json.dump(geojson_object, downloadfile, ensure_ascii=False, indent=4)
 
             # Create download link:
-            downloadlink = self.config['download_url'] + downloadfilename
+            downloadlink = self.download_url + downloadfilename
 
             # Build response containing the link
             output_name = 'polygon'
