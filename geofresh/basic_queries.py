@@ -444,6 +444,88 @@ def get_subcid_basinid_regid_for_all_2(conn, LOGGER, input_dataframe, colname_lo
     return dataframe
 
 
+
+def get_basinid_regid_for_all_2(conn, LOGGER, input_dataframe, colname_lon, colname_lat, colname_site_id):
+    # Input: Pandas Dataframe
+    # Output: Pandas Dataframe
+
+    # Create list to be filled and converted to Pandas dataframe:
+    everything = []
+    site_id = None # in case none is provided.
+    basin_ids = []
+    reg_ids = []
+
+    # Iterate over points and call "get_basinid_regid" for each point:
+    # TODO: This is not super efficient, but the quickest to implement :)
+    # TODO: Read this for alternatives to iteration: https://stackoverflow.com/questions/16476924/how-can-i-iterate-over-rows-in-a-pandas-dataframe
+    num = input_dataframe.shape[0]
+    LOGGER.debug('Getting basin_id, reg_id for %s lon, lat pairs...' % num)
+
+    for row in input_dataframe.itertuples(index=False):
+
+        # Get coordinates from input:
+        # TODO OPTIMIZE: getattr may not be the fastest way of accessing this...
+        lon = getattr(row, colname_lon)
+        lat = getattr(row, colname_lat)
+        site_id = getattr(row, colname_site_id)
+
+        # Query database:
+        try:
+            LOGGER.log(logging.TRACE, 'Getting basin_id, reg_id for lon, lat: %s, %s' % (lon, lat))
+            basin_id, reg_id = get_basinid_regid(
+                conn, LOGGER, lon, lat)
+        except exc.GeoFreshNoResultException as e:
+            # For example, if the point is in the ocean.
+            # In Pandas dataframe, NaN is returned.
+            reg_id = basin_id = None
+
+        # Collect results in list:
+        everything.append([site_id, reg_id, basin_id])
+
+    # Finished collecting the results, now make pandas dataframe:
+    dataframe = pd.DataFrame(everything, columns=['site_id', 'reg_id', 'basin_id'])
+    return dataframe
+
+def get_regid_for_all_2(conn, LOGGER, input_dataframe, colname_lon, colname_lat, colname_site_id):
+    # Input: Pandas Dataframe
+    # Output: Pandas Dataframe
+
+    # Create list to be filled and converted to Pandas dataframe:
+    everything = []
+    site_id = None # in case none is provided.
+    reg_ids = []
+
+    # Iterate over points and call "get_regid" for each point:
+    # TODO: This is not super efficient, but the quickest to implement :)
+    # TODO: Read this for alternatives to iteration: https://stackoverflow.com/questions/16476924/how-can-i-iterate-over-rows-in-a-pandas-dataframe
+    num = input_dataframe.shape[0]
+    LOGGER.debug('Getting reg_id for %s lon, lat pairs...' % num)
+
+    for row in input_dataframe.itertuples(index=False):
+
+        # Get coordinates from input:
+        # TODO OPTIMIZE: getattr may not be the fastest way of accessing this...
+        lon = getattr(row, colname_lon)
+        lat = getattr(row, colname_lat)
+        site_id = getattr(row, colname_site_id)
+
+        # Query database:
+        try:
+            LOGGER.log(logging.TRACE, 'Getting reg_id for lon, lat: %s, %s' % (lon, lat))
+            reg_id = get_regid(conn, LOGGER, lon, lat)
+        except exc.GeoFreshNoResultException as e:
+            # For example, if the point is in the ocean.
+            # In Pandas dataframe, NaN is returned.
+            reg_id = None
+
+        # Collect results in list:
+        everything.append([site_id, reg_id])
+
+    # Finished collecting the results, now make pandas dataframe:
+    dataframe = pd.DataFrame(everything, columns=['site_id', 'reg_id'])
+    return dataframe
+
+
 if __name__ == "__main__":
 
     try:
