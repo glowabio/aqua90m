@@ -69,6 +69,47 @@ def get_regid(conn, lon, lat):
     return reg_id
 
 
+def get_basinid(conn, lon, lat, reg_id):
+
+    #extent_helpers.check_outside_europe(lon, lat)
+    # May throw OutsideAreaException/UserInputException
+    # TODO: Can we find a more elegant solution for this?
+
+    ### Define query:
+    """
+    Example query:
+    SELECT basin_id FROM basins
+    WHERE st_intersects(ST_SetSRID(ST_MakePoint(9.931555, 54.695070), 4326), geom);
+
+    Result: TODO
+    """
+    query = """
+    SELECT basin_id
+    FROM basins
+    WHERE st_intersects(ST_SetSRID(ST_MakePoint({longitude}, {latitude}), 4326), geom)
+    AND reg_id = {reg_id}
+    """.format(longitude = lon, latitude = lat, reg_id = reg_id)
+    query = query.replace("\n", " ")
+
+    ### Query database:
+    cursor = conn.cursor()
+    LOGGER.log(logging.TRACE, 'Querying database...')
+    cursor.execute(query)
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
+
+    ### Get results and construct GeoJSON:
+    row = cursor.fetchone()
+    if row is None: # Ocean case:
+        err_msg      = 'No basin id found for lon %s, lat %s! Is this in the ocean?' % (lon, lat)
+        LOGGER.error(err_msg)
+        raise exc.GeoFreshNoResultException(err_msg)
+
+    else:
+        basin_id = row[0]
+
+    return basin_id
+
+
 def get_subcid_basinid(conn, lon, lat, reg_id):
 
     ### Define query:

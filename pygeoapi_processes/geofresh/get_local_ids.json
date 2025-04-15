@@ -1,0 +1,90 @@
+{
+    "version": "0.0.1",
+    "id": "get-local-ids",
+    "use_case": "hydrography90m",
+    "title": {"en": "Get ids"},
+    "description": {
+        "en": "Return the subcatchment id, basin id and/or regional unit id of the single subcatchment into which the given point falls."
+    },
+    "jobControlOptions": ["sync-execute", "async-execute"],
+    "keywords": ["subcatchment", "GeoFRESH", "hydrography90m"],
+    "links": [{
+        "type": "text/html",
+        "rel": "about",
+        "title": "GeoFRESH website",
+        "href": "https://geofresh.org/",
+        "hreflang": "en-US"
+    },
+    {
+        "type": "text/html",
+        "rel": "about",
+        "title": "On Subcatchment Ids (Hydrography90m)",
+        "href": "https://hydrography.org/hydrography90m/hydrography90m_layers",
+        "hreflang": "en-US"
+    }],
+    "inputs": {
+        "lon": {
+            "title": "Longitude (WGS84)",
+            "description": "Longitude....",
+            "schema": {"type": "number"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["longitude", "wgs84"]
+        },
+        "lat": {
+            "title": "Latitude (WGS84)",
+            "description": "Latitude....",
+            "schema": {"type": "number"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["latitude", "wgs84"]
+        },
+        "which_ids": {
+            "title": "Requested ids",
+            "description": "Whether we should return only regional unit id (reg_id), or also basin id (basin_id), or also subcatchment id (subc_id). Please provide the requested ids as a comma-separated list, e.g. 'reg_id,basin_id,subc_id'",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["reg_id", "basin_id", "subc_id"]
+        },
+        "comment": {
+            "title": "Comment",
+            "description": "Arbitrary string that will not be processed but returned, for user\"s convenience.",
+            "schema": {"type": "string"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["comment"]
+        },
+        "subc_id": {
+            "title": "Optional: Subcatchment id",
+            "description": "In case you already know the subcatchment id and just need regional unit id (reg_id), and/or basin id (basin_id), add the subcatchment id here.",
+            "schema": {"type": "integer"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["comment"]
+        }
+    },
+    "outputs": {
+        "ids": {
+            "title": "Requested ids",
+            "description": "subc_id: Subcatchment id of the subcatchment in which the provided coordinates fall. basin_id: Basin id of the basin in which the provided coordinates fall. reg_id: Regional unit in which the provided coordinates fall.",
+            "schema": {
+                "type": "object",
+                "contentMediaType": "application/json"
+            }
+        }
+    },
+    "example": {
+        "inputs": {
+            "lon": "9.931555",
+            "lat": "54.695070",
+            "which_ids": "reg_id,basin_id,subc_id",
+            "comment": "located in schlei area"
+        }
+    }
+}
