@@ -131,6 +131,7 @@ class LocalIdGetter(BaseProcessor):
         lat = data.get('lat', None)
         input_subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
         comment = data.get('comment') # optional
+        site_id = data.get('site_id') # optional
         which_ids = data.get('which_ids', 'subc_id, basin_id, reg_id')
         which_ids = which_ids.replace(' ', '')
         which_ids = which_ids.split(',')
@@ -147,30 +148,40 @@ class LocalIdGetter(BaseProcessor):
         reg_id = None
 
         # Special case: User did not provide lon, lat but subc_id ...
-        if input_subc_id is not None:
-            LOGGER.debug('Special case: User provided a subc_id...')
-            basin_id, reg_id = basic_queries.get_basinid_regid(conn, LOGGER, input_subc_id)
-            LOGGER.debug('Special case: Returning reg_id (%s), basin_id (%s).' % (reg_id, basin_id))
-            subc_id = input_subc_id
+        try:
+            if input_subc_id is not None:
+                LOGGER.debug('Special case: User provided a subc_id...')
+                basin_id, reg_id = basic_queries.get_basinid_regid(conn, LOGGER, input_subc_id)
+                LOGGER.debug('Special case: Returning reg_id (%s), basin_id (%s).' % (reg_id, basin_id))
+                subc_id = input_subc_id
 
-        # Normal case: User provided lon, lat:
-        elif 'subc_id' in which_ids:
-            #LOGGER.log(logging.TRACE, 'Getting subc_id for lon, lat: %s, %s' % (lon, lat))
-            LOGGER.debug('Getting subc_id for lon, lat: %s, %s' % (lon, lat))
-            subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
-                conn, LOGGER, lon, lat)
-            LOGGER.debug('FOUND: %s %s %s' % (subc_id, basin_id, reg_id))
+            # Normal case: User provided lon, lat:
+            elif 'subc_id' in which_ids:
+                LOGGER.log(logging.TRACE, 'Getting subc_id for lon, lat: %s, %s' % (lon, lat))
+                subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
+                    conn, LOGGER, lon, lat)
+                LOGGER.debug('FOUND: %s %s %s' % (subc_id, basin_id, reg_id))
 
-        elif 'basin_id' in which_ids:
-            LOGGER.log(logging.TRACE, 'Getting basin_id for lon, lat: %s, %s' % (lon, lat))
-            # TODO: Would it be better to query for reg_id before? Does that speed anything up?
-            basin_id, reg_id = basic_queries.get_basinid(
-                conn, LOGGER, lon, lat)
+            elif 'basin_id' in which_ids:
+                LOGGER.log(logging.TRACE, 'Getting basin_id for lon, lat: %s, %s' % (lon, lat))
+                basin_id, reg_id = basic_queries.get_basinid(
+                    conn, LOGGER, lon, lat)
 
-        elif 'reg_id' in which_ids:
-            LOGGER.log(logging.TRACE, 'Getting reg_id for lon, lat: %s, %s' % (lon, lat))
-            reg_id = basic_queries.get_regid(
-                conn, LOGGER, lon, lat)
+            elif 'reg_id' in which_ids:
+                LOGGER.log(logging.TRACE, 'Getting reg_id for lon, lat: %s, %s' % (lon, lat))
+                reg_id = basic_queries.get_regid(
+                    conn, LOGGER, lon, lat)
+
+        except exc.GeoFreshNoResultException as e:
+            # TODO: Improve! What I don't like about this: This should not be an exception, but probably
+            # quite a normal case...
+            LOGGER.debug('Caught this: %s, adding site_id: %s' % (e, site_id))
+            if site_id is not None:
+                err_msg = '%s (%s)' % (str(e), site_id)
+                raise exc.GeoFreshNoResultException(err_msg)
+            else:
+                raise exc.GeoFreshNoResultException(e)
+
 
         ################
         ### Results: ###
