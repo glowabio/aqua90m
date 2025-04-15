@@ -293,98 +293,8 @@ def get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson, colname_sit
 
 
 
-def get_subcid_basinid_regid_for_all_2(conn, LOGGER, points_geojson):
-    # Input: GeoJSON
-    # Output: Pandas Dataframe
 
-    # Create list to be filled and converted to Pandas dataframe:
-    everything = []
-    # Create lists to be filled just for logging the results:
-    basin_ids = []
-    reg_ids = []
-    subc_ids = []
-    # In case no site_id is provided, use "None":
-    site_id = None
-
-    # Check GeoJSON validity, and define what to iterate over:
-    if points_geojson['type'] == 'GeometryCollection':
-        geojson_helpers.check_is_geometry_collection_points(points_geojson)
-        iterate_over = points_geojson['geometries']
-        num = len(iterate_over)
-    elif points_geojson['type'] == 'FeatureCollection':
-        geojson_helpers.check_is_feature_collection_points(points_geojson)
-        iterate_over = points_geojson['features']
-        num = len(iterate_over)
-
-    # Iterate over points and call "get_subcid_basinid_regid" for each point:
-    # TODO: This is not super efficient, but the quickest to implement :)
-    LOGGER.debug('Getting subcatchment for %s lon, lat pairs...' % num)
-    for point in iterate_over: # either point or feature...
-
-        # Get coordinates from input:
-        if 'properties' in point:
-            lon, lat = point['geometry']['coordinates']
-            site_id = point['properties']['site_id']
-        elif 'coordinates' in point:
-            lon, lat = point['coordinates']
-        else:
-            err_msg = "Input is not valid GeoJSON Point or Point-Feature: %s" % point
-            raise UserInputException(err_msg)
-
-        # Query database:
-        LOGGER.log(logging.TRACE, 'Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
-        subc_id, basin_id, reg_id = get_subcid_basinid_regid(
-            conn, LOGGER, lon, lat, None)
-        # May throw GeoFreshNoResultException, ...
-
-        # Database returns None, e.g. when point falls into ocean:
-        # TODO: What to return? null/NA? "unknown"? Or leave out?
-        if (reg_id is None and basin_id is None and subc_id is None):
-            reg_id = "ocean"
-            basin_id = "ocean"
-            subc_id = "ocean"
-
-        # Collect results in list:
-        everything.append([site_id, reg_id, basin_id, subc_id])
-
-        # This is not really needed, just for logging:
-        reg_ids.append(str(reg_id))
-        basin_ids.append(str(basin_id))
-        subc_ids.append(str(subc_id))
-
-    # Finished collecting the results, now make pandas dataframe:
-    dataframe = pd.DataFrame(everything, columns=['site_id', 'reg_id', 'basin_id', 'subc_id'])
-
-    # Extensive logging of stats:
-    LOGGER.log(logging.TRACE, 'Of %s points, ...' % num)
-
-    if len(set(reg_ids)) == 1:
-        LOGGER.log(logging.TRACE, '... all %s points fall into regional unit with reg_id %s' % (num, reg_ids[0]))
-    else:
-        reg_id_counts = {reg_id: reg_ids.count(reg_id) for reg_id in reg_ids}
-        for reg_id in set(reg_ids):
-            LOGGER.log(logging.TRACE, '... %s points fall into regional unit with reg_id %s' % (reg_id_counts[reg_id], reg_id))
-
-    if len(set(basin_ids)) == 1:
-        LOGGER.log(logging.TRACE, '... all %s points fall into drainage basin with basin_id %s' % (num, basin_ids[0]))
-    else:
-        basin_id_counts = {basin_id: basin_ids.count(basin_id) for basin_id in basin_ids}
-        for basin_id in set(basin_ids):
-            LOGGER.log(logging.TRACE, '... %s points fall into drainage basin with basin_id %s' % (basin_id_counts[basin_id], basin_id))
-
-    if len(set(subc_ids)) == 1:
-        LOGGER.log(logging.TRACE, '... all %s points fall into subcatchment with subc_id %s' % (num, subc_ids[0]))
-    else:
-        subc_id_counts = {subc_id: subc_ids.count(subc_id) for subc_id in subc_ids}
-        for subc_id in set(subc_ids):
-            LOGGER.log(logging.TRACE, '... %s points fall into subcatchment with subc_id %s' % (subc_id_counts[subc_id], subc_id))
-
-    # Return result
-    return dataframe
-
-
-
-def get_subcid_basinid_regid_for_all_3(conn, LOGGER, input_dataframe, colname_lon, colname_lat, colname_site_id):
+def get_subcid_basinid_regid_for_all_2(conn, LOGGER, input_dataframe, colname_lon, colname_lat, colname_site_id):
     # Input: Pandas Dataframe
     # Output: Pandas Dataframe
 
@@ -678,18 +588,8 @@ if __name__ == "__main__":
     res = get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson_all_same)
     print('RESULT:\n%s' % res)
 
-    # Input: GeoJSON, output dataframe
-    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_2 (input: json, output: dataframe)')
-    res = get_subcid_basinid_regid_for_all_2(conn, LOGGER, points_geojson)
-    print('RESULT:\n%s' % res)
-
-    # Input: GeoJSON, output dataframe, with site_id!
-    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_2 (input: json with site_id, output: dataframe)')
-    res = get_subcid_basinid_regid_for_all_2(conn, LOGGER, points_geojson_with_siteid)
-    print('RESULT:\n%s' % res)
-
     ## Input: dataframe, output dataframe, with site_id!
-    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_3 (input: dataframe, output: dataframe)')
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_2 (input: dataframe, output: dataframe)')
     example_dataframe = pd.DataFrame(
         [
             ['aa', 10.041155219078064, 53.07006147583069],
@@ -703,5 +603,5 @@ if __name__ == "__main__":
             ['f',  24.432498016999062, 61.215505889934434]
         ], columns=['site_id', 'lon', 'lat']
     )
-    res = get_subcid_basinid_regid_for_all_3(conn, LOGGER, example_dataframe, 'lon', 'lat', 'site_id')
+    res = get_subcid_basinid_regid_for_all_2(conn, LOGGER, example_dataframe, 'lon', 'lat', 'site_id')
     print('RESULT:\n%s' % res)

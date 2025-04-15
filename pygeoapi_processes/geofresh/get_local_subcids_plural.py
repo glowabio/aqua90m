@@ -363,7 +363,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
                         raise exc.DataAccessException(err_msg)
 
             # Query database:
-            output_df = basic_queries.get_subcid_basinid_regid_for_all_3(
+            output_df = basic_queries.get_subcid_basinid_regid_for_all_2(
                 conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
 
         else:
