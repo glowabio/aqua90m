@@ -32,7 +32,7 @@ def get_regid(conn, LOGGER, lon=None, lat=None, subc_id=None):
 
     # Non-standard case: If user provided subc_id, then use it!
     if subc_id is not None:
-        return get_reg_id_from_subcid(conn, LOGGER, subc_id)
+        return get_regid_from_subcid(conn, LOGGER, subc_id)
 
 def get_regid_from_lonlat(conn, LOGGER, lon, lat):
 
@@ -79,12 +79,12 @@ def get_regid_from_lonlat(conn, LOGGER, lon, lat):
 
 def get_regid_from_subcid(conn, LOGGER, subc_id):
     # This function is not really useful, it's just here for the sake for systematicness.
-    basin_id, reg_id = get_basinid_regid(conn, LOGGER, subc_id)
+    basin_id, reg_id = get_basinid_regid_from_subcid(conn, LOGGER, subc_id)
     return reg_id
 
 
 
-def get_basinid_regid(conn, LOGGER, lon=None, lat=None, subc_id=None)):
+def get_basinid_regid(conn, LOGGER, lon=None, lat=None, subc_id=None):
 
     # Standard case: User provided lon and lat!
     if lon is not None and lat is not None:
@@ -135,7 +135,7 @@ def get_basinid_regid_from_lonlat(conn, LOGGER, lon, lat):
     return basin_id, reg_id
 
 
-def get_subcid_basinid(conn, LOGGER, lon, lat, reg_id):
+def get_subcid_basinid_from_lonlat_regid(conn, LOGGER, lon, lat, reg_id):
 
     ### Define query:
     """
@@ -210,7 +210,7 @@ def get_basinid_regid_from_subcid(conn, LOGGER, subc_id):
     return basin_id, reg_id
 
 
-def get_subcid_basinid_regid(conn, LOGGER, lon=None, lat=None, subc_id=None)):
+def get_subcid_basinid_regid(conn, LOGGER, lon=None, lat=None, subc_id=None):
 
     # Standard case: User provided lon and lat!
     if lon is not None and lat is not None:
@@ -223,7 +223,7 @@ def get_subcid_basinid_regid(conn, LOGGER, lon=None, lat=None, subc_id=None)):
 def get_subcid_basinid_regid_from_subcid(conn, LOGGER, subc_id):
 
     LOGGER.log(logging.TRACE, 'Getting subcatchment, region and basin id for subc_id: %s' % subc_id)
-    basin_id, reg_id = get_basinid_regid(conn, LOGGER, subc_id)
+    basin_id, reg_id = get_basinid_regid_from_subcid(conn, LOGGER, subc_id)
     return subc_id, basin_id, reg_id
 
 def get_subcid_basinid_regid_from_lonlat(conn, LOGGER, lon, lat):
@@ -231,8 +231,8 @@ def get_subcid_basinid_regid_from_lonlat(conn, LOGGER, lon, lat):
     LOGGER.log(logging.TRACE, 'Getting subcatchment, region and basin id for lon, lat: %s, %s' % (lon, lat))
     lon = float(lon)
     lat = float(lat)
-    reg_id = get_regid(conn, LOGGER, lon, lat)
-    subc_id, basin_id = get_subcid_basinid(conn, LOGGER, lon, lat, reg_id)
+    reg_id = get_regid_from_lonlat(conn, LOGGER, lon, lat)
+    subc_id, basin_id = get_subcid_basinid_from_lonlat_regid(conn, LOGGER, lon, lat, reg_id)
     LOGGER.log(logging.TRACE, 'Subcatchment has subc_id %s, basin_id %s, reg_id %s.' % (subc_id, basin_id, reg_id))
     return subc_id, basin_id, reg_id
 
@@ -295,7 +295,7 @@ def get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson, colname_sit
         try:
             LOGGER.log(logging.TRACE, 'Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
             subc_id, basin_id, reg_id = get_subcid_basinid_regid(
-                conn, LOGGER, lon, lat, None)
+                conn, LOGGER, lon, lat)
         except exc.GeoFreshNoResultException as e:
             # For example, if the point is in the ocean.
             # We return None. TODO: Test how this looks in JSON!
@@ -396,7 +396,7 @@ def get_subcid_basinid_regid_for_all_2(conn, LOGGER, input_dataframe, colname_lo
         try:
             LOGGER.log(logging.TRACE, 'Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
             subc_id, basin_id, reg_id = get_subcid_basinid_regid(
-                conn, LOGGER, lon, lat, None)
+                conn, LOGGER, lon, lat)
         except exc.GeoFreshNoResultException as e:
             # For example, if the point is in the ocean.
             # In Pandas dataframe, NaN is returned.
@@ -499,39 +499,30 @@ if __name__ == "__main__":
     #############################
 
     print('\nSTART RUNNING FUNCTION: get_regid')
-    lon = 9.931555
-    lat = 54.695070
-    res = get_regid(conn, LOGGER, lon, lat)
+    res = get_regid(conn, LOGGER, 9.931555, 54.695070)
+    print('RESULT: %s' % res)
+    res = get_regid(conn, LOGGER, subc_id=506250459)
     print('RESULT: %s' % res)
 
-    print('\nSTART RUNNING FUNCTION: get_basinid')
-    lon = 9.931555
-    lat = 54.695070
-    basin_id, reg_id = get_basinid_regid(conn, LOGGER, lon, lat)
+    print('\nSTART RUNNING FUNCTION: get_basinid_regid')
+    basin_id, reg_id = get_basinid_regid(conn, LOGGER, 9.931555, 54.695070)
+    print('RESULT: %s %s' % (basin_id, reg_id))
+    basin_id, reg_id = get_basinid_regid(conn, LOGGER, subc_id=506250459)
     print('RESULT: %s %s' % (basin_id, reg_id))
 
-    print('\nSTART RUNNING FUNCTION: get_subcid_basinid')
-    lon = 9.931555
-    lat = 54.695070
-    reg_id = 58
-    res = get_subcid_basinid(conn, LOGGER, lon, lat, reg_id)
-    print('RESULT: %s %s' % (res[0], res[1]))
-
-    print('\nSTART RUNNING FUNCTION: get_basinid_regid')
-    one_subc_id = 506250459
-    res = get_basinid_regid(conn, LOGGER, one_subc_id)
-    print('RESULT: %s %s' % (res[0], res[1]))
-
-    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid (using subc_id)')
-    one_subc_id = 506250459
-    res = get_subcid_basinid_regid(conn, LOGGER, lon = None, lat = None, subc_id = one_subc_id)
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid')
+    res = get_subcid_basinid_regid(conn, LOGGER, 9.931555, 54.695070)
+    print('RESULT: %s %s %s' % (res[0], res[1], res[2]))
+    res = get_subcid_basinid_regid(conn, LOGGER, subc_id=506250459)
     print('RESULT: %s %s %s' % (res[0], res[1], res[2]))
 
-    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid (using lon, lat)')
-    lon = 9.931555
-    lat = 54.695070
-    res = get_subcid_basinid_regid(conn, LOGGER, lon = lon, lat = lat, subc_id = None)
-    print('RESULT: %s %s %s' % (res[0], res[1], res[2]))
+    print('\nSTART RUNNING HELPER FUNCTION: get_subcid_basinid')
+    res = get_subcid_basinid_from_lonlat_regid(conn, LOGGER, 9.931555, 54.695070, 58)
+    print('RESULT: %s %s' % (res[0], res[1]))
+
+    print('\n---------- NOW PLURAL -----------')
+
+
 
     ###########################
     ### Run function plural ###
