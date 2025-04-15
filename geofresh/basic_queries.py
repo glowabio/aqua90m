@@ -175,9 +175,9 @@ def get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson, colname_sit
     # Input: GeoJSON
     # Output: JSON
 
-    # TODO: When input is FeatureCollection, make site_id mandatory?
-    #
-    # This returns a weird statistic:
+    # When input is FeatureCollection, site_id is mandatory.
+
+    # This function returns a weird statistic:
     #    output = {
     #    "subc_ids":   <comma-separated list>,
     #    "region_ids": <comma-separated list>,
@@ -329,7 +329,7 @@ def get_subcid_basinid_regid_for_all_2(conn, LOGGER, input_dataframe, colname_lo
                 conn, LOGGER, lon, lat, None)
         except exc.GeoFreshNoResultException as e:
             # For example, if the point is in the ocean.
-            # We return None. TODO: Test how this looks in Pandas dataframe!
+            # In Pandas dataframe, NaN is returned.
             reg_id = basin_id = subc_id = None
 
         # Collect results in list:
@@ -601,6 +601,18 @@ if __name__ == "__main__":
             ['d',  16.651903948708565, 48.27779486850176],
             ['e',  19.201146608148463, 47.12192880511424],
             ['f',  24.432498016999062, 61.215505889934434]
+        ], columns=['site_id', 'lon', 'lat']
+    )
+    res = get_subcid_basinid_regid_for_all_2(conn, LOGGER, example_dataframe, 'lon', 'lat', 'site_id')
+    print('RESULT:\n%s' % res)
+
+    ## Input: dataframe, output dataframe, with site_id! One coordinate is in the sea, SE of Heligoland
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_2 (input: dataframe, output: dataframe)')
+    example_dataframe = pd.DataFrame(
+        [
+            ['aa', 10.041155219078064, 53.07006147583069],
+            ['bb',  8.090485, 54.119322],
+            ['cc', 10.039894580841064, 53.06869677412868]
         ], columns=['site_id', 'lon', 'lat']
     )
     res = get_subcid_basinid_regid_for_all_2(conn, LOGGER, example_dataframe, 'lon', 'lat', 'site_id')

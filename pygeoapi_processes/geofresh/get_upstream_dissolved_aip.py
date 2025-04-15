@@ -143,16 +143,17 @@ class UpstreamDissolvedGetter(BaseProcessor):
         get_json_directly = (get_json_directly.lower() == 'true')
 
         # Overall goal: Get the upstream polygon (as one dissolved)!
-        LOGGER.info('START: Getting upstream dissolved polygon for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
+        LOGGER.info('START PROCESS: Getting upstream dissolved polygon for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
 
         # Get reg_id, basin_id, subc_id, upstream_catchment_ids
         subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
             conn, LOGGER, lon, lat, subc_id)
+        LOGGER.debug('Requesting upstream catchment ids for subc_id: %s' % subc_id)
         upstream_catchment_ids = upstream_subcids.get_upstream_catchment_ids_incl_itself(
             conn, subc_id, basin_id, reg_id)
 
         # Get geometry (three types)
-        LOGGER.debug('...Getting upstream catchment dissolved polygon for subc_id: %s' % subc_id)
+        LOGGER.debug('Requesting dissolved polygon of upstream catchment for subc_id: %s' % subc_id)
         geojson_object = {}
         if get_type.lower() == 'polygon':
             geojson_object = dissolved.get_dissolved_simplegeom(
