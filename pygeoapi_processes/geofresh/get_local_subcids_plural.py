@@ -1,4 +1,6 @@
 import logging
+logging.TRACE = 5
+logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
 
 import os
@@ -257,17 +259,17 @@ class LocalSubcidGetterPlural(BaseProcessor):
 
 
     def execute(self, data, outputs=None):
-        LOGGER.info('Starting to get the subcatchment from coordinates..."')
-        LOGGER.info('Inputs: %s' % data)
-        LOGGER.info('Requested outputs: %s' % outputs)
+        LOGGER.debug('Start execution: %s (job %s)' % (self.metadata['id'], self.job_id))
+        LOGGER.debug('Inputs: %s' % data)
+        LOGGER.log(logging.TRACE, 'Requested outputs: %s' % outputs)
 
         try:
             conn = get_connection_object_config(self.config)
             res = self._execute(data, outputs, conn)
+            LOGGER.debug('Finished execution: %s (job %s)' % (self.metadata['id'], self.job_id))
             LOGGER.log(5, 'Closing connection...')
             conn.close()
             LOGGER.log(5, 'Closing connection... Done.')
-            LOGGER.info('DONE: %s (job %s).' % (self.metadata['id'], self.job_id))
             return res
 
         except psycopg2.Error as e3:
@@ -286,7 +288,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
 
     def _execute(self, data, requested_outputs, conn):
 
-        # User inputs:
+        ## User inputs:
         # GeoJSON, posted directly
         points_geojson = data.get('points_geojson', None)
         # GeoJSON, to be downloaded via URL:

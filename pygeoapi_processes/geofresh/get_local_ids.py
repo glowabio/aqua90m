@@ -97,18 +97,17 @@ class LocalIdGetter(BaseProcessor):
 
 
     def execute(self, data, outputs=None):
-        LOGGER.info('Starting to get the ids from coordinates..."')
-        LOGGER.info('Inputs: %s' % data)
-        LOGGER.info('Requested outputs: %s' % outputs)
+        LOGGER.debug('Start execution: %s (job %s)' % (self.metadata['id'], self.job_id))
+        LOGGER.debug('Inputs: %s' % data)
+        LOGGER.log(logging.TRACE, 'Requested outputs: %s' % outputs)
 
         try:
             conn = get_connection_object_config(self.config)
             res = self._execute(data, outputs, conn)
-
+            LOGGER.debug('Finished execution: %s (job %s)' % (self.metadata['id'], self.job_id))
             LOGGER.log(logging.TRACE, 'Closing connection...')
             conn.close()
             LOGGER.log(logging.TRACE, 'Closing connection... Done.')
-
             return res
 
         except psycopg2.Error as e3:

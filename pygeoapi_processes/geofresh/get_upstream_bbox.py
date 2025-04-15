@@ -1,6 +1,6 @@
-
 import logging
-from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
+logging.TRACE = 5
+logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
 
 import os
@@ -8,6 +8,7 @@ import sys
 import traceback
 import json
 import psycopg2
+from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
 import pygeoapi.process.aqua90m.geofresh.upstream_subcids as upstream_subcids
 import pygeoapi.process.aqua90m.geofresh.bbox as bbox
@@ -74,21 +75,17 @@ class UpstreamBboxGetter(BaseProcessor):
 
 
     def execute(self, data, outputs=None):
-        LOGGER.info('Starting to get the upstream bounding box..."')
-        LOGGER.info('Inputs: %s' % data)
-        LOGGER.info('Requested outputs: %s' % outputs)
-
-        # Check for which outputs it is asking:
-        if outputs is None:
-            LOGGER.info('Client did not specify outputs, so all possible outputs are returned!')
-            outputs = {'ALL': None}
+        LOGGER.debug('Start execution: %s (job %s)' % (self.metadata['id'], self.job_id))
+        LOGGER.debug('Inputs: %s' % data)
+        LOGGER.log(logging.TRACE, 'Requested outputs: %s' % outputs)
 
         try:
             conn = get_connection_object_config(self.config)
             res = self._execute(data, outputs, conn)
-            LOGGER.debug('Closing connection...')
+            LOGGER.debug('Finished execution: %s (job %s)' % (self.metadata['id'], self.job_id))
+            LOGGER.log(logging.TRACE, 'Closing connection...')
             conn.close()
-            LOGGER.debug('Closing connection... Done.')
+            LOGGER.log(logging.TRACE, 'Closing connection... Done.')
             return res
 
         except psycopg2.Error as e3:

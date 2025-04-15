@@ -1,6 +1,6 @@
-
 import logging
-from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
+logging.TRACE = 5
+logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
 
 import os
@@ -8,6 +8,7 @@ import sys
 import traceback
 import json
 import psycopg2
+from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
 import pygeoapi.process.aqua90m.geofresh.upstream_subcids as upstream_subcids
 import pygeoapi.process.aqua90m.geofresh.dissolved as dissolved
@@ -100,16 +101,17 @@ class UpstreamDissolvedGetter(BaseProcessor):
 
 
     def execute(self, data, outputs=None):
-        LOGGER.info('Starting to get the upstream polygon..."')
-        LOGGER.info('Inputs: %s' % data)
-        LOGGER.info('Outputs: %s' % outputs)
+        LOGGER.debug('Start execution: %s (job %s)' % (self.metadata['id'], self.job_id))
+        LOGGER.debug('Inputs: %s' % data)
+        LOGGER.log(logging.TRACE, 'Requested outputs: %s' % outputs)
 
         try:
             conn = get_connection_object_config(self.config)
             res = self._execute(data, outputs, conn)
-            LOGGER.debug('Closing connection...')
+            LOGGER.debug('Finished execution: %s (job %s)' % (self.metadata['id'], self.job_id))
+            LOGGER.log(logging.TRACE, 'Closing connection...')
             conn.close()
-            LOGGER.debug('Closing connection... Done.')
+            LOGGER.log(logging.TRACE, 'Closing connection... Done.')
             return res
 
         except psycopg2.Error as e3:
