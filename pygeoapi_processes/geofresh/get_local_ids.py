@@ -1,6 +1,6 @@
-
 import logging
-from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
+logging.TRACE = 5
+logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
 
 import os
@@ -10,7 +10,9 @@ import json
 import psycopg2
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
 import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
+import pygeoapi.process.aqua90m.utils.exceptions as exc
 from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection_object_config
+from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 
 '''
 
@@ -55,7 +57,7 @@ curl -X POST "http://localhost:5000/processes/get-local-ids/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
-    "subc_id": 506250459
+    "subc_id": 506250459,
     "which_ids": "subc_id, basin_id, reg_id",
     "comment": "schlei-near-rabenholz"
     }
@@ -95,7 +97,7 @@ class LocalIdGetter(BaseProcessor):
 
 
     def execute(self, data, outputs=None):
-        LOGGER.info('Starting to get the ids from coordintes..."')
+        LOGGER.info('Starting to get the ids from coordinates..."')
         LOGGER.info('Inputs: %s' % data)
         LOGGER.info('Requested outputs: %s' % outputs)
 
@@ -103,9 +105,9 @@ class LocalIdGetter(BaseProcessor):
             conn = get_connection_object_config(self.config)
             res = self._execute(data, outputs, conn)
 
-            LOGGER.debug('Closing connection...')
+            LOGGER.log(logging.TRACE, 'Closing connection...')
             conn.close()
-            LOGGER.debug('Closing connection... Done.')
+            LOGGER.log(logging.TRACE, 'Closing connection... Done.')
 
             return res
 
@@ -130,15 +132,15 @@ class LocalIdGetter(BaseProcessor):
         lat = data.get('lat', None)
         input_subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
         comment = data.get('comment') # optional
-        which_ids = data-get('which_ids', 'subc_id, basin_id, reg_id')
+        which_ids = data.get('which_ids', 'subc_id, basin_id, reg_id')
         which_ids = which_ids.replace(' ', '')
         which_ids = which_ids.split(',')
 
         possible_ids = ['subc_id', 'basin_id', 'reg_id']
-        if not all(which_ids) in possible_ids:
+        if not all([some_id in possible_ids for some_id in which_ids]):
             err_msg = "The requested ids have to be one or several of: %s (you provided %s)" % (possible_ids, which_ids)
             LOGGER.error(err_msg)
-            raise UserInputException(err_msg)
+            raise exc.UserInputException(err_msg)
 
         # Possible results:
         subc_id = None
@@ -147,23 +149,27 @@ class LocalIdGetter(BaseProcessor):
 
         # Special case: User did not provide lon, lat but subc_id ...
         if input_subc_id is not None:
-            basin_id, reg_id = get_basinid_regid(conn, input_subc_id)
+            LOGGER.debug('Special case: User provided a subc_id...')
+            basin_id, reg_id = basic_queries.get_basinid_regid(conn, LOGGER, input_subc_id)
+            LOGGER.debug('Special case: Returning reg_id (%s), basin_id (%s).' % (reg_id, basin_id))
             subc_id = input_subc_id
 
         # Normal case: User provided lon, lat:
-        if 'subc_id' in which_ids:
-            print('Getting subc_id for lon, lat: %s, %s' % (lon, lat))
+        elif 'subc_id' in which_ids:
+            #LOGGER.log(logging.TRACE, 'Getting subc_id for lon, lat: %s, %s' % (lon, lat))
+            LOGGER.debug('Getting subc_id for lon, lat: %s, %s' % (lon, lat))
             subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
                 conn, LOGGER, lon, lat)
+            LOGGER.debug('FOUND: %s %s %s' % (subc_id, basin_id, reg_id))
 
         elif 'basin_id' in which_ids:
-            print('Getting basin_id for lon, lat: %s, %s' % (lon, lat))
+            LOGGER.log(logging.TRACE, 'Getting basin_id for lon, lat: %s, %s' % (lon, lat))
             # TODO: Would it be better to query for reg_id before? Does that speed anything up?
             basin_id, reg_id = basic_queries.get_basinid(
                 conn, LOGGER, lon, lat)
 
         elif 'reg_id' in which_ids:
-            print('Getting reg_id for lon, lat: %s, %s' % (lon, lat))
+            LOGGER.log(logging.TRACE, 'Getting reg_id for lon, lat: %s, %s' % (lon, lat))
             reg_id = basic_queries.get_regid(
                 conn, LOGGER, lon, lat)
 

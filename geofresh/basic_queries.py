@@ -25,7 +25,7 @@ except ModuleNotFoundError as e1:
         LOGGER.debug(msg)
 
 
-def get_regid(conn, lon, lat):
+def get_regid(conn, LOGGER, lon, lat):
 
     extent_helpers.check_outside_europe(lon, lat)
     # May throw OutsideAreaException/UserInputException
@@ -69,7 +69,7 @@ def get_regid(conn, lon, lat):
     return reg_id
 
 
-def get_basinid(conn, lon, lat, reg_id):
+def get_basinid(conn, LOGGER, lon, lat):
 
     #extent_helpers.check_outside_europe(lon, lat)
     # May throw OutsideAreaException/UserInputException
@@ -84,11 +84,10 @@ def get_basinid(conn, lon, lat, reg_id):
     Result: TODO
     """
     query = """
-    SELECT basin_id
+    SELECT basin_id, reg_id
     FROM basins
     WHERE st_intersects(ST_SetSRID(ST_MakePoint({longitude}, {latitude}), 4326), geom)
-    AND reg_id = {reg_id}
-    """.format(longitude = lon, latitude = lat, reg_id = reg_id)
+    """.format(longitude = lon, latitude = lat)
     query = query.replace("\n", " ")
 
     ### Query database:
@@ -106,11 +105,12 @@ def get_basinid(conn, lon, lat, reg_id):
 
     else:
         basin_id = row[0]
+        reg_id = row[1]
 
-    return basin_id
+    return basin_id, reg_id
 
 
-def get_subcid_basinid(conn, lon, lat, reg_id):
+def get_subcid_basinid(conn, LOGGER, lon, lat, reg_id):
 
     ### Define query:
     """
@@ -155,7 +155,7 @@ def get_subcid_basinid(conn, lon, lat, reg_id):
     return subc_id, basin_id 
 
 
-def get_basinid_regid(conn, subc_id):
+def get_basinid_regid(conn, LOGGER, subc_id):
     # TODO: We need this in plural for geofresh.get_env90m_data_for_subcids.py
 
     ### Define query:
@@ -190,15 +190,15 @@ def get_subcid_basinid_regid(conn, LOGGER, lon = None, lat = None, subc_id = Non
     # Non-standard case: If user provided subc_id, then use it!
     if subc_id is not None:
         LOGGER.log(logging.TRACE, 'Getting subcatchment, region and basin id for subc_id: %s' % subc_id)
-        basin_id, reg_id = get_basinid_regid(conn, subc_id)
+        basin_id, reg_id = get_basinid_regid(conn, LOGGER, subc_id)
 
     # Standard case: User provided lon and lat!
     elif lon is not None and lat is not None:
         LOGGER.log(logging.TRACE, 'Getting subcatchment, region and basin id for lon, lat: %s, %s' % (lon, lat))
         lon = float(lon)
         lat = float(lat)
-        reg_id = get_regid(conn, lon, lat)
-        subc_id, basin_id = get_subcid_basinid(conn, lon, lat, reg_id)
+        reg_id = get_regid(conn, LOGGER, lon, lat)
+        subc_id, basin_id = get_subcid_basinid(conn, LOGGER, lon, lat, reg_id)
 
     else:
         err_msg = 'Lon and lat (or subc_id) have to be provided! Lon: %s, lat: %s, subc_id %s' % (lon, lat, subc_id)
@@ -472,19 +472,25 @@ if __name__ == "__main__":
     print('\nSTART RUNNING FUNCTION: get_regid')
     lon = 9.931555
     lat = 54.695070
-    res = get_regid(conn, lon, lat)
+    res = get_regid(conn, LOGGER, lon, lat)
     print('RESULT: %s' % res)
+
+    print('\nSTART RUNNING FUNCTION: get_basinid')
+    lon = 9.931555
+    lat = 54.695070
+    basin_id, reg_id = get_basinid(conn, LOGGER, lon, lat)
+    print('RESULT: %s %s' % (basin_id, reg_id))
 
     print('\nSTART RUNNING FUNCTION: get_subcid_basinid')
     lon = 9.931555
     lat = 54.695070
     reg_id = 58
-    res = get_subcid_basinid(conn, lon, lat, reg_id)
+    res = get_subcid_basinid(conn, LOGGER, lon, lat, reg_id)
     print('RESULT: %s %s' % (res[0], res[1]))
 
     print('\nSTART RUNNING FUNCTION: get_basinid_regid')
     one_subc_id = 506250459
-    res = get_basinid_regid(conn, one_subc_id)
+    res = get_basinid_regid(conn, LOGGER, one_subc_id)
     print('RESULT: %s %s' % (res[0], res[1]))
 
     print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid (using subc_id)')
