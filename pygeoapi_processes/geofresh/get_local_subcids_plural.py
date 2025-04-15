@@ -295,7 +295,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
         csv_url = data.get('csv_url', None)
         colname_lon = data.get('colname_lon', 'lon')
         colname_lat = data.get('colname_lat', 'lat')
-        colname_site_id = data.get('colname_site_id', 'site_id')
+        colname_site_id = data.get('colname_site_id', None)
         # Optional comment:
         comment = data.get('comment') # optional
 
@@ -333,7 +333,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
 
             # Query database:
             output_json = basic_queries.get_subcid_basinid_regid_for_all_1(
-                conn, LOGGER, points_geojson)
+                conn, LOGGER, points_geojson, colname_site_id)
 
         ## Handle CSV case:
         elif csv_url is not None:

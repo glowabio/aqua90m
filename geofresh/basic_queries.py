@@ -171,7 +171,7 @@ def get_subcid_basinid_regid(conn, LOGGER, lon = None, lat = None, subc_id = Non
 ### for many points at a time ###
 #################################
 
-def get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson):
+def get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson, colname_site_id = None):
     # Input: GeoJSON
     # Output: JSON
 
@@ -200,6 +200,10 @@ def get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson):
         num = len(iterate_over)
     elif points_geojson['type'] == 'FeatureCollection':
         geojson_helpers.check_is_feature_collection_points(points_geojson)
+        if colname_site_id is None:
+            err_msg = "Please provide the property name where the site id is provided."
+            LOGGER.error(err_msg)
+            raise exc.UserInputException(err_msg)
         iterate_over = points_geojson['features']
         num = len(iterate_over)
 
@@ -656,8 +660,19 @@ if __name__ == "__main__":
     print('RESULT:\n%s' % res)
 
     print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_1 (with site_id)')
-    res = get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson)
+    res = get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson_with_siteid, "site_id")
     print('RESULT:\n%s' % res)
+
+
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_1 (with site_id, but omit it...)')
+    try:
+        res = get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson_with_siteid)
+        print('ERROR! Should not have worked!')
+        import sys
+        sys.exit(1)
+    except Exception as e:
+        print('RESULT:\nException was raised as desired: %s' % e)
+
 
     print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_1 (all in same region)')
     res = get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson_all_same)
