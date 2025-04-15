@@ -164,7 +164,7 @@ class LocalIdGetter(BaseProcessor):
 
             elif 'basin_id' in which_ids:
                 LOGGER.log(logging.TRACE, 'Getting basin_id for lon, lat: %s, %s' % (lon, lat))
-                basin_id, reg_id = basic_queries.get_basinid(
+                basin_id, reg_id = basic_queries.get_basinid_regid(
                     conn, LOGGER, lon, lat)
 
             elif 'reg_id' in which_ids:

@@ -35,7 +35,6 @@ def get_regid(conn, LOGGER, first, second = None):
         subc_id = first
         return get_reg_id_from_subcid(conn, LOGGER, subc_id)
 
-
 def get_regid_from_lonlat(conn, LOGGER, lon, lat):
 
     #extent_helpers.check_outside_europe(lon, lat)
@@ -87,7 +86,18 @@ def get_regid_from_subcid(conn, LOGGER, subc_id):
 
 
 
-def get_basinid(conn, LOGGER, lon, lat):
+def get_basinid_regid(conn, LOGGER, first, second = None):
+
+    if second is not None and isinstance(first, float) and isinstance(second, float):
+        lon = first
+        lat = second
+        return get_basinid_regid_from_lonlat(conn, LOGGER, lon, lat)
+
+    if second is None and isinstance(first, int):
+        subc_id = first
+        return get_basinid_regid_from_subcid(conn, LOGGER, subc_id)
+
+def get_basinid_regid_from_lonlat(conn, LOGGER, lon, lat):
 
     #extent_helpers.check_outside_europe(lon, lat)
     # May throw OutsideAreaException/UserInputException
@@ -173,7 +183,7 @@ def get_subcid_basinid(conn, LOGGER, lon, lat, reg_id):
     return subc_id, basin_id 
 
 
-def get_basinid_regid(conn, LOGGER, subc_id):
+def get_basinid_regid_from_subcid(conn, LOGGER, subc_id):
     # TODO: We need this in plural for geofresh.get_env90m_data_for_subcids.py
 
     ### Define query:
@@ -496,7 +506,7 @@ if __name__ == "__main__":
     print('\nSTART RUNNING FUNCTION: get_basinid')
     lon = 9.931555
     lat = 54.695070
-    basin_id, reg_id = get_basinid(conn, LOGGER, lon, lat)
+    basin_id, reg_id = get_basinid_regid(conn, LOGGER, lon, lat)
     print('RESULT: %s %s' % (basin_id, reg_id))
 
     print('\nSTART RUNNING FUNCTION: get_subcid_basinid')
