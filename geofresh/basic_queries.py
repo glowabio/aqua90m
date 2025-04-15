@@ -24,6 +24,11 @@ except ModuleNotFoundError as e1:
         print(msg)
         LOGGER.debug(msg)
 
+
+####################################
+### Functions for singular points ##
+####################################
+
 def get_regid(conn, LOGGER, lon=None, lat=None, subc_id=None):
 
     # Standard case: User provided lon and lat!
@@ -68,7 +73,7 @@ def get_regid_from_lonlat(conn, LOGGER, lon, lat):
     ### Get results and construct GeoJSON:
     row = cursor.fetchone()
     if row is None: # Ocean case:
-        err_msg      = 'No region id found for lon %s, lat %s! Is this in the ocean?' % (lon, lat)
+        err_msg = 'No reg_id found for lon %s, lat %s! Is this in the ocean?' % (lon, lat)
         LOGGER.error(err_msg)
         raise exc.GeoFreshNoResultException(err_msg)
 
@@ -81,7 +86,6 @@ def get_regid_from_subcid(conn, LOGGER, subc_id):
     # This function is not really useful, it's just here for the sake for systematicness.
     basin_id, reg_id = get_basinid_regid_from_subcid(conn, LOGGER, subc_id)
     return reg_id
-
 
 
 def get_basinid_regid(conn, LOGGER, lon=None, lat=None, subc_id=None):
@@ -124,7 +128,7 @@ def get_basinid_regid_from_lonlat(conn, LOGGER, lon, lat):
     ### Get results and construct GeoJSON:
     row = cursor.fetchone()
     if row is None: # Ocean case:
-        err_msg      = 'No basin id found for lon %s, lat %s! Is this in the ocean?' % (lon, lat)
+        err_msg = 'No basin_id found for lon %s, lat %s! Is this in the ocean?' % (lon, lat)
         LOGGER.error(err_msg)
         raise exc.GeoFreshNoResultException(err_msg)
 
@@ -133,52 +137,6 @@ def get_basinid_regid_from_lonlat(conn, LOGGER, lon, lat):
         reg_id = row[1]
 
     return basin_id, reg_id
-
-
-def get_subcid_basinid_from_lonlat_regid(conn, LOGGER, lon, lat, reg_id):
-
-    ### Define query:
-    """
-    Example query:
-    SELECT sub.subc_id, sub.basin_id FROM sub_catchments sub
-    WHERE st_intersects(ST_SetSRID(ST_MakePoint(9.931555, 54.695070),4326), sub.geom)
-    AND sub.reg_id = 58;
-
-    Result:
-    subc_id    | basin_id
-    -----------+----------
-     506251252 |  1292547
-    (1 row)
-    """
-
-    query = """
-    SELECT
-    subc_id,
-    basin_id
-    FROM sub_catchments
-    WHERE st_intersects(ST_SetSRID(ST_MakePoint({longitude}, {latitude}),4326), geom)
-    AND reg_id = {reg_id}
-    """.format(longitude = lon, latitude = lat, reg_id = reg_id)
-    query = query.replace("\n", " ")
-
-    ### Query database:
-    cursor = conn.cursor()
-    LOGGER.log(logging.TRACE, 'Querying database...')
-    cursor.execute(query)
-    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
-
-    ### Get results:
-    row = cursor.fetchone()
-    if row is None: # Ocean case:
-        err_msg = 'No subc_id and basin_id found for lon, lat %s, %s. Is this located in the ocean?' % (lon, lat)
-        LOGGER.error(err_msg)
-        raise exc.GeoFreshNoResultException(err_msg)
-    else:
-        subc_id = row[0]
-        basin_id = row[1]
-
-    return subc_id, basin_id 
-
 
 def get_basinid_regid_from_subcid(conn, LOGGER, subc_id):
     # TODO: We need this in plural for geofresh.get_env90m_data_for_subcids.py
@@ -235,6 +193,51 @@ def get_subcid_basinid_regid_from_lonlat(conn, LOGGER, lon, lat):
     subc_id, basin_id = get_subcid_basinid_from_lonlat_regid(conn, LOGGER, lon, lat, reg_id)
     LOGGER.log(logging.TRACE, 'Subcatchment has subc_id %s, basin_id %s, reg_id %s.' % (subc_id, basin_id, reg_id))
     return subc_id, basin_id, reg_id
+
+
+def get_subcid_basinid_from_lonlat_regid(conn, LOGGER, lon, lat, reg_id):
+
+    ### Define query:
+    """
+    Example query:
+    SELECT sub.subc_id, sub.basin_id FROM sub_catchments sub
+    WHERE st_intersects(ST_SetSRID(ST_MakePoint(9.931555, 54.695070),4326), sub.geom)
+    AND sub.reg_id = 58;
+
+    Result:
+    subc_id    | basin_id
+    -----------+----------
+     506251252 |  1292547
+    (1 row)
+    """
+
+    query = """
+    SELECT
+    subc_id,
+    basin_id
+    FROM sub_catchments
+    WHERE st_intersects(ST_SetSRID(ST_MakePoint({longitude}, {latitude}),4326), geom)
+    AND reg_id = {reg_id}
+    """.format(longitude = lon, latitude = lat, reg_id = reg_id)
+    query = query.replace("\n", " ")
+
+    ### Query database:
+    cursor = conn.cursor()
+    LOGGER.log(logging.TRACE, 'Querying database...')
+    cursor.execute(query)
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
+
+    ### Get results:
+    row = cursor.fetchone()
+    if row is None: # Ocean case:
+        err_msg = 'No subc_id and basin_id found for lon %s, lat %s! Is this in the ocean?' % (lon, lat)
+        LOGGER.error(err_msg)
+        raise exc.GeoFreshNoResultException(err_msg)
+    else:
+        subc_id = row[0]
+        basin_id = row[1]
+
+    return subc_id, basin_id
 
 
 #################################
