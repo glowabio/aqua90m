@@ -213,25 +213,32 @@ def get_basinid_regid_from_subcid(conn, LOGGER, subc_id):
     return basin_id, reg_id
 
 
-def get_subcid_basinid_regid(conn, LOGGER, lon = None, lat = None, subc_id = None):
-
-    # Non-standard case: If user provided subc_id, then use it!
-    if subc_id is not None:
-        LOGGER.log(logging.TRACE, 'Getting subcatchment, region and basin id for subc_id: %s' % subc_id)
-        basin_id, reg_id = get_basinid_regid(conn, LOGGER, subc_id)
+def get_subcid_basinid_regid(conn, LOGGER, first, second = None):
 
     # Standard case: User provided lon and lat!
-    elif lon is not None and lat is not None:
-        LOGGER.log(logging.TRACE, 'Getting subcatchment, region and basin id for lon, lat: %s, %s' % (lon, lat))
-        lon = float(lon)
-        lat = float(lat)
-        reg_id = get_regid(conn, LOGGER, lon, lat)
-        subc_id, basin_id = get_subcid_basinid(conn, LOGGER, lon, lat, reg_id)
+    if second is not None and isinstance(first, float) and isinstance(second, float):
+        lon = first
+        lat = second
+        return get_subcid_basinid_regid_from_lonlat(conn, LOGGER, lon, lat)
 
-    else:
-        err_msg = 'Lon and lat (or subc_id) have to be provided! Lon: %s, lat: %s, subc_id %s' % (lon, lat, subc_id)
-        raise UserInputException(err_msg)
+    # Non-standard case: If user provided subc_id, then use it!
+    if second is None and isinstance(first, int):
+        subc_id = first
+        return get_subcid_basinid_regid_from_subcid(conn, LOGGER, subc_id)
 
+def get_subcid_basinid_regid_from_subcid(conn, LOGGER, subc_id):
+
+    LOGGER.log(logging.TRACE, 'Getting subcatchment, region and basin id for subc_id: %s' % subc_id)
+    basin_id, reg_id = get_basinid_regid(conn, LOGGER, subc_id)
+    return subc_id, basin_id, reg_id
+
+def get_subcid_basinid_regid_from_lonlat(conn, LOGGER, lon, lat):
+
+    LOGGER.log(logging.TRACE, 'Getting subcatchment, region and basin id for lon, lat: %s, %s' % (lon, lat))
+    lon = float(lon)
+    lat = float(lat)
+    reg_id = get_regid(conn, LOGGER, lon, lat)
+    subc_id, basin_id = get_subcid_basinid(conn, LOGGER, lon, lat, reg_id)
     LOGGER.log(logging.TRACE, 'Subcatchment has subc_id %s, basin_id %s, reg_id %s.' % (subc_id, basin_id, reg_id))
     return subc_id, basin_id, reg_id
 
