@@ -152,7 +152,7 @@ class ShortestPathToOutletGetter(BaseProcessor):
         ##################
 
         # Potential result:
-        geojson_object = {}
+        json_result = {}
 
         # Get subc_ids of the whole connection...
         LOGGER.debug('Getting network connection for subc_id: start = %s, end = %s' % (subc_id1, subc_id2))
@@ -160,26 +160,26 @@ class ShortestPathToOutletGetter(BaseProcessor):
 
         # Only return the ids, no geometry at all:
         if downstream_ids_only:
-            geojson_object["downstream_ids"] = segment_ids
+            json_result["downstream_ids"] = segment_ids
 
         # Get GeometryCollection only:
         elif geometry_only:
-            geojson_object = get_linestrings.get_streamsegment_linestrings_geometry_coll(
+            json_result = get_linestrings.get_streamsegment_linestrings_geometry_coll(
                 conn, segment_ids, basin_id1, reg_id1)
 
         # Get FeatureCollection
         if not geometry_only:
-            geojson_object = get_linestrings.get_streamsegment_linestrings_feature_coll(
+            json_result = get_linestrings.get_streamsegment_linestrings_feature_coll(
                 conn, segment_ids, basin_id1, reg_id1)
-        
+
             # Add some info to the FeatureCollection:
             # TODO: Should we include the requested lon and lat? Maybe as a point?
-            geojson_object["description"] = "Downstream path from subcatchment %s to the outlet of its basin." % subc_id1
-            geojson_object["subc_id"] = subc_id1 # TODO how to name the point from where we route to outlet?
-            geojson_object["outlet_id"] = subc_id2
-            geojson_object["downstream_path_of"] = subc_id1
+            json_result["description"] = "Downstream path from subcatchment %s to the outlet of its basin." % subc_id1
+            json_result["subc_id"] = subc_id1 # TODO how to name the point from where we route to outlet?
+            json_result["outlet_id"] = subc_id2
+            json_result["downstream_path_of"] = subc_id1
             if add_downstream_ids:
-                geojson_object["downstream_ids"] = segment_ids
+                json_result["downstream_ids"] = segment_ids
 
 
         ##############
@@ -187,14 +187,14 @@ class ShortestPathToOutletGetter(BaseProcessor):
         ##############
             
         if comment is not None:
-            geojson_object['comment'] = comment
+            json_result['comment'] = comment
 
         # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
         if utils.return_hyperlink('downstream_path', requested_outputs):
-            output_dict_with_url =  utils.store_to_json_file('downstream_path', geojson_object,
+            output_dict_with_url =  utils.store_to_json_file('downstream_path', json_result,
                 self.metadata, self.job_id,
                 self.download_dir,
                 self.download_url)
             return 'application/json', output_dict_with_url
         else:
-            return 'application/json', geojson_object
+            return 'application/json', json_result
