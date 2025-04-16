@@ -367,7 +367,7 @@ class LocalIdGetterPlural(BaseProcessor):
 
             # Query database:
             if 'subc_id' in which_ids:
-                output_json = basic_queries.get_subcid_basinid_regid_for_all_1(
+                output_json = basic_queries.get_subcid_basinid_regid_for_all_2json(
                     conn, LOGGER, points_geojson, colname_site_id)
             elif 'basin_id' in which_ids:
                 err_msg = "Currently, for GeoJSON input, only all ids can be returned."
@@ -413,17 +413,17 @@ class LocalIdGetterPlural(BaseProcessor):
             # Query database:
             if colname_subc_id is not None:
                 # Special case! User provided CSV with a column containing subc_ids...
-                output_df = basic_queries.get_basinid_regid_for_all_from_subcid_2(
+                output_df = basic_queries.get_basinid_regid_for_all_from_subcid_1csv(
                     conn, LOGGER, input_df, colname_subc_id, colname_site_id)
 
             elif 'subc_id' in which_ids:
-                output_df = basic_queries.get_subcid_basinid_regid_for_all_2(
+                output_df = basic_queries.get_subcid_basinid_regid_for_all_1csv(
                     conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
             elif 'basin_id' in which_ids:
-                output_df = basic_queries.get_basinid_regid_for_all_2(
+                output_df = basic_queries.get_basinid_regid_for_all_1csv(
                     conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
             elif 'reg_id' in which_ids:
-                output_df = basic_queries.get_regid_for_all_2(
+                output_df = basic_queries.get_regid_for_all_1csv(
                     conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
 
         else:

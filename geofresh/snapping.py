@@ -310,7 +310,7 @@ def get_snapped_point_simplegeom(conn, lon, lat, subc_id, basin_id, reg_id):
 ### Many points at a time ###
 #############################
 
-def get_snapped_points_1(conn, points_geojson, colname_site_id = None):
+def get_snapped_points_2json(conn, points_geojson, colname_site_id = None):
     # Just a wrapper
     # INPUT: GeoJSON (Multipoint)
     # OUTPUT: FeatureCollection (Point)
@@ -331,7 +331,7 @@ def get_snapped_points_1(conn, points_geojson, colname_site_id = None):
 
     return get_snapped_point_xy(conn, geojson = points_geojson, colname_site_id = colname_site_id)
 
-def get_snapped_points_2(conn, input_df, colname_lon, colname_lat, colname_site_id):
+def get_snapped_points_1csv(conn, input_df, colname_lon, colname_lat, colname_site_id):
     # Just a wrapper
     # INPUT: Pandas dataframe
     # OUTPUT: Pandas dataframe
@@ -684,7 +684,7 @@ if __name__ == "__main__":
 
     print('\nSTART RUNNING FUNCTION: get_snapped_points_1')
     start = time.time()
-    res = get_snapped_points_1(conn, input_points_geojson)
+    res = get_snapped_points_2json(conn, input_points_geojson)
     end = time.time()
     print('TIME: %s' % (end - start))
     print('RESULT: %s' % res)
@@ -705,7 +705,7 @@ if __name__ == "__main__":
 
     print('\nSTART RUNNING FUNCTION: get_snapped_points_1, some more points...')
     start = time.time()
-    res = get_snapped_points_1(conn, input_points_geojson)
+    res = get_snapped_points_2json(conn, input_points_geojson)
     end = time.time()
     print('TIME: %s' % (end - start))
     print('RESULT: %s' % res)
@@ -737,7 +737,7 @@ if __name__ == "__main__":
 
     print('\nTEST CUSTOM EXCEPTION: get_snapped_points_1, FeatureCollection...')
     try:
-        res = get_snapped_points_1(conn, input_points_geojson)
+        res = get_snapped_points_2json(conn, input_points_geojson)
         raise RuntimeError('Should not reach here!')
     except exc.UserInputException as e:
         print('RESULT: Proper exception, saying: %s' % e)
@@ -745,7 +745,7 @@ if __name__ == "__main__":
 
     print('\nSTART RUNNING FUNCTION: get_snapped_points_1, FeatureCollection...')
     start = time.time()
-    res = get_snapped_points_1(conn, input_points_geojson, "my_site")
+    res = get_snapped_points_2json(conn, input_points_geojson, "my_site")
     end = time.time()
     print('TIME: %s' % (end - start))
     print('RESULT: %s' % res)
@@ -766,7 +766,7 @@ if __name__ == "__main__":
 
     print('\nSTART RUNNING FUNCTION: get_snapped_points_1, GeometryCollection...')
     start = time.time()
-    res = get_snapped_points_1(conn, input_points_geojson)
+    res = get_snapped_points_2json(conn, input_points_geojson)
     end = time.time()
     print('TIME: %s' % (end - start))
     print('RESULT: %s' % res)
@@ -786,7 +786,7 @@ if __name__ == "__main__":
         ], columns=['my_site', 'lon', 'lat']
     )
     start = time.time()
-    res = get_snapped_points_2(conn, example_dataframe, 'lon', 'lat', 'my_site')
+    res = get_snapped_points_1csv(conn, example_dataframe, 'lon', 'lat', 'my_site')
     end = time.time()
     print('TIME: %s' % (end - start))
     print('RESULT: %s' % res)

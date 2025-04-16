@@ -244,7 +244,7 @@ def get_subcid_basinid_from_lonlat_regid(conn, LOGGER, lon, lat, reg_id):
 ### for many points at a time ###
 #################################
 
-def get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson, colname_site_id = None):
+def get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson, colname_site_id = None):
     # Input: GeoJSON
     # Output: JSON
 
@@ -365,9 +365,7 @@ def get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson, colname_sit
     return output
 
 
-
-
-def get_subcid_basinid_regid_for_all_2(conn, LOGGER, input_dataframe, colname_lon, colname_lat, colname_site_id):
+def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname_lon, colname_lat, colname_site_id):
     # Input: Pandas Dataframe
     # Output: Pandas Dataframe
 
@@ -444,8 +442,7 @@ def get_subcid_basinid_regid_for_all_2(conn, LOGGER, input_dataframe, colname_lo
     return dataframe
 
 
-
-def get_basinid_regid_for_all_2(conn, LOGGER, input_dataframe, colname_lon, colname_lat, colname_site_id):
+def get_basinid_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname_lon, colname_lat, colname_site_id):
     # Input: Pandas Dataframe
     # Output: Pandas Dataframe
 
@@ -486,7 +483,8 @@ def get_basinid_regid_for_all_2(conn, LOGGER, input_dataframe, colname_lon, coln
     dataframe = pd.DataFrame(everything, columns=['site_id', 'reg_id', 'basin_id'])
     return dataframe
 
-def get_regid_for_all_2(conn, LOGGER, input_dataframe, colname_lon, colname_lat, colname_site_id):
+
+def get_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname_lon, colname_lat, colname_site_id):
     # Input: Pandas Dataframe
     # Output: Pandas Dataframe
 
@@ -527,7 +525,7 @@ def get_regid_for_all_2(conn, LOGGER, input_dataframe, colname_lon, colname_lat,
 
 
 
-def get_basinid_regid_for_all_from_subcid_2(conn, LOGGER, input_dataframe, colname_subc_id, colname_site_id):
+def get_basinid_regid_for_all_from_subcid_1csv(conn, LOGGER, input_dataframe, colname_subc_id, colname_site_id):
     # Input: Pandas Dataframe
     # Output: Pandas Dataframe
 
@@ -764,18 +762,18 @@ if __name__ == "__main__":
     }
 
     # Input: GeoJSON, output JSON
-    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_1 (using Multipoint)')
-    res = get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson)
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_2json (using Multipoint)')
+    res = get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson)
     print('RESULT:\n%s' % res)
 
-    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_1 (with site_id)')
-    res = get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson_with_siteid, "site_id")
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_2json (with site_id)')
+    res = get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson_with_siteid, "site_id")
     print('RESULT:\n%s' % res)
 
 
-    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_1 (with site_id, but omit it...)')
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_2json (with site_id, but omit it...)')
     try:
-        res = get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson_with_siteid)
+        res = get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson_with_siteid)
         print('ERROR! Should not have worked!')
         import sys
         sys.exit(1)
@@ -783,12 +781,12 @@ if __name__ == "__main__":
         print('RESULT:\nException was raised as desired: %s' % e)
 
 
-    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_1 (all in same region)')
-    res = get_subcid_basinid_regid_for_all_1(conn, LOGGER, points_geojson_all_same)
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_2json (all in same region)')
+    res = get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson_all_same)
     print('RESULT:\n%s' % res)
 
     ## Input: dataframe, output dataframe, with site_id!
-    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_2 (input: dataframe, output: dataframe)')
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_1csv (input: dataframe, output: dataframe)')
     example_dataframe = pd.DataFrame(
         [
             ['aa', 10.041155219078064, 53.07006147583069],
@@ -802,11 +800,11 @@ if __name__ == "__main__":
             ['f',  24.432498016999062, 61.215505889934434]
         ], columns=['site_id', 'lon', 'lat']
     )
-    res = get_subcid_basinid_regid_for_all_2(conn, LOGGER, example_dataframe, 'lon', 'lat', 'site_id')
+    res = get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, example_dataframe, 'lon', 'lat', 'site_id')
     print('RESULT:\n%s' % res)
 
     ## Input: dataframe, output dataframe, with site_id! One coordinate is in the sea, SE of Heligoland
-    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_2 (input: dataframe, output: dataframe)')
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_1csv (input: dataframe, output: dataframe)')
     example_dataframe = pd.DataFrame(
         [
             ['aa', 10.041155219078064, 53.07006147583069],
@@ -814,5 +812,5 @@ if __name__ == "__main__":
             ['cc', 10.039894580841064, 53.06869677412868]
         ], columns=['site_id', 'lon', 'lat']
     )
-    res = get_subcid_basinid_regid_for_all_2(conn, LOGGER, example_dataframe, 'lon', 'lat', 'site_id')
+    res = get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, example_dataframe, 'lon', 'lat', 'site_id')
     print('RESULT:\n%s' % res)

@@ -203,7 +203,7 @@ class SnappedPointsGetterPlural(BaseProcessor):
                 geojson_helpers.check_feature_collection_property(points_geojson, colname_site_id)
 
             # Query database:
-            output_json = snapping.get_snapped_points_1(conn, points_geojson, colname_site_id = colname_site_id)
+            output_json = snapping.get_snapped_points_2json(conn, points_geojson, colname_site_id = colname_site_id)
 
         ## Handle CSV case:
         elif csv_url is not None:
@@ -233,7 +233,7 @@ class SnappedPointsGetterPlural(BaseProcessor):
                         raise exc.DataAccessException(err_msg)
 
             # Query database:
-            output_df = snapping.get_snapped_points_2(conn, input_df, colname_lon, colname_lat, colname_site_id)
+            output_df = snapping.get_snapped_points_1csv(conn, input_df, colname_lon, colname_lat, colname_site_id)
 
         else:
             err_msg = 'Please provide either GeoJSON (points_geojson, points_geojson_url) or CSV data (csv_url).'
