@@ -41,6 +41,19 @@ curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execut
     "comment": "bla"
     }
 }'
+
+
+# Request only the ids:
+curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.937520027160646,
+    "lat": 54.69422745526058,
+    "downstream_ids_only": True
+    }
+}'
+
 '''
 
 # Process metadata and description
@@ -111,6 +124,7 @@ class ShortestPathToOutletGetter(BaseProcessor):
         subc_id1 = data.get('subc_id', None) # optional, need either lonlat OR subc_id
         comment = data.get('comment') # optional
         geometry_only = data.get('geometry_only', 'false')
+        downstream_ids_only = data.get('downstream_ids_only', False)
         add_downstream_ids = data.get('add_downstream_ids', 'true')
 
         # Parse booleans
@@ -144,15 +158,17 @@ class ShortestPathToOutletGetter(BaseProcessor):
         LOGGER.debug('Getting network connection for subc_id: start = %s, end = %s' % (subc_id1, subc_id2))
         segment_ids = routing.get_dijkstra_ids_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
 
-        # Get geometry only:
-        if geometry_only:
+        # Only return the ids, no geometry at all:
+        if downstream_ids_only:
+            geojson_object["downstream_ids"] = segment_ids
+
+        # Get GeometryCollection only:
+        elif geometry_only:
             geojson_object = get_linestrings.get_streamsegment_linestrings_geometry_coll(
                 conn, segment_ids, basin_id1, reg_id1)
 
-
         # Get FeatureCollection
         if not geometry_only:
-
             geojson_object = get_linestrings.get_streamsegment_linestrings_feature_coll(
                 conn, segment_ids, basin_id1, reg_id1)
         
