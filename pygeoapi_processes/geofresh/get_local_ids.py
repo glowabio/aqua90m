@@ -149,8 +149,8 @@ class LocalIdGetter(BaseProcessor):
         basin_id = None
         reg_id = None
 
-        # Special case: User did not provide lon, lat but subc_id ...
         try:
+            # Special case: User did not provide lon, lat but subc_id ...
             if input_subc_id is not None:
                 LOGGER.debug('Special case: User provided a subc_id...')
                 basin_id, reg_id = basic_queries.get_basinid_regid(

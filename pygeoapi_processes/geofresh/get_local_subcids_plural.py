@@ -292,9 +292,8 @@ class LocalSubcidGetterPlural(BaseProcessor):
     def _execute(self, data, requested_outputs, conn):
 
         ## User inputs:
-        # GeoJSON, posted directly
+        # GeoJSON, posted directly / to be downloaded via URL:
         points_geojson = data.get('points_geojson', None)
-        # GeoJSON, to be downloaded via URL:
         points_geojson_url = data.get('points_geojson_url', None)
         # CSV, to be downloaded via URL
         csv_url = data.get('csv_url', None)
@@ -346,7 +345,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
                 geojson_helpers.check_feature_collection_property(points_geojson, colname_site_id)
 
             # Query database:
-            output_json = basic_queries.get_subcid_basinid_regid_for_all_1(
+            output_json = basic_queries.get_subcid_basinid_regid_for_all_2json(
                 conn, LOGGER, points_geojson, colname_site_id)
 
         ## Handle CSV case:
@@ -377,7 +376,7 @@ class LocalSubcidGetterPlural(BaseProcessor):
                         raise exc.DataAccessException(err_msg)
 
             # Query database:
-            output_df = basic_queries.get_subcid_basinid_regid_for_all_2(
+            output_df = basic_queries.get_subcid_basinid_regid_for_all_1csv(
                 conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
 
         else:
