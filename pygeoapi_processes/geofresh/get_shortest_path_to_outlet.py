@@ -24,7 +24,7 @@ curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execut
   "inputs": {
     "lon": 9.937520027160646,
     "lat": 54.69422745526058,
-    "geometry_only": "true",
+    "geometry_only": true,
     "comment": "bla"
     }
 }'
@@ -36,8 +36,8 @@ curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execut
   "inputs": {
     "lon": 9.937520027160646,
     "lat": 54.69422745526058,
-    "geometry_only": "false",
-    "add_downstream_ids": "true",
+    "geometry_only": false,
+    "add_downstream_ids": true,
     "comment": "bla"
     }
 }'
@@ -50,7 +50,7 @@ curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execut
   "inputs": {
     "lon": 9.937520027160646,
     "lat": 54.69422745526058,
-    "downstream_ids_only": True
+    "downstream_ids_only": true
     }
 }'
 
@@ -123,13 +123,9 @@ class ShortestPathToOutletGetter(BaseProcessor):
         lat_start = data.get('lat', None)
         subc_id1 = data.get('subc_id', None) # optional, need either lonlat OR subc_id
         comment = data.get('comment') # optional
-        geometry_only = data.get('geometry_only', 'false')
+        geometry_only = data.get('geometry_only', False)
         downstream_ids_only = data.get('downstream_ids_only', False)
-        add_downstream_ids = data.get('add_downstream_ids', 'true')
-
-        # Parse booleans
-        geometry_only = (geometry_only.lower() == 'true')
-        add_downstream_ids = (add_downstream_ids.lower() == 'true')
+        add_downstream_ids = data.get('add_downstream_ids', True)
 
         # Overall goal: Get the dijkstra shortest path (as linestrings)!
 
