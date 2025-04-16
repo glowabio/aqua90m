@@ -23,218 +23,21 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 '''
 
 # Request with CSV input and CSV output:
-curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plural/execution' \
-# NOT COMMIT:
-curl -X POST --location 'https://aqua.igb-berlin.de/pygeoapi-dev/processes/get-local-subcids-plural/execution' \
+curl -X POST --location 'http://localhost:5000/processes/get-local-ids-plural/execution' \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
-        "csv_url": "https://nimbus.igb-berlin.de/index.php/s/SnDSamy56sLWs2s/download/spdata.csv",
+        "csv_url": "https://localhost/spdata.csv",
         "colname_lat": "latitude",
         "colname_lon": "longitude",
         "colname_site_id": "site_id",
+        "which_ids": "reg_id",
         "comment": "schlei-near-rabenholz"
     },
     "outputs": {
         "transmissionMode": "reference"
     }
 }'
-
-
-# Request plain JSON (not GeoJSON: Cannot request Feature/Geometry, does not apply)
-# Input points: GeoJSON
-curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plural/execution' \
-# NOT COMMIT:
-curl -X POST --location 'https://aqua.igb-berlin.de/pygeoapi-dev/processes/get-local-subcids-plural/execution' \
---header 'Content-Type: application/json' \
---data '{
-    "inputs": {
-        "points_geojson": {
-            "type": "FeatureCollection",
-            "features": [
-                {
-                    "type": "Feature",
-                    "properties": {"site_id": 1},
-                    "geometry": { "coordinates": [ 10.698832912677716, 53.51710727672125 ], "type": "Point" }
-                },
-                {
-                    "type": "Feature",
-                    "properties": {"site_id": 2},
-                    "geometry": { "coordinates": [ 12.80898022975407, 52.42187129944509 ], "type": "Point" }
-                },
-                {
-                    "type": "Feature",
-                    "properties": {"site_id": 3},
-                    "geometry": { "coordinates": [ 11.915323076217902, 52.730867141970464 ], "type": "Point" }
-                },
-                {
-                    "type": "Feature",
-                    "properties": {"site_id": 4},
-                    "geometry": { "coordinates": [ 16.651903948708565, 48.27779486850176 ], "type": "Point" }
-                },
-                {
-                    "type": "Feature",
-                    "properties": {"site_id": 5},
-                    "geometry": { "coordinates": [ 19.201146608148463, 47.12192880511424 ], "type": "Point" }
-                },
-                {
-                    "type": "Feature",
-                    "properties": {"site_id": 6},
-                    "geometry": { "coordinates": [ 24.432498016999062, 61.215505889934434 ], "type": "Point" }
-                }
-            ]
-        },
-        "comment": "schlei-near-rabenholz"
-    }
-}'
-
-
-curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plural/execution' \
-# NOT COMMIT:
-curl -X POST --location 'https://aqua.igb-berlin.de/pygeoapi-dev/processes/get-local-subcids-plural/execution' \
---header 'Content-Type: application/json' \
---data '{
-    "inputs": {
-        "points_geojson": {
-            "type": "FeatureCollection",
-            "features": [
-                {
-                    "type": "Feature",
-                    "properties": {"site_id": 1},
-                    "geometry": { "coordinates": [ 10.041155219078064, 53.07006147583069 ], "type": "Point" }
-                },
-                {
-                    "type": "Feature",
-                    "properties": {"site_id": 2},
-                    "geometry": { "coordinates": [ 10.042726993560791, 53.06911450500803 ], "type": "Point" }
-                },
-                {
-                    "type": "Feature",
-                    "properties": {"site_id": 3},
-                    "geometry": { "coordinates": [ 10.039894580841064, 53.06869677412868 ], "type": "Point" }
-                }
-            ]
-        },
-        "comment": "schlei-near-rabenholz"
-    }
-}'
-
-
-# Request plain JSON (not GeoJSON: Cannot request Feature/Geometry, does not apply)
-# Input points: Lonlat string
-curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plural/execution' \
-# NOT COMMIT:
-curl -X POST --location 'https://aqua.igb-berlin.de/pygeoapi-dev/processes/get-local-subcids-plural/execution' \
---header 'Content-Type: application/json' \
---data '{
-    "inputs": {
-        "lonlatstring": "10.698832912677716,53.51710727672125;12.80898022975407,52.42187129944509;11.915323076217902,52.730867141970464;16.651903948708565,48.27779486850176;19.201146608148463,47.12192880511424;24.432498016999062,61.215505889934434",
-        "comment": "schlei-near-rabenholz"
-    }
-}'
-
-'''
-
-'''
-Example result:
-# TODO: Discuss if this result is understandable enough!
-{
-    "subc_ids":"507307015, 90929627, 553374842, 507081236, 506601172, 91875954",
-    "region_ids":"58, 65, 159",
-    "basin_ids":"1291835, 1291763, 1294020",
-    "everything":{
-        "58":{
-            "1294020":{
-                "506601172":[
-                    {
-                        "coordinates":[
-                            10.698832912677716,
-                            53.51710727672125
-                        ],
-                        "type":"Point"
-                    }
-                ],
-                "507307015":[
-                    {
-                        "coordinates":[
-                            12.80898022975407,
-                            52.42187129944509
-                        ],
-                        "type":"Point"
-                    }
-                ],
-                "507081236":[
-                    {
-                        "coordinates":[
-                            11.915323076217902,
-                            52.730867141970464
-                        ],
-                        "type":"Point"
-                    }
-                ]
-            }
-        },
-        "159":{
-            "1291835":{
-                "90929627":[
-                    {
-                        "coordinates":[
-                            16.651903948708565,
-                            48.27779486850176
-                        ],
-                        "type":"Point"
-                    }
-                ],
-                "91875954":[
-                    {
-                        "coordinates":[
-                            19.201146608148463,
-                            47.12192880511424
-                        ],
-                        "type":"Point"
-                    }
-                ]
-            }
-        },
-        "65":{
-            "1291763":{
-                "553374842":[
-                    {
-                        "coordinates":[
-                            24.432498016999062,
-                            61.215505889934434
-                        ],
-                        "type":"Point"
-                    }
-                ]
-            }
-        }
-    },
-    "comment": "schlei-bei-rabenholz"
-}
-
-TODO: Maybe rather:
-
-
-{
-    "subc_ids":"507307015, 90929627, 553374842, 507081236, 506601172, 91875954",
-    "region_ids":"58, 65, 159",
-    "basin_ids":"1291835, 1291763, 1294020",
-    "everything":{
-        "regional_unit_ids": {
-            "58": {
-                "basin_ids": {
-                    "1294020": {
-                        "subcatchment_ids": {
-                            "506601172": [...point, point, point...],
-                            "50660117x": [...point, point, point...],
-                        }
-                    }
-                }
-            }
-        }
-    }
-        
 
 '''
 
@@ -370,10 +173,10 @@ class LocalIdGetterPlural(BaseProcessor):
                 output_json = basic_queries.get_subcid_basinid_regid_for_all_2json(
                     conn, LOGGER, points_geojson, colname_site_id)
             elif 'basin_id' in which_ids:
-                err_msg = "Currently, for GeoJSON input, only all ids can be returned."
+                err_msg = "Currently, for GeoJSON input, only all ids can be returned. Please set which_ids to subc_id,basin_id,reg_id, or input a CSV file."
                 raise NotImplementedError(err_msg) # TODO
             elif 'reg_id' in which_ids:
-                err_msg = "Currently, for GeoJSON input, only all ids can be returned."
+                err_msg = "Currently, for GeoJSON input, only all ids can be returned. Please set which_ids to subc_id,basin_id,reg_id, or input a CSV file."
                 raise NotImplementedError(err_msg) # TODO
             # Note: The case where users input subc_ids and want basin_id and reg_id cannot be
             # handled in GeoJSON, as GeoJSON must by definition contain coordinates!

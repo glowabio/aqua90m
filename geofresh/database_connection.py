@@ -14,7 +14,7 @@ LOGGER = logging.getLogger(__name__)
 ###########################
 
 def is_database_off(config_file_path = None):
-    # TODO Test!
+    # TODO Test is_database_off!
 
     # Read value from config file, if available:
     if config_file_path is None:
