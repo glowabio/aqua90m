@@ -4,6 +4,8 @@ logging.TRACE = 5
 logging.addLevelName(5, "TRACE")
 LOGGER = logging.getLogger(__name__)
 
+import pandas as pd
+
 
 '''
 
@@ -79,6 +81,33 @@ def get_dijkstra_ids_one(conn, start_subc_id, end_subc_id, reg_id, basin_id):
             all_ids.append(edge) # these are already integer!
 
     return all_ids
+
+
+
+def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id):
+    # We don't want a matrix, we want one path per pair of points - but for many!
+    everything = []
+
+    # Iterate over all rows: # TODO: Looping may not be the best...
+    for row in input_df.itertuples(index=False):
+
+        site_id   = getattr(row, colname_site_id)
+        subc_id   = getattr(row, "subc_id")
+        basin_id  = getattr(row, "basin_id")
+        reg_id    = getattr(row, "reg_id")
+        outlet_id = -basin_id
+
+        # Now get the downstream ids from the database, for this point:
+        segment_ids = get_dijkstra_ids_one(conn, subc_id, outlet_id, reg_id, basin_id)
+        segment_ids_str = "+".join([str(elem) for elem in segment_ids])
+        # TODO: plus-separated is not cool, but how to do it...
+
+        # Collect results in list:
+        everything.append([site_id, reg_id, basin_id, subc_id, segment_ids_str])
+
+    # Finished collecting the results, now make pandas dataframe:
+    output_df = pd.DataFrame(everything, columns=[colname_site_id, 'reg_id', 'basin_id', 'subc_id', 'downstream_segments'])
+    return output_df
 
 
 def get_dijkstra_ids_many(conn, subc_ids, reg_id, basin_id):
@@ -275,6 +304,10 @@ def get_dijkstra_distance_many(conn, subc_ids, reg_id, basin_id):
     return results
 
 
+###############
+### Testing ###
+###############
+
 if __name__ == "__main__":
 
     # Logging
@@ -324,9 +357,13 @@ if __name__ == "__main__":
     #lat_end = 54.6917
     subc_id_end = 506251712
 
-    #################
-    ### One route ###
-    #################
+
+
+#################
+### One route ###
+#################
+
+if __name__ == "__main__" and True:
 
     print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_one (just returns 5 ids)')
     res = get_dijkstra_ids_one(conn, subc_id_start, subc_id_end, reg_id, basin_id)
@@ -370,9 +407,12 @@ if __name__ == "__main__":
     res = get_dijkstra_distance_one(conn, subc_id_start, subc_id_end, reg_id, basin_id)
     print('RESULT: DISTANCE: %s' % res) # just a number!
 
-    ######################
-    ### Many distances ###
-    ######################
+
+######################
+### Many distances ###
+######################
+
+if __name__ == "__main__" and True:
 
     other1 = 507199553
     other2 = 507332148
@@ -390,9 +430,12 @@ if __name__ == "__main__":
             [subc_id_start, subc_id_end, other1, other2, other3], reg_id, basin_id)
         print('RESULT: DISTANCE MATRIX: %s' % res)
 
-    ###################
-    ### Many routes ###
-    ###################
+
+###################
+### Many routes ###
+###################
+
+if __name__ == "__main__" and True:
 
     print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_many')
     res = get_dijkstra_ids_many(conn,
@@ -407,3 +450,32 @@ if __name__ == "__main__":
         print('RESULT: ROUTE MATRIX: %s' % res)
 
 
+###################
+### CSV version ###
+###################
+
+if __name__ == "__main__" and True:
+
+    ## Input: dataframe, output dataframe, with site_id!
+    input_df = pd.DataFrame(
+        [
+            ['aa', 10.041155219078064, 53.07006147583069],
+            ['bb', 10.042726993560791, 53.06911450500803],
+            ['cc', 10.039894580841064, 53.06869677412868],
+            ['a',  10.698832912677716, 53.51710727672125],
+            ['b',  12.80898022975407,  52.42187129944509],
+            ['c',  11.915323076217902, 52.730867141970464],
+            ['d',  16.651903948708565, 48.27779486850176],
+            ['e',  19.201146608148463, 47.12192880511424],
+            ['f',  24.432498016999062, 61.215505889934434],
+            #['sea',  8.090485, 54.119322]
+        ], columns=['site_id', 'lon', 'lat']
+    )
+
+    ## Now, for each row, get the ids!
+    print('\nPREPARE RUNNING FUNCTION: get_dijkstra_ids_to_outlet_one_loop')
+    import basic_queries
+    temp_df = basic_queries.get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, "lon", "lat", "site_id")
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_to_outlet_one_loop')
+    res = get_dijkstra_ids_to_outlet_one_loop(conn, temp_df, "site_id")
+    print('RESULT: SEGMENTS IN DATAFRAME: %s' % res)

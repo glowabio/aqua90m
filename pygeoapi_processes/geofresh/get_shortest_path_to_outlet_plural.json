@@ -1,0 +1,82 @@
+{
+    "version": "0.0.1",
+    "id": "get-shortest-path-to-outlet-plural",
+    "use_case": "hydrography90m",
+    "title": {"en": "Shortest path to the outlet (CSV)"},
+    "description": {
+        "en": "Return the shortest path (using the Dijkstra algorithm) from the stream segment to which the given start points belongs to sea (outlet). Currently, only the downstream subc_ids are returned."
+    },
+    "jobControlOptions": ["sync-execute", "async-execute"],
+    "keywords": ["dijkstra", "shortest-path", "stream", "stream-segment", "GeoFRESH", "hydrography90m", "routing"],
+    "links": [{
+        "type": "text/html",
+        "rel": "about",
+        "title": "GeoFRESH website",
+        "href": "https://geofresh.org/",
+        "hreflang": "en-US"
+    },
+    {
+        "type": "text/html",
+        "rel": "about",
+        "title": "On Stream segments (Hydrography90m)",
+        "href": "https://hydrography.org/hydrography90m/hydrography90m_layers",
+        "hreflang": "en-US"
+    }],
+    "inputs": {
+        "csv_url": {
+            "title": "Bla",
+            "description": "Bla....",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "comment": {
+            "title": "Comment",
+            "description": "Arbitrary string that will not be processed but returned, for user\"s convenience.",
+            "schema": {"type": "string"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["comment"]
+        },
+        "geometry_only": {
+            "title": "Get only GeoJSON GeometryCollection?",
+            "description": "Specify whether to return only a GeoJSON GeometryCollection (in this case, LineStrings), instead of a GeoJSON FeatureCollection containing additional properties. Please write \"true\" or \"false\".",
+            "schema": {"type": "boolean"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["GeoJSON", "GeometryCollection", "FeatureCollection"]
+        },
+        "downstream_ids_only": {
+            "title": "Only downstream ids (no geometries)",
+            "description": "Specify whether ONLY to return the subcatchment ids of each segment along the path.",
+            "schema": {"type": "boolean"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        }
+    },
+    "outputs": {
+        "downstream_path": {
+            "title": "Shortest path to sea outlet",
+            "description": "Shortest path from the provided location and the outlet of the river basin, as a FeatureCollection or GeometryCollection. Routing is done via Dijkstra algorithm. Subcatchment ids and strahler order of each line segment along the way are included.",
+            "schema": {
+                "type": "object",
+                "contentMediaType": "application/json"
+            }
+        }
+    },
+    "example": {
+        "inputs": {
+            "lon_start": "9.937520027160646",
+            "lat_start": "54.69422745526058",
+            "comment": "test query",
+            "add_downstream_ids": "true",
+            "geometry_only": "false"
+        }
+    }
+}

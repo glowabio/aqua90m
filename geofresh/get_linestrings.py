@@ -7,7 +7,10 @@ LOGGER = logging.getLogger(__name__)
 
 try:
     # If the package is installed in local python PATH:
-    import aqua90m.geofresh.upstream_subcids as upstream_subcids
+    #import aqua90m.geofresh.upstream_subcids as upstream_subcids
+    # For some reason, this fixed it, when this module was called from routing,
+    # so it was not __main__, and this aqua90m was not added to local python PATH...
+    import upstream_subcids as upstream_subcids
 except ModuleNotFoundError as e1:
     try:
         # If we are using this from pygeoapi:
@@ -247,6 +250,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.TRACE, format='%(name)s:%(lineno)s - %(levelname)5s - %(message)s')
     logging.getLogger("paramiko").setLevel(logging.WARNING)
 
+    # Local imports:
     from database_connection import connect_to_db
     from database_connection import get_connection_object
 
