@@ -118,8 +118,6 @@ class ShortestPathToOutletGetter(BaseProcessor):
         add_downstream_ids = (add_downstream_ids.lower() == 'true')
 
         # Overall goal: Get the dijkstra shortest path (as linestrings)!
-        subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
-            conn, LOGGER, lon_start, lat_start, subc_id1)
 
         # Get reg_id, basin_id, subc_id
         if subc_id1 is not None:
@@ -135,50 +133,50 @@ class ShortestPathToOutletGetter(BaseProcessor):
         # Outlet has minus basin_id as subc_id!
         subc_id2 = -basin_id1
 
+        ##################
+        ### Actual ... ###
+        ##################
+
+        # Potential result:
+        geojson_object = {}
+
         # Get subc_ids of the whole connection...
         LOGGER.debug('Getting network connection for subc_id: start = %s, end = %s' % (subc_id1, subc_id2))
         segment_ids = routing.get_dijkstra_ids_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
 
         # Get geometry only:
         if geometry_only:
-            geometry_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll(
+            geojson_object = get_linestrings.get_streamsegment_linestrings_geometry_coll(
                 conn, segment_ids, basin_id1, reg_id1)
 
-            if comment is not None:
-                geometry_coll['comment'] = comment
-
-            # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
-            if utils.return_hyperlink('downstream_path', requested_outputs):
-                output_dict_with_url =  utils.store_to_json_file('downstream_path', geometry_coll,
-                    self.metadata, self.job_id,
-                    self.download_dir,
-                    self.download_url)
-                return 'application/json', output_dict_with_url
-            else:
-                return 'application/json', geometry_coll
 
         # Get FeatureCollection
         if not geometry_only:
 
-            feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(
+            geojson_object = get_linestrings.get_streamsegment_linestrings_feature_coll(
                 conn, segment_ids, basin_id1, reg_id1, add_subc_ids = add_downstream_ids)
         
             # Add some info to the FeatureCollection:
-            feature_coll["description"] = "Downstream path from subcatchment %s to the outlet of its basin." % subc_id1
-            feature_coll["subc_id"] = subc_id1 # TODO how to name the point from where we route to outlet?
-            feature_coll["outlet_id"] = subc_id2
-            feature_coll["downstream_path_of"] = subc_id1
+            geojson_object["description"] = "Downstream path from subcatchment %s to the outlet of its basin." % subc_id1
+            geojson_object["subc_id"] = subc_id1 # TODO how to name the point from where we route to outlet?
+            geojson_object["outlet_id"] = subc_id2
+            geojson_object["downstream_path_of"] = subc_id1
             # TODO: Should we include the requested lon and lat? Maybe as a point?
-            
-            if comment is not None:
-                feature_coll['comment'] = comment
 
-            # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
-            if utils.return_hyperlink('downstream_path', requested_outputs):
-                output_dict_with_url =  utils.store_to_json_file('downstream_path', feature_coll,
-                    self.metadata, self.job_id,
-                    self.download_dir,
-                    self.download_url)
-                return 'application/json', output_dict_with_url
-            else:
-                return 'application/json', feature_coll
+
+        ##############
+        ### Return ###
+        ##############
+            
+        if comment is not None:
+            geojson_object['comment'] = comment
+
+        # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
+        if utils.return_hyperlink('downstream_path', requested_outputs):
+            output_dict_with_url =  utils.store_to_json_file('downstream_path', geojson_object,
+                self.metadata, self.job_id,
+                self.download_dir,
+                self.download_url)
+            return 'application/json', output_dict_with_url
+        else:
+            return 'application/json', geojson_object
