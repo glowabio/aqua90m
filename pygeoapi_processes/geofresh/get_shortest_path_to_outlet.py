@@ -154,14 +154,16 @@ class ShortestPathToOutletGetter(BaseProcessor):
         if not geometry_only:
 
             geojson_object = get_linestrings.get_streamsegment_linestrings_feature_coll(
-                conn, segment_ids, basin_id1, reg_id1, add_subc_ids = add_downstream_ids)
+                conn, segment_ids, basin_id1, reg_id1)
         
             # Add some info to the FeatureCollection:
+            # TODO: Should we include the requested lon and lat? Maybe as a point?
             geojson_object["description"] = "Downstream path from subcatchment %s to the outlet of its basin." % subc_id1
             geojson_object["subc_id"] = subc_id1 # TODO how to name the point from where we route to outlet?
             geojson_object["outlet_id"] = subc_id2
             geojson_object["downstream_path_of"] = subc_id1
-            # TODO: Should we include the requested lon and lat? Maybe as a point?
+            if add_downstream_ids:
+                geojson_object["downstream_ids"] = segment_ids
 
 
         ##############

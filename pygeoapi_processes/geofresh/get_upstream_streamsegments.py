@@ -198,12 +198,14 @@ class UpstreamStreamSegmentsGetter(BaseProcessor):
                 # Note: The feature collection contains the strahler order for each feature (each stream segment)
                 LOGGER.debug('... Getting upstream catchment line segments for subc_id: %s' % subc_id)
                 feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(
-                    conn, upstream_ids, basin_id, reg_id, add_subc_ids = add_upstream_ids)
+                    conn, upstream_ids, basin_id, reg_id)
 
             # Add some info to the FeatureCollection:
             feature_coll["part_of_upstream_catchment_of"] = subc_id
             feature_coll["cumulative_length"] = cum_length_by_strahler["all_strahler_orders"],
             feature_coll["cumulative_length_by_strahler"] = cum_length_by_strahler
+            if add_upstream_ids:
+                feature_coll["upstream_ids"] = upstream_ids
 
             LOGGER.debug('END: Received FeatureCollection: %s' % str(feature_coll)[0:50])
 

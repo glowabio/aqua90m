@@ -185,13 +185,15 @@ class ShortestPathBetweenPointsGetter(BaseProcessor):
         if not geometry_only:
 
             feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(
-                conn, segment_ids, basin_id1, reg_id1, add_subc_ids = add_segment_ids)
+                conn, segment_ids, basin_id1, reg_id1)
 
             # Add some info to the FeatureCollection:
+            # TODO: Should we include the requested lon and lat? Maybe as a point?
             feature_coll["description"] = "Connecting path between %s and %s" % (subc_id1, subc_id2)
             feature_coll["start_subc_id"] = subc_id1 # TODO how to name the start point of routing?
             feature_coll["target_subc_id"] = subc_id2 # TODO how to name the end point of routing?
-            # TODO: Should we include the requested lon and lat? Maybe as a point?
+            if add_segment_ids:
+                feature_coll["subc_ids"] = segment_ids
 
             if comment is not None:
                 feature_coll['comment'] = comment

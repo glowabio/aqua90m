@@ -88,7 +88,7 @@ def get_streamsegment_linestrings_geometry_coll(conn, subc_ids, basin_id, reg_id
     return geometry_coll
 
 
-def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id, add_subc_ids = False):
+def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id):
 
     ### Define query:
     '''
@@ -162,9 +162,6 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id,
         "basin_id": basin_id,
         "region_id": reg_id
     }
-
-    if add_subc_ids:
-        feature_coll["subc_ids"] = subc_ids
 
     return feature_coll
 
@@ -290,7 +287,7 @@ if __name__ == "__main__":
     print('RESULT:\n%s' % res)
     
     print('\nSTART RUNNING FUNCTION: get_streamsegment_linestrings_feature_coll')
-    res = get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id, add_subc_ids=True)
+    res = get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id)
     print('RESULT:\n%s' % res)
 
     print('\nSTART RUNNING FUNCTION: get_accum_length_by_strahler')
