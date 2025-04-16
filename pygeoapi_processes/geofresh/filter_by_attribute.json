@@ -1,0 +1,72 @@
+{
+    "version": "0.0.1",
+    "id": "filter-by-attribute",
+    "use_case": "hydrography90m",
+    "title": {"en": "Filter by attribute"},
+    "description": {
+        "en": "Filter..."
+    },
+    "jobControlOptions": ["sync-execute", "async-execute"],
+    "keywords": ["subcatchment", "GeoFRESH", "hydrography90m"],
+    "links": [{
+        "type": "text/html",
+        "rel": "about",
+        "title": "GeoFRESH website",
+        "href": "https://geofresh.org/",
+        "hreflang": "en-US"
+    },
+    {
+        "type": "text/html",
+        "rel": "about",
+        "title": "On Subcatchment Ids (Hydrography90m)",
+        "href": "https://hydrography.org/hydrography90m/hydrography90m_layers",
+        "hreflang": "en-US"
+    }],
+    "inputs": {
+        "csv_url": {
+            "title": "Bla",
+            "description": "Bla....",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "keep": {
+            "title": "Bla",
+            "description": "Bla....",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "comment": {
+            "title": "Comment",
+            "description": "Arbitrary string that will not be processed but returned, for user\"s convenience.",
+            "schema": {"type": "string"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["comment"]
+        }
+    },
+    "outputs": {
+        "filtered_data": {
+            "title": "Filtered data",
+            "description": "blablabla.",
+            "schema": {
+                "type": "object",
+                "contentMediaType": "application/json"
+            }
+        }
+    },
+    "example": {
+        "inputs": {
+            "lon": "9.931555",
+            "lat": "54.695070",
+            "which_ids": "reg_id,basin_id,subc_id",
+            "comment": "located in schlei area"
+        }
+    }
+}
