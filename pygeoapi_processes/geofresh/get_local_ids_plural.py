@@ -308,6 +308,7 @@ class LocalIdGetterPlural(BaseProcessor):
         colname_lon = data.get('colname_lon', None)
         colname_lat = data.get('colname_lat', None)
         colname_site_id = data.get('colname_site_id', None)
+        colname_subc_id = data.get('colname_subc_id', None) # special case, optional
         # Optional comment:
         comment = data.get('comment') # optional
         # Which ids are requested:
@@ -374,6 +375,11 @@ class LocalIdGetterPlural(BaseProcessor):
             elif 'reg_id' in which_ids:
                 err_msg = "Currently, for GeoJSON input, only all ids can be returned."
                 raise NotImplementedError(err_msg) # TODO
+            # Note: The case where users input subc_ids and want basin_id and reg_id cannot be
+            # handled in GeoJSON, as GeoJSON must by definition contain coordinates!
+            # In this case, instead of GeoJSON, we'd have to let them input just some dictionary.
+            # Probably not needed ever, so why implement that. It would just be for completeness.
+            # Implement when needed.
 
 
 
@@ -405,7 +411,12 @@ class LocalIdGetterPlural(BaseProcessor):
                         raise exc.DataAccessException(err_msg)
 
             # Query database:
-            if 'subc_id' in which_ids:
+            if colname_subc_id is not None:
+                # Special case! User provided CSV with a column containing subc_ids...
+                output_df = basic_queries.get_basinid_regid_for_all_from_subcid_2(
+                    conn, LOGGER, input_df, colname_subc_id, colname_site_id)
+
+            elif 'subc_id' in which_ids:
                 output_df = basic_queries.get_subcid_basinid_regid_for_all_2(
                     conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
             elif 'basin_id' in which_ids:
