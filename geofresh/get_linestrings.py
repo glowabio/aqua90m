@@ -16,7 +16,8 @@ except ModuleNotFoundError as e1:
         # If we are using this from pygeoapi:
         import pygeoapi.process.aqua90m.geofresh.upstream_subcids as upstream_subcids
     except ModuleNotFoundError as e2:
-        msg = 'Module not found: '+e1.name+'. If this is being run from' + \
+        msg = 'Module not found: '+e1.name+' (imported in '+__name__+').' + \
+              ' If this is being run from' + \
               ' command line, the aqua90m directory has to be added to ' + \
               ' PATH for python to find it.'
         print(msg)
