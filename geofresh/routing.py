@@ -84,11 +84,10 @@ def get_dijkstra_ids_one(conn, start_subc_id, end_subc_id, reg_id, basin_id, sil
     return all_ids
 
 
-
-def get_dijkstra_ids_to_outlet_one_loop_1(conn, input_df, colname_site_id):
+def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id, return_csv=False, return_json=False):
     # We don't want a matrix, we want one path per pair of points - but for many!
     # Input: CSV
-    # Output: CSV (but ugly... as we have to store entire paths in one column.)
+    # Output: JSON or CSV (but ugly CSV... as we have to store entire paths in one column.)
     everything = []
     already_computed = set()
 
@@ -96,91 +95,89 @@ def get_dijkstra_ids_to_outlet_one_loop_1(conn, input_df, colname_site_id):
     i = 0
     for row in input_df.itertuples(index=False):
         i += 1
+        segment_ids = None
 
+        # Extract values from CSV:
         site_id   = getattr(row, colname_site_id)
         subc_id   = getattr(row, "subc_id")
         basin_id  = getattr(row, "basin_id")
         reg_id    = getattr(row, "reg_id")
-        outlet_id = -basin_id
 
-        if str(site_id) in already_computed:
-            LOGGER.debug('(%s) Not computing for site %s: Downstream segments already computed for subc_id %s' % (i, site_id, subc_id))
+        # Stop if no site_id!
+        if pd.isna(site_id):
+            err_msg = "Missing site_id in row %s (subc_id=%s, basin_id=%s, reg_id=%s)" % (i, subc_id, basin_id, reg_id)
+            LOGGER.error('(%s) %s' % (i, err_msg))
+            raise ValueError(err_msg)
             continue
 
-        if pd.isna(site_id) or pd.isna(subc_id) or pd.isna(outlet_id) or pd.isna(basin_id) or pd.isna(reg_id):
-            err_msg = "Cannot compute downstream ids due to missing value(s): site_id=%s, subc_id=%s, outlet_id=%s, basin_id=%s, reg_id=%s" % \
+        # Ocean case...
+        # As we do not return the site_ids, but only subc_ids with downstream path, there is no point in returning
+        # an empty list for subc_id "NaN"... If we ever switch back to returning downstream ids for each site_id,
+        # returning an empty list here make sense...
+        if pd.isna(subc_id):
+            # This can be the case if the point falls into the ocean...
+            err_msg = "Cannot compute downstream ids due to missing subc_id at site %s" % site_id
+            LOGGER.info('(%s) %s' % (i, err_msg))
+            #segment_ids = []
+            continue
+
+        # Unexpected case...
+        elif pd.isna(basin_id) or pd.isna(reg_id):
+            LOGGER.error('TODO CAN THIS HAPPEN AT ALL? Can we have invalid reg_id/basin_id if we have no valid subc_id?')
+            err_msg = "UNEXPECTED: Cannot compute downstream ids due to missing value(s) at site %s (subc_id=%s, basin_id=%s, reg_id=%s)" % \
                       (site_id, subc_id, outlet_id, basin_id, reg_id)
-            LOGGER.warning('(%s) %s' % (i, err_msg))
-            segment_ids_str = ""
+            LOGGER.error('(%s) %s' % (i, err_msg))
+            raise ValueError(err_msg)
 
         else:
-            # Now get the downstream ids from the database, for this point:
-            # (We need to cast to int, as they come as decimal numbers...)
-            LOGGER.debug('(%s) Computing downstream segments for site %s / for subc_id %s' % (i, site_id, subc_id))
-            segment_ids = get_dijkstra_ids_one(conn, int(subc_id), int(outlet_id), int(reg_id), int(basin_id), silent=True)
+
+            # Cast to int if not NA! Otherwise the database query fails.
+            if not pd.isna(subc_id):
+                subc_id = int(subc_id)
+            if not pd.isna(basin_id):
+                basin_id = int(basin_id)
+            if not pd.isna(reg_id):
+                reg_id = int(reg_id)
+
+            # Outlet has the id minus-basin!
+            outlet_id = -basin_id
+
+            if str(subc_id) in already_computed:
+                LOGGER.debug('(%s) Not computing for site %s: Downstream segments already computed for subc_id %s' % (i, site_id, subc_id))
+                continue
+
+            else:
+                # Now get the downstream ids from the database, for this point:
+                # (We need to cast to int, as they come as decimal numbers...)
+                subc_id = int(subc_id)
+                outlet_id = int(outlet_id)
+                basin_id = int(basin_id)
+                reg_id = int(reg_id)
+                LOGGER.debug('(%s) Computing downstream segments for site %s / for subc_id %s' % (i, site_id, subc_id))
+                segment_ids = get_dijkstra_ids_one(conn, subc_id, outlet_id, reg_id, basin_id, silent=True)
+                already_computed.add(str(subc_id))
+
+        # Collect results for this row:
+        if return_csv:
+            # Output CSV:  We need to make one string out of the segment ids!
+            # TODO: Separating the segment ids by "+" is not cool, but how to do it...
             segment_ids_str = "+".join([str(elem) for elem in segment_ids])
-            # TODO: plus-separated is not cool, but how to do it...
-
-        # Collect results in list:
-        everything.append([reg_id, basin_id, subc_id, segment_ids_str])
-        already_computed.add(str(site_id))
-
-    # Finished collecting the results, now make pandas dataframe:
-    output_df = pd.DataFrame(everything, columns=['reg_id', 'basin_id', 'subc_id', 'downstream_segments'])
-    return output_df
-
-def get_dijkstra_ids_to_outlet_one_loop_2(conn, input_df, colname_site_id):
-    # We don't want a matrix, we want one path per pair of points - but for many!
-    # Input: CSV
-    # Output: JSON
-    everything = []
-    already_computed = set()
-
-    # Iterate over all rows: # TODO: Looping may not be the best...
-    i = 0
-    for row in input_df.itertuples(index=False):
-        i += 1
-
-        site_id   = getattr(row, colname_site_id)
-        subc_id   = getattr(row, "subc_id")
-        basin_id  = getattr(row, "basin_id")
-        reg_id    = getattr(row, "reg_id")
-        outlet_id = -basin_id
-
-        if str(site_id) in already_computed:
-            LOGGER.debug('(%s) Not computing for site %s: Downstream segments already computed for subc_id %s' % (i, site_id, subc_id))
-            continue
-
-        if pd.isna(site_id) or pd.isna(subc_id) or pd.isna(outlet_id) or pd.isna(basin_id) or pd.isna(reg_id):
-            err_msg = "Cannot compute downstream ids due to missing value(s): site_id=%s, subc_id=%s, outlet_id=%s, basin_id=%s, reg_id=%s" % \
-                      (site_id, subc_id, outlet_id, basin_id, reg_id)
-            LOGGER.warning('(%s) %s' % (i, err_msg))
-            segment_ids_str = []
-
-        else:
-            # Now get the downstream ids from the database, for this point:
-            # (We need to cast to int, as they come as decimal numbers...)
-            LOGGER.debug('(%s) Computing downstream segments for site %s / for subc_id %s' % (i, site_id, subc_id))
-            segment_ids = get_dijkstra_ids_one(conn, int(subc_id), int(outlet_id), int(reg_id), int(basin_id), silent=True)
-            #segment_ids_str = "+".join([str(elem) for elem in segment_ids])
-            # TODO: Test, hope that comes as a list! If string, must split!
-
-        # Collect results in list:
-        everything.append({
-            "subc_id": subc_id,
-            "basin_id": basin_id,
-            "reg_id": reg_id,
-            "downstream_segments": segment_ids
-        })
-        already_computed.add(str(site_id))
-
+            everything.append([reg_id, basin_id, subc_id, segment_ids_str])
+        elif return_json:
+            everything.append({
+                "subc_id": subc_id,
+                "basin_id": basin_id,
+                "reg_id": reg_id,
+                "downstream_segments": segment_ids
+            })
 
     # Finished collecting the results, now return JSON object:
-    output_json = {
-        "downstream_segments_for_all_sites": everything
-    }
-    return output_json
-
+    if return_csv:
+        output_df = pd.DataFrame(everything, columns=['reg_id', 'basin_id', 'subc_id', 'downstream_segments'])
+        return output_df
+    elif return_json:
+        output_json = {"downstream_segments_for_all_sites": everything}
+        return output_json
 
 
 def get_dijkstra_ids_many(conn, subc_ids, reg_id, basin_id):

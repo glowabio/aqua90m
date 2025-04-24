@@ -210,9 +210,9 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
 
             ## Next, for each row, get the downstream ids!
             if return_csv:
-                output_df = routing.get_dijkstra_ids_to_outlet_one_loop_1(conn, temp_df, colname_site_id)
+                output_df = routing.get_dijkstra_ids_to_outlet_one_loop(conn, temp_df, colname_site_id, return_csv=True)
             elif return_json:
-                output_json = routing.get_dijkstra_ids_to_outlet_one_loop_2(conn, temp_df, colname_site_id)
+                output_json = routing.get_dijkstra_ids_to_outlet_one_loop(conn, temp_df, colname_site_id, return_json=True)
 
 
         #####################
@@ -229,7 +229,8 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
                     self.download_dir,
                     self.download_url)
 
-                output_dict_with_url['comment'] = comment
+                if comment is not None:
+                    output_dict_with_url['comment'] = comment
 
                 return 'application/json', output_dict_with_url
             else:
@@ -239,13 +240,16 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
 
         ## Return JSON:
         elif output_json is not None:
-            output_json['comment'] = comment
+
+            if comment is not None:
+                output_json['comment'] = comment
 
             if do_return_link:
                 output_dict_with_url =  utils.store_to_json_file('downstream_path', output_json,
                     self.metadata, self.job_id,
                     self.download_dir,
                     self.download_url)
+
                 return 'application/json', output_dict_with_url
 
             else:
