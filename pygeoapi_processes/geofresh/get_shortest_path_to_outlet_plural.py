@@ -7,9 +7,14 @@ import os
 import sys
 import traceback
 import json
+import urllib
+import requests
+import pandas as pd
+import tempfile
 import psycopg2
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
+import pygeoapi.process.aqua90m.utils.exceptions as exc
 import pygeoapi.process.aqua90m.geofresh.routing as routing
 import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
 import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
@@ -25,6 +30,7 @@ curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execut
         "csv_url": "https://nimbus.igb-berlin.de/index.php/s/SnDSamy56sLWs2s/download/spdata.csv",
         "colname_lon": "lon",
         "colname_lat": "lat",
+        "colname_site_id": "site_id",
         "downstream_ids_only": true
     },
     "outputs": {
@@ -113,6 +119,8 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
         geometry_only = data.get('geometry_only', False)
         downstream_ids_only = data.get('downstream_ids_only', False)
         add_downstream_ids = data.get('add_downstream_ids', True)
+        # GeoJSON:
+        points_geojson = None # TODO
 
         # Check parameters:
         if csv_url is not None:
@@ -188,7 +196,7 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
                 conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
 
             ## Next, for each row, get the downstream ids!
-            output_df = get_dijkstra_ids_to_outlet_one_loop(conn, temp_df, colname_site_id)
+            output_df = routing.get_dijkstra_ids_to_outlet_one_loop(conn, temp_df, colname_site_id)
 
         #####################
         ### Return result ###
