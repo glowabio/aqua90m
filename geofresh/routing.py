@@ -89,6 +89,7 @@ def get_dijkstra_ids_to_outlet_one_loop_1(conn, input_df, colname_site_id):
     # Input: CSV
     # Output: CSV (but ugly... as we have to store entire paths in one column.)
     everything = []
+    already_computed = set()
 
     # Iterate over all rows: # TODO: Looping may not be the best...
     for row in input_df.itertuples(index=False):
@@ -98,6 +99,10 @@ def get_dijkstra_ids_to_outlet_one_loop_1(conn, input_df, colname_site_id):
         basin_id  = getattr(row, "basin_id")
         reg_id    = getattr(row, "reg_id")
         outlet_id = -basin_id
+
+        if str(site_id) in already_computed:
+            LOGGER.debug('Not computing for site %s: Downstream segments already computed for subc_id %s' % (site_id, subc_id))
+            continue
 
         if pd.isna(site_id) or pd.isna(subc_id) or pd.isna(outlet_id) or pd.isna(basin_id) or pd.isna(reg_id):
             err_msg = "Cannot compute downstream ids due to missing value(s): site_id=%s, subc_id=%s, outlet_id=%s, basin_id=%s, reg_id=%s" % \
@@ -113,10 +118,11 @@ def get_dijkstra_ids_to_outlet_one_loop_1(conn, input_df, colname_site_id):
             # TODO: plus-separated is not cool, but how to do it...
 
         # Collect results in list:
-        everything.append([site_id, reg_id, basin_id, subc_id, segment_ids_str])
+        everything.append([reg_id, basin_id, subc_id, segment_ids_str])
+        already_computed.add(str(site_id))
 
     # Finished collecting the results, now make pandas dataframe:
-    output_df = pd.DataFrame(everything, columns=[colname_site_id, 'reg_id', 'basin_id', 'subc_id', 'downstream_segments'])
+    output_df = pd.DataFrame(everything, columns=['reg_id', 'basin_id', 'subc_id', 'downstream_segments'])
     return output_df
 
 def get_dijkstra_ids_to_outlet_one_loop_2(conn, input_df, colname_site_id):
@@ -124,6 +130,7 @@ def get_dijkstra_ids_to_outlet_one_loop_2(conn, input_df, colname_site_id):
     # Input: CSV
     # Output: JSON
     everything = []
+    already_computed = set()
 
     # Iterate over all rows: # TODO: Looping may not be the best...
     for row in input_df.itertuples(index=False):
@@ -133,6 +140,10 @@ def get_dijkstra_ids_to_outlet_one_loop_2(conn, input_df, colname_site_id):
         basin_id  = getattr(row, "basin_id")
         reg_id    = getattr(row, "reg_id")
         outlet_id = -basin_id
+
+        if str(site_id) in already_computed:
+            LOGGER.debug('Not computing for site %s: Downstream segments already computed for subc_id %s' % (site_id, subc_id))
+            continue
 
         if pd.isna(site_id) or pd.isna(subc_id) or pd.isna(outlet_id) or pd.isna(basin_id) or pd.isna(reg_id):
             err_msg = "Cannot compute downstream ids due to missing value(s): site_id=%s, subc_id=%s, outlet_id=%s, basin_id=%s, reg_id=%s" % \
@@ -149,15 +160,15 @@ def get_dijkstra_ids_to_outlet_one_loop_2(conn, input_df, colname_site_id):
 
         # Collect results in list:
         everything.append({
-            "site_id": site_id,
             "subc_id": subc_id,
             "basin_id": basin_id,
             "reg_id": reg_id,
             "downstream_segments": segment_ids
         })
+        already_computed.add(str(site_id))
 
-    # Finished collecting the results, now make pandas dataframe:
-    #output_df = pd.DataFrame(everything, columns=[colname_site_id, 'reg_id', 'basin_id', 'subc_id', 'downstream_segments'])
+
+    # Finished collecting the results, now return JSON object:
     output_json = {
         "downstream_segments_for_all_sites": everything
     }
