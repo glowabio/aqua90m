@@ -32,7 +32,8 @@ curl -i -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet-plu
         "colname_lon": "lon",
         "colname_lat": "lat",
         "colname_site_id": "site_id",
-        "downstream_ids_only": true
+        "downstream_ids_only": true,
+        "return_csv": true
     },
     "outputs": {
         "transmissionMode": "reference"
@@ -111,6 +112,8 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
         # Output: GeoJSON with points, and for each point, a list of the downstream ids
 
         # User inputs
+        return_csv  = data.get('return_csv',  False)
+        return_json = data.get('return_json', False)
         # CSV, to be downloaded via URL
         csv_url = data.get('csv_url', None)
         colname_lon = data.get('colname_lon', 'lon')
@@ -134,6 +137,15 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
                 LOGGER.error(err_msg)
                 raise NotImplementedError(err_msg)
                 # TODO: Any idea how to return linestrings in a csv? Is that required, or even desired at all?
+
+        if return_csv and return_json:
+            err_msg = "Please set either return_csv or return_json to true (not both)!"
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
+        if not return_csv and not return_json:
+            err_msg = "Please set either return_csv or return_json to true!"
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
 
 
         ##################
@@ -197,7 +209,11 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
                 conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
 
             ## Next, for each row, get the downstream ids!
-            output_df = routing.get_dijkstra_ids_to_outlet_one_loop(conn, temp_df, colname_site_id)
+            if return_csv:
+                output_df = routing.get_dijkstra_ids_to_outlet_one_loop_1(conn, temp_df, colname_site_id)
+            elif return_json:
+                output_json = routing.get_dijkstra_ids_to_outlet_one_loop_2(conn, temp_df, colname_site_id)
+
 
         #####################
         ### Return result ###

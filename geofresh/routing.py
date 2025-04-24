@@ -84,8 +84,10 @@ def get_dijkstra_ids_one(conn, start_subc_id, end_subc_id, reg_id, basin_id):
 
 
 
-def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id):
+def get_dijkstra_ids_to_outlet_one_loop_1(conn, input_df, colname_site_id):
     # We don't want a matrix, we want one path per pair of points - but for many!
+    # Input: CSV
+    # Output: CSV (but ugly... as we have to store entire paths in one column.)
     everything = []
 
     # Iterate over all rows: # TODO: Looping may not be the best...
@@ -105,7 +107,7 @@ def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id):
 
         else:
             # Now get the downstream ids from the database, for this point:
-            # (We need to cast to int??, as they come as decimal numbers...)
+            # (We need to cast to int, as they come as decimal numbers...)
             segment_ids = get_dijkstra_ids_one(conn, int(subc_id), int(outlet_id), int(reg_id), int(basin_id))
             segment_ids_str = "+".join([str(elem) for elem in segment_ids])
             # TODO: plus-separated is not cool, but how to do it...
@@ -116,6 +118,51 @@ def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id):
     # Finished collecting the results, now make pandas dataframe:
     output_df = pd.DataFrame(everything, columns=[colname_site_id, 'reg_id', 'basin_id', 'subc_id', 'downstream_segments'])
     return output_df
+
+def get_dijkstra_ids_to_outlet_one_loop_2(conn, input_df, colname_site_id):
+    # We don't want a matrix, we want one path per pair of points - but for many!
+    # Input: CSV
+    # Output: JSON
+    everything = []
+
+    # Iterate over all rows: # TODO: Looping may not be the best...
+    for row in input_df.itertuples(index=False):
+
+        site_id   = getattr(row, colname_site_id)
+        subc_id   = getattr(row, "subc_id")
+        basin_id  = getattr(row, "basin_id")
+        reg_id    = getattr(row, "reg_id")
+        outlet_id = -basin_id
+
+        if pd.isna(site_id) or pd.isna(subc_id) or pd.isna(outlet_id) or pd.isna(basin_id) or pd.isna(reg_id):
+            err_msg = "Cannot compute downstream ids due to missing value(s): site_id=%s, subc_id=%s, outlet_id=%s, basin_id=%s, reg_id=%s" % \
+                      (site_id, subc_id, outlet_id, basin_id, reg_id)
+            LOGGER.warning(err_msg)
+            segment_ids_str = []
+
+        else:
+            # Now get the downstream ids from the database, for this point:
+            # (We need to cast to int, as they come as decimal numbers...)
+            segment_ids = get_dijkstra_ids_one(conn, int(subc_id), int(outlet_id), int(reg_id), int(basin_id))
+            #segment_ids_str = "+".join([str(elem) for elem in segment_ids])
+            # TODO: Test, hope that comes as a list! If string, must split!
+
+        # Collect results in list:
+        everything.append({
+            "site_id": site_id,
+            "subc_id": subc_id,
+            "basin_id": basin_id,
+            "reg_id": reg_id,
+            "downstream_segments": segment_ids
+        })
+
+    # Finished collecting the results, now make pandas dataframe:
+    #output_df = pd.DataFrame(everything, columns=[colname_site_id, 'reg_id', 'basin_id', 'subc_id', 'downstream_segments'])
+    output_json = {
+        "downstream_segments_for_all_sites": everything
+    }
+    return output_json
+
 
 
 def get_dijkstra_ids_many(conn, subc_ids, reg_id, basin_id):
