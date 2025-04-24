@@ -97,10 +97,18 @@ def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id):
         reg_id    = getattr(row, "reg_id")
         outlet_id = -basin_id
 
-        # Now get the downstream ids from the database, for this point:
-        segment_ids = get_dijkstra_ids_one(conn, subc_id, outlet_id, reg_id, basin_id)
-        segment_ids_str = "+".join([str(elem) for elem in segment_ids])
-        # TODO: plus-separated is not cool, but how to do it...
+        if pd.isna(site_id) or pd.isna(subc_id) or pd.isna(outlet_id) or pd.isna(basin_id) or pd.isna(reg_id):
+            err_msg = "Cannot compute downstream ids due to missing value(s): site_id=%s, subc_id=%s, outlet_id=%s, basin_id=%s, reg_id=%s" % \
+                      (site_id, subc_id, outlet_id, basin_id, reg_id)
+            LOGGER.warning(err_msg)
+            segment_ids_str = ""
+
+        else:
+            # Now get the downstream ids from the database, for this point:
+            # (We need to cast to int??, as they come as decimal numbers...)
+            segment_ids = get_dijkstra_ids_one(conn, int(subc_id), int(outlet_id), int(reg_id), int(basin_id))
+            segment_ids_str = "+".join([str(elem) for elem in segment_ids])
+            # TODO: plus-separated is not cool, but how to do it...
 
         # Collect results in list:
         everything.append([site_id, reg_id, basin_id, subc_id, segment_ids_str])
