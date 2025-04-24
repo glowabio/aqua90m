@@ -23,11 +23,12 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 '''
 # Request only the ids:
-curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execution" \
+curl -i -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet-plural/execution" \
 --header "Content-Type: application/json" \
+--header "Prefer: respond-async" \
 --data '{
   "inputs": {
-        "csv_url": "https://nimbus.igb-berlin.de/index.php/s/SnDSamy56sLWs2s/download/spdata.csv",
+        "csv_url": "https://example.igb-berlin.de/download/spdata.csv",
         "colname_lon": "lon",
         "colname_lat": "lat",
         "colname_site_id": "site_id",
