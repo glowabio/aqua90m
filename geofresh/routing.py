@@ -33,10 +33,11 @@ RETURNS SET OF (seq, path_seq, node, edge, cost, agg_cost)
 '''
 
 
-def get_dijkstra_ids_one(conn, start_subc_id, end_subc_id, reg_id, basin_id):
+def get_dijkstra_ids_one(conn, start_subc_id, end_subc_id, reg_id, basin_id, silent=False):
     #INPUT: subc_ids (start and end)
     #OUTPUT: subc_ids (the entire path, incl. start and end)
-    LOGGER.debug('Compute route between subc_id %s and %s (in basin %s, region %s)' % (start_subc_id, end_subc_id, basin_id, reg_id))
+    if not silent:
+        LOGGER.debug('Compute route between subc_id %s and %s (in basin %s, region %s)' % (start_subc_id, end_subc_id, basin_id, reg_id))
 
 
     ### Define query:
@@ -92,7 +93,9 @@ def get_dijkstra_ids_to_outlet_one_loop_1(conn, input_df, colname_site_id):
     already_computed = set()
 
     # Iterate over all rows: # TODO: Looping may not be the best...
+    i = 0
     for row in input_df.itertuples(index=False):
+        i += 1
 
         site_id   = getattr(row, colname_site_id)
         subc_id   = getattr(row, "subc_id")
@@ -101,19 +104,20 @@ def get_dijkstra_ids_to_outlet_one_loop_1(conn, input_df, colname_site_id):
         outlet_id = -basin_id
 
         if str(site_id) in already_computed:
-            LOGGER.debug('Not computing for site %s: Downstream segments already computed for subc_id %s' % (site_id, subc_id))
+            LOGGER.debug('(%s) Not computing for site %s: Downstream segments already computed for subc_id %s' % (i, site_id, subc_id))
             continue
 
         if pd.isna(site_id) or pd.isna(subc_id) or pd.isna(outlet_id) or pd.isna(basin_id) or pd.isna(reg_id):
             err_msg = "Cannot compute downstream ids due to missing value(s): site_id=%s, subc_id=%s, outlet_id=%s, basin_id=%s, reg_id=%s" % \
                       (site_id, subc_id, outlet_id, basin_id, reg_id)
-            LOGGER.warning(err_msg)
+            LOGGER.warning('(%s) %s' % (i, err_msg))
             segment_ids_str = ""
 
         else:
             # Now get the downstream ids from the database, for this point:
             # (We need to cast to int, as they come as decimal numbers...)
-            segment_ids = get_dijkstra_ids_one(conn, int(subc_id), int(outlet_id), int(reg_id), int(basin_id))
+            LOGGER.debug('(%s) Computing downstream segments for site %s / for subc_id %s' % (i, site_id, subc_id))
+            segment_ids = get_dijkstra_ids_one(conn, int(subc_id), int(outlet_id), int(reg_id), int(basin_id), silent=True)
             segment_ids_str = "+".join([str(elem) for elem in segment_ids])
             # TODO: plus-separated is not cool, but how to do it...
 
@@ -133,7 +137,9 @@ def get_dijkstra_ids_to_outlet_one_loop_2(conn, input_df, colname_site_id):
     already_computed = set()
 
     # Iterate over all rows: # TODO: Looping may not be the best...
+    i = 0
     for row in input_df.itertuples(index=False):
+        i += 1
 
         site_id   = getattr(row, colname_site_id)
         subc_id   = getattr(row, "subc_id")
@@ -142,19 +148,20 @@ def get_dijkstra_ids_to_outlet_one_loop_2(conn, input_df, colname_site_id):
         outlet_id = -basin_id
 
         if str(site_id) in already_computed:
-            LOGGER.debug('Not computing for site %s: Downstream segments already computed for subc_id %s' % (site_id, subc_id))
+            LOGGER.debug('(%s) Not computing for site %s: Downstream segments already computed for subc_id %s' % (i, site_id, subc_id))
             continue
 
         if pd.isna(site_id) or pd.isna(subc_id) or pd.isna(outlet_id) or pd.isna(basin_id) or pd.isna(reg_id):
             err_msg = "Cannot compute downstream ids due to missing value(s): site_id=%s, subc_id=%s, outlet_id=%s, basin_id=%s, reg_id=%s" % \
                       (site_id, subc_id, outlet_id, basin_id, reg_id)
-            LOGGER.warning(err_msg)
+            LOGGER.warning('(%s) %s' % (i, err_msg))
             segment_ids_str = []
 
         else:
             # Now get the downstream ids from the database, for this point:
             # (We need to cast to int, as they come as decimal numbers...)
-            segment_ids = get_dijkstra_ids_one(conn, int(subc_id), int(outlet_id), int(reg_id), int(basin_id))
+            LOGGER.debug('(%s) Computing downstream segments for site %s / for subc_id %s' % (i, site_id, subc_id))
+            segment_ids = get_dijkstra_ids_one(conn, int(subc_id), int(outlet_id), int(reg_id), int(basin_id), silent=True)
             #segment_ids_str = "+".join([str(elem) for elem in segment_ids])
             # TODO: Test, hope that comes as a list! If string, must split!
 
