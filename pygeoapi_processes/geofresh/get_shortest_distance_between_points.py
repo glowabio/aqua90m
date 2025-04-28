@@ -130,25 +130,28 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
 
         # Overall goal: Get the dijkstra distance!
         if points is not None:
-            LOGGER.debug('START: Getting dijkstra shortest distance between a number of points...')
+            LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are the same)...')
         elif lon_start is not None and lat_start is not None and lon_end is not None and lat_end is not None:
             # TODO: Just ask users for two GeoJSON points?!?!
             LOGGER.debug('START: Getting dijkstra shortest distance between two of points...')
+        elif points_start is not None and points_end is not None:
+            LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are different)...')
         else:
             err_msg = 'You must specify either "point" or lon and lat of start and end point...'
             raise ProcessorExecuteError(err_msg)
 
 
-        ###################
-        ### Many points ###
-        ###################
+        ############################
+        ### Many points          ###
+        ### starts and ends same ###
+        ############################
         if points is not None:
 
             # Collect reg_id, basin_id, subc_id
             all_subc_ids = []
             all_reg_ids = []
             all_basin_ids = []
-            for lon, lat in points['coordinates']:
+            for lon, lat in points['coordinates']: # TODO: Maybe not do this loop based?
                 LOGGER.debug('Now getting subc_id, basin_id, reg_id for lon %s, lat %s' % (lon, lat))
                 subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
                     conn, LOGGER, lon, lat)
@@ -173,8 +176,9 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
                 raise ProcessorExecuteError(user_msg=err_msg)
 
             # Get distance - this is a JSON-ified matrix:
+            # (Complete matrix, starts and ends are the same set!)
             json_result = routing.get_dijkstra_distance_many(
-                conn, all_subc_ids, reg_id, basin_id)
+                conn, all_subc_ids, all_subc_ids, reg_id, basin_id)
 
 
         #################

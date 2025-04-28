@@ -303,7 +303,7 @@ def get_dijkstra_distance_one(conn, start_subc_id, end_subc_id, reg_id, basin_id
     return dist
 
 
-def get_dijkstra_distance_many(conn, subc_ids, reg_id, basin_id):
+def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin_id):
     # INPUT: Set of subc_ids
     # OUTPUT: Distance matrix (as JSON)
 
@@ -323,7 +323,8 @@ def get_dijkstra_distance_many(conn, subc_ids, reg_id, basin_id):
 
 
     ### Construct SQL query:
-    nodes = 'ARRAY[%s]' % ','.join(str(x) for x in subc_ids)
+    nodes_start = 'ARRAY[%s]' % ','.join(str(x) for x in subc_ids_start)
+    nodes_end = 'ARRAY[%s]' % ','.join(str(x) for x in subc_ids_end)
     query = 'SELECT edge, start_vid, end_vid, agg_cost'
     query += '''
     FROM pgr_dijkstra('
@@ -338,7 +339,7 @@ def get_dijkstra_distance_many(conn, subc_ids, reg_id, basin_id):
         {starts},
         {ends},
         directed := false);
-    '''.format(reg_id = reg_id, basin_id = basin_id, starts = nodes, ends = nodes)
+    '''.format(reg_id = reg_id, basin_id = basin_id, starts = nodes_start, ends = nodes_end)
     query = query.replace("\n", " ")
     query = query.replace("    ", "")
     query = query.strip()
@@ -352,9 +353,9 @@ def get_dijkstra_distance_many(conn, subc_ids, reg_id, basin_id):
     ### Construct result matrix:
     # TODO: JSON may not be the ideal type for returning a matrix!
     results = {}
-    for start_id in subc_ids:
+    for start_id in subc_ids_start:
         results[str(start_id)] = {}
-        for end_id in subc_ids:
+        for end_id in subc_ids_end:
             results[str(start_id)][str(end_id)] = 0
 
     ### Iterating over the result rows:
