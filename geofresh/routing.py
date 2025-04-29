@@ -304,10 +304,10 @@ def get_dijkstra_distance_one(conn, start_subc_id, end_subc_id, reg_id, basin_id
 
 
 def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin_id):
-    # INPUT: Set of subc_ids
+    # INPUT: Sets of subc_ids
     # OUTPUT: Distance matrix (as JSON)
 
-    LOGGER.debug('Compute distance matrix between %s subc_ids (in basin %s, region %s)' % (len(subc_ids), basin_id, reg_id))
+    LOGGER.debug('Compute distance matrix between %s subc_ids (in basin %s, region %s)' % (len(subc_ids_start | subc_ids_end), basin_id, reg_id))
     # TODO What if not in one basin?
 
     '''

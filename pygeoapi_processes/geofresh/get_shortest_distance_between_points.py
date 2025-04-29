@@ -52,6 +52,30 @@ curl -X POST "http://localhost:5000/processes/get-shortest-distance-between-poin
   }
 }'
 
+
+# Request some JSON, to be improved (TODO):
+curl -X POST "http://localhost:5000/processes/get-shortest-distance-between-points/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "points_start": {
+      "type": "MultiPoint",
+      "coordinates": [
+        [9.9217, 54.6917],
+        [9.9312, 54.6933]
+      ]
+    },
+    "points_end": {
+      "type": "MultiPoint",
+      "coordinates": [
+        [9.937520027160646, 54.69422745526058],
+        [9.9217478273, 54.69173489023]
+      ]
+    },
+    "comment": "located in schlei area"
+  }
+}'
+
 '''
 
 # Process metadata and description
@@ -118,6 +142,8 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
 
         # User inputs: Multipoint:
         points = data.get('points', None)
+        points_start = data.get('points_start', None)
+        points_end = data.get('points_end', None)
         # User inputs: One point:
         lon_start = data.get('lon_start', None)
         lat_start = data.get('lat_start', None)
@@ -179,6 +205,58 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
             # (Complete matrix, starts and ends are the same set!)
             json_result = routing.get_dijkstra_distance_many(
                 conn, all_subc_ids, all_subc_ids, reg_id, basin_id)
+
+        ##################################
+        ### Many points                ###
+        ### starts and ends separately ###
+        ##################################
+        if points_start is not None and points_end is not None:
+            # This is basically the same as above!!
+
+            # Collect reg_id, basin_id, subc_id
+            # TODO: Make this a function?! We do this 3 times...
+            all_subc_ids_start = set()
+            all_reg_ids_start = set()
+            all_basin_ids_start = set()
+            for lon, lat in points_start['coordinates']: # TODO: Maybe not do this loop based?
+                LOGGER.debug('Now getting subc_id, basin_id, reg_id for lon %s, lat %s' % (lon, lat))
+                subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
+                    conn, LOGGER, lon, lat)
+                all_subc_ids_start.add(subc_id)
+                all_reg_ids_start.add(reg_id)
+                all_basin_ids_start.add(basin_id)
+
+            all_subc_ids_end = set()
+            all_reg_ids_end = set()
+            all_basin_ids_end = set()
+            for lon, lat in points_end['coordinates']: # TODO: Maybe not do this loop based?
+                LOGGER.debug('Now getting subc_id, basin_id, reg_id for lon %s, lat %s' % (lon, lat))
+                subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
+                    conn, LOGGER, lon, lat)
+                all_subc_ids_end.add(subc_id)
+                all_reg_ids_end.add(reg_id)
+                all_basin_ids_end.add(basin_id)
+
+            # Check if same region and basin?
+            # TODO: Can we route via the sea then??
+            if len(all_reg_ids_start | all_reg_ids_end) == 1:
+                reg_id = all_reg_ids_start.pop()
+            else:
+                err_msg = 'The input points are in different regions (%s) - this cannot work.' % all_reg_ids_start | all_reg_ids_end
+                LOGGER.warning(err_msg)
+                raise ProcessorExecuteError(user_msg=err_msg)
+
+            if len(all_basin_ids_start | all_basin_ids_end) == 1:
+                basin_id = all_basin_ids_start.pop()
+            else:
+                err_msg = 'The input points are in different basins (%s) - this cannot work.' % all_basin_ids_start | all_basin_ids_end
+                LOGGER.warning(err_msg)
+                raise ProcessorExecuteError(user_msg=err_msg)
+
+            # Get distance - this is a JSON-ified matrix:
+            # (Complete matrix, starts and ends are the same set!)
+            json_result = routing.get_dijkstra_distance_many(
+                conn, all_subc_ids_start, all_subc_ids_end, reg_id, basin_id)
 
 
         #################
