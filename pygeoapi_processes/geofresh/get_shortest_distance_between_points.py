@@ -174,30 +174,30 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
         if points is not None:
 
             # Collect reg_id, basin_id, subc_id
-            all_subc_ids = []
-            all_reg_ids = []
-            all_basin_ids = []
+            all_subc_ids = set()
+            all_reg_ids = set()
+            all_basin_ids = set()
             for lon, lat in points['coordinates']: # TODO: Maybe not do this loop based?
                 LOGGER.debug('Now getting subc_id, basin_id, reg_id for lon %s, lat %s' % (lon, lat))
                 subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
                     conn, LOGGER, lon, lat)
-                all_subc_ids.append(subc_id)
-                all_reg_ids.append(reg_id)
-                all_basin_ids.append(basin_id)
+                all_subc_ids.add(subc_id)
+                all_reg_ids.add(reg_id)
+                all_basin_ids.add(basin_id)
 
             # Check if same region and basin?
             # TODO: Can we route via the sea then??
-            if len(set(all_reg_ids)) == 1:
+            if len(all_reg_ids) == 1:
                 reg_id = all_reg_ids[0]
             else:
-                err_msg = 'The input points are in different regions (%s) - this cannot work.' % set(all_reg_ids)
+                err_msg = 'The input points are in different regions (%s) - this cannot work.' % all_reg_ids
                 LOGGER.warning(err_msg)
                 raise ProcessorExecuteError(user_msg=err_msg)
 
-            if len(set(all_basin_ids)) == 1:
+            if len(all_basin_ids) == 1:
                 basin_id = all_basin_ids[0]
             else:
-                err_msg = 'The input points are in different basins (%s) - this cannot work.' % set(all_basin_ids)
+                err_msg = 'The input points are in different basins (%s) - this cannot work.' % all_basin_ids
                 LOGGER.warning(err_msg)
                 raise ProcessorExecuteError(user_msg=err_msg)
 
