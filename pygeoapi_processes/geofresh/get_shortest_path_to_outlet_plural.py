@@ -204,9 +204,14 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
                         LOGGER.error(err_msg)
                         raise exc.DataAccessException(err_msg)
 
-            ## Now, for each row, get the ids!
-            temp_df = basic_queries.get_subcid_basinid_regid_for_all_1csv(
-                conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
+            ## Now, for each row, get the ids (unless already present)!
+            if 'subc_id' in input_df.columns:
+                LOGGER.debug('Input dataframe already contains subc_id for each point, using that...')
+                temp_df = input_df
+            else:
+                LOGGER.debug('Querying subc_id etc. for each point...')
+                temp_df = basic_queries.get_subcid_basinid_regid_for_all_1csv(
+                    conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
 
             ## Next, for each row, get the downstream ids!
             if return_csv:
