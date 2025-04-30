@@ -1,0 +1,89 @@
+{
+    "version": "0.0.1",
+    "id": "filter-attribute-by-list",
+    "use_case": "hydrography90m",
+    "title": {"en": "Filter attribute by list"},
+    "description": {
+        "en": "Filter..."
+    },
+    "jobControlOptions": ["sync-execute", "async-execute"],
+    "keywords": ["subcatchment", "GeoFRESH", "hydrography90m"],
+    "links": [{
+        "type": "text/html",
+        "rel": "about",
+        "title": "GeoFRESH website",
+        "href": "https://geofresh.org/",
+        "hreflang": "en-US"
+    },
+    {
+        "type": "text/html",
+        "rel": "about",
+        "title": "On Subcatchment Ids (Hydrography90m)",
+        "href": "https://hydrography.org/hydrography90m/hydrography90m_layers",
+        "hreflang": "en-US"
+    }],
+    "inputs": {
+        "items_json": {
+            "title": "Items to be filtered (POST)",
+            "description": "Currently, a JSON list of items is requested.",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "items_json_url": {
+            "title": "Items to be filtered (URL)",
+            "description": "Currently, a JSON list of items is requested.",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "csv_url": {
+            "title": "Items to be filtered (URL)",
+            "description": "Currently, a CSV file is requested.",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "keep": {
+            "title": "Which values of which attributes",
+            "description": "JSON dictionary of the form 'attribute-name': [list of attribute values]...",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "comment": {
+            "title": "Comment",
+            "description": "Arbitrary string that will not be processed but returned, for user\"s convenience.",
+            "schema": {"type": "string"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["comment"]
+        }
+    },
+    "outputs": {
+        "filtered_data": {
+            "title": "Filtered data",
+            "description": "blablabla.",
+            "schema": {
+                "type": "object",
+                "contentMediaType": "application/json"
+            }
+        }
+    },
+    "example": {
+        "inputs": {
+            "items_json_url": "https://example.com/download/some.json",
+            "keep": {"downstream_segments": [561603988, 561707768, 559889880]},
+            "return_json": true
+        }
+    }
+}
