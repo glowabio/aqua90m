@@ -89,7 +89,7 @@ def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id, return_
     # Input: CSV
     # Output: JSON or CSV (but ugly CSV... as we have to store entire paths in one column.)
     everything = []
-    already_computed = set()
+    subc_id_site_id = {}
 
     # Iterate over all rows: # TODO: Looping may not be the best...
     i = 0
@@ -142,8 +142,9 @@ def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id, return_
             # Outlet has the id minus-basin!
             outlet_id = -basin_id
 
-            if str(subc_id) in already_computed:
+            if str(subc_id) in subc_id_site_id.keys():
                 LOGGER.debug('(%s) Not computing for site %s: Downstream segments already computed for subc_id %s' % (i, site_id, subc_id))
+                subc_id_site_id[str(subc_id)].append(site_id)
                 continue
 
             else:
@@ -153,9 +154,11 @@ def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id, return_
                 outlet_id = int(outlet_id)
                 basin_id = int(basin_id)
                 reg_id = int(reg_id)
-                LOGGER.debug('(%s) Computing downstream segments for site %s / for subc_id %s' % (i, site_id, subc_id))
+                LOGGER.log(logging.TRACE, '(%s) Computing downstream segments for site %s / for subc_id %s' % (i, site_id, subc_id))
                 segment_ids = get_dijkstra_ids_one(conn, subc_id, outlet_id, reg_id, basin_id, silent=True)
-                already_computed.add(str(subc_id))
+                # Keep the site_id as belonging this subc_id
+                subc_id_site_id[str(subc_id)] = [site_id]
+
 
         # Collect results for this row:
         if return_csv:
@@ -168,6 +171,7 @@ def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id, return_
                 "subc_id": subc_id,
                 "basin_id": basin_id,
                 "reg_id": reg_id,
+                "num_downstream_ids": len(segment_ids),
                 "downstream_segments": segment_ids
             })
 
@@ -176,6 +180,11 @@ def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id, return_
         output_df = pd.DataFrame(everything, columns=['reg_id', 'basin_id', 'subc_id', 'downstream_segments'])
         return output_df
     elif return_json:
+        # Add all the site_ids!
+        LOGGER.debug("Iterating over all %s items in 'everything'..." % len(everything))
+        for item in everything:
+            item["site_ids"] = subc_id_site_id[str(item["subc_id"])]
+            LOGGER.debug('To item %s, added %s site ids: %s' % (item["subc_id"], len(item["site_ids"]), item["site_ids"]))
         output_json = {"downstream_segments_for_all_sites": everything}
         return output_json
 
