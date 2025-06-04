@@ -25,30 +25,30 @@
     "inputs": {
         "items_json": {
             "title": "Items to be filtered (POST)",
-            "description": "Currently, a JSON list of items is requested.",
+            "description": "A JSON list of items which all have the attributes based on which to filter. Directly pass the JSON in the HTTP POST payload.",
             "schema": {"type": "string"},
             "minOccurs": 1,
             "maxOccurs": 1,
             "metadata": null,
-            "keywords": []
+            "keywords": ["json"]
         },
         "items_json_url": {
             "title": "Items to be filtered (URL)",
-            "description": "Currently, a JSON list of items is requested.",
+            "description": "A JSON list of items which all have the attributes based on which to filter. Please pass a URL to a JSON file.",
             "schema": {"type": "string"},
             "minOccurs": 1,
             "maxOccurs": 1,
             "metadata": null,
-            "keywords": []
+            "keywords": ["json"]
         },
         "csv_url": {
             "title": "Items to be filtered (URL)",
-            "description": "Currently, a CSV file is requested.",
+            "description": "Currently, a CSV file cannot be filtered yet. WIP.",
             "schema": {"type": "string"},
             "minOccurs": 1,
             "maxOccurs": 1,
             "metadata": null,
-            "keywords": []
+            "keywords": ["csv"]
         },
         "keep": {
             "title": "Which values of which attributes",
@@ -72,7 +72,7 @@
     "outputs": {
         "filtered_data": {
             "title": "Filtered data",
-            "description": "blablabla.",
+            "description": "The complete input list, but the values of the given attributes which are not in the list to be kept are removed.",
             "schema": {
                 "type": "object",
                 "contentMediaType": "application/json"
@@ -83,7 +83,7 @@
         "inputs": {
             "items_json_url": "https://example.com/download/some.json",
             "keep": {"downstream_segments": [561603988, 561707768, 559889880]},
-            "return_json": true
+            "comment": "only keep some downstream segments."
         }
     }
 }

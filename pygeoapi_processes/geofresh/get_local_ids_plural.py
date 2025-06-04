@@ -220,13 +220,13 @@ class LocalIdGetterPlural(BaseProcessor):
                     conn, LOGGER, input_df, colname_subc_id, colname_site_id)
 
             elif 'subc_id' in which_ids:
-                output_df = basic_queries.get_subcid_basinid_regid_for_all_1csv(
+                output_df = basic_queries.get_subcid_basinid_regid_for_all_1csv( # TODO: make int!
                     conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
             elif 'basin_id' in which_ids:
-                output_df = basic_queries.get_basinid_regid_for_all_1csv(
+                output_df = basic_queries.get_basinid_regid_for_all_1csv(# TODO: make int!
                     conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
             elif 'reg_id' in which_ids:
-                output_df = basic_queries.get_regid_for_all_1csv(
+                output_df = basic_queries.get_regid_for_all_1csv(# TODO: make int!
                     conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
 
         else:
@@ -249,7 +249,8 @@ class LocalIdGetterPlural(BaseProcessor):
                     self.download_dir,
                     self.download_url)
 
-                output_dict_with_url['comment'] = comment
+                if comment is not None:
+                    output_dict_with_url['comment'] = comment
 
                 return 'application/json', output_dict_with_url
             else:
@@ -259,7 +260,8 @@ class LocalIdGetterPlural(BaseProcessor):
 
         ## Return JSON:
         elif output_json is not None:
-            output_json['comment'] = comment
+            if comment is not None:
+                output_json['comment'] = comment
 
             if do_return_link:
                 output_dict_with_url =  utils.store_to_json_file('local_ids', output_json,

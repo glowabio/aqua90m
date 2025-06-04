@@ -4,7 +4,7 @@
     "use_case": "hydrography90m",
     "title": {"en": "Filter by attribute"},
     "description": {
-        "en": "Filter..."
+        "en": "Filter a list of items by attribute. Only keep those items of the list that have one of the values of that attribute."
     },
     "jobControlOptions": ["sync-execute", "async-execute"],
     "keywords": ["subcatchment", "GeoFRESH", "hydrography90m"],
@@ -33,8 +33,8 @@
             "keywords": []
         },
         "keep": {
-            "title": "Bla",
-            "description": "Bla....",
+            "title": "Which values of which attributes",
+            "description": "JSON dictionary of the form 'attribute-name': [list of attribute values]...",
             "schema": {"type": "string"},
             "minOccurs": 1,
             "maxOccurs": 1,
@@ -54,7 +54,7 @@
     "outputs": {
         "filtered_data": {
             "title": "Filtered data",
-            "description": "blablabla.",
+            "description": "The input list, but without the items whose values for the given attributes do not fall into the given list.",
             "schema": {
                 "type": "object",
                 "contentMediaType": "application/json"
@@ -63,10 +63,9 @@
     },
     "example": {
         "inputs": {
-            "lon": "9.931555",
-            "lat": "54.695070",
-            "which_ids": "reg_id,basin_id,subc_id",
-            "comment": "located in schlei area"
+            "csv_url": "https://example.com/spdata.csv",
+            "keep": {"species": ["Salaria fluviatilis", "Squalius peloponensis"]},
+            "comment": "filtering fish species"
         }
     }
 }

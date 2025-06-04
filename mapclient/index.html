@@ -55,7 +55,7 @@ integrity=
   </select>
   <label><input type="checkbox" id="stylingStrahlerToggle" checked>Style depending on <strong>strahler</strong> order</label>
   <div>(please choose!)...</div>
-  <p>
+  <p id="scrollToTop">
     <span class="greynote">Note: Computing may take some time, depending on catchment size!</span>
     <br />
     <span class="greynote">Note: In case you click to a headwater, no upstream catchment is provided, as no upstream exists...</span>
@@ -154,10 +154,15 @@ integrity=
   </table>
 
 
-  <!-- Text field -->
+  <!-- Text field for response -->
   <h3>Response returned by server:</h3>
   <p id="responseField">Response returned by server:</p>
   <p><textarea id="displayGeoJSON" class="codeblock" rows="20", cols="120">(Result GeoJSON will be displayed here)</textarea></p>
+
+  <!-- Text field for adding custom GeoJSON -->
+  <h3>Enter GeoJSON:</h3>
+  <textarea id="customGeoJsonArea" class="codeblock" rows="5" cols="120" placeholder='Paste valid GeoJSON here'></textarea>
+  <button id="customGeoJsonButton">Display on map</button>
 
   <h3>Data sources</h3>
   <p>The data based on which the above functionalities are computed is the <strong>Hydrography90m dataset</strong> (see <a href="https://hydrography.org">hydrography.org</a>), especially the vector layers contained in the <strong>GeoFRESH database</strong> (see <a href="https://geofresh.org">geofresh.org</a>):
@@ -214,6 +219,11 @@ integrity=
     //        }
     //    }
     //}).addTo(map);
+
+
+    ///////////////////////////////////////////////
+    ////// Functions for colouring / styling //////
+    ///////////////////////////////////////////////
 
     // Colour conversion function for strahler-colouring.
     // TODO: Move to separate javascript and import
@@ -493,6 +503,11 @@ integrity=
       }
     };
 
+
+    ///////////////////////////////////////////////
+    ////// Functions for making OGC requests //////
+    ///////////////////////////////////////////////
+
     // Define making request to OGC service (function):
     var ogcRequestTwoCoordinatePairs = function(clickMarker, lon1, lat1, lon2, lat2) {
 
@@ -603,7 +618,9 @@ integrity=
           console.log('Zoomed to layer...');
           clickMarker.closePopup();
 
-          // TODO: Move web page to map!
+          // Move web page to map!
+          document.getElementById("scrollToTop").scrollIntoView();
+
           // Write GeoJSON into field so that user can copy-paste it:
           var prettyResponse = JSON.stringify(xhrPygeo.response, null, 2); // spacing level = 2
           document.getElementById("displayGeoJSON").innerHTML = prettyResponse;
@@ -614,30 +631,39 @@ integrity=
         xhrPygeo.send(payload_inputs_json);
     }
 
+    ////////////////////////////////////
+    ////// Define button behaviour /////
+    ////////////////////////////////////
+
     // Define button behaviour (function):
+    // Button clicked by user after entering their own coordinates (one pair)
     var buttonClickBehaviourOnePair = function(lon1, lat1){
       console.log("Clicked button for one coordinate pair: "+lon1+", "+lat1+" (lon, lat, WGS84)");
 
       // Add icon and popup to click location:
       clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button", false);
+      document.getElementById("scrollToTop").scrollIntoView();
 
       // Construct and send HTTP request to OGC service:
       ogcRequestOneCoordinatePair(clickMarker, lon1, lat1);
     }
 
     // Define button behaviour (function):
+    // Button clicked by user after entering their own coordinates (two pairs, e.g. routing)
     var buttonClickBehaviourTwoPairs = function(lon1, lat1, lon2, lat2){
       console.log("Clicked button for two coordinate pairs: "+lon1+", "+lat1+" and "+lon2+", "+lat2+" (lon, lat, WGS84)");
 
       // Add icon and popup to click location:
       clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button (part 1)", false);
       clickMarker = putIconToClickLocation(lon2, lat2, map, "clicked on button (part 2)", false);
+      document.getElementById("scrollToTop").scrollIntoView();
 
       // Construct and send HTTP request to OGC service:
       ogcRequestTwoCoordinatePairs(clickMarker, lon1, lat1, lon2, lat2)
     };
 
     // Define behaviour for custom lonlat button (function):
+    // Button clicked by user after entering their own coordinates (one or two pairs)
     var customButtonClickBehaviour = function() {
       console.log("User requested to use their own values...")
       var lon1 = document.getElementById("customLon1").value;
@@ -707,9 +733,38 @@ integrity=
       document.getElementById("customLonLat2").value = newlonlat;
     };
 
+
     ///////////////////////////////
     //// Other Event Listeners ////
     ///////////////////////////////
+
+    // Define event listener for adding custom GeoJSON
+    // First, define a container for GeoJSON layer
+    var geoJsonLayer;
+    // Now, define the behaviour:
+    var eventCustomGeojsonDisplay = function(evt) {
+      try {
+        let input = document.getElementById('customGeoJsonArea').value;
+        let geojson = JSON.parse(input);
+
+        // Remove existing layer if present
+        if (geoJsonLayer) {
+          map.removeLayer(geoJsonLayer);
+        }
+
+        // Add new GeoJSON layer, zoom to bounds
+        geoJsonLayer = L.geoJSON(geojson).addTo(map);
+
+        // Zoom to bounds of new layer, scroll up to map:
+        map.fitBounds(geoJsonLayer.getBounds());
+        //document.getElementById("map").scrollIntoView();
+        document.getElementById("scrollToTop").scrollIntoView();
+        // TODO: Can we add up, instead of removing previous? Then, add a delete button?
+
+      } catch (err) {
+        alert("Invalid GeoJSON:\n" + err.message);
+      }
+    };
 
     // Define event listener for change of process id, so I can switch off/ switch on
     // the buttons for examples (which only work for one-click examples)!
@@ -752,6 +807,10 @@ integrity=
       //}
     }
 
+    ////////////////////////////////////
+    //// Example Buttons: Behaviour ////
+    ////////////////////////////////////
+
     // Define behaviour for example button (function):
     var exampleButtonClickBehaviourOnePair = function() {
       console.log("User requested to use example values...")
@@ -789,6 +848,10 @@ integrity=
       };
       _defineExampleButtons(examples, true)
     }
+
+    //////////////////////////////////
+    //// Generate Example Buttons ////
+    //////////////////////////////////
 
     // Define programatically content/text of buttons:
     var defineOneClickExampleButtons = function() {
@@ -901,6 +964,10 @@ integrity=
       }
     }
 
+    ///////////////////////////////
+    //// Other functions ////
+    ///////////////////////////////
+
     // Function to add a grey marker, and a pop-up, to a location on the map
     var putIconToClickLocation = function(lon1, lat1, map, actionDone, askToClickAgain) {
       console.log("User "+actionDone+" (coordinates: "+lon1+", "+lat1+" (lon, lat, WGS84)");
@@ -997,6 +1064,11 @@ integrity=
       document.getElementById("displayGeoJSON").innerHTML = "";
     }
 
+
+    //////////////////////////////////////////
+    //// Define buttons and add behaviour ////
+    //////////////////////////////////////////
+
     // Run the button content/text definition:
     defineOneClickExampleButtons();
 
@@ -1016,6 +1088,9 @@ integrity=
     document.getElementById("customLonLat2").addEventListener('input', eventLonLat2Changed);
     document.getElementById("customLon2").addEventListener('input', eventLon2Changed);
     document.getElementById("customLat2").addEventListener('input', eventLat2Changed);
+
+    // When a user clicks the button to display custom GeoJSON
+    document.getElementById('customGeoJsonButton').addEventListener('click', eventCustomGeojsonDisplay);
 
     // Bind map click behaviour to the map click event:
     console.log('Waiting for user to click to get a coordinate...');
