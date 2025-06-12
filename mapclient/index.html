@@ -123,6 +123,21 @@ integrity=
       </td>
       <td class="fortwo invisible">e.g. <span class="code">9.17, 52.95</span></td>
     </tr>
+    <tr>
+      <td>Subcatchment id:</td>
+      <td>
+        <input type="text" id="customSubc1" value=""
+          onfocus="if(this.value==''){ this.value='507044912'; this.style.color='#000';} else {this.style.color='#000';}"
+          style="color:#BBB;" />
+      </td>
+      <td>e.g. <span class="code">507044912</span></td>
+      <td class="fortwo invisible">
+        <input type="text" id="customSubc2" value=""
+          onfocus="if(this.value==''){ this.value='506924326'; this.style.color='#000';} else {this.style.color='#000';}"
+          style="color:#BBB;" />
+      </td>
+      <td class="fortwo invisible">e.g. <span class="code">506924326</span></td>
+    </tr>
   </table>
   <!-- Behaviour is defined programmatically further below -->
   <p><button id="customLonlatButton">Use these values!</button> (The result will be displayed in the map above)</p>
@@ -653,47 +668,160 @@ integrity=
     ////// Define button behaviour /////
     ////////////////////////////////////
 
-    // Define button behaviour (function):
-    // Button clicked by user after entering their own coordinates (one pair)
-    var buttonClickBehaviourOnePair = function(lon1, lat1){
-      console.log("Clicked button for one coordinate pair: "+lon1+", "+lat1+" (lon, lat, WGS84)");
-
-      // Add icon and popup to click location:
-      clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button", false);
-      document.getElementById("scrollToTop").scrollIntoView();
-
-      // Construct and send HTTP request to OGC service:
-      ogcRequestOneCoordinatePair(clickMarker, lon1, lat1);
-    }
-
-    // Define button behaviour (function):
-    // Button clicked by user after entering their own coordinates (two pairs, e.g. routing)
-    var buttonClickBehaviourTwoPairs = function(lon1, lat1, lon2, lat2){
-      console.log("Clicked button for two coordinate pairs: "+lon1+", "+lat1+" and "+lon2+", "+lat2+" (lon, lat, WGS84)");
-
-      // Add icon and popup to click location:
-      clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button (part 1)", false);
-      clickMarker = putIconToClickLocation(lon2, lat2, map, "clicked on button (part 2)", false);
-      document.getElementById("scrollToTop").scrollIntoView();
-
-      // Construct and send HTTP request to OGC service:
-      ogcRequestTwoCoordinatePairs(clickMarker, lon1, lat1, lon2, lat2)
-    };
-
     // Define behaviour for custom lonlat button (function):
     // Button clicked by user after entering their own coordinates (one or two pairs)
     var customButtonClickBehaviour = function() {
       console.log("User requested to use their own values...")
+
+      // Get first (and only?) pair of coordinates:
       var lon1 = document.getElementById("customLon1").value;
       var lat1 = document.getElementById("customLat1").value;
+
+      // Should we use subc_id instead of coordinates?
+      var subcid1 = document.getElementById("customSubc1").value;
+      var use_subcid1 = false;
+      if (subcid1 === "") {
+        console.log("Found no subcid1: "+ subcid1);
+      } else {
+        console.log("Found a subcid1: "+subcid1);
+        use_subcid1 = true;
+        subcid1 = parseInt(subcid1);
+      }
+
+      // Which process? Does it need one or two input coordinate pairs?
       var dropdown = document.getElementById("processes");
       let pairs = dropdown.options[dropdown.selectedIndex].dataset.pairs;
       if (pairs == "one") {
-        buttonClickBehaviourOnePair(lon1, lat1);
+
+        if (!use_subcid1) {
+          console.log("Clicked button for one coordinate pair: "+lon1+", "+lat1+" (lon, lat, WGS84)");
+          clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button", false);
+          document.getElementById("scrollToTop").scrollIntoView();
+          // Construct and send HTTP request to OGC service:
+          ogcRequestOneCoordinatePair(clickMarker, lon1, lat1);
+
+        } else {
+          console.log("Clicked button for one subcid "+subcid1+".");
+          // We have no click location... Putting it to a corner of the map, but it will stay at that map location...
+          // TODO: Can we later move the clickmarker somewhere?
+          //let northEast = map.getBounds().getNorthEast();
+          //console.log("map getBounds: "+map.getBounds());
+          //let lat = northEast.lat;
+          //let lon = northEast.lng;
+          //console.log('Map Northeast: '+lon+', '+lat);
+          //clickMarker = putIconToClickLocation(lon, lat, map, "entered a subc_id (location unknown)", false);
+          clickMarker = putIconToClickLocation(null, null, map, "entered a subc_id (location unknown)", false);
+          // Reset result field:
+          document.getElementById("responseField").innerHTML = "Response returned by server for subc_id <span class=\"code\">"+subcid1+"</span>...";
+          document.getElementById("displayGeoJSON").innerHTML = "waiting..."
+          // Construct and send HTTP request to OGC service:
+          // Param string for logging
+          var logstring = "subcid="+subcid1;
+          // Define JSON payload and send:
+          var payload_inputs_json = JSON.stringify({"inputs":{"subc_id":subcid1}})
+          _ogcRequest(clickMarker, payload_inputs_json, logstring) ;
+        }
+
       } else if (pairs == "two") {
+
+        // Get second pair of coordinates:
         var lon2 = document.getElementById("customLon2").value;
         var lat2 = document.getElementById("customLat2").value;
-        buttonClickBehaviourTwoPairs(lon1, lat1, lon2, lat2);
+
+        // Should we use subc_id instead of coordinates?
+        var subcid2 = document.getElementById("customSubc2").value;
+        var use_subcid2 = false;
+        if (subcid2 === "") {
+          console.log("Found no subcid2: "+ subcid2);
+        } else {
+          console.log("Found a subcid2: "+subcid2);
+          use_subcid2 = true;
+          subcid2 = parseInt(subcid2);
+        }
+
+        // Two coordinates:
+        if (!use_subcid1 && !use_subcid2) {
+          //buttonClickBehaviourTwoPairs(lon1, lat1, lon2, lat2); WIPPP
+          console.log("Clicked button for two coordinate pairs: "+lon1+", "+lat1+" and "+lon2+", "+lat2+" (lon, lat, WGS84)");
+          // Add icon and popup to click location:
+          clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button (part 1)", false);
+          clickMarker = putIconToClickLocation(lon2, lat2, map, "clicked on button (part 2)", false);
+          document.getElementById("scrollToTop").scrollIntoView();
+          // Construct and send HTTP request to OGC service:
+          ogcRequestTwoCoordinatePairs(clickMarker, lon1, lat1, lon2, lat2);
+
+        // Two subcids:
+        } else if (use_subcid1 && use_subcid2) {
+          console.log("Clicked button for two subcids: "+subcid1+", "+subcid2+".");
+          // We have no click location... Putting it to a corner of the map, but it will stay at that map location...
+          // TODO: Can we later move the clickmarker somewhere?
+          let northEast = map.getBounds().getNorthEast();
+          let lat = northEast.lat;
+          let lon = northEast.lng;
+          console.log('Map Northeast: '+lon+', '+lat)
+          clickMarker = putIconToClickLocation(lon, lat, map, "entered two subc_ids (location unknown)", false);
+          // Reset result field:
+          document.getElementById("responseField").innerHTML = "Response returned by server for subc_id <span class=\"code\">"+subcid1+"</span> to <span class=\"code\">"+subcid2+"...";
+          document.getElementById("displayGeoJSON").innerHTML = "waiting..."
+          // Construct and send HTTP request to OGC service:
+          // Param string for logging
+          var logstring = "subcid1="+subcid1+",subcid2="+subcid2;
+          // Define JSON payload and send:
+          var payload_inputs_json = JSON.stringify({"inputs":{"subc_id_start":subcid1, "subc_id_end": subcid2}})
+          _ogcRequest(clickMarker, payload_inputs_json, logstring);
+
+        // Mixed 1
+        } else if (use_subcid1 && !use_subcid2) { WIP
+          // Param string for logging
+          var logstring = "subcid1="+subcid1+",lon2="+lon2+",lat2="+lat2;
+          console.log("Clicked button for mixed: "+logstring+".");
+
+          // We have no click location... Putting it to a corner of the map, but it will stay at that map location...
+          // TODO: Can we later move the clickmarker somewhere?
+          // WE NEED TWO CLICKMARKERS??? WIP
+          //let northEast = map.getBounds().getNorthEast();
+          //let lat = northEast.lat;
+          //let lon = northEast.lng;
+          //console.log('Map Northeast: '+lon+', '+lat)
+
+          // Use known location for click marker (TODO IMPROVE)
+          clickMarker = putIconToClickLocation(lon2, lat2, map, "entered two subc_ids (location unknown)", false);
+
+          // Reset result field:
+          document.getElementById("responseField").innerHTML = "Response returned by server for subc_id <span class=\"code\">"+subcid1+"</span> to <span class=\"code\">"+lon2+", "+lat2+"</span> (lon, lat, WGS84)...";
+          document.getElementById("displayGeoJSON").innerHTML = "waiting..."
+
+          // Construct and send HTTP request to OGC service:
+          // Define JSON payload and send:
+          var payload_inputs_json = JSON.stringify({"inputs":{"subc_id_start":subcid1, "lon_end": lon2, "lat_end": lat2}})
+          _ogcRequest(clickMarker, payload_inputs_json, logstring);
+
+        // Mixed 2:
+        } else if (!use_subcid1 && use_subcid2) {
+          var logstring = "lon1="+lon1+",lat1="+lat1+",subcid2="+subcid2;
+          console.log("Clicked button for mixed: "+logstring+".");
+
+          // We have no click location... Putting it to a corner of the map, but it will stay at that map location...
+          // TODO: Can we later move the clickmarker somewhere?
+          // WE NEED TWO CLICKMARKERS??? WIP
+          //let northEast = map.getBounds().getNorthEast();
+          //let lat = northEast.lat;
+          //let lon = northEast.lng;
+          //console.log('Map Northeast: '+lon+', '+lat)
+          // Param string for logging
+
+          // Use known location for click marker (TODO IMPROVE)
+          clickMarker = putIconToClickLocation(lon1, lat1, map, "entered mixed "+logstring, false);
+
+          // Reset result field:
+          document.getElementById("responseField").innerHTML = "Response returned by server for <span class=\"code\">"+lon1+", "+lat1+"</span> (lon, lat, WGS84) to subc_id <span class=\"code\">"+subcid2+"</span>...";
+          document.getElementById("displayGeoJSON").innerHTML = "waiting..."
+
+          // Construct and send HTTP request to OGC service:
+          // Define JSON payload and send:
+          var payload_inputs_json = JSON.stringify({"inputs":{"lon_start": lon1, "lat_start": lat1, "subc_id_end":subcid2}})
+          _ogcRequest(clickMarker, payload_inputs_json, logstring);
+        }
       }
     }
 
@@ -701,54 +829,105 @@ integrity=
     //// Event Listeners for connecting the lon, lat input boxes ////
     /////////////////////////////////////////////////////////////////
 
-    // Define event listeners for custom lon and lat
-    var eventLonLatChanged = function(evt) {
+    // If lonlat is changed by user, also change lon and lat:
+    var eventLonLat1Changed = function(evt) {
       var temp = this.value.split(",");
       var newlon = parseFloat(temp[0]);
       var newlat = parseFloat(temp[1]);
       document.getElementById("customLon1").value = newlon;
       document.getElementById("customLat1").value = newlat;
+      document.getElementById("customSubc1").value = "";
     };
 
-    // Define event listeners for custom lon and lat
-    var eventLonChanged = function(evt) {
+    // If lon is changed by the user, also change lonlat
+    var eventLon1Changed = function(evt) {
       var newlon = parseFloat(this.value);
       var oldlonlat = document.getElementById("customLonLat1").value;
-      var newlonlat = newlon+', '+oldlonlat.split(",")[1];
+      if (oldlonlat === "") { oldlonlat = "undefined,undefined" };
+      var oldlat = oldlonlat.split(",")[1]
+      var newlonlat = newlon+', '+oldlat;
+      // This adds more and more spaces, so we remove double whitespace:
+      newlonlat = newlonlat.replace("  ", " ");
       document.getElementById("customLonLat1").value = newlonlat;
+      document.getElementById("customSubc1").value = "";
     };
 
-    // Define event listeners for custom lon and lat
+    // If lat is changed by the user, also change lonlat
     var eventLatChanged = function(evt) {
       var newlat = parseFloat(this.value);
       var oldlonlat = document.getElementById("customLonLat1").value;
-      var newlonlat = oldlonlat.split(",")[0]+', '+newlat;
+      if (oldlonlat === "") { oldlonlat = "undefined,undefined" };
+      var oldlon = oldlonlat.split(",")[0]
+      var newlonlat = oldlon+', '+newlat;
       document.getElementById("customLonLat1").value = newlonlat;
+      document.getElementById("customSubc1").value = "";
     };
 
-    // Define event listeners for custom lon and lat
+    // If the user adds a subc_id, remove all lon/lat coords:
+    var eventSubcid1Changed = function(evt) {
+      if (this.value == "") {
+        console.log("FIRED: eventSubcid1Changed, with no value.");
+      } else {
+        console.log("FIRED: eventSubcid1Changed, with value "+this.value+" (now parsing to int).");
+        var newsubcid = parseInt(this.value);
+        document.getElementById("customSubc1").value = newsubcid;
+        // No more coordinates:
+        document.getElementById("customLon1").value = "";
+        document.getElementById("customLat1").value = "";
+        document.getElementById("customLonLat1").value = "";
+      }
+    };
+
+    // When a user focuses on a coordinate field, empty the subcatchment field!
+    var eventCoord1Focus = function(evt) {
+      document.getElementById("customSubc1").value = "";
+    };
+    var eventCoord2Focus = function(evt) {
+      document.getElementById("customSubc2").value = "";
+    };
+
+    // Same for the second set, which is usually invisible, unless
+    // when a process is selected that needs two locations (routing)
     var eventLonLat2Changed = function(evt) {
       var temp = this.value.split(",");
       var newlon = parseFloat(temp[0]);
       var newlat = parseFloat(temp[1]);
       document.getElementById("customLon2").value = newlon;
       document.getElementById("customLat2").value = newlat;
+      document.getElementById("customSubc2").value = "";
     };
 
-    // Define event listeners for custom lon and lat
     var eventLon2Changed = function(evt) {
       var newlon = parseFloat(this.value);
       var oldlonlat = document.getElementById("customLonLat2").value;
+      if (oldlonlat === "") { oldlonlat = "undefined,undefined" };
       var newlonlat = newlon+', '+oldlonlat.split(",")[1];
       document.getElementById("customLonLat2").value = newlonlat;
+      document.getElementById("customSubc2").value = "";
     };
 
     // Define event listeners for custom lon and lat
     var eventLat2Changed = function(evt) {
       var newlat = parseFloat(this.value);
       var oldlonlat = document.getElementById("customLonLat2").value;
+      if (oldlonlat === "") { oldlonlat = "undefined,undefined" };
       var newlonlat = oldlonlat.split(",")[0]+', '+newlat;
       document.getElementById("customLonLat2").value = newlonlat;
+      document.getElementById("customSubc2").value = "";
+    };
+
+    var eventSubcid2Changed = function(evt) {
+      if (this.value == "") {
+        console.log("FIRED: eventSubcid2Changed, with no value.");
+      } else {
+        console.log("FIRED: eventSubcid2Changed, with value "+this.value+" (now parsing to int).");
+        var newsubcid = parseInt(this.value);
+        document.getElementById("customSubc2").value = newsubcid;
+        // No more coordinates:
+        document.getElementById("customLon2").value = "";
+        document.getElementById("customLat2").value = "";
+        document.getElementById("customLonLat2").value = "";
+      }
     };
 
 
@@ -838,7 +1017,13 @@ integrity=
       var lon1 = caller.getAttribute("thislon");
       var lat1 = caller.getAttribute("thislat");
       console.log("Example coordinate pair: "+lon1+", "+lat1+" (lon, lat, WGS84)")
-      buttonClickBehaviourOnePair(lon1, lat1);
+      //buttonClickBehaviourOnePair(lon1, lat1);
+      console.log("Clicked button for one coordinate pair: "+lon1+", "+lat1+" (lon, lat, WGS84)");
+      // Add icon and popup to click location:
+      clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button", false);
+      document.getElementById("scrollToTop").scrollIntoView();
+      // Construct and send HTTP request to OGC service:
+      ogcRequestOneCoordinatePair(clickMarker, lon1, lat1);
     }
 
     // Define behaviour for example button (function):
@@ -852,7 +1037,14 @@ integrity=
       var lon2 = caller.getAttribute("thislon2");
       var lat2 = caller.getAttribute("thislat2");
       console.log("Example coordinate pairs: "+lon1+", "+lat1+" and "+lon2+", "+lat2+" (lon, lat, WGS84)")
-      buttonClickBehaviourTwoPairs(lon1, lat1, lon2, lat2);
+      //buttonClickBehaviourTwoPairs(lon1, lat1, lon2, lat2);
+      console.log("Clicked button for two coordinate pairs: "+lon1+", "+lat1+" and "+lon2+", "+lat2+" (lon, lat, WGS84)");
+      // Add icon and popup to click location:
+      clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button (part 1)", false);
+      clickMarker = putIconToClickLocation(lon2, lat2, map, "clicked on button (part 2)", false);
+      document.getElementById("scrollToTop").scrollIntoView();
+      // Construct and send HTTP request to OGC service:
+      ogcRequestTwoCoordinatePairs(clickMarker, lon1, lat1, lon2, lat2)
     }
 
     // Define programatically content/text of buttons:
@@ -989,19 +1181,32 @@ integrity=
     // Function to add a grey marker, and a pop-up, to a location on the map
     var putIconToClickLocation = function(lon1, lat1, map, actionDone, askToClickAgain) {
       console.log("User "+actionDone+" (coordinates: "+lon1+", "+lat1+" (lon, lat, WGS84)");
-      var lon1 = parseFloat(lon1);
-      var lat1 = parseFloat(lat1);
-
-      // Icon for user-clicks
       var iconheight = 30;
       var iconwidth = 0.61*iconheight;
+
+      if (lon1 === null) {
+        var latlon = map.getCenter();
+        var logstring = "no coord chosennn, using map centre..."+latlon;
+        console.log("LOGGISRING "+logstring);
+        var iconUrl = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; // 1x1 transparent gif
+        var iconSize = [1, 1]; // minimal size
+      } else {
+        var lon1 = parseFloat(lon1);
+        var lat1 = parseFloat(lat1);
+        var latlon = [lat1, lon1];
+        var logstring = lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat)...";
+        var iconSize = [iconwidth, iconheight];
+        var iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png';
+      }
+
+      // Icon for user-clicks
       var clickIcon = L.icon({
         iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png',
-        iconSize: [iconwidth, iconheight],
+        iconSize: iconSize,
         iconAnchor: [iconwidth*0.5, iconheight], // from top left corner: go half-width to right, full-height to bottom 
         popupAnchor: [0, -iconheight-5] // where iconAnchor is, go full-height to top plus 5 pixels
       });
-      let clickMarker = L.marker([lat1, lon1], {icon: clickIcon}).addTo(map);
+      let clickMarker = L.marker(latlon, {icon: clickIcon}).addTo(map);
       allMyIcons.push(clickMarker);
 
       // Add Popup to user-click
@@ -1010,7 +1215,7 @@ integrity=
       if (askToClickAgain) {
         clickMarker.bindPopup("You selected "+lookingfor+", so please click another time!").openPopup();
       } else {
-        clickMarker.bindPopup("Waiting for "+lookingfor+" for "+lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat)...").openPopup();
+        clickMarker.bindPopup("Waiting for "+lookingfor+" for "+logstring).openPopup();
       }
       console.log("When clicked, this process was selected: "+dropdown.value+"...");
       return (clickMarker);
@@ -1100,12 +1305,24 @@ integrity=
     document.getElementById("processes").addEventListener('input', eventProcessChanged);
 
     // When a user modifies text fields "lon", "lat" or "lon,lat", modify the others accordinly:
-    document.getElementById("customLonLat1").addEventListener('input', eventLonLatChanged);
-    document.getElementById("customLon1").addEventListener('input', eventLonChanged);
+    document.getElementById("customLonLat1").addEventListener('input', eventLonLat1Changed);
+    document.getElementById("customLon1").addEventListener('input', eventLon1Changed);
     document.getElementById("customLat1").addEventListener('input', eventLatChanged);
     document.getElementById("customLonLat2").addEventListener('input', eventLonLat2Changed);
     document.getElementById("customLon2").addEventListener('input', eventLon2Changed);
     document.getElementById("customLat2").addEventListener('input', eventLat2Changed);
+    // When a user modifies/focuses the subcatchment id field, remove the coordinates:
+    document.getElementById("customSubc1").addEventListener('input', eventSubcid1Changed);
+    document.getElementById("customSubc1").addEventListener('focus', eventSubcid1Changed);
+    document.getElementById("customSubc2").addEventListener('input', eventSubcid2Changed);
+    document.getElementById("customSubc2").addEventListener('focus', eventSubcid2Changed);
+    // When a user focuses back on coordinates, remove the subcatchment fields:
+    document.getElementById("customLonLat1").addEventListener('focus', eventCoord1Focus);
+    document.getElementById("customLon1").addEventListener('focus', eventCoord1Focus);
+    document.getElementById("customLat1").addEventListener('focus', eventCoord1Focus);
+    document.getElementById("customLonLat2").addEventListener('focus', eventCoord2Focus);
+    document.getElementById("customLon2").addEventListener('focus', eventCoord2Focus);
+    document.getElementById("customLat2").addEventListener('focus', eventCoord2Focus);
 
     // When a user clicks the button to display custom GeoJSON
     document.getElementById('customGeoJsonButton').addEventListener('click', eventCustomGeojsonDisplay);
