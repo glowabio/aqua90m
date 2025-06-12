@@ -570,6 +570,24 @@ integrity=
         xhrPygeo.responseType = 'json';
 
         // Define behaviour for HTTP request:
+        // First, error message (e.g. on HTTP 405 / CORS error):
+        xhrPygeo.onerror = function() {
+          console.error("Request failed.");
+          if (xhrPygeo.status === 405) {
+            console.error("Method Not Allowed (405) - likely OPTIONS request failed");
+            clickMarker.bindPopup("HTTP request to service failed (HTTP "+xhrPygeo.status+"). Sorry for that.");
+          } else if (xhrPygeo.status === 0) {
+            console.error("We got status 0: Request failed or blocked (likely preflight failure)");
+            clickMarker.bindPopup("HTTP request to service failed or blocked, probably a network problem or CORS error. Sorry for that.");
+          }
+          document.getElementById("displayGeoJSON").innerHTML = "nothing to display"
+        };
+
+        xhrPygeo.onreadystatechange = function () {
+          if (xhrPygeo.readyState === XMLHttpRequest.DONE) {
+            console.log("Request done with status:", xhrPygeo.status);
+          }
+        };
         xhrPygeo.onload = function() {
           console.log("Returning from OGC process: "+processId+"...");
           
