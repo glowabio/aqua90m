@@ -76,14 +76,14 @@ integrity=
       <td>
         <input type="text" id="customLon1" value="9.0409"
           onblur="if(this.value==''){ this.value='9.0409'; this.style.color='#BBB';}"
-          onfocus="if(this.value=='9.17'){ this.value='9.0409'; this.style.color='#000';}"
+          onfocus="if(this.value==''){ this.value='9.0409'; this.style.color='#000';} else {this.style.color='#000';}"
           style="color:#BBB;" />
       </td>
-      <td>e.g. <span class="code">9.17</span></td>
+      <td>e.g. <span class="code">9.0409</span></td>
       <td class="fortwo invisible">
         <input type="text" id="customLon2" value="8.99853"
           onblur="if(this.value==''){ this.value='8.99853'; this.style.color='#BBB';}"
-          onfocus="if(this.value=='9.17'){ this.value='8.99853'; this.style.color='#000';}"
+          onfocus="if(this.value==''){ this.value='8.99853'; this.style.color='#000';} else {this.style.color='#000';}"
           style="color:#BBB;" />
       </td>
       <td class="fortwo invisible">e.g. <span class="code">9.17</span></td>
@@ -93,14 +93,14 @@ integrity=
       <td>
         <input type="text" id="customLat1" value="52.7769"
           onblur="if(this.value==''){ this.value='52.7769'; this.style.color='#BBB';}"
-          onfocus="if(this.value=='9.17'){ this.value='52.7769'; this.style.color='#000';}"
+          onfocus="if(this.value==''){ this.value='52.7769'; this.style.color='#000';} else {this.style.color='#000';}"
           style="color:#BBB;" />
       </td>
       <td>e.g. <span class="code">52.95</span></td>
       <td class="fortwo invisible">
         <input type="text" id="customLat2" value="52.799"
           onblur="if(this.value==''){ this.value='52.799'; this.style.color='#BBB';}"
-          onfocus="if(this.value=='9.17'){ this.value='52.799'; this.style.color='#000';}"
+          onfocus="if(this.value==''){ this.value='52.799'; this.style.color='#000';} else {this.style.color='#000';}"
           style="color:#BBB;" />
       </td>
       <td class="fortwo invisible">e.g. <span class="code">52.95</span></td>
@@ -110,14 +110,15 @@ integrity=
       <td>
         <input type="text" id="customLonLat1" value="9.0409, 52.7769"
           onblur="if(this.value==''){ this.value='9.0409, 52.7769'; this.style.color='#BBB';}"
-          onfocus="if(this.value=='9.0409, 52.7769'){ this.value='9.0409, 52.7769'; this.style.color='#000';}"
+          onfocus="if(this.value==''){ this.value='9.0409, 52.7769'; this.style.color='#000';} else {this.style.color='#000';}"
+          onfocus="{ this.style.color='#000';}"
           style="color:#BBB;" />
       </td>
       <td>e.g. <span class="code">8.99853, 52.799</span></td>
       <td class="fortwo invisible">
         <input type="text" id="customLonLat2" value="8.99853, 52.799"
           onblur="if(this.value==''){ this.value='8.99853, 52.799'; this.style.color='#BBB';}"
-          onfocus="if(this.value=='8.99853, 52.799'){ this.value='8.99853, 52.799'; this.style.color='#000';}"
+          onfocus="if(this.value==''){ this.value='8.99853, 52.799'; this.style.color='#000';} else {this.style.color='#000';}"
           style="color:#BBB;" />
       </td>
       <td class="fortwo invisible">e.g. <span class="code">9.17, 52.95</span></td>
@@ -536,7 +537,7 @@ integrity=
     var ogcRequestOneCoordinatePair = function(clickMarker, lon1, lat1) {
 
         // Reset result field:
-        document.getElementById("responseField").innerHTML = "Response returned by server for lon <span class=\"code\">"+lon1+", "+lat1+"</span> (lon, lat, WGS84)...";
+        document.getElementById("responseField").innerHTML = "Response returned by server for lon, lat <span class=\"code\">"+lon1+", "+lat1+"</span> (lon, lat, WGS84)...";
         document.getElementById("displayGeoJSON").innerHTML = "waiting..."
 
         // Parse coordinates to Float
@@ -580,7 +581,6 @@ integrity=
             var errmsg = xhrPygeo.response["description"];
             clickMarker.bindPopup(errmsg);
             document.getElementById("displayGeoJSON").innerHTML = errmsg
-
             return
           } else {
             console.log("Oh no: OGC server returned bad HTTP status: "+xhrPygeo.status);
