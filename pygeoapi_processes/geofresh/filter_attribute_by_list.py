@@ -155,7 +155,6 @@ class FilterAttributeByListProcessor(BaseProcessor):
             i = 0
             for item in items_json:
                 i += 1
-                #LOGGER.debug('THIS ITEMMMM: %s' % item)
                 LOGGER.debug('Filtering item %s/%s.' % (i, num_items))
 
                 j = 0
@@ -180,6 +179,7 @@ class FilterAttributeByListProcessor(BaseProcessor):
                     # Overwrite the list...
                     item[keep_attribute] = kept
                     num_val = len(item[keep_attribute])
+                    item["%s_num_filtered" % keep_attribute] = num_val
                     LOGGER.debug('After filtering, "%s" has %s values...' % (keep_attribute, num_val))
 
             # Prepare output:

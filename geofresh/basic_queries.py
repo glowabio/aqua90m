@@ -75,7 +75,7 @@ def get_regid_from_lonlat(conn, LOGGER, lon, lat):
     row = cursor.fetchone()
     if row is None: # Ocean case:
         err_msg = 'No reg_id found for lon %s, lat %s! Is this in the ocean?' % (lon, lat)
-        LOGGER.error(err_msg)
+        LOGGER.warning(err_msg)
         raise exc.GeoFreshNoResultException(err_msg)
 
     else:
@@ -407,6 +407,10 @@ def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname
         # Collect results in list:
         everything.append([site_id, reg_id, basin_id, subc_id])
 
+        # First is string, the others are integers.
+        #LOGGER.debug("Which type are these? site_id %s (%s) reg_id %s (%s) basin_id %s (%s) subc_id %s (%s)" % (
+        #    site_id, type(site_id), reg_id, type(reg_id), basin_id, type(basin_id), subc_id, type(subc_id)))
+
         # This is not really needed, just for logging:
         reg_ids.append(str(reg_id))
         basin_ids.append(str(basin_id))
@@ -414,6 +418,9 @@ def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname
 
     # Finished collecting the results, now make pandas dataframe:
     dataframe = pd.DataFrame(everything, columns=['site_id', 'reg_id', 'basin_id', 'subc_id'])
+
+    # Change them to integers:
+    dataframe[['reg_id', 'basin_id', 'subc_id']] = dataframe[['reg_id', 'basin_id', 'subc_id']].apply(pd.to_numeric)
 
     # Extensive logging of stats:
     LOGGER.log(logging.TRACE, 'Of %s points, ...' % num)

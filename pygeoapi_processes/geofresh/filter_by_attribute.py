@@ -11,6 +11,7 @@ import pandas as pd
 import requests
 import tempfile
 import urllib
+import pygeoapi.process.aqua90m.utils.exceptions as exc
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
 import pygeoapi.process.aqua90m.utils.dataframe_utils as dataframe_utils
@@ -91,7 +92,7 @@ class FilterByAttributeProcessor(BaseProcessor):
         except Exception as e:
             LOGGER.error('During process execution, this happened: %s' % e)
             print(traceback.format_exc())
-            raise ProcessorExecuteError(e) # TODO: Can we feed e into ProcessExecuteError?
+            raise ProcessorExecuteError(e) from e # TODO: Can we feed e into ProcessExecuteError?
 
 
     def _execute(self, data, requested_outputs):
@@ -166,7 +167,7 @@ class FilterByAttributeProcessor(BaseProcessor):
             #    conn, LOGGER, points_geojson, colname_site_id)
             err_msg = "Cannot filter GeoJSON yet!"
             LOGGER.error(err_msg)
-            raise ProcessorExecuteError(err_msg)
+            raise NotImplementedError(err_msg)
 
 
         ## Handle CSV case:
@@ -196,6 +197,10 @@ class FilterByAttributeProcessor(BaseProcessor):
                         LOGGER.debug("CSV file stored to tempfile successfully: %s" % mytempfilename)
                         input_df = pd.read_csv(mytempfilename)
                         mytempfile.close()
+                    elif resp.status_code == 404:
+                        err_msg = 'Could not download CSV input data from %s, does not seem to exist (HTTP %s)' % (csv_url, resp.status_code)
+                        LOGGER.error(err_msg)
+                        raise exc.DataAccessException(err_msg)
                     else:
                         err_msg = 'Could not download CSV input data from %s (HTTP %s)' % (csv_url, resp.status_code)
                         LOGGER.error(err_msg)
@@ -235,7 +240,8 @@ class FilterByAttributeProcessor(BaseProcessor):
                     self.download_dir,
                     self.download_url)
 
-                output_dict_with_url['comment'] = comment
+                if comment is not None:
+                    output_dict_with_url['comment'] = comment
 
                 LOGGER.debug('Outputs: %s' % output_dict_with_url)
 
@@ -247,7 +253,8 @@ class FilterByAttributeProcessor(BaseProcessor):
 
         ## Return JSON:
         elif output_json is not None:
-            output_json['comment'] = comment
+            if comment is not None:
+                output_json['comment'] = comment
 
             if do_return_link:
                 output_dict_with_url =  utils.store_to_json_file('filtered_data', output_json,
