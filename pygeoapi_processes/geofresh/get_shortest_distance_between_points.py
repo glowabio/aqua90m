@@ -98,6 +98,17 @@ curl -X POST "http://localhost:5000/processes/get-shortest-distance-between-poin
   }
 }'
 
+# Input: One set of subc_ids
+curl -X POST "http://localhost:5000/processes/get-shortest-distance-between-points/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "subc_ids": [506251712, 506251713, 506252055],
+    "comment": "located in schlei area"
+  }
+}'
+
+
 '''
 
 # Process metadata and description
@@ -181,6 +192,8 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
         # Two separate sets of points (Multipoint):
         points_start = data.get('points_start', None)
         points_end = data.get('points_end', None)
+        # Set of subcatchments:
+        subc_ids = data.get('subc_ids', None)
         # Comment:
         comment = data.get('comment') # optional
 
@@ -197,6 +210,8 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
             LOGGER.debug('START: Getting dijkstra shortest distance between two subcatchments...')
         elif points_start is not None and points_end is not None:
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are different)...')
+        elif subc_ids is not None:
+            LOGGER.debug('START: Getting dijkstra shortest distance between a number of subcatchments (start and end points are the same)...')
         else:
             err_msg = 'You must specify either "point" or lon and lat of start and end point...'
             raise ProcessorExecuteError(err_msg)
@@ -206,35 +221,47 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
         ### Many points          ###
         ### starts and ends same ###
         ############################
-        if points is not None:
+        if points is not None or subc_ids is not None:
 
-            # Collect reg_id, basin_id, subc_id
-            all_subc_ids = set()
-            all_reg_ids = set()
-            all_basin_ids = set()
-            for lon, lat in points['coordinates']: # TODO: Maybe not do this loop based?
-                LOGGER.debug('Now getting subc_id, basin_id, reg_id for lon %s, lat %s' % (lon, lat))
-                subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
-                    conn, LOGGER, lon, lat)
-                all_subc_ids.add(subc_id)
-                all_reg_ids.add(reg_id)
-                all_basin_ids.add(basin_id)
+            if subc_ids is not None:
+                all_subc_ids = set(subc_ids)
 
-            # Check if same region and basin?
-            # TODO: Can we route via the sea then??
-            if len(all_reg_ids) == 1:
-                reg_id = all_reg_ids[0]
-            else:
-                err_msg = 'The input points are in different regions (%s) - this cannot work.' % all_reg_ids
-                LOGGER.warning(err_msg)
-                raise ProcessorExecuteError(user_msg=err_msg)
+                # Should we also get all basin ids, reg ids?
+                # Or just one ... ?
+                basin_id, reg_id = basic_queries.get_basinid_regid_from_subcid(conn, LOGGER, subc_ids[0])
+                #for subc_id in all_subc_ids:
+                #    basin_id, reg_id = basic_queries.get_basinid_regid_from_subcid(conn, LOGGER, subc_id)
+                #    all_reg_ids.add(reg_id)
+                #    all_basin_ids.add(basin_id)
 
-            if len(all_basin_ids) == 1:
-                basin_id = all_basin_ids[0]
-            else:
-                err_msg = 'The input points are in different basins (%s) - this cannot work.' % all_basin_ids
-                LOGGER.warning(err_msg)
-                raise ProcessorExecuteError(user_msg=err_msg)
+            elif points is not None:
+                # Collect reg_id, basin_id, subc_id
+                all_subc_ids = set()
+                all_reg_ids = set()
+                all_basin_ids = set()
+                for lon, lat in points['coordinates']: # TODO: Maybe not do this loop based?
+                    LOGGER.debug('Now getting subc_id, basin_id, reg_id for lon %s, lat %s' % (lon, lat))
+                    subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
+                        conn, LOGGER, lon, lat)
+                    all_subc_ids.add(subc_id)
+                    all_reg_ids.add(reg_id)
+                    all_basin_ids.add(basin_id)
+
+                # Check if same region and basin?
+                # TODO: Can we route via the sea then??
+                if len(all_reg_ids) == 1:
+                    reg_id = next(iter(all_reg_ids))
+                else:
+                    err_msg = 'The input points are in different regions (%s) - this cannot work.' % all_reg_ids
+                    LOGGER.warning(err_msg)
+                    raise ProcessorExecuteError(user_msg=err_msg)
+
+                if len(all_basin_ids) == 1:
+                    basin_id = next(iter(all_basin_ids))
+                else:
+                    err_msg = 'The input points are in different basins (%s) - this cannot work.' % all_basin_ids
+                    LOGGER.warning(err_msg)
+                    raise ProcessorExecuteError(user_msg=err_msg)
 
             # Get distance - this is a JSON-ified matrix:
             # (Complete matrix, starts and ends are the same set!)
