@@ -17,7 +17,7 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 '''
 
 # Request a simple GeometryCollection (Point):
-curl -X POST "http://localhost:5000/processes/get-snapped-points/execution" \
+curl -X POST "http://localhost:5000/processes/get-snapped-points-strahler/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -29,7 +29,7 @@ curl -X POST "http://localhost:5000/processes/get-snapped-points/execution" \
 }'
 
 # Request a FeatureCollection (Point):
-curl -X POST "http://localhost:5000/processes/get-snapped-points/execution" \
+curl -X POST "http://localhost:5000/processes/get-snapped-points-strahler/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
