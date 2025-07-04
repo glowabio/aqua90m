@@ -143,7 +143,7 @@ class SnappedPointsStrahlerGetter(BaseProcessor):
         if not geometry_only:
 
             # Get snapped point:
-            LOGGER.debug('... Now, getting snapped point for subc_id (as feature): %s' % subc_id)
+            LOGGER.debug('... Now, getting snapped point for strahler %s (as feature)' % strahler)
             snappedpoint_feature_coll = snapping_strahler.get_snapped_point_feature_coll(conn, lon, lat, strahler, basin_id, reg_id)
 
             snappedpoint_feature_coll['subc_id_before_snapping'] = subc_id_before_snap
@@ -159,5 +159,5 @@ class SnappedPointsStrahlerGetter(BaseProcessor):
                     self.download_url)
                 return 'application/json', output_dict_with_url
             else:
-                return 'application/json', snappedpoint_feature
+                return 'application/json', snappedpoint_feature_coll
 
