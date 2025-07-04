@@ -162,21 +162,32 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
 
     def _execute(self, data, requested_outputs, conn):
 
-        # User inputs: Multipoint:
-        points = data.get('points', None)
-        points_start = data.get('points_start', None)
-        points_end = data.get('points_end', None)
-        # User inputs: One point:
+        # Overall goal: Get the dijkstra distance!
+
+        ####################
+        ### User inputs: ###
+        ####################
+
+        # Two points:
         lon_start = data.get('lon_start', None)
         lat_start = data.get('lat_start', None)
         lon_end = data.get('lon_end', None)
         lat_end = data.get('lat_end', None)
+        # Two subcatchments:
         subc_id_start = data.get('subc_id_start', None) # optional, need either lonlat OR subc_id
         subc_id_end = data.get('subc_id_end', None)     # optional, need either lonlat OR subc_id
-        # User inputs: Other
+        # Set of points (Multipoint):
+        points = data.get('points', None)
+        # Two separate sets of points (Multipoint):
+        points_start = data.get('points_start', None)
+        points_end = data.get('points_end', None)
+        # Comment:
         comment = data.get('comment') # optional
 
-        # Overall goal: Get the dijkstra distance!
+        ############################
+        ### Validate user inputs ###
+        ############################
+
         if points is not None:
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are the same)...')
         elif lon_start is not None and lat_start is not None and lon_end is not None and lat_end is not None:
