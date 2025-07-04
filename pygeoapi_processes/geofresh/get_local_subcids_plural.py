@@ -27,7 +27,7 @@ curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plura
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
-        "csv_url": "https://nimbus.igb-berlin.de/index.php/s/SnDSamy56sLWs2s/download/spdata.csv",
+        "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
         "colname_lat": "latitude",
         "colname_lon": "longitude",
         "colname_site_id": "site_id",
