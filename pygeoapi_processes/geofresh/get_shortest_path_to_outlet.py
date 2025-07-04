@@ -42,7 +42,6 @@ curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execut
     }
 }'
 
-
 # Request only the ids:
 curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execution" \
 --header "Content-Type: application/json" \

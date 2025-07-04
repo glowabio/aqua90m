@@ -28,9 +28,9 @@ curl -i -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet-plu
 --header "Prefer: respond-async" \
 --data '{
   "inputs": {
-        "csv_url": "https://example.igb-berlin.de/download/spdata.csv",
-        "colname_lon": "lon",
-        "colname_lat": "lat",
+        "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+        "colname_lon": "longitude",
+        "colname_lat": "latitude",
         "colname_site_id": "site_id",
         "downstream_ids_only": true,
         "return_csv": true

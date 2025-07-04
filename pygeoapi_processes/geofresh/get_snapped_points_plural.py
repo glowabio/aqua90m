@@ -25,11 +25,11 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 '''
 INPUT: CSV
 OUTPUT: CSV
-curl -X POST "http://localhost:5000/pygeoapi/processes/get-snapped-points-plural/execution" \
+curl -X POST "http://localhost:5000/processes/get-snapped-points-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
-    "csv_url": "https://nimbus.igb-berlin.de/index.php/s/SnDSamy56sLWs2s/download/spdata.csv",
+    "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
     "colname_lon": "longitude",
     "colname_lat": "latitude",
     "colname_site_id": "site_id"
@@ -42,7 +42,7 @@ curl -X POST "http://localhost:5000/pygeoapi/processes/get-snapped-points-plural
 
 # INPUT: MultiPoint
 # OUTPUT: FeatureCollection
-curl -X POST "http://localhost:5000/pygeoapi/processes/get-snapped-points-plural/execution" \
+curl -X POST "http://localhost:5000/processes/get-snapped-points-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -59,7 +59,7 @@ curl -X POST "http://localhost:5000/pygeoapi/processes/get-snapped-points-plural
 
 # INPUT: FeatureCollection
 # OUTPUT: FeatureCollection
-curl -X POST "http://localhost:5000/pygeoapi/processes/get-snapped-points-plural/execution" \
+curl -X POST "http://localhost:5000/processes/get-snapped-points-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -256,7 +256,8 @@ class SnappedPointsGetterPlural(BaseProcessor):
                     self.download_dir,
                     self.download_url)
 
-                output_dict_with_url['comment'] = comment
+                if comment is not None:
+                    output_dict_with_url['comment'] = comment
 
                 return 'application/json', output_dict_with_url
             else:
@@ -266,7 +267,9 @@ class SnappedPointsGetterPlural(BaseProcessor):
 
         ## Return JSON:
         elif output_json is not None:
-            output_json['comment'] = comment
+
+            if comment is not None:
+                output_json['comment'] = comment
 
             if do_return_link:
                 output_dict_with_url =  utils.store_to_json_file('snapped_points', output_json,

@@ -27,7 +27,7 @@ curl -X POST --location 'http://localhost:5000/processes/get-local-ids-plural/ex
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
-        "csv_url": "https://localhost/spdata.csv",
+        "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
         "colname_lat": "latitude",
         "colname_lon": "longitude",
         "colname_site_id": "site_id",

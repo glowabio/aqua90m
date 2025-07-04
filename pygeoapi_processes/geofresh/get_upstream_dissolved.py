@@ -18,7 +18,7 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 '''
 # Request a simple Geometry (Polygon) (just one, not a collection):
-curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" \
+curl -X POST "http://localhost:5000/processes/get-upstream-dissolved-cont/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -30,7 +30,7 @@ curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" 
 }'
 
 # Request a Feature (Polygon) (just one, not a collection):
-curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" \
+curl -X POST "http://localhost:5000/processes/get-upstream-dissolved-cont/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {

@@ -22,22 +22,34 @@ curl -X POST "http://localhost:5000/processes/filter-by-attribute/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
-        "csv_url": "https://localhost/spdata.csv",
-        "keep": {"site_id": [1,10,20]},
-        "comment": "schlei-near-rabenholz"
+        "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+        "keep": {"site_id": ["FP1", "FP10", "FP20"]},
+        "comment": "barbus sites"
     },
     "outputs": {
         "transmissionMode": "reference"
     }
 }'
 
+# Filtering by species name: TODO: Missing example data!
+curl -X POST "http://localhost:5000/processes/filter-by-attribute/execution" \
+--data '{
+  "inputs": {
+        "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/xyz",
+        "keep": {"species": ["Salaria fluviatilis", "Squalius peloponensis"]},
+        "comment": "species list"
+    },
+    "outputs": {
+        "transmissionMode": "reference"
+    }
+}'
 
-# Filter output from get-local-ids:
-curl -X POST "https://aqua.igb-berlin.de/pygeoapi-dev/processes/filter-by-attribute/execution" \
+# Filter output from get-local-ids: TODO: Missing example data!
+curl -X POST "http://localhost:5000/processes/filter-by-attribute/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
-        "csv_url": "https://localhost/download/outputs-local_ids-get-local-ids-plural-bb55584.csv",
+        "csv_url": "https://aqua.igb-berlin.de/download/outputs-local_ids-get-local-ids-plural-bb5be376-1adc-11f0-ba7f-6fbdd8a35584.csv",
         "keep": {"reg_id": [176]}
     },
     "outputs": {

@@ -19,7 +19,7 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 '''
 # Request a GeometryCollection (Polygons):
-curl -X POST "http://localhost:5000/pygeoapi-dev/processes/get-upstream-subcatchments/execution" \
+curl -X POST "http://localhost:5000/processes/get-upstream-subcatchments/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -31,7 +31,7 @@ curl -X POST "http://localhost:5000/pygeoapi-dev/processes/get-upstream-subcatch
 }'
 
 # Request a FeatureCollection (Polygons):
-curl -X POST "http://localhost:5000/pygeoapi-dev/processes/get-upstream-subcatchments/execution" \
+curl -X POST "http://localhost:5000/processes/get-upstream-subcatchments/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -44,7 +44,7 @@ curl -X POST "http://localhost:5000/pygeoapi-dev/processes/get-upstream-subcatch
 }'
 
 # Request a FeatureCollection (Polygons) as URL:
-curl -X POST "http://localhost:5000/pygeoapi-dev/processes/get-upstream-subcatchments/execution" \
+curl -X POST "http://localhost:5000/processes/get-upstream-subcatchments/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {

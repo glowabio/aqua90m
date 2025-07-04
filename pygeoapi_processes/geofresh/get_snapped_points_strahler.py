@@ -23,6 +23,7 @@ curl -X POST "http://localhost:5000/processes/get-snapped-points-strahler/execut
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
+    "strahler": 3,
     "geometry_only": "true",
     "comment": "schlei-near-rabenholz"
     }
