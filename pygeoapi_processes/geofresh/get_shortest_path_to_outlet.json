@@ -52,17 +52,26 @@
         },
         "geometry_only": {
             "title": "Get only GeoJSON GeometryCollection?",
-            "description": "Specify whether to return only a GeoJSON GeometryCollection (in this case, LineStrings), instead of a GeoJSON FeatureCollection containing additional properties. Please write \"true\" or \"false\".",
-            "schema": {"enum": ["true", "false"]},
+            "description": "Specify whether to return only a GeoJSON GeometryCollection (in this case, LineStrings), instead of a GeoJSON FeatureCollection containing additional properties.",
+            "schema": {"type": "boolean"},
             "minOccurs": 0,
             "maxOccurs": 1,
             "metadata": null,
             "keywords": ["GeoJSON", "GeometryCollection", "FeatureCollection"]
         },
+        "downstream_ids_only": {
+            "title": "Only downstream ids (no geometries)",
+            "description": "Specify whether ONLY to return the subcatchment ids of each segment along the path.",
+            "schema": {"type": "boolean"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
         "add_downstream_ids": {
             "title": "Add downstream ids?",
-            "description": "Specify whether to add the subcatchment ids of each segment along the path to the GeoJSON Feature's properties. Please write \"true\" or \"false\".",
-            "schema": {"enum": ["true", "false"]},
+            "description": "Specify whether to add the subcatchment ids of each segment along the path to the GeoJSON Feature's properties.",
+            "schema": {"type": "boolean"},
             "minOccurs": 0,
             "maxOccurs": 1,
             "metadata": null,
