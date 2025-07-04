@@ -22,7 +22,13 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 TODO: This already provides the computation for just one pair of points, or for an entire
 matrix. However, the results are quite different.
 
-# Request some JSON, to be improved (TODO):
+
+###########################################
+### Simple:                             ###
+### Request distance between two points ###
+###########################################
+
+# Input: Coordinate pairs
 curl -X POST "http://localhost:5000/processes/get-shortest-distance-between-points/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -35,7 +41,23 @@ curl -X POST "http://localhost:5000/processes/get-shortest-distance-between-poin
   }
 }'
 
-# Request some JSON, to be improved (TODO):
+# Input: Subcatchment ids:
+curl -X POST "http://localhost:5000/processes/get-shortest-distance-between-points/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "subc_id_start": 506251713,
+    "subc_id_end": 506251712,
+    "comment": "located in schlei area"
+  }
+}'
+
+############################################
+### Matrix:                              ###
+### Request distance between many points ###
+############################################
+
+# Input: Multipoint (one set of points)
 curl -X POST "http://localhost:5000/processes/get-shortest-distance-between-points/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -53,7 +75,7 @@ curl -X POST "http://localhost:5000/processes/get-shortest-distance-between-poin
 }'
 
 
-# Request some JSON, to be improved (TODO):
+# Input: Multipoint (two separate set of points)
 curl -X POST "http://localhost:5000/processes/get-shortest-distance-between-points/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -160,6 +182,8 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
         elif lon_start is not None and lat_start is not None and lon_end is not None and lat_end is not None:
             # TODO: Just ask users for two GeoJSON points?!?!
             LOGGER.debug('START: Getting dijkstra shortest distance between two of points...')
+        elif subc_id_start is not None and subc_id_end is not None:
+            LOGGER.debug('START: Getting dijkstra shortest distance between two subcatchments...')
         elif points_start is not None and points_end is not None:
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are different)...')
         else:
@@ -262,25 +286,33 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
         #################
         ### One point ###
         #################
-        elif lon_start is not None and lat_start is not None and lon_end is not None and lat_end is not None:
+        else:
 
-            # Get reg_id, basin_id, subc_id
-            # Point 1:
-            if subc_id is not None:
-                # (special case: user provided subc_id instead of lonlat!)
-                subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
-                    conn, LOGGER, subc_id = subc_id_start)
-            else:
+            if lon_start is not None and lat_start is not None and lon_end is not None and lat_end is not None:
+
+                # Get reg_id, basin_id, subc_id
+                # Point 1:
                 subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
                     conn, LOGGER, lon_start, lat_start)
-            # Point 2:
-            if subc_id is not None:
-                # (special case: user provided subc_id instead of lonlat!)
-                subc_id2, basin_id2, reg_id2 = basic_queries.get_subcid_basinid_regid(
-                    conn, LOGGER, subc_id = subc_id_end)
-            else:
+                # Point 2:
                 subc_id2, basin_id2, reg_id2 = basic_queries.get_subcid_basinid_regid(
                     conn, LOGGER, lon_end, lat_end)
+
+            # Special case: user provided subc_id instead of lonlat!
+            elif subc_id_start is not None and subc_id_end is not None:
+
+                # Get reg_id, basin_id, subc_id
+                # Point 1:
+                subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
+                    conn, LOGGER, subc_id = subc_id_start)
+                # Point 2:
+                subc_id2, basin_id2, reg_id2 = basic_queries.get_subcid_basinid_regid(
+                    conn, LOGGER, subc_id = subc_id_end)
+
+            else:
+                err_msg = 'Please check your inputs. Could not identify start and end point. Expected either coordinate pairs or two subc_ids.'
+                LOGGER.warning(err_msg)
+                raise ProcessorExecuteError(user_msg=err_msg)
 
             # Check if same region and basin?
             # TODO: Can we route via the sea then??
