@@ -40,7 +40,7 @@ def store_to_json_file(output_name, json_object, job_metadata, job_id, download_
     return outputs_dict
 
 
-def store_to_csv_file(output_name, pandas_df, job_metadata, job_id, download_dir, download_url):
+def store_to_csv_file(output_name, pandas_df, job_metadata, job_id, download_dir, download_url, sep=","):
 
     # How NaN should be stored in the CSV (if you set nothing, it is a string of length 0)
     store_na='NA'
@@ -49,7 +49,7 @@ def store_to_csv_file(output_name, pandas_df, job_metadata, job_id, download_dir
     downloadfilename = 'outputs-%s-%s-%s.csv' % (output_name, job_metadata['id'], job_id)
     downloadfilepath = download_dir+downloadfilename
     LOGGER.debug('Writing process result to csv file: %s' % downloadfilepath)
-    pandas_df.to_csv(downloadfilepath, sep=';', encoding='utf-8', index=False, header=True, na_rep=store_na)
+    pandas_df.to_csv(downloadfilepath, sep=sep, encoding='utf-8', index=False, header=True, na_rep=store_na)
 
     # Create download link:
     downloadlink = download_url + downloadfilename
