@@ -186,11 +186,10 @@ class FilterByAttributeProcessor(BaseProcessor):
         elif csv_url is not None:
             LOGGER.debug('Accessing input CSV from: %s' % csv_url)
             try:
-                input_df = pd.read_csv(csv_url) # tries comma
-
+                input_df = pd.read_csv(csv_url) # tries comma first
                 if input_df.shape[1] == 1:
-                    LOGGER.debug('Found only one column (name "%s"). Maybe it is not comma-separeted, but semicolo-separated? Trying...' % input_df.columns)
-                    input_df = pd.read_csv(csv_url, sep=';')
+                    LOGGER.debug('Found only one column (name "%s"). Maybe it is not comma-separated, but semicolon-separated? Trying...' % input_df.columns)
+                    input_df = pd.read_csv(csv_url, sep=';') # if comma failed, try semicolon
 
                 LOGGER.debug('Accessing input CSV... DONE. Found %s columns (names: %s)' % (input_df.shape[1], input_df.columns))
 
@@ -207,7 +206,11 @@ class FilterByAttributeProcessor(BaseProcessor):
                         mytempfile.flush()
                         mytempfilename = mytempfile.name
                         LOGGER.debug("CSV file stored to tempfile successfully: %s" % mytempfilename)
-                        input_df = pd.read_csv(mytempfilename)
+                        input_df = pd.read_csv(mytempfilename) # tries comma first
+                        if input_df.shape[1] == 1:
+                            LOGGER.debug('Found only one column (name "%s"). Maybe it is not comma-separated, but semicolon-separated? Trying...' % input_df.columns)
+                            input_df = pd.read_csv(mytempfilename, sep=';') # if comma failed, try semicolon
+
                         mytempfile.close()
                     elif resp.status_code == 404:
                         err_msg = 'Could not download CSV input data from %s, does not seem to exist (HTTP %s)' % (csv_url, resp.status_code)
