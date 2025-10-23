@@ -87,13 +87,20 @@ var successPleaseShowGeojson = function(responseJson) {
     document.getElementById("displayGeoJSON").innerHTML = prettyResponse;
 }
 
-// Pre-Request
+// Pre-Requests:
+// If upstream or downstream things are requested, we first make
+// a pre-request that checks how much time the actual request may
+// probably take, based on the strahler order.
+//
 function preRequestUpstream(clickMarker, lon, lat) {
   preRequest(clickMarker, lon, lat, strahlerInformUpstream)
 }
 
 function preRequestDownstream(clickMarker, lon, lat) {
   preRequest(clickMarker, lon, lat, strahlerInformDownstream)
+  // Downstream might be better to use something else, because headwaters
+  // exist close to the coast and far from the coast, so strahler is not
+  // a good predictor for computation duration...
 }
 
 function preRequest(clickMarker, lon, lat, strahlerInformFunction) {
@@ -175,7 +182,9 @@ function strahlerInformDownstream(strahler, clickMarker) {
 
 // Inform user based on strahler order
 function strahlerInformUpstream(strahler, clickMarker) {
-    if (strahler == 1 | strahler == 2 | strahler == 3) {
+    if (strahler == null) {
+      console.log('Strahler: No strahler order found...')
+    } else if (strahler == 1 | strahler == 2 | strahler == 3) {
       console.log('Strahler '+strahler+': Probably superfast!')
     } else if (strahler == 4 | strahler == 5 | strahler == 6) {
       console.log('Strahler '+strahler+': May take a little...')
@@ -183,10 +192,12 @@ function strahlerInformUpstream(strahler, clickMarker) {
       console.log('Strahler '+strahler+': May take a while...')
       var msg = 'Strahler order '+strahler+', this may take a while...'
       clickMarker.bindPopup(msg);
-    } else {
+    } else if (strahler >= 10 ) {
       console.log('Strahler '+strahler+': Uff, will take ages...')
-      var msg = 'Strahler order '+strahler+', this will take a long time or even fail...'
+      var msg = 'Strahler order '+strahler+', this will take a long time or even fail...';
       clickMarker.bindPopup(msg);
+    } else {
+      console.log('Strahler: Could not understand strahler order: '+strahler);
     }
 }
 
