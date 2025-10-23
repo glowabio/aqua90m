@@ -39,6 +39,13 @@ var ogcRequestOneCoordinatePair = function(clickMarker, lon1, lat1) {
     var lon1 = parseFloat(lon1);
     var lat1 = parseFloat(lat1);
 
+    // If upstream, make pre-request:
+    var processId = document.getElementById("processes").value;
+    if (processId.startsWith("get-upstream")) {
+      console.log('Requesting upstream... This may take a while, so we do a pre-request!');
+      preRequest(clickMarker, lon1, lat1);
+    }
+
     // Param string for logging
     var paramstring = "lat="+lat1.toFixed(3)+", lon="+lon1.toFixed(3);
 
@@ -75,6 +82,79 @@ var successPleaseShowGeojson = function(responseJson) {
     // Write GeoJSON into field so that user can copy-paste it:
     var prettyResponse = JSON.stringify(responseJson, null, 2); // spacing level = 2
     document.getElementById("displayGeoJSON").innerHTML = prettyResponse;
+}
+
+// Pre-Request
+function preRequest(clickMarker, lon, lat) {
+
+    // Construct HTTP request to OGC service:
+    let xhrPygeo = new XMLHttpRequest();
+    var url = "https://aqua.igb-berlin.de/pygeoapi/processes/get-local-streamsegments/execution";
+    xhrPygeo.open('POST', url, true)
+    xhrPygeo.setRequestHeader('Content-Type', 'application/json');
+    xhrPygeo.responseType = 'json';
+    // TODO Note: This process expects geometry_only as string, not as bool, which is stupid.
+    // Need to change that in pygeoapi, and then here too!
+    var payload_inputs_json = JSON.stringify({"inputs":{
+      "lon":lon, "lat":lat, 
+      "geometry_only": "false"
+    }})
+
+    // Define behaviour after response:
+    xhrPygeo.onerror = function() {
+      console.error("Pre-Request: Failed.");
+      if (xhrPygeo.status === 405) {
+        console.error("Pre-Request: Method Not Allowed (405) - likely OPTIONS request failed");
+      } else if (xhrPygeo.status === 0) {
+        console.error("Pre-Request: We got status 0: Request failed or blocked (likely preflight failure)");
+      }
+    };
+
+    xhrPygeo.onreadystatechange = function () {
+      if (xhrPygeo.readyState === XMLHttpRequest.DONE) {
+        console.log("Pre-Request: Done with status:", xhrPygeo.status);
+      }
+    };
+
+    xhrPygeo.onload = function() {
+
+      // Log response status:
+      console.log("Pre-Request: Returning from OGC process...");
+      if (xhrPygeo.status == 200) {
+        console.log("Pre-Request: OGC server returned HTTP 200");
+      } else if (xhrPygeo.status == 400) {
+        console.log("Pre-Request: Oh no: Internal server error (HTTP 400)");
+        return
+      } else {
+        console.log("Pre-Request: Oh no: OGC server returned bad HTTP status: "+xhrPygeo.status);
+        return
+      }
+
+      // Extract strahler order and inform user if a high strahler order was clicked:
+      var strahler = xhrPygeo.response.properties.strahler_order;
+      strahlerInform(strahler, clickMarker);
+    }
+
+    // Send HTTP request:
+    console.log('Pre-Request: Sending HTTP POST request...')
+    xhrPygeo.send(payload_inputs_json);
+}
+
+// Inform user based on strahler order
+function strahlerInform(strahler, clickMarker) {
+    if (strahler == 1 | strahler == 2 | strahler == 3) {
+      console.log('Strahler '+strahler+': Probably superfast!')
+    } else if (strahler == 4 | strahler == 5 | strahler == 6) {
+      console.log('Strahler '+strahler+': May take a little...')
+    } else if (strahler == 7 | strahler == 8 | strahler == 9) {
+      console.log('Strahler '+strahler+': May take a while...')
+      var msg = 'Strahler order '+strahler+', this may take a while...'
+      clickMarker.bindPopup(msg);
+    } else {
+      console.log('Strahler '+strahler+': Uff, will take ages...')
+      var msg = 'Strahler order '+strahler+', this will take a long time or even fail...'
+      clickMarker.bindPopup(msg);
+    }
 }
 
 // Define making request to OGC service (function):
