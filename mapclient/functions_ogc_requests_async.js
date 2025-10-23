@@ -43,7 +43,7 @@ var ogcRequestOneCoordinatePair = function(clickMarker, lon1, lat1) {
     var processId = document.getElementById("processes").value;
     if (processId.startsWith("get-upstream")) {
       console.log('Requesting upstream... This may take a while, so we do a pre-request!');
-      preRequest(clickMarker, lon1, lat1);
+      preRequestUpstream(clickMarker, lon1, lat1);
     }
 
     // Param string for logging
@@ -85,7 +85,11 @@ var successPleaseShowGeojson = function(responseJson) {
 }
 
 // Pre-Request
-function preRequest(clickMarker, lon, lat) {
+function preRequestUpstream(clickMarker, lon, lat) {
+  preRequest(clickMarker, lon, lat, strahlerInformUpstream)
+}
+
+function preRequest(clickMarker, lon, lat, strahlerInformFunction) {
 
     // Construct HTTP request to OGC service:
     let xhrPygeo = new XMLHttpRequest();
@@ -132,7 +136,7 @@ function preRequest(clickMarker, lon, lat) {
 
       // Extract strahler order and inform user if a high strahler order was clicked:
       var strahler = xhrPygeo.response.properties.strahler_order;
-      strahlerInform(strahler, clickMarker);
+      strahlerInformFunction(strahler, clickMarker);
     }
 
     // Send HTTP request:
@@ -141,7 +145,7 @@ function preRequest(clickMarker, lon, lat) {
 }
 
 // Inform user based on strahler order
-function strahlerInform(strahler, clickMarker) {
+function strahlerInformUpstream(strahler, clickMarker) {
     if (strahler == 1 | strahler == 2 | strahler == 3) {
       console.log('Strahler '+strahler+': Probably superfast!')
     } else if (strahler == 4 | strahler == 5 | strahler == 6) {
