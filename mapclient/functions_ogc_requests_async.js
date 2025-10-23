@@ -44,6 +44,9 @@ var ogcRequestOneCoordinatePair = function(clickMarker, lon1, lat1) {
     if (processId.startsWith("get-upstream")) {
       console.log('Requesting upstream... This may take a while, so we do a pre-request!');
       preRequestUpstream(clickMarker, lon1, lat1);
+    } else if (processId == 'get-shortest-path-to-outlet') {
+      console.log('Requesting downstream... This may take a while, so we do a pre-request!');
+      preRequestDownstream(clickMarker, lon1, lat1);
     }
 
     // Param string for logging
@@ -87,6 +90,10 @@ var successPleaseShowGeojson = function(responseJson) {
 // Pre-Request
 function preRequestUpstream(clickMarker, lon, lat) {
   preRequest(clickMarker, lon, lat, strahlerInformUpstream)
+}
+
+function preRequestDownstream(clickMarker, lon, lat) {
+  preRequest(clickMarker, lon, lat, strahlerInformDownstream)
 }
 
 function preRequest(clickMarker, lon, lat, strahlerInformFunction) {
@@ -142,6 +149,28 @@ function preRequest(clickMarker, lon, lat, strahlerInformFunction) {
     // Send HTTP request:
     console.log('Pre-Request: Sending HTTP POST request...')
     xhrPygeo.send(payload_inputs_json);
+}
+
+
+// Inform user based on strahler order
+function strahlerInformDownstream(strahler, clickMarker) {
+    if (strahler == null) {
+      console.log('Strahler: No strahler order found...')
+    } else if (strahler == 1 | strahler == 2 | strahler == 3) {
+      console.log('Strahler '+strahler+': Uff, will take time...')
+      var msg = 'Strahler order '+strahler+', this will take a long time...';
+      clickMarker.bindPopup(msg);
+    } else if (strahler == 4 | strahler == 5 | strahler == 6) {
+      var msg = 'Strahler order '+strahler+', this may take a while...'
+      clickMarker.bindPopup(msg);
+      console.log('Strahler '+strahler+': May take a little...')
+    } else if (strahler == 7 | strahler == 8 | strahler == 9) {
+      console.log('Strahler '+strahler+': Probably reasonably fast...')
+    } else if (strahler >= 10 ) {
+      console.log('Strahler '+strahler+': Probably superfast!')
+    } else {
+      console.log('Strahler: Could not understand strahler order: '+strahler);
+    }
 }
 
 // Inform user based on strahler order
