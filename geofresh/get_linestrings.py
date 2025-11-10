@@ -242,6 +242,121 @@ def get_accum_length(conn, subc_ids, basin_id, reg_id):
     return cum_length
 
 
+def get_streamsegment_linestrings_geometry_coll_by_basin(conn, basin_id, reg_id):
+
+    query = '''
+    SELECT 
+    ST_AsText(geom), subc_id, target, length, strahler
+    FROM hydro.stream_segments
+    WHERE basin_id = {basin_id}
+    AND reg_id = {reg_id}
+    '''.format(basin_id = basin_id, reg_id = reg_id)
+    query = query.replace("\n", " ")
+
+    ### Query database:
+    cursor = conn.cursor()
+    LOGGER.log(logging.TRACE, 'Querying database...')
+    cursor.execute(query)
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
+
+    ### Get results and construct GeoJSON:
+    LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
+    linestrings_geojson = []
+    while (True):
+        row = cursor.fetchone()
+        if row is None:
+            break
+
+        # Create GeoJSON geometry from each linestring:
+        geometry = None
+        if row[0] is not None:
+            geometry = geomet.wkt.loads(row[0])
+        else:
+            # Geometry errors that happen when two segments flow into one outlet (Vanessa, 17 June 2024)
+            # For example, subc_id 506469602, when routing from 507056424 to outlet -1294020
+            LOGGER.error('Subcatchment %s has no geometry!' % row[1]) # for example: 506469602
+            # Features with empty geometries:
+            # A geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
+            # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
+
+        linestrings_geojson.append(geometry)
+
+    geometry_coll = {
+        "type": "GeometryCollection",
+        "geometries": linestrings_geojson
+    }
+
+    return geometry_coll
+
+
+def get_streamsegment_linestrings_feature_coll_by_basin(conn, basin_id, reg_id):
+
+    ### Define query:
+    '''
+    Example query:
+
+   Example result:
+    '''
+
+
+    query = '''
+    SELECT 
+    ST_AsText(geom), subc_id, target, length, strahler
+    FROM hydro.stream_segments
+    WHERE basin_id = {basin_id}
+    AND reg_id = {reg_id}
+    '''.format(basin_id = basin_id, reg_id = reg_id)
+    query = query.replace("\n", " ")
+
+    ### Query database:
+    cursor = conn.cursor()
+    LOGGER.log(logging.TRACE, 'Querying database...')
+    cursor.execute(query)
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
+
+    ### Get results and construct GeoJSON:
+    LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
+    features_geojson = []
+    while (True):
+        row = cursor.fetchone()
+        if row is None:
+            break
+
+        # Create GeoJSON feature from each linestring:
+        geometry = None
+        if row[0] is not None:
+            geometry = geomet.wkt.loads(row[0])
+        else:
+            # Geometry errors that happen when two segments flow into one outlet (Vanessa, 17 June 2024)
+            # For example, subc_id 506469602, when routing from 507056424 to outlet -1294020
+            LOGGER.error('Subcatchment %s has no linestring!' % row[1]) # for example: 506469602
+            # Features with empty geometries:
+            # A geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
+            # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
+
+        feature = {
+            "type": "Feature",
+            "geometry": geometry,
+            "properties": {
+                "subc_id": row[1],
+                "strahler_order": row[2],
+                "target": row[3],
+                "length": row[4]
+            }
+        }
+        features_geojson.append(feature)
+
+    feature_coll = {
+        "type": "FeatureCollection",
+        "features": features_geojson,
+        "basin_id": basin_id,
+        "region_id": reg_id,
+        "number_stream_segments": len(features_geojson)
+    }
+
+    return feature_coll
+
+
 if __name__ == "__main__":
 
     # Logging

@@ -241,6 +241,34 @@ def get_subcid_basinid_from_lonlat_regid(conn, LOGGER, lon, lat, reg_id):
     return subc_id, basin_id
 
 
+def get_regid_from_basinid(conn, LOGGER, basin_id):
+
+    ### Define query:
+    query = """
+    SELECT reg_id
+    FROM hydro.basins
+    WHERE basin_id = {basin_id}
+    """.format(basin_id = basin_id)
+    query = query.replace("\n", " ")
+
+    ### Query database:
+    cursor = conn.cursor()
+    LOGGER.log(logging.TRACE, 'Querying database...')
+    cursor.execute(query)
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
+
+    ### Get results and construct GeoJSON:
+    row = cursor.fetchone()
+    if row is None:
+        err_msg = 'No reg_id found for basin_id %s!' % basin_id
+        LOGGER.error(err_msg)
+        raise exc.GeoFreshUnexpectedResultException(error_message)
+    else:
+        reg_id = row[0]
+
+    return reg_id
+
+
 #################################
 ### for many points at a time ###
 #################################
