@@ -311,7 +311,7 @@ def get_snapped_point_simplegeom(conn, lon, lat, subc_id, basin_id, reg_id):
 ### Many points at a time ###
 #############################
 
-def get_snapped_points_2json(conn, points_geojson, colname_site_id = None):
+def get_snapped_points_json2json(conn, points_geojson, colname_site_id = None):
     # Just a wrapper
     # INPUT: GeoJSON (Multipoint)
     # OUTPUT: FeatureCollection (Point)
@@ -330,9 +330,9 @@ def get_snapped_points_2json(conn, points_geojson, colname_site_id = None):
         iterate_over = points_geojson['features']
         num = len(iterate_over)
 
-    return get_snapped_point_xy(conn, geojson = points_geojson, colname_site_id = colname_site_id)
+    return get_snapped_point_xy(conn, geojson = points_geojson, colname_site_id = colname_site_id, result_format="geojson")
 
-def get_snapped_points_1csv(conn, input_df, colname_lon, colname_lat, colname_site_id):
+def get_snapped_points_csv2csv(conn, input_df, colname_lon, colname_lat, colname_site_id):
     # Just a wrapper
     # INPUT: Pandas dataframe
     # OUTPUT: Pandas dataframe
@@ -340,11 +340,55 @@ def get_snapped_points_1csv(conn, input_df, colname_lon, colname_lat, colname_si
         dataframe = input_df,
         colname_lon = colname_lon,
         colname_lat = colname_lat,
-        colname_site_id = colname_site_id)
+        colname_site_id = colname_site_id,
+        output="csv")
 
-def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, colname_lat=None, colname_site_id=None):
+def get_snapped_points_csv2json(conn, input_df, colname_lon, colname_lat, colname_site_id):
+    # Just a wrapper
+    # INPUT: Pandas dataframe
+    # OUTPUT: FeatureCollection (Point)
+    return get_snapped_point_xy(conn,
+        dataframe = input_df,
+        colname_lon = colname_lon,
+        colname_lat = colname_lat,
+        colname_site_id = colname_site_id,
+        output="csv")
+
+def get_snapped_points_json2csv(conn, points_geojson, colname_site_id = None):
+    # Just a wrapper
+    # INPUT: GeoJSON (Multipoint)
+    # OUTPUT: Pandas dataframe
+
+    # Check GeoJSON validity, and define what to iterate over:
+    if points_geojson['type'] == 'GeometryCollection':
+        geojson_helpers.check_is_geometry_collection_points(points_geojson)
+        iterate_over = points_geojson['geometries']
+        num = len(iterate_over)
+    elif points_geojson['type'] == 'FeatureCollection':
+        geojson_helpers.check_is_feature_collection_points(points_geojson)
+        if colname_site_id is None:
+            err_msg = "Please provide the property name where the site id is provided."
+            LOGGER.error(err_msg)
+            raise exc.UserInputException(err_msg)
+        iterate_over = points_geojson['features']
+        num = len(iterate_over)
+
+    return get_snapped_point_xy(conn,
+        geojson = points_geojson,
+        colname_site_id = colname_site_id,
+        colname_lon='lon', # TODO: This csv column name is hardcoded
+        colname_lat='lat', # TODO: This csv column name is hardcoded
+        result_format="csv")
+
+
+def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, colname_lat=None, colname_site_id=None, result_format="geojson"):
     # INPUT: GeoJSON (Multipoint)
     # OUTPUT: FeatureCollection (Point)
+
+    # Note:
+    # If the input is geojson,   we also need: colname_site_id
+    # If the input is dataframe, we also need: colname_site_id, colname_lon, colname_lat
+    # Same for the output!
 
     cursor = conn.cursor()
 
@@ -486,8 +530,8 @@ def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, c
 
     ## Now iterate over result rows:
     result_to_be_returned = None
-    # If input was GeoJSON, we return output as GeoJSON:
-    if geojson is not None:
+    # If caller asks for GeoJSON output, we return output as GeoJSON:
+    if result_format == "geojson":
 
         LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
         features = []
@@ -539,8 +583,8 @@ def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, c
         LOGGER.log(logging.TRACE, 'Generated GeoJSON: %s' % feature_coll)
         result_to_be_returned = feature_coll
 
-    # If input was dataframe, we return output as dataframe:
-    elif dataframe is not None:
+    # If caller asks for CSV output, we return output as dataframe:
+    elif result_format == "csv":
         # Create list to be filled and converted to Pandas dataframe:
         everything = []
         while (True):
@@ -685,7 +729,7 @@ if __name__ == "__main__":
 
     print('\nSTART RUNNING FUNCTION: get_snapped_points_1')
     start = time.time()
-    res = get_snapped_points_2json(conn, input_points_geojson)
+    res = get_snapped_points_json2json(conn, input_points_geojson)
     end = time.time()
     print('TIME: %s' % (end - start))
     print('RESULT: %s' % res)
@@ -706,7 +750,7 @@ if __name__ == "__main__":
 
     print('\nSTART RUNNING FUNCTION: get_snapped_points_1, some more points...')
     start = time.time()
-    res = get_snapped_points_2json(conn, input_points_geojson)
+    res = get_snapped_points_json2json(conn, input_points_geojson)
     end = time.time()
     print('TIME: %s' % (end - start))
     print('RESULT: %s' % res)
@@ -738,7 +782,7 @@ if __name__ == "__main__":
 
     print('\nTEST CUSTOM EXCEPTION: get_snapped_points_1, FeatureCollection...')
     try:
-        res = get_snapped_points_2json(conn, input_points_geojson)
+        res = get_snapped_points_json2json(conn, input_points_geojson)
         raise RuntimeError('Should not reach here!')
     except exc.UserInputException as e:
         print('RESULT: Proper exception, saying: %s' % e)
@@ -746,7 +790,7 @@ if __name__ == "__main__":
 
     print('\nSTART RUNNING FUNCTION: get_snapped_points_1, FeatureCollection...')
     start = time.time()
-    res = get_snapped_points_2json(conn, input_points_geojson, "my_site")
+    res = get_snapped_points_json2json(conn, input_points_geojson, "my_site")
     end = time.time()
     print('TIME: %s' % (end - start))
     print('RESULT: %s' % res)
@@ -767,7 +811,7 @@ if __name__ == "__main__":
 
     print('\nSTART RUNNING FUNCTION: get_snapped_points_1, GeometryCollection...')
     start = time.time()
-    res = get_snapped_points_2json(conn, input_points_geojson)
+    res = get_snapped_points_json2json(conn, input_points_geojson)
     end = time.time()
     print('TIME: %s' % (end - start))
     print('RESULT: %s' % res)
@@ -787,7 +831,7 @@ if __name__ == "__main__":
         ], columns=['my_site', 'lon', 'lat']
     )
     start = time.time()
-    res = get_snapped_points_1csv(conn, example_dataframe, 'lon', 'lat', 'my_site')
+    res = get_snapped_points_csv2csv(conn, example_dataframe, 'lon', 'lat', 'my_site')
     end = time.time()
     print('TIME: %s' % (end - start))
     print('RESULT: %s' % res)

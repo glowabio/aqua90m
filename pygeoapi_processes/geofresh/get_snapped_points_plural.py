@@ -36,7 +36,7 @@ curl -X POST "http://localhost:5000/processes/get-snapped-points-plural/executio
   },
   "outputs": {
     "transmissionMode": "reference"
-  } 
+  }
 }'
 
 
@@ -64,6 +64,43 @@ curl -X POST "http://localhost:5000/processes/get-snapped-points-plural/executio
 --data '{
   "inputs": {
     "colname_site_id": "my_site",
+    "points_geojson": {
+        "type": "FeatureCollection",
+        "features": [
+            {
+               "type": "Feature",
+               "geometry": { "type": "Point", "coordinates": [9.931555, 54.695070]},
+               "properties": {
+                   "my_site": "bla1",
+                   "species_name": "Hase",
+                   "species_id": "007"
+               }
+            },
+            {
+               "type": "Feature",
+               "geometry": { "type": "Point", "coordinates": [9.921555, 54.295070]},
+               "properties": {
+                   "my_site": "bla2",
+                   "species_name": "Delphin",
+                   "species_id": "008"
+               }
+            }
+        ]
+    }
+  }
+}'
+
+# INPUT: FeatureCollection
+# OUTPUT: CSV
+curl -X POST "https://$PYSERVER/processes/get-snapped-points-plural/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "outputs": {
+    "transmissionMode": "reference"
+  },
+  "inputs": {
+    "colname_site_id": "my_site",
+    "result_format": "csv",
     "points_geojson": {
         "type": "FeatureCollection",
         "features": [
@@ -167,6 +204,8 @@ class SnappedPointsGetterPlural(BaseProcessor):
         colname_lon = data.get('colname_lon', 'lon')
         colname_lat = data.get('colname_lat', 'lat')
         colname_site_id = data.get('colname_site_id', 'site_id')
+        # Ask for result format
+        result_format = data.get('result_format', None)
         # Optional comment:
         comment = data.get('comment') # optional
 
@@ -174,6 +213,16 @@ class SnappedPointsGetterPlural(BaseProcessor):
         ## Potential outputs:
         output_json = None
         output_df = None
+
+
+        ## Check which format
+        if result_format is None:
+            if points_geojson is not None or points_geojson_url is not None:
+                LOGGER.debug('User did not specify output format, but provided GeoJSON, so we will provide geojson back!')
+                result_format = 'geojson'
+            elif csv_url is not None:
+                LOGGER.debug('User did not specify output format, but provided CSV, so we will provide CSV back!')
+                result_format = 'csv'
 
 
         ## Download GeoJSON if user provided URL:
@@ -203,7 +252,10 @@ class SnappedPointsGetterPlural(BaseProcessor):
                 geojson_helpers.check_feature_collection_property(points_geojson, colname_site_id)
 
             # Query database:
-            output_json = snapping.get_snapped_points_2json(conn, points_geojson, colname_site_id = colname_site_id)
+            if result_format == 'geojson':
+                output_json = snapping.get_snapped_points_json2json(conn, points_geojson, colname_site_id = colname_site_id)
+            elif result_format == 'csv':
+                output_df = snapping.get_snapped_points_json2csv(conn, points_geojson, colname_site_id = colname_site_id)
 
         ## Handle CSV case:
         elif csv_url is not None:
@@ -242,7 +294,10 @@ class SnappedPointsGetterPlural(BaseProcessor):
                         raise exc.DataAccessException(err_msg)
 
             # Query database:
-            output_df = snapping.get_snapped_points_1csv(conn, input_df, colname_lon, colname_lat, colname_site_id)
+            if result_format == 'geojson':
+                output_json = snapping.get_snapped_points_csv2json(conn, input_df, colname_site_id = colname_site_id)
+            elif result_format == 'csv':
+                output_df = snapping.get_snapped_points_csv2csv(conn, input_df, colname_lon, colname_lat, colname_site_id)
 
         else:
             err_msg = 'Please provide either GeoJSON (points_geojson, points_geojson_url) or CSV data (csv_url).'
