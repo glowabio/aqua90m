@@ -165,7 +165,7 @@ class BasinStreamSegmentsGetter(BaseProcessor):
 
             LOGGER.debug('Now, getting stream segments for basin_id: %s' % basin_id)
             geometry_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll_by_basin(
-                conn, basin_id, reg_id, strahler_min=strahler_min)
+                conn, basin_id, reg_id, strahler_min = strahler_min)
         
             if comment is not None:
                 geometry_coll['comment'] = comment

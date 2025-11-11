@@ -32,6 +32,15 @@
             "metadata": null,
             "keywords": ["longitude", "wgs84"]
         },
+        "strahler_min": {
+            "title": "Strahler filter",
+            "description": "Filter the stream segments by strahler order: Only return stream segments with a strahler order equal or higher than this value. Defaults to zero.",
+            "schema": {"type": "integer"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
         "subc_id": {
             "title": "Subcatchment id",
             "description": "Subcatchment id",
