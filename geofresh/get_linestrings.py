@@ -339,9 +339,9 @@ def get_streamsegment_linestrings_feature_coll_by_basin(conn, basin_id, reg_id):
             "geometry": geometry,
             "properties": {
                 "subc_id": row[1],
-                "strahler_order": row[2],
-                "target": row[3],
-                "length": row[4]
+                "target": row[2],
+                "length": row[3],
+                "strahler_order": row[4]
             }
         }
         features_geojson.append(feature)
