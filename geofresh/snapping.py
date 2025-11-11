@@ -354,7 +354,7 @@ def get_snapped_points_csv2json(conn, input_df, colname_lon, colname_lat, colnam
         colname_site_id = colname_site_id,
         result_format="geojson")
 
-def get_snapped_points_json2csv(conn, points_geojson, colname_site_id = None):
+def get_snapped_points_json2csv(conn, points_geojson, colname_lon, colname_lat, colname_site_id):
     # Just a wrapper
     # INPUT: GeoJSON (Multipoint)
     # OUTPUT: Pandas dataframe
@@ -376,8 +376,8 @@ def get_snapped_points_json2csv(conn, points_geojson, colname_site_id = None):
     return get_snapped_point_xy(conn,
         geojson = points_geojson,
         colname_site_id = colname_site_id,
-        colname_lon='lon', # TODO: This csv column name is hardcoded
-        colname_lat='lat', # TODO: This csv column name is hardcoded
+        colname_lon = colname_lon,
+        colname_lat = colname_lat,
         result_format="csv")
 
 

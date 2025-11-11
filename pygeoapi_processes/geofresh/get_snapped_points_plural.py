@@ -118,6 +118,8 @@ curl -X POST "https://$PYSERVER/processes/get-snapped-points-plural/execution" \
   "inputs": {
     "colname_site_id": "my_site",
     "result_format": "csv",
+    "colname_lon": "long_wgs84",
+    "colname_lat": "lat_wgs84",
     "points_geojson": {
         "type": "FeatureCollection",
         "features": [
@@ -279,7 +281,8 @@ class SnappedPointsGetterPlural(BaseProcessor):
                 LOGGER.debug('Requesting geojson (get_snapped_points_json2json)')
                 output_json = snapping.get_snapped_points_json2json(conn, points_geojson, colname_site_id = colname_site_id)
             elif result_format == 'csv':
-                output_df = snapping.get_snapped_points_json2csv(conn, points_geojson, colname_site_id = colname_site_id)
+                LOGGER.debug('Requesting csv (get_snapped_points_json2csv)')
+                output_df = snapping.get_snapped_points_json2csv(conn, points_geojson, colname_lon, colname_lat, colname_site_id)
 
         ## Handle CSV case:
         elif csv_url is not None:
@@ -322,6 +325,7 @@ class SnappedPointsGetterPlural(BaseProcessor):
                 LOGGER.debug('Requesting geojson (get_snapped_points_csv2json)')
                 output_json = snapping.get_snapped_points_csv2json(conn, input_df, colname_lon, colname_lat, colname_site_id)
             elif result_format == 'csv':
+                LOGGER.debug('Requesting csv (get_snapped_points_csv2csv)')
                 output_df = snapping.get_snapped_points_csv2csv(conn, input_df, colname_lon, colname_lat, colname_site_id)
 
         else:
