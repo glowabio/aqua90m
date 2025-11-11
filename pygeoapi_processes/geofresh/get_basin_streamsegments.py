@@ -106,6 +106,7 @@ class BasinStreamSegmentsGetter(BaseProcessor):
         lat = data.get('lat', None)
         subc_id  = data.get('subc_id',  None) # optional, need either lonlat OR subc_id
         basin_id = data.get('basin_id', None) # optional, need either lonlat OR subc_id
+        strahler_min = data.get('strahler_min', 0)
         comment = data.get('comment') # optional
         geometry_only = data.get('geometry_only', False)
 
@@ -136,7 +137,7 @@ class BasinStreamSegmentsGetter(BaseProcessor):
 
             LOGGER.debug('Now, getting stream segment for basin_id: %s' % basin_id)
             geometry_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll_by_basin(
-                conn, basin_id, reg_id)
+                conn, basin_id, reg_id, strahler_min=strahler_min)
         
             if comment is not None:
                 geometry_coll['comment'] = comment
@@ -157,7 +158,7 @@ class BasinStreamSegmentsGetter(BaseProcessor):
 
             LOGGER.debug('Now, getting stream segment (incl. strahler order) for basin_id: %s' % basin_id)
             feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll_by_basin(
-                conn, basin_id, reg_id)
+                conn, basin_id, reg_id, strahler_min = strahler_min)
 
             if comment is not None:
                 feature_coll['comment'] = comment
