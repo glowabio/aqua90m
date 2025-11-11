@@ -341,7 +341,7 @@ def get_snapped_points_csv2csv(conn, input_df, colname_lon, colname_lat, colname
         colname_lon = colname_lon,
         colname_lat = colname_lat,
         colname_site_id = colname_site_id,
-        output="csv")
+        result_format="csv")
 
 def get_snapped_points_csv2json(conn, input_df, colname_lon, colname_lat, colname_site_id):
     # Just a wrapper
@@ -352,7 +352,7 @@ def get_snapped_points_csv2json(conn, input_df, colname_lon, colname_lat, colnam
         colname_lon = colname_lon,
         colname_lat = colname_lat,
         colname_site_id = colname_site_id,
-        output="csv")
+        result_format="geojson")
 
 def get_snapped_points_json2csv(conn, points_geojson, colname_site_id = None):
     # Just a wrapper
@@ -532,6 +532,7 @@ def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, c
     result_to_be_returned = None
     # If caller asks for GeoJSON output, we return output as GeoJSON:
     if result_format == "geojson":
+        LOGGER.debug("Generating GeoJSON to return...")
 
         LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
         features = []
@@ -585,6 +586,7 @@ def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, c
 
     # If caller asks for CSV output, we return output as dataframe:
     elif result_format == "csv":
+        LOGGER.debug("Generating csv to return...")
         # Create list to be filled and converted to Pandas dataframe:
         everything = []
         while (True):

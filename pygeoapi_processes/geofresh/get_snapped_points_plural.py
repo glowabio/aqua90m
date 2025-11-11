@@ -25,7 +25,7 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 '''
 INPUT: CSV
 OUTPUT: CSV
-curl -X POST "http://localhost:5000/processes/get-snapped-points-plural/execution" \
+curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -39,10 +39,27 @@ curl -X POST "http://localhost:5000/processes/get-snapped-points-plural/executio
   }
 }'
 
+INPUT: CSV
+OUTPUT: JSON
+curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+    "colname_lon": "longitude",
+    "colname_lat": "latitude",
+    "colname_site_id": "site_id",
+    "result_format": "geojson"
+  },
+  "outputs": {
+    "transmissionMode": "reference"
+  }
+}'
+
 
 # INPUT: MultiPoint
 # OUTPUT: FeatureCollection
-curl -X POST "http://localhost:5000/processes/get-snapped-points-plural/execution" \
+curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -59,7 +76,7 @@ curl -X POST "http://localhost:5000/processes/get-snapped-points-plural/executio
 
 # INPUT: FeatureCollection
 # OUTPUT: FeatureCollection
-curl -X POST "http://localhost:5000/processes/get-snapped-points-plural/execution" \
+curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -224,6 +241,12 @@ class SnappedPointsGetterPlural(BaseProcessor):
                 LOGGER.debug('User did not specify output format, but provided CSV, so we will provide CSV back!')
                 result_format = 'csv'
 
+        ## Validate output format:
+        if result_format not in ['csv', 'geojson']:
+            err_msg = f'Wrong result format: {result_format}!'
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
+
 
         ## Download GeoJSON if user provided URL:
         if points_geojson_url is not None:
@@ -253,6 +276,7 @@ class SnappedPointsGetterPlural(BaseProcessor):
 
             # Query database:
             if result_format == 'geojson':
+                LOGGER.debug('Requesting geojson (get_snapped_points_json2json)')
                 output_json = snapping.get_snapped_points_json2json(conn, points_geojson, colname_site_id = colname_site_id)
             elif result_format == 'csv':
                 output_df = snapping.get_snapped_points_json2csv(conn, points_geojson, colname_site_id = colname_site_id)
@@ -295,7 +319,8 @@ class SnappedPointsGetterPlural(BaseProcessor):
 
             # Query database:
             if result_format == 'geojson':
-                output_json = snapping.get_snapped_points_csv2json(conn, input_df, colname_site_id = colname_site_id)
+                LOGGER.debug('Requesting geojson (get_snapped_points_csv2json)')
+                output_json = snapping.get_snapped_points_csv2json(conn, input_df, colname_lon, colname_lat, colname_site_id)
             elif result_format == 'csv':
                 output_df = snapping.get_snapped_points_csv2csv(conn, input_df, colname_lon, colname_lat, colname_site_id)
 
