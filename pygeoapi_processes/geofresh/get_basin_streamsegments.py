@@ -26,7 +26,8 @@ curl -X POST "https://$PYSERVER/processes/get-basin-streamsegments/execution" \
     "basin_id": 1288419,
     "geometry_only": false,
     "comment": "close to bremerhaven",
-    "strahler_min": 3
+    "strahler_min": 4,
+    "add_segment_ids": true
     }
 }'
 
@@ -138,6 +139,7 @@ class BasinStreamSegmentsGetter(BaseProcessor):
         strahler_min = data.get('strahler_min', 0)
         comment = data.get('comment') # optional
         geometry_only = data.get('geometry_only', False)
+        add_segment_ids = data.get('add_segment_ids', False)
 
         # Check type:
         if not type(geometry_only) == bool:
@@ -190,6 +192,13 @@ class BasinStreamSegmentsGetter(BaseProcessor):
 
             if comment is not None:
                 feature_coll['comment'] = comment
+
+            if add_segment_ids:
+                segment_ids = []
+                for item in feature_coll['features']:
+                    segment_ids.append(item["properties"]["subc_id"])
+                feature_coll['segment_ids'] = segment_ids
+
 
             # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             if utils.return_hyperlink('stream_segments', requested_outputs):
