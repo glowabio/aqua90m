@@ -16,7 +16,22 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 
 '''
-# Request a simple GeometryCollection (LineString):
+
+# Request a FeatureCollection, based on a basin_id:
+# Output: LineStrings (FeatureCollection)
+curl -X POST "https://$PYSERVER/processes/get-basin-streamsegments/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "basin_id": 1288419,
+    "geometry_only": false,
+    "comment": "close to bremerhaven",
+    "strahler_min": 3
+    }
+}'
+
+# Request a simple GeometryCollection, based on a basin_id
+# Output: LineStrings (GeometryCollection)
 curl -X POST "https://$PYSERVER/processes/get-basin-streamsegments/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -27,14 +42,28 @@ curl -X POST "https://$PYSERVER/processes/get-basin-streamsegments/execution" \
     }
 }'
 
-# Request a FeatureCollection (LineString):
+# Request a simple GeometryCollection, based on a subc_id
+# Output: LineStrings (GeometryCollection)
 curl -X POST "https://$PYSERVER/processes/get-basin-streamsegments/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
-    "basin_id": 1288419,
-    "geometry_only": false,
+    "subc_id": 506586041,
+    "geometry_only": true,
     "comment": "close to bremerhaven"
+    }
+}'
+
+
+# Request a simple GeometryCollection, based on lon+lat
+# Output: LineStrings (GeometryCollection)
+curl -X POST "https://$PYSERVER/processes/get-basin-streamsegments/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 8.278198242187502,
+    "lat": 53.54910661890981,
+    "geometry_only": true
     }
 }'
 
@@ -116,12 +145,11 @@ class BasinStreamSegmentsGetter(BaseProcessor):
 
         # Get reg_id, basin_id, subc_id
         if subc_id is not None:
-            # (special case: user provided subc_id instead of lonlat!)
-            LOGGER.info('Retrieving stream segment for subc_id %s' % subc_id)
+            LOGGER.info('Retrieving basin_id for subc_id %s' % subc_id)
             subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
                 conn, LOGGER, subc_id = subc_id)
         elif lon is not None and lat is not None:
-            LOGGER.info('Retrieving stream segment for lon, lat: %s, %s' % (lon, lat))
+            LOGGER.info('Retrieving basin_id for lon, lat: %s, %s' % (lon, lat))
             subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
                 conn, LOGGER, lon, lat)
         elif basin_id is not None:
@@ -135,7 +163,7 @@ class BasinStreamSegmentsGetter(BaseProcessor):
         # Get only geometry:
         if geometry_only:
 
-            LOGGER.debug('Now, getting stream segment for basin_id: %s' % basin_id)
+            LOGGER.debug('Now, getting stream segments for basin_id: %s' % basin_id)
             geometry_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll_by_basin(
                 conn, basin_id, reg_id, strahler_min=strahler_min)
         
@@ -156,7 +184,7 @@ class BasinStreamSegmentsGetter(BaseProcessor):
         # Get Feature:
         if not geometry_only:
 
-            LOGGER.debug('Now, getting stream segment (incl. strahler order) for basin_id: %s' % basin_id)
+            LOGGER.debug('Now, getting stream segments for basin_id: %s' % basin_id)
             feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll_by_basin(
                 conn, basin_id, reg_id, strahler_min = strahler_min)
 

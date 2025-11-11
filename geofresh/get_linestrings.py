@@ -296,7 +296,7 @@ def get_streamsegment_linestrings_feature_coll_by_basin(conn, basin_id, reg_id, 
     '''
     Example query:
 
-   Example result:
+    Example result:
     '''
 
 
