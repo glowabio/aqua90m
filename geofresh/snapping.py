@@ -504,6 +504,18 @@ def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, c
     ## Run the snapping query ##
     ############################
 
+    result_to_be_returned = _run_snapping_query(cursor, tablename, reg_id_set, result_format, colname_lon, colname_lat, colname_site_id)
+
+    ## Drop temp table:
+    LOGGER.debug('Dropping temporary table "%s".' % tablename)
+    query_drop = "DROP TABLE IF EXISTS {tablename};".format(tablename = tablename)
+    cursor.execute(query_drop)
+
+    return result_to_be_returned
+
+
+
+def _run_snapping_query(cursor, tablename, reg_id_set, result_format, colname_lon, colname_lat, colname_site_id):
     ## This does not write anything into the database:
     reg_ids_string = ", ".join([str(elem) for elem in reg_id_set])
     query_snap = '''
@@ -618,15 +630,9 @@ def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, c
         ])
         result_to_be_returned = output_dataframe
 
-
-
-
-    ## Drop temp table:
-    LOGGER.debug('Dropping temporary table "%s".' % tablename)
-    query_drop = "DROP TABLE IF EXISTS {tablename};".format(tablename = tablename)
-    cursor.execute(query_drop)
-
     return result_to_be_returned
+
+
 
 
 if __name__ == "__main__":
