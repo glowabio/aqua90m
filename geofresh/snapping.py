@@ -12,11 +12,13 @@ try:
     # If the package is installed in local python PATH:
     import aqua90m.utils.geojson_helpers as geojson_helpers
     import aqua90m.utils.exceptions as exc
+    import aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
 except ModuleNotFoundError as e1:
     try:
         # If we are using this from pygeoapi:
         import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
         import pygeoapi.process.aqua90m.utils.exceptions as exc
+        import pygeoapi.process.aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
     except ModuleNotFoundError as e2:
         msg = 'Module not found: '+e1.name+' (imported in '+__name__+').' + \
               ' If this is being run from' + \
@@ -380,139 +382,26 @@ def get_snapped_points_json2csv(conn, points_geojson, colname_lon, colname_lat, 
         colname_lat = colname_lat,
         result_format="csv")
 
-
 def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, colname_lat=None, colname_site_id=None, result_format="geojson"):
-    # INPUT: GeoJSON (Multipoint)
-    # OUTPUT: FeatureCollection (Point)
 
-    # Note:
-    # If the input is geojson,   we also need: colname_site_id
-    # If the input is dataframe, we also need: colname_site_id, colname_lon, colname_lat
-    # Same for the output!
-
-    cursor = conn.cursor()
-
-    #######################
-    ## Create temp table ##
-    #######################
-
-    # TODO WIP numeric or decimal or ...?
-    # TODO: Is varchar a good type for expected site_ids?
-    tablename = 'snapping_{uuid}'.format(uuid = str(uuid.uuid4()).replace('-', ''))
-    LOGGER.debug('Creating temporary table "%s"...' % tablename)
-    query_create = """
-    CREATE TEMP TABLE {tablename} (
-    site_id varchar(100),
-    lon decimal,
-    lat decimal,
-    subc_id integer,
-    basin_id integer,
-    reg_id smallint,
-    geom_user geometry(POINT, 4326)
-    );
-    """.format(tablename = tablename)
-    query_create = query_create.replace("\n", " ")
-    ## Run the create query:
-    ## Note: At first, we ran them all at once, but for measuring performance we now
-    ## send them separately, and it does not make things much slower.
-    _start = time.time()
-    cursor.execute(query_create)
-    _end = time.time()
-    LOGGER.log(logging.TRACE, '**** TIME ************ query_create: %s' % (_end - _start))
-
-    ## Collect the user values
-    tmp = []
-
-    ## Collect the user values from dataframe:
     if dataframe is not None:
-        for row in dataframe.itertuples(index=False):
-            lon = getattr(row, colname_lon)
-            lat = getattr(row, colname_lat)
-            site_id = getattr(row, colname_site_id)
-            tmp.append("('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))".format(site_id=site_id, lon=lon, lat=lat))
-
-    ## Collect the user values from GeoJSON:
+        list_of_insert_rows = temp_table_for_queries.make_insertion_rows_from_dataframe(
+            dataframe, colname_lon, colname_lat, colname_site_id)
     elif geojson is not None:
-        if geojson['type'] == 'MultiPoint':
-            site_id = 'none' # TODO Maybe fill with NULL values, or not create that column if it is not needed? 
-            for lon, lat in geojson["coordinates"]:
-                tmp.append("('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))".format(site_id=site_id, lon=lon, lat=lat))
-        elif geojson['type'] == 'GeometryCollection':
-            site_id = 'none'
-            for point in geojson['geometries']:
-                lon, lat = point['coordinates']
-                tmp.append("('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))".format(site_id=site_id, lon=lon, lat=lat))
-        elif geojson['type'] == 'FeatureCollection':
-            for point in geojson['features']:
-                lon, lat = point['geometry']['coordinates']
-                site_id = point['properties'][colname_site_id]
-                tmp.append("('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))".format(site_id=site_id, lon=lon, lat=lat))
-        else:
-            err_msg = 'Cannot recognize GeoJSON object!'
-            LOGGER.error(err_msg)
-            raise exc.UserInputException(err_msg)
+        list_of_insert_rows = temp_table_for_queries.make_insertion_rows_from_geojson(
+            geojson, colname_site_id)
     else:
         err_msg = 'Cannot recognize input object!'
         LOGGER.error(err_msg)
         raise exc.UserInputException(err_msg)
 
-    ## Insert the user values
-    LOGGER.debug('Inserting into temporary table "%s"...' % tablename)
-    query_insert = "INSERT INTO {tablename} (site_id, lon, lat, geom_user) VALUES {values};".format(tablename=tablename, values=", ".join(tmp))
-    _start = time.time()
-    cursor.execute(query_insert)
-    _end = time.time()
-    LOGGER.log(logging.TRACE, '**** TIME ************ query_insert: %s' % (_end - _start))
 
-    # Adding index:
-    LOGGER.debug('Creating index for temporary table "%s"...' % tablename)
-    query_index = "CREATE INDEX IF NOT EXISTS temp_test_geom_user_idx ON {tablename} USING gist (geom_user);".format(tablename=tablename)
-    _start = time.time()
-    cursor.execute(query_index)
-    _end = time.time()
-    LOGGER.log(logging.TRACE, '**** TIME ************ query_index: %s' % (_end - _start))
-
-    ## Add reg_id to temp table, get it returned:
-    LOGGER.debug('Update reg_id (st_intersects) in temporary table "%s"...' % tablename)
-    query_reg = "WITH updater AS (UPDATE {tablename} SET reg_id = reg.reg_id FROM regional_units reg WHERE st_intersects({tablename}.geom_user, reg.geom) RETURNING {tablename}.reg_id) SELECT DISTINCT reg_id FROM updater;".format(tablename = tablename)
-    _start = time.time()
-    cursor.execute(query_reg)
-    _end = time.time()
-    LOGGER.log(logging.TRACE, '**** TIME ************ query_reg: %s' % (_end - _start))
-
-    ## Retrieve reg_id, for next query:
-    LOGGER.log(logging.TRACE, 'Retrieving reg_ids (RETURNING from UPDATE query)...')
-    reg_id_set = set()
-    while (True):
-        row = cursor.fetchone()
-        if row is None: break
-        LOGGER.log(logging.TRACE, '  Retrieved: %s' % str(row[0]))
-        reg_id_set.add(row[0])
-    LOGGER.debug('Set of reg_ids: %s' % reg_id_set)
-
-    ## Add sub_id:
-    LOGGER.debug('Update subc_id, basin_id (st_intersects) in temporary table "%s"...' % tablename)
-    reg_ids_string = ", ".join([str(elem) for elem in reg_id_set])
-    _start = time.time()
-    query_sub_bas = "UPDATE {tablename} SET subc_id = sub.subc_id, basin_id = sub.basin_id FROM sub_catchments sub WHERE st_intersects({tablename}.geom_user, sub.geom) AND sub.reg_id IN ({reg_ids}) ;".format(tablename = tablename, reg_ids = reg_ids_string)
-    cursor.execute(query_sub_bas)
-    _end = time.time()
-    LOGGER.log(logging.TRACE, '**** TIME ************ query_sub_bas: %s' % (_end - _start))
-    LOGGER.log(logging.TRACE, 'Creating temporary table "%s"... DONE.' % tablename)
-
-    ############################
-    ## Run the snapping query ##
-    ############################
-
-    result_to_be_returned = _run_snapping_query(cursor, tablename, reg_id_set, result_format, colname_lon, colname_lat, colname_site_id)
-
-    ## Drop temp table:
-    LOGGER.debug('Dropping temporary table "%s".' % tablename)
-    query_drop = "DROP TABLE IF EXISTS {tablename};".format(tablename = tablename)
-    cursor.execute(query_drop)
-
+    cursor = conn.cursor()
+    tablename_prefix = "snapping_basic"
+    tablename, reg_ids = temp_table_for_queries.create_and_fill_temp_table(cursor, list_of_insert_rows, tablename_prefix)
+    result_to_be_returned = _run_snapping_query(cursor, tablename, reg_ids, result_format, colname_lon, colname_lat, colname_site_id)
+    temp_table_for_queries.drop_temp_table(cursor, tablename)
     return result_to_be_returned
-
 
 
 def _run_snapping_query(cursor, tablename, reg_id_set, result_format, colname_lon, colname_lat, colname_site_id):
