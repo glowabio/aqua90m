@@ -211,7 +211,7 @@ def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_fea
 ###############################
 
 
-def get_snapped_points_json2json(conn, points_geojson, colname_site_id = None):
+def get_snapped_points_json2json(conn, points_geojson, min_strahler, colname_site_id = None):
     # Just a wrapper
     # INPUT: GeoJSON (Multipoint)
     # OUTPUT: FeatureCollection (Point)
@@ -230,9 +230,9 @@ def get_snapped_points_json2json(conn, points_geojson, colname_site_id = None):
         iterate_over = points_geojson['features']
         num = len(iterate_over)
 
-    return get_snapped_points_xy(conn, geojson = points_geojson, colname_site_id = colname_site_id, result_format="geojson")
+    return get_snapped_points_xy(conn, geojson = points_geojson, min_strahler = min_strahler, colname_site_id = colname_site_id, result_format="geojson")
 
-def get_snapped_points_csv2csv(conn, input_df, colname_lon, colname_lat, colname_site_id):
+def get_snapped_points_csv2csv(conn, input_df, min_strahler, colname_lon, colname_lat, colname_site_id):
     # Just a wrapper
     # INPUT: Pandas dataframe
     # OUTPUT: Pandas dataframe
@@ -241,9 +241,10 @@ def get_snapped_points_csv2csv(conn, input_df, colname_lon, colname_lat, colname
         colname_lon = colname_lon,
         colname_lat = colname_lat,
         colname_site_id = colname_site_id,
-        result_format="csv")
+        result_format="csv",
+        min_strahler=min_strahler)
 
-def get_snapped_points_csv2json(conn, input_df, colname_lon, colname_lat, colname_site_id):
+def get_snapped_points_csv2json(conn, input_df, min_strahler, colname_lon, colname_lat, colname_site_id):
     # Just a wrapper
     # INPUT: Pandas dataframe
     # OUTPUT: FeatureCollection (Point)
@@ -252,9 +253,10 @@ def get_snapped_points_csv2json(conn, input_df, colname_lon, colname_lat, colnam
         colname_lon = colname_lon,
         colname_lat = colname_lat,
         colname_site_id = colname_site_id,
-        result_format="geojson")
+        result_format="geojson",
+        min_strahler=min_strahler)
 
-def get_snapped_points_json2csv(conn, points_geojson, colname_lon, colname_lat, colname_site_id):
+def get_snapped_points_json2csv(conn, points_geojson, min_strahler, colname_lon, colname_lat, colname_site_id):
     # Just a wrapper
     # INPUT: GeoJSON (Multipoint)
     # OUTPUT: Pandas dataframe
@@ -278,7 +280,8 @@ def get_snapped_points_json2csv(conn, points_geojson, colname_lon, colname_lat, 
         colname_site_id = colname_site_id,
         colname_lon = colname_lon,
         colname_lat = colname_lat,
-        result_format="csv")
+        result_format="csv",
+        min_strahler=min_strahler)
 
 ##################################
 ### Many points at a time      ###
@@ -556,6 +559,7 @@ if __name__ == "__main__":
     ####################################
     ### Run function for many points ###
     ####################################
+    min_strahler = 5
 
     input_points_geojson = {
         "type": "FeatureCollection",
@@ -588,22 +592,71 @@ if __name__ == "__main__":
         colname_lat=None,
         colname_site_id="my_site",
         result_format="geojson",
-        min_strahler=5
+        min_strahler=min_strahler
     )
-
     print('RESULT:')
     print(res)
 
     res = get_snapped_points_xy(conn,
         geojson=input_points_geojson,
         dataframe=None,
-        colname_lon="longitude",
-        colname_lat="latitude",
+        colname_lon="lon",
+        colname_lat="lat",
         colname_site_id="my_site",
         result_format="csv",
-        min_strahler=5
+        min_strahler=min_strahler
+    )
+    print('RESULT:')
+    print(res)
+
+
+    res = get_snapped_points_json2csv(conn,
+        input_points_geojson,
+        min_strahler,
+        "lon",
+        "lat",
+        "my_site"
+    )
+    print('RESULT:')
+    print(res)
+
+    example_dataframe = pd.DataFrame(
+        [
+            ['aa', 10.041155219078064, 53.07006147583069],
+            ['bb', 10.042726993560791, 53.06911450500803],
+            ['cc', 10.039894580841064, 53.06869677412868],
+            ['a',  10.698832912677716, 53.51710727672125],
+            ['b',  12.80898022975407,  52.42187129944509],
+            ['c',  11.915323076217902, 52.730867141970464],
+            ['d',  16.651903948708565, 48.27779486850176],
+            ['e',  19.201146608148463, 47.12192880511424],
+            ['f',  24.432498016999062, 61.215505889934434]
+        ], columns=['my_site', 'lon', 'lat']
     )
 
+    res = get_snapped_points_csv2json(conn,
+        example_dataframe,
+        min_strahler,
+        "lon", "lat",
+        "my_site"
+    )
+    print('RESULT:')
+    print(res)
+
+    res = get_snapped_points_csv2csv(conn,
+        example_dataframe,
+        min_strahler,
+        "lon", "lat",
+        "my_site"
+    )
+    print('RESULT:')
+    print(res)
+
+    res = get_snapped_points_json2json(conn,
+        input_points_geojson,
+        min_strahler,
+        "my_site"
+    )
     print('RESULT:')
     print(res)
 
