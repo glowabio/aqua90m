@@ -26,17 +26,28 @@ except ModuleNotFoundError as e1:
         LOGGER.debug(msg)
 
 
-def create_and_fill_temp_table(cursor, list_of_insert_rows, tablename_prefix):
-    randomstring = str(uuid.uuid4()).replace('-', '')
-    tablename = f'{tablename_prefix}_{randomstring}'
-    LOGGER.debug(f'Creating and filling temp table "{tablename}"...')
-    _create_temp_table(cursor, tablename)
+def populate_temp_table(cursor, tablename, list_of_insert_rows):
+    LOGGER.debug(f'Populating temp table "{tablename}"...')
+
+    # Inserting the information passed by the user:
     _fill_temp_table(cursor, tablename, list_of_insert_rows)
+
+    # Generate a spatial index:
     _add_index(cursor, tablename)
+
+    # For each point, find out and store and retrieve the reg_id:
     reg_ids = _update_temp_table_regid(cursor, tablename)
+
+    # For each point, find out and store the basin_id and subc_id:
     _add_subcids(cursor, tablename, reg_ids)
-    LOGGER.debug(f'Creating and filling temp table "{tablename}"... done.')
-    return tablename, reg_ids
+
+    LOGGER.debug(f'Populating temp table "{tablename}"... done.')
+    return reg_ids
+
+
+def _tablename(tablename_prefix):
+    randomstring = str(uuid.uuid4()).replace('-', '')
+    return f'{tablename_prefix}_{randomstring}'
 
 
 def drop_temp_table(cursor, tablename):
@@ -98,7 +109,8 @@ def make_insertion_rows_from_dataframe(dataframe, colname_lon, colname_lat, coln
     return list_of_insert_rows
 
 
-def _create_temp_table(cursor, tablename):
+def create_temp_table(cursor, tablename_prefix):
+    tablename =_tablename(tablename_prefix)
     LOGGER.debug(f'Creating temporary table "{tablename}"...')
     # TODO WIP numeric or decimal or ...?
     # TODO: Is varchar a good type for expected site_ids?
@@ -114,15 +126,13 @@ def _create_temp_table(cursor, tablename):
     );
     """
     query = query.replace("\n", " ")
-
-    ## Run the create query:
-    ## Note: At first, we ran them all at once, but for measuring performance we now
-    ## send them separately, and it does not make things much slower.
     _start = time.time()
     cursor.execute(query)
     _end = time.time()
     LOGGER.debug(f'Creating temporary table "{tablename}"... done.')
     LOGGER.log(logging.TRACE, '**** TIME ************ query_create: %s' % (_end - _start))
+    return tablename
+
 
 
 def _fill_temp_table(cursor, tablename, list_of_insert_rows):
