@@ -433,99 +433,127 @@ def _run_snapping_query(cursor, tablename, reg_id_set, result_format, colname_lo
     _end = time.time()
     LOGGER.log(logging.TRACE, '**** TIME ************ query_snap: %s' % (_end - _start))
     LOGGER.debug('Querying database with snapping query... DONE.')
+    return _package_result(cursor, result_format, colname_lon, colname_lat, colname_site_id)
 
-    ## Now iterate over result rows:
+
+def _package_result(cursor, result_format, colname_lon, colname_lat, colname_site_id):
     result_to_be_returned = None
-    # If caller asks for GeoJSON output, we return output as GeoJSON:
+
     if result_format == "geojson":
-        LOGGER.debug("Generating GeoJSON to return...")
+        result_to_be_returned = _package_result_in_geojson(cursor, colname_site_id)
 
-        LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
-        features = []
-        while (True):
-            row = cursor.fetchone()
-            if row is None: break
-
-            # Extract values from row:
-            lon = float(row[0])
-            lat = float(row[1])
-            subc_id = row[2]
-            basin_id = row[3]
-            reg_id = row[4]
-            strahler = row[5]
-            snappedpoint_wkt = row[6]
-            site_id = row[7]
-            #streamsegment_wkt = row[7]
-
-            # Convert to GeoJSON:
-            snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
-            #streamsegment_linestring = geomet.wkt.loads(streamsegment_wkt)
-
-            # Construct Feature, incl. ids, strahler and original lonlat:
-            # TODO: If all are in same reg_id and basin, we could remove those
-            # attributes from here...
-            # TODO: If the input was a Geometry or GeometryCollection, we have no site_id!
-            features.append({
-                "type": "Feature",
-                "geometry": snappedpoint_simplegeom,
-                "properties": {
-                    colname_site_id: site_id,
-                    "subc_id": subc_id,
-                    "strahler": strahler,
-                    "basin_id": basin_id,
-                    "reg_id": reg_id,
-                    "lon_original": lon,
-                    "lat_original": lat,
-                }
-            })
-        LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON... DONE.')
-
-        if len(features) == 0:
-            raise exc.UserInputException("No features...")
-
-        feature_coll = {
-            "type": "FeatureCollection",
-            "features": features
-        }
-        LOGGER.log(logging.TRACE, 'Generated GeoJSON: %s' % feature_coll)
-        result_to_be_returned = feature_coll
-
-    # If caller asks for CSV output, we return output as dataframe:
     elif result_format == "csv":
-        LOGGER.debug("Generating csv to return...")
-        # Create list to be filled and converted to Pandas dataframe:
-        everything = []
-        while (True):
-            row = cursor.fetchone()
-            if row is None: break
-
-            # Extract values from row:
-            lon = float(row[0])
-            lat = float(row[1])
-            subc_id = row[2]
-            basin_id = row[3]
-            reg_id = row[4]
-            strahler = row[5]
-            snappedpoint_wkt = row[6]
-            site_id = row[7]
-            #streamsegment_wkt = row[7]
-            snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
-            lon_snapped = snappedpoint_simplegeom['coordinates'][0]
-            lat_snapped = snappedpoint_simplegeom['coordinates'][1]
-            everything.append([site_id, subc_id, basin_id, reg_id, strahler, lon_snapped, lon, lat_snapped, lat])
-
-
-        output_dataframe = pd.DataFrame(everything, columns=[
-            colname_site_id,
-            'subc_id', 'basin_id', 'reg_id',
-            'strahler',
-            colname_lon+'_snapped', colname_lon+'_original',
-            colname_lat+'_snapped', colname_lat+'_original'
-        ])
-        result_to_be_returned = output_dataframe
+        if colname_lon is None or colname_lat is None:
+            raise UserInputException("Need to provide column names for lon and lat for the resulting dataframe!")
+        result_to_be_returned = _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_id)
 
     return result_to_be_returned
 
+
+
+def _package_result_in_geojson(cursor, colname_site_id):
+    LOGGER.debug("Generating GeoJSON to return...")
+    LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
+
+    # Create list to be filled with the GeoJSON Features:
+    features = []
+
+    # Iterating over database results:
+    while (True):
+        row = cursor.fetchone()
+        if row is None: break
+
+        # Extract values from row:
+        lon = float(row[0])
+        lat = float(row[1])
+        subc_id = row[2]
+        basin_id = row[3]
+        reg_id = row[4]
+        strahler = row[5]
+        snappedpoint_wkt = row[6]
+        site_id = row[7]
+
+        # Convert to GeoJSON:
+        snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
+
+        # Construct Feature, incl. ids, strahler and original lonlat:
+        # TODO: If all are in same reg_id and basin, we could remove those
+        # attributes from here...
+        # TODO: If the input was a Geometry or GeometryCollection, we have no site_id!
+        features.append({
+            "type": "Feature",
+            "geometry": snappedpoint_simplegeom,
+            "properties": {
+                colname_site_id: site_id,
+                "subc_id": subc_id,
+                "strahler": strahler,
+                "basin_id": basin_id,
+                "reg_id": reg_id,
+                "lon_original": lon,
+                "lat_original": lat,
+            }
+        })
+
+    LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON... DONE.')
+
+    if len(features) == 0:
+        raise exc.UserInputException("No features...")
+
+    feature_coll = {
+        "type": "FeatureCollection",
+        "features": features
+    }
+    LOGGER.log(logging.TRACE, 'Generated GeoJSON: %s' % feature_coll)
+    return feature_coll
+
+
+def _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_id):
+    LOGGER.debug("Generating dataframe to return...")
+
+    # Create list to be filled and converted to Pandas dataframe:
+    everything = []
+
+    # These will be the column names:
+    colnames = [
+        colname_site_id,
+        'subc_id',
+        'basin_id',
+        'reg_id',
+        'strahler',
+        colname_lon+'_snapped',
+        colname_lon+'_original',
+        colname_lat+'_snapped',
+        colname_lat+'_original'
+    ]
+
+    # Iterating over database results:
+    while (True):
+        row = cursor.fetchone()
+        if row is None: break
+
+        # Extract values from row:
+        lon = float(row[0])
+        lat = float(row[1])
+        subc_id = row[2]
+        basin_id = row[3]
+        reg_id = row[4]
+        strahler = row[5]
+        snappedpoint_wkt = row[6]
+        site_id = row[7]
+
+        # Convert to GeoJSON:
+        snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
+
+        # Extract snapped coordinates:
+        lon_snapped = snappedpoint_simplegeom['coordinates'][0]
+        lat_snapped = snappedpoint_simplegeom['coordinates'][1]
+
+        # Append the line to dataframe:
+        everything.append([site_id, subc_id, basin_id, reg_id, strahler, lon_snapped, lon, lat_snapped, lat])
+
+    # Construct pandas dataframe from collected rows:
+    output_dataframe = pd.DataFrame(everything, columns=colnames)
+    return output_dataframe
 
 
 
