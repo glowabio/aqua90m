@@ -74,7 +74,7 @@ def make_insertion_rows_from_geojson(geojson, colname_site_id=None):
         site_id = 'none'
         for point in geojson['geometries']:
             lon, lat = point['coordinates']
-            f"('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
+            row = f"('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
             list_of_insert_rows.append(row)
 
     elif geojson['type'] == 'FeatureCollection':
@@ -82,7 +82,7 @@ def make_insertion_rows_from_geojson(geojson, colname_site_id=None):
         for point in geojson['features']:
             lon, lat = point['geometry']['coordinates']
             site_id = point['properties'][colname_site_id]
-            f"('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
+            row = f"('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
             list_of_insert_rows.append(row)
 
     else:

@@ -544,6 +544,7 @@ if __name__ == "__main__":
         # If the package is properly installed, thus it is findable by python on PATH:
         import aqua90m.utils.geojson_helpers as geojson_helpers
         import aqua90m.utils.exceptions as exc
+        import aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
     except ModuleNotFoundError:
         # If we are calling this script from the aqua90m parent directory via
         # "python aqua90m/geofresh/basic_queries.py", we have to make it available on PATH:
@@ -551,6 +552,7 @@ if __name__ == "__main__":
         sys.path.append(os.getcwd())
         import aqua90m.utils.geojson_helpers as geojson_helpers
         import aqua90m.utils.exceptions as exc
+        import aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
 
 
     # Get config
