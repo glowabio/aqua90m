@@ -134,6 +134,34 @@ def create_temp_table(cursor, tablename_prefix):
     return tablename
 
 
+def create_temp_table_for_strahler_snapping(cursor, tablename_prefix):
+    # TODO: Should this be placed in snapping_strahler.py?
+    tablename =_tablename(tablename_prefix)
+    LOGGER.debug(f'Creating temporary table "{tablename}" (with column "geom_closest")...')
+    # TODO WIP numeric or decimal or ...?
+    # TODO: Is varchar a good type for expected site_ids?
+    query = f"""
+    CREATE TEMP TABLE {tablename} (
+    site_id varchar(100),
+    lon decimal,
+    lat decimal,
+    subc_id integer,
+    basin_id integer,
+    reg_id smallint,
+    geom_user geometry(POINT, 4326),
+    geom_closest geometry(LINESTRING, 4326),
+    subcid_closest integer,
+    strahler_closest integer
+    );
+    """
+    query = query.replace("\n", " ")
+    _start = time.time()
+    cursor.execute(query)
+    _end = time.time()
+    LOGGER.debug(f'Creating temporary table "{tablename}" (with column "geom_closest")... done.')
+    LOGGER.log(logging.TRACE, '**** TIME ************ query: %s' % (_end - _start))
+    return tablename
+
 
 def _fill_temp_table(cursor, tablename, list_of_insert_rows):
     LOGGER.debug(f'Inserting into temporary table "{tablename}"...')

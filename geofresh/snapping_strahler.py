@@ -12,11 +12,14 @@ try:
     # If the package is installed in local python PATH:
     import aqua90m.utils.geojson_helpers as geojson_helpers
     import aqua90m.utils.exceptions as exc
+    import aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
 except ModuleNotFoundError as e1:
     try:
         # If we are using this from pygeoapi:
         import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
         import pygeoapi.process.aqua90m.utils.exceptions as exc
+        import pygeoapi.process.aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
+
     except ModuleNotFoundError as e2:
         msg = 'Module not found: '+e1.name+' (imported in '+__name__+').' + \
               ' If this is being run from' + \
@@ -202,6 +205,301 @@ def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_fea
     return None # GeoJSON has been returned before!
 
 
+###############################
+### Many points at a time   ###
+### Functions to be exposed ###
+###############################
+
+
+def get_snapped_points_json2json(conn, points_geojson, colname_site_id = None):
+    # Just a wrapper
+    # INPUT: GeoJSON (Multipoint)
+    # OUTPUT: FeatureCollection (Point)
+
+    # Check GeoJSON validity, and define what to iterate over:
+    if points_geojson['type'] == 'GeometryCollection':
+        geojson_helpers.check_is_geometry_collection_points(points_geojson)
+        iterate_over = points_geojson['geometries']
+        num = len(iterate_over)
+    elif points_geojson['type'] == 'FeatureCollection':
+        geojson_helpers.check_is_feature_collection_points(points_geojson)
+        if colname_site_id is None:
+            err_msg = "Please provide the property name where the site id is provided."
+            LOGGER.error(err_msg)
+            raise exc.UserInputException(err_msg)
+        iterate_over = points_geojson['features']
+        num = len(iterate_over)
+
+    return get_snapped_points_xy(conn, geojson = points_geojson, colname_site_id = colname_site_id, result_format="geojson")
+
+def get_snapped_points_csv2csv(conn, input_df, colname_lon, colname_lat, colname_site_id):
+    # Just a wrapper
+    # INPUT: Pandas dataframe
+    # OUTPUT: Pandas dataframe
+    return get_snapped_points_xy(conn,
+        dataframe = input_df,
+        colname_lon = colname_lon,
+        colname_lat = colname_lat,
+        colname_site_id = colname_site_id,
+        result_format="csv")
+
+def get_snapped_points_csv2json(conn, input_df, colname_lon, colname_lat, colname_site_id):
+    # Just a wrapper
+    # INPUT: Pandas dataframe
+    # OUTPUT: FeatureCollection (Point)
+    return get_snapped_points_xy(conn,
+        dataframe = input_df,
+        colname_lon = colname_lon,
+        colname_lat = colname_lat,
+        colname_site_id = colname_site_id,
+        result_format="geojson")
+
+def get_snapped_points_json2csv(conn, points_geojson, colname_lon, colname_lat, colname_site_id):
+    # Just a wrapper
+    # INPUT: GeoJSON (Multipoint)
+    # OUTPUT: Pandas dataframe
+
+    # Check GeoJSON validity, and define what to iterate over:
+    if points_geojson['type'] == 'GeometryCollection':
+        geojson_helpers.check_is_geometry_collection_points(points_geojson)
+        iterate_over = points_geojson['geometries']
+        num = len(iterate_over)
+    elif points_geojson['type'] == 'FeatureCollection':
+        geojson_helpers.check_is_feature_collection_points(points_geojson)
+        if colname_site_id is None:
+            err_msg = "Please provide the property name where the site id is provided."
+            LOGGER.error(err_msg)
+            raise exc.UserInputException(err_msg)
+        iterate_over = points_geojson['features']
+        num = len(iterate_over)
+
+    return get_snapped_points_xy(conn,
+        geojson = points_geojson,
+        colname_site_id = colname_site_id,
+        colname_lon = colname_lon,
+        colname_lat = colname_lat,
+        result_format="csv")
+
+##################################
+### Many points at a time      ###
+### Functions that do the work ###
+##################################
+
+def get_snapped_points_xy(conn, geojson=None, dataframe=None, colname_lon=None, colname_lat=None, colname_site_id=None, min_strahler=1, result_format="geojson"):
+
+    # The input passed by the user is converted to SQL rows
+    # that can be inserted into a temporary table:
+    if dataframe is not None:
+        list_of_insert_rows = temp_table_for_queries.make_insertion_rows_from_dataframe(
+            dataframe, colname_lon, colname_lat, colname_site_id)
+    elif geojson is not None:
+        list_of_insert_rows = temp_table_for_queries.make_insertion_rows_from_geojson(
+            geojson, colname_site_id)
+    else:
+        err_msg = 'Cannot recognize input object!'
+        LOGGER.error(err_msg)
+        raise exc.UserInputException(err_msg)
+
+    # A temporary table is created and populated with the lines above.
+    cursor = conn.cursor()
+    tablename_prefix = "snapping_strahler"
+    tablename = temp_table_for_queries.create_temp_table_for_strahler_snapping(cursor, tablename_prefix)
+    temp_table_for_queries.populate_temp_table(cursor, tablename, list_of_insert_rows)
+
+    # Then, the nearest-neighbouring stream segments are added:
+    _fill_temptable_with_nearest_neighbours(cursor, tablename, min_strahler)
+
+    # Then the points are snapped to those neighbouring stream segments:
+    result_to_be_returned =  _run_snapping_query(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id)
+
+    # Database hygiene: Drop the table
+    temp_table_for_queries.drop_temp_table(cursor, tablename)
+    return result_to_be_returned
+
+
+def _fill_temptable_with_nearest_neighbours(cursor, tablename, min_strahler):
+    # Fill the table with the geometry and properties of the nearest neighbour
+    # stream segment. For this we compute the distance using <->, and sort by that.
+    LOGGER.debug(f'Adding nearest neighbours to temporary table "{tablename}"...')
+
+    # Note: The columns we UPDATE here (geom_closest, strahler_closest, subcid_closest)
+    # have to exist in the temp table!
+    # Note: LATERAL makes the subquery run once per row of tablename.
+    query = f'''
+        UPDATE {tablename} AS temp1
+        SET
+            geom_closest = closest.geom,
+            strahler_closest = closest.strahler,
+            subcid_closest = closest.subc_id
+        FROM {tablename} AS temp2
+        CROSS JOIN LATERAL (
+            SELECT seg.geom, seg.strahler, seg.subc_id
+            FROM stream_segments seg
+            WHERE seg.strahler >= {min_strahler}
+            ORDER BY seg.geom <-> ST_SetSRID(ST_MakePoint(temp2.lon, temp2.lat), 4326)
+            LIMIT 1
+        ) AS closest
+        WHERE temp1.subc_id = temp2.subc_id;
+    '''
+    query = query.replace("\n", " ")
+    LOGGER.debug('Updating database with closest query...')
+    _start = time.time()
+    cursor.execute(query)
+    _end = time.time()
+    LOGGER.log(logging.TRACE, '**** TIME ************ query: %s' % (_end - _start))
+    LOGGER.debug(f'Adding nearest neighbours to temporary table "{tablename}"... done.')
+
+
+def _run_snapping_query(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id):
+    # Run the query that generates the snapped point, i.e. the point on the
+    # stream segment (nearest neighbour) that is closest to the original point.
+    # The nearest-neighbouring stream segments in question have been previously
+    # found and stored to column "geom_closest" by the previous query.
+    # So this here is pretty much the normal snapping query.
+
+    # This RETURNS the snapped points, but does not store them in the temp table.
+    # Note: The columns we SELECT here (geom_closest, strahler_closest, subcid_closest)
+    # have to be present in the temp table!
+    query = f'''
+    SELECT
+        temp.lon,
+        temp.lat,
+        temp.site_id,
+        ST_AsText(
+            ST_LineInterpolatePoint(
+                temp.geom_closest,
+                ST_LineLocatePoint(temp.geom_closest, ST_SetSRID(ST_MakePoint(temp.lon, temp.lat), 4326))
+            )
+        ),
+        temp.strahler_closest,
+        temp.subcid_closest
+    FROM {tablename} AS temp
+    '''
+    query = query.replace("\n", " ")
+    LOGGER.debug('Querying database with snapping query...')
+    _start = time.time()
+    cursor.execute(query)
+    _end = time.time()
+    LOGGER.log(logging.TRACE, '**** TIME ************ query: %s' % (_end - _start))
+    LOGGER.debug('Querying database with snapping query... DONE.')
+    return _package_result(cursor, result_format, colname_lon, colname_lat, colname_site_id)
+
+
+def _package_result(cursor, result_format, colname_lon, colname_lat, colname_site_id):
+    result_to_be_returned = None
+
+    if result_format == "geojson":
+        result_to_be_returned = _package_result_in_geojson(cursor, colname_site_id)
+
+    elif result_format == "csv":
+        if colname_lon is None or colname_lat is None:
+            raise UserInputException("Need to provide column names for lon and lat for the resulting dataframe!")
+        result_to_be_returned = _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_id)
+
+    return result_to_be_returned
+
+
+def _package_result_in_geojson(cursor, colname_site_id):
+    LOGGER.debug("Generating GeoJSON to return...")
+    LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
+
+    # Create list to be filled with the GeoJSON Features:
+    features = []
+
+    # Iterating over database results:
+    while (True):
+        row = cursor.fetchone()
+        if row is None: break
+
+        # Extract values from row:
+        lon = float(row[0])
+        lat = float(row[1])
+        site_id = row[2]
+        snappedpoint_wkt = row[3]
+        strahler = row[4]
+        subc_id = row[5]
+
+        # Convert to GeoJSON:
+        snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
+
+        # Construct Feature:
+        features.append({
+            "type": "Feature",
+            "geometry": snappedpoint_simplegeom,
+            "properties": {
+                colname_site_id: site_id,
+                "lon_original": lon,
+                "lat_original": lat,
+                "strahler": strahler,
+                "subc_id": subc_id
+            }
+        })
+    LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON... DONE.')
+
+    if len(features) == 0:
+        raise exc.UserInputException("No features...")
+
+    feature_coll = {
+        "type": "FeatureCollection",
+        "features": features
+    }
+    LOGGER.log(logging.TRACE, 'Generated GeoJSON: %s' % feature_coll)
+    return feature_coll
+
+
+def _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_id):
+    LOGGER.debug("Generating dataframe to return...")
+
+    # Create list to be filled and converted to Pandas dataframe:
+    everything = []
+
+    # These will be the column names:
+    colnames = [
+        colname_site_id,
+        'subc_id',
+        'strahler',
+        colname_lon+'_snapped',
+        colname_lon+'_original',
+        colname_lat+'_snapped',
+        colname_lat+'_original'
+    ]
+
+    # Iterating over database results:
+    while (True):
+        row = cursor.fetchone()
+        if row is None: break
+
+        # Extract values from row:
+        lon = float(row[0])
+        lat = float(row[1])
+        site_id = row[2]
+        snappedpoint_wkt = row[3]
+        strahler = row[4]
+        subc_id = row[5]
+
+        # Convert to GeoJSON:
+        snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
+
+        # Extract snapped coordinates:
+        lon_snapped = snappedpoint_simplegeom['coordinates'][0]
+        lat_snapped = snappedpoint_simplegeom['coordinates'][1]
+
+        # Append the line to dataframe:
+        everything.append([
+            site_id,
+            subc_id,
+            strahler,
+            lon_snapped,
+            lon,
+            lat_snapped,
+            lat
+        ])
+
+    # Construct pandas dataframe from collected rows:
+    output_dataframe = pd.DataFrame(everything, columns=colnames)
+    return output_dataframe
+
+
 
 if __name__ == "__main__":
 
@@ -218,6 +516,8 @@ if __name__ == "__main__":
         # If the package is properly installed, thus it is findable by python on PATH:
         import aqua90m.utils.geojson_helpers as geojson_helpers
         import aqua90m.utils.exceptions as exc
+        import aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
+
     except ModuleNotFoundError:
         # If we are calling this script from the aqua90m parent directory via
         # "python aqua90m/geofresh/basic_queries.py", we have to make it available on PATH:
@@ -225,6 +525,7 @@ if __name__ == "__main__":
         sys.path.append(os.getcwd())
         import aqua90m.utils.geojson_helpers as geojson_helpers
         import aqua90m.utils.exceptions as exc
+        import aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
 
 
     # Get config
@@ -251,6 +552,64 @@ if __name__ == "__main__":
     #conn = connect_to_db(geofresh_server, geofresh_port, database_name,
     #database_username, database_password)
     LOGGER.log(logging.TRACE, 'Connecting to database... DONE.')
+
+    ####################################
+    ### Run function for many points ###
+    ####################################
+
+    input_points_geojson = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+               "type": "Feature",
+               "geometry": { "type": "Point", "coordinates": [9.931555, 54.695070]},
+               "properties": {
+                   "my_site": "bla1",
+                   "species_name": "Hase",
+                   "species_id": "007"
+               }
+            },
+            {
+               "type": "Feature",
+               "geometry": { "type": "Point", "coordinates": [9.921555, 54.295070]},
+               "properties": {
+                   "my_site": "bla2",
+                   "species_name": "Delphin",
+                   "species_id": "008"
+               }
+            }
+        ]
+    }
+
+    res = get_snapped_points_xy(conn,
+        geojson=input_points_geojson,
+        dataframe=None,
+        colname_lon=None,
+        colname_lat=None,
+        colname_site_id="my_site",
+        result_format="geojson",
+        min_strahler=5
+    )
+
+    print('RESULT:')
+    print(res)
+
+    res = get_snapped_points_xy(conn,
+        geojson=input_points_geojson,
+        dataframe=None,
+        colname_lon="longitude",
+        colname_lat="latitude",
+        colname_site_id="my_site",
+        result_format="csv",
+        min_strahler=5
+    )
+
+    print('RESULT:')
+    print(res)
+
+
+    sys.exit()
+
 
     ######################################
     ### Run function for single points ###
