@@ -105,7 +105,7 @@ def make_insertion_rows_from_dataframe(dataframe, colname_lon, colname_lat, coln
         list_of_insert_rows.append(row)
 
     LOGGER.debug(f'Created list of {len(list_of_insert_rows)} insert rows...')
-    LOGGER.debug(f'First insert rows:\n{list_of_insert_rows[0]}\n{list_of_insert_rows[1]}')
+    LOGGER.debug(f'First insert row:\n{list_of_insert_rows[0]}')
     return list_of_insert_rows
 
 
