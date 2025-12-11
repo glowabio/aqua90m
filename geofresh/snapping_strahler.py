@@ -211,7 +211,7 @@ def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_fea
 ###############################
 
 
-def get_snapped_points_json2json(conn, points_geojson, min_strahler, colname_site_id = None):
+def get_snapped_points_json2json(conn, points_geojson, min_strahler, colname_site_id=None, add_distance=None):
     # Just a wrapper
     # INPUT: GeoJSON (Multipoint)
     # OUTPUT: FeatureCollection (Point)
@@ -230,9 +230,9 @@ def get_snapped_points_json2json(conn, points_geojson, min_strahler, colname_sit
         iterate_over = points_geojson['features']
         num = len(iterate_over)
 
-    return get_snapped_points_xy(conn, geojson = points_geojson, min_strahler = min_strahler, colname_site_id = colname_site_id, result_format="geojson")
+    return get_snapped_points_xy(conn, geojson = points_geojson, min_strahler = min_strahler, colname_site_id = colname_site_id, result_format="geojson", add_distance=add_distance)
 
-def get_snapped_points_csv2csv(conn, input_df, min_strahler, colname_lon, colname_lat, colname_site_id):
+def get_snapped_points_csv2csv(conn, input_df, min_strahler, colname_lon, colname_lat, colname_site_id, add_distance=None):
     # Just a wrapper
     # INPUT: Pandas dataframe
     # OUTPUT: Pandas dataframe
@@ -242,9 +242,10 @@ def get_snapped_points_csv2csv(conn, input_df, min_strahler, colname_lon, colnam
         colname_lat = colname_lat,
         colname_site_id = colname_site_id,
         result_format="csv",
-        min_strahler=min_strahler)
+        min_strahler=min_strahler,
+        add_distance=add_distance)
 
-def get_snapped_points_csv2json(conn, input_df, min_strahler, colname_lon, colname_lat, colname_site_id):
+def get_snapped_points_csv2json(conn, input_df, min_strahler, colname_lon, colname_lat, colname_site_id, add_distance=None):
     # Just a wrapper
     # INPUT: Pandas dataframe
     # OUTPUT: FeatureCollection (Point)
@@ -254,9 +255,10 @@ def get_snapped_points_csv2json(conn, input_df, min_strahler, colname_lon, colna
         colname_lat = colname_lat,
         colname_site_id = colname_site_id,
         result_format="geojson",
-        min_strahler=min_strahler)
+        min_strahler=min_strahler,
+        add_distance=add_distance)
 
-def get_snapped_points_json2csv(conn, points_geojson, min_strahler, colname_lon, colname_lat, colname_site_id):
+def get_snapped_points_json2csv(conn, points_geojson, min_strahler, colname_lon, colname_lat, colname_site_id, add_distance=None):
     # Just a wrapper
     # INPUT: GeoJSON (Multipoint)
     # OUTPUT: Pandas dataframe
@@ -281,14 +283,21 @@ def get_snapped_points_json2csv(conn, points_geojson, min_strahler, colname_lon,
         colname_lon = colname_lon,
         colname_lat = colname_lat,
         result_format="csv",
-        min_strahler=min_strahler)
+        min_strahler=min_strahler,
+        add_distance=add_distance)
 
 ##################################
 ### Many points at a time      ###
 ### Functions that do the work ###
 ##################################
 
-def get_snapped_points_xy(conn, geojson=None, dataframe=None, colname_lon=None, colname_lat=None, colname_site_id=None, min_strahler=1, result_format="geojson"):
+def get_snapped_points_xy(conn, geojson=None, dataframe=None, colname_lon=None, colname_lat=None, colname_site_id=None, min_strahler=1, add_distance=True, result_format="geojson"):
+
+    if min_strahler is None:
+        raise ValueError('Must provide min_strahler')
+    if add_distance is None:
+        raise ValueError('Must provide add_distance')
+    LOGGER.debug(f'Snapping to min strahler order: "{min_strahler}".')
 
     # The input passed by the user is converted to SQL rows
     # that can be inserted into a temporary table:
@@ -312,8 +321,11 @@ def get_snapped_points_xy(conn, geojson=None, dataframe=None, colname_lon=None, 
     # Then, the nearest-neighbouring stream segments are added:
     _fill_temptable_with_nearest_neighbours(cursor, tablename, min_strahler)
 
-    # Then the points are snapped to those neighbouring stream segments:
-    result_to_be_returned =  _run_snapping_query(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id)
+    if add_distance:
+        result_to_be_returned = _snapping_with_distances(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id)
+    else:
+        # Then the points are snapped to those neighbouring stream segments:
+        result_to_be_returned = _run_snapping_query(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id)
 
     # Database hygiene: Drop the table
     temp_table_for_queries.drop_temp_table(cursor, tablename)
@@ -351,6 +363,43 @@ def _fill_temptable_with_nearest_neighbours(cursor, tablename, min_strahler):
     _end = time.time()
     LOGGER.log(logging.TRACE, '**** TIME ************ query: %s' % (_end - _start))
     LOGGER.debug(f'Adding nearest neighbours to temporary table "{tablename}"... done.')
+
+
+def _snapping_with_distances(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id):
+    # Compute the snapped point, store in table, and calculate distance.
+
+    # Add column for snapped point:
+    LOGGER.debug(f'Adding snapped points to temporary table "{tablename}"...')
+    query = f'ALTER TABLE {tablename} ADD COLUMN geom_snapped geometry(POINT, 4326)'
+    cursor.execute(query)
+
+    # Compute snapped point, store in table:
+    query = f'''
+        UPDATE {tablename} AS temp
+        SET geom_snapped = ST_LineInterpolatePoint(
+            temp.geom_closest,
+            ST_LineLocatePoint(temp.geom_closest, temp.geom_user)
+        );
+    '''.replace("\n", " ")
+    cursor.execute(query)
+    LOGGER.debug(f'Adding snapped points to temporary table "{tablename}"... done.')
+
+    # Compute the distance, retrieve the snapped points:
+    LOGGER.debug(f'Retrieving snapped points from temporary table "{tablename}"...')
+    query = f'''
+    SELECT
+        temp.lon,
+        temp.lat,
+        temp.site_id,
+        ST_AsText(temp.geom_snapped),
+        temp.strahler_closest,
+        temp.subcid_closest,
+        ST_Distance(temp.geom_user, temp.geom_snapped)
+    FROM {tablename} AS temp
+    '''.replace("\n", " ")
+    cursor.execute(query)
+
+    return _package_result(cursor, result_format, colname_lon, colname_lat, colname_site_id)
 
 
 def _run_snapping_query(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id):
@@ -421,12 +470,16 @@ def _package_result_in_geojson(cursor, colname_site_id):
         snappedpoint_wkt = row[3]
         strahler = row[4]
         subc_id = row[5]
+        try:
+            distance = row[6] # optional
+        except IndexError as e:
+            distance = None
 
         # Convert to GeoJSON:
         snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
 
         # Construct Feature:
-        features.append({
+        feature = {
             "type": "Feature",
             "geometry": snappedpoint_simplegeom,
             "properties": {
@@ -436,7 +489,14 @@ def _package_result_in_geojson(cursor, colname_site_id):
                 "strahler": strahler,
                 "subc_id": subc_id
             }
-        })
+        }
+
+        # Add distance, if it was computed:
+        if distance is not None:
+            feature["properties"]["distance"] = distance
+
+        features.append(feature)
+
     LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON... DONE.')
 
     if len(features) == 0:
@@ -464,7 +524,8 @@ def _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_
         colname_lon+'_snapped',
         colname_lon+'_original',
         colname_lat+'_snapped',
-        colname_lat+'_original'
+        colname_lat+'_original',
+        'distance'
     ]
 
     # Iterating over database results:
@@ -479,6 +540,10 @@ def _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_
         snappedpoint_wkt = row[3]
         strahler = row[4]
         subc_id = row[5]
+        try:
+            distance = row[6] # optional
+        except IndexError as e:
+            distance = None
 
         # Convert to GeoJSON:
         snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
@@ -495,7 +560,8 @@ def _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_
             lon_snapped,
             lon,
             lat_snapped,
-            lat
+            lat,
+            distance
         ])
 
     # Construct pandas dataframe from collected rows:

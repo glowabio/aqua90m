@@ -33,7 +33,8 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
     "colname_lon": "longitude",
     "colname_lat": "latitude",
     "colname_site_id": "site_id",
-    "min_strahler": 5
+    "min_strahler": 5,
+    "add_distance": true
   },
   "outputs": {
     "transmissionMode": "reference"
@@ -51,7 +52,8 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
     "colname_lat": "latitude",
     "colname_site_id": "site_id",
     "result_format": "geojson",
-    "min_strahler": 5
+    "min_strahler": 5,
+    "add_distance": true
   },
   "outputs": {
     "transmissionMode": "reference"
@@ -66,6 +68,7 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
 --data '{
   "inputs": {
     "min_strahler": 5,
+    "add_distance": true,
     "points_geojson": {
       "type": "MultiPoint",
       "coordinates": [
@@ -85,6 +88,7 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
   "inputs": {
     "colname_site_id": "my_site",
     "min_strahler": 5,
+    "add_distance": true,
     "points_geojson": {
         "type": "FeatureCollection",
         "features": [
@@ -122,6 +126,7 @@ curl -X POST "https://$PYSERVER/processes/get-snapped-points-strahler-plural/exe
   "inputs": {
     "colname_site_id": "my_site",
     "min_strahler": 5,
+    "add_distance": true,
     "result_format": "csv",
     "colname_lon": "long_wgs84",
     "colname_lat": "lat_wgs84",
@@ -220,6 +225,7 @@ class SnappedPointsStrahlerGetterPlural(BaseProcessor):
 
         # User inputs:
         min_strahler = data.get('min_strahler', None)
+        add_distance = data.get('add_distance', None)
         # GeoJSON, posted directly
         points_geojson = data.get('points_geojson', None)
         # GeoJSON, to be downloaded via URL:
@@ -233,6 +239,16 @@ class SnappedPointsStrahlerGetterPlural(BaseProcessor):
         result_format = data.get('result_format', None)
         # Optional comment:
         comment = data.get('comment') # optional
+
+        if min_strahler is None:
+            err_msg = "Missing parameter 'min_strahler'. Please provide an integer value."
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
+
+        if add_distance is None:
+            err_msg = "Missing parameter 'add_distance'. Please provide a boolean value."
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
 
 
         ## Potential outputs:
@@ -285,10 +301,10 @@ class SnappedPointsStrahlerGetterPlural(BaseProcessor):
             # Query database:
             if result_format == 'geojson':
                 LOGGER.debug('Requesting geojson (get_snapped_points_json2json)')
-                output_json = snapping_strahler.get_snapped_points_json2json(conn, points_geojson, min_strahler, colname_site_id = colname_site_id)
+                output_json = snapping_strahler.get_snapped_points_json2json(conn, points_geojson, min_strahler, colname_site_id = colname_site_id, add_distance=add_distance)
             elif result_format == 'csv':
                 LOGGER.debug('Requesting csv (get_snapped_points_json2csv)')
-                output_df = snapping_strahler.get_snapped_points_json2csv(conn, points_geojson, min_strahler, colname_lon, colname_lat, colname_site_id)
+                output_df = snapping_strahler.get_snapped_points_json2csv(conn, points_geojson, min_strahler, colname_lon, colname_lat, colname_site_id, add_distance=add_distance)
 
         ## Handle CSV case:
         elif csv_url is not None:
@@ -330,10 +346,10 @@ class SnappedPointsStrahlerGetterPlural(BaseProcessor):
             LOGGER.info(f'PYGEOAPI USER PASSED STRAHLER {min_strahler}')
             if result_format == 'geojson':
                 LOGGER.debug('Requesting geojson (get_snapped_points_csv2json)')
-                output_json = snapping_strahler.get_snapped_points_csv2json(conn, input_df, min_strahler, colname_lon, colname_lat, colname_site_id)
+                output_json = snapping_strahler.get_snapped_points_csv2json(conn, input_df, min_strahler, colname_lon, colname_lat, colname_site_id, add_distance=add_distance)
             elif result_format == 'csv':
                 LOGGER.debug('Requesting csv (get_snapped_points_csv2csv)')
-                output_df = snapping_strahler.get_snapped_points_csv2csv(conn, input_df, min_strahler, colname_lon, colname_lat, colname_site_id)
+                output_df = snapping_strahler.get_snapped_points_csv2csv(conn, input_df, min_strahler, colname_lon, colname_lat, colname_site_id, add_distance=add_distance)
 
         else:
             err_msg = 'Please provide either GeoJSON (points_geojson, points_geojson_url) or CSV data (csv_url).'
