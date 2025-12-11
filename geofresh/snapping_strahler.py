@@ -325,7 +325,7 @@ def get_snapped_points_xy(conn, geojson=None, dataframe=None, colname_lon=None, 
         result_to_be_returned = _snapping_with_distances(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id)
     else:
         # Then the points are snapped to those neighbouring stream segments:
-        result_to_be_returned = _run_snapping_query(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id)
+        result_to_be_returned =  _snapping_without_distances(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id)
 
     # Database hygiene: Drop the table
     temp_table_for_queries.drop_temp_table(cursor, tablename)
@@ -402,16 +402,15 @@ def _snapping_with_distances(cursor, tablename, result_format, colname_lon, coln
     return _package_result(cursor, result_format, colname_lon, colname_lat, colname_site_id)
 
 
-def _run_snapping_query(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id):
+def _snapping_without_distances(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id):
     # Run the query that generates the snapped point, i.e. the point on the
     # stream segment (nearest neighbour) that is closest to the original point.
     # The nearest-neighbouring stream segments in question have been previously
     # found and stored to column "geom_closest" by the previous query.
-    # So this here is pretty much the normal snapping query.
+    # (So this here is pretty much the normal snapping query).
+    #
+    # This RETURNS the snapped points, but does not STORE them in the temp table!
 
-    # This RETURNS the snapped points, but does not store them in the temp table.
-    # Note: The columns we SELECT here (geom_closest, strahler_closest, subcid_closest)
-    # have to be present in the temp table!
     query = f'''
     SELECT
         temp.lon,
