@@ -13,13 +13,14 @@ try:
     import aqua90m.utils.geojson_helpers as geojson_helpers
     import aqua90m.utils.exceptions as exc
     import aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
+    from temp_table_for_queries import _log_query_time
 except ModuleNotFoundError as e1:
     try:
         # If we are using this from pygeoapi:
         import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
         import pygeoapi.process.aqua90m.utils.exceptions as exc
         import pygeoapi.process.aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
-
+        from temp_table_for_queries import _log_query_time
     except ModuleNotFoundError as e2:
         msg = 'Module not found: '+e1.name+' (imported in '+__name__+').' + \
               ' If this is being run from' + \
@@ -358,10 +359,9 @@ def _fill_temptable_with_nearest_neighbours(cursor, tablename, min_strahler):
     '''
     query = query.replace("\n", " ")
     LOGGER.debug('Updating database with closest query...')
-    _start = time.time()
+    querystart = time.time()
     cursor.execute(query)
-    _end = time.time()
-    LOGGER.log(logging.TRACE, '**** TIME ************ query: %s' % (_end - _start))
+    _log_query_time(querystart, 'adding nearest neighbours')
     LOGGER.debug(f'Adding nearest neighbours to temporary table "{tablename}"... done.')
 
 
@@ -381,7 +381,9 @@ def _snapping_with_distances(cursor, tablename, result_format, colname_lon, coln
             ST_LineLocatePoint(temp.geom_closest, temp.geom_user)
         );
     '''.replace("\n", " ")
+    querystart = time.time()
     cursor.execute(query)
+    _log_query_time(querystart, 'computing snapped points and store in table')
     LOGGER.debug(f'Adding snapped points to temporary table "{tablename}"... done.')
 
     # Compute the distance, retrieve the snapped points:
@@ -397,8 +399,9 @@ def _snapping_with_distances(cursor, tablename, result_format, colname_lon, coln
         ST_Distance(temp.geom_user, temp.geom_snapped)
     FROM {tablename} AS temp
     '''.replace("\n", " ")
+    querystart = time.time()
     cursor.execute(query)
-
+    _log_query_time(querystart, 'computing distances and retrieve results')
     return _package_result(cursor, result_format, colname_lon, colname_lat, colname_site_id)
 
 
@@ -428,10 +431,9 @@ def _snapping_without_distances(cursor, tablename, result_format, colname_lon, c
     '''
     query = query.replace("\n", " ")
     LOGGER.debug('Querying database with snapping query...')
-    _start = time.time()
+    querystart = time.time()
     cursor.execute(query)
-    _end = time.time()
-    LOGGER.log(logging.TRACE, '**** TIME ************ query: %s' % (_end - _start))
+    _log_query_time(querystart, 'snapping without distances')
     LOGGER.debug('Querying database with snapping query... DONE.')
     return _package_result(cursor, result_format, colname_lon, colname_lat, colname_site_id)
 
@@ -569,6 +571,7 @@ def _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_
 
 
 
+
 if __name__ == "__main__":
 
     # Logging
@@ -585,7 +588,7 @@ if __name__ == "__main__":
         import aqua90m.utils.geojson_helpers as geojson_helpers
         import aqua90m.utils.exceptions as exc
         import aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
-
+        from temp_table_for_queries import _log_query_time
     except ModuleNotFoundError:
         # If we are calling this script from the aqua90m parent directory via
         # "python aqua90m/geofresh/basic_queries.py", we have to make it available on PATH:
@@ -594,6 +597,7 @@ if __name__ == "__main__":
         import aqua90m.utils.geojson_helpers as geojson_helpers
         import aqua90m.utils.exceptions as exc
         import aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
+        from temp_table_for_queries import _log_query_time
 
 
     # Get config

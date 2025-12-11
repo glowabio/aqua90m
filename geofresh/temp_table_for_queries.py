@@ -234,6 +234,10 @@ def _add_subcids(cursor, tablename, reg_ids):
     LOGGER.log(logging.TRACE, '**** TIME ************ query_sub_bas: %s' % (_end - _start))
     LOGGER.debug(f'Update subc_id, basin_id (st_intersects) in temporary table "{tablename}"... done.')
 
+def _log_query_time(start, comment):
+    end = time.time()
+    LOGGER.log(logging.TRACE, f'**** TIME ************ query: {(end - start)} ({comment})')
+
 
 
 

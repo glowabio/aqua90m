@@ -13,12 +13,14 @@ try:
     import aqua90m.utils.geojson_helpers as geojson_helpers
     import aqua90m.utils.exceptions as exc
     import aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
+    from temp_table_for_queries import _log_query_time
 except ModuleNotFoundError as e1:
     try:
         # If we are using this from pygeoapi:
         import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
         import pygeoapi.process.aqua90m.utils.exceptions as exc
         import pygeoapi.process.aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
+        from temp_table_for_queries import _log_query_time
     except ModuleNotFoundError as e2:
         msg = 'Module not found: '+e1.name+' (imported in '+__name__+').' + \
               ' If this is being run from' + \
@@ -334,6 +336,7 @@ def get_snapped_points_json2json(conn, points_geojson, colname_site_id = None):
 
     return get_snapped_point_xy(conn, geojson = points_geojson, colname_site_id = colname_site_id, result_format="geojson")
 
+
 def get_snapped_points_csv2csv(conn, input_df, colname_lon, colname_lat, colname_site_id):
     # Just a wrapper
     # INPUT: Pandas dataframe
@@ -345,6 +348,7 @@ def get_snapped_points_csv2csv(conn, input_df, colname_lon, colname_lat, colname
         colname_site_id = colname_site_id,
         result_format="csv")
 
+
 def get_snapped_points_csv2json(conn, input_df, colname_lon, colname_lat, colname_site_id):
     # Just a wrapper
     # INPUT: Pandas dataframe
@@ -355,6 +359,7 @@ def get_snapped_points_csv2json(conn, input_df, colname_lon, colname_lat, colnam
         colname_lat = colname_lat,
         colname_site_id = colname_site_id,
         result_format="geojson")
+
 
 def get_snapped_points_json2csv(conn, points_geojson, colname_lon, colname_lat, colname_site_id):
     # Just a wrapper
@@ -381,6 +386,7 @@ def get_snapped_points_json2csv(conn, points_geojson, colname_lon, colname_lat, 
         colname_lon = colname_lon,
         colname_lat = colname_lat,
         result_format="csv")
+
 
 def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, colname_lat=None, colname_site_id=None, result_format="geojson"):
 
@@ -428,10 +434,9 @@ def _run_snapping_query(cursor, tablename, reg_id_set, result_format, colname_lo
     # TODO: Add ST_AsText(seg.geom) if you want the linestring!
     query_snap = query_snap.replace("\n", " ")
     LOGGER.debug('Querying database with snapping query...')
-    _start = time.time()
+    querystart = time.time()
     cursor.execute(query_snap)
-    _end = time.time()
-    LOGGER.log(logging.TRACE, '**** TIME ************ query_snap: %s' % (_end - _start))
+    _log_query_time(querystart, 'basic snapping')
     LOGGER.debug('Querying database with snapping query... DONE.')
     return _package_result(cursor, result_format, colname_lon, colname_lat, colname_site_id)
 
@@ -448,7 +453,6 @@ def _package_result(cursor, result_format, colname_lon, colname_lat, colname_sit
         result_to_be_returned = _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_id)
 
     return result_to_be_returned
-
 
 
 def _package_result_in_geojson(cursor, colname_site_id):
@@ -573,6 +577,7 @@ if __name__ == "__main__":
         import aqua90m.utils.geojson_helpers as geojson_helpers
         import aqua90m.utils.exceptions as exc
         import aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
+        from temp_table_for_queries import _log_query_time
     except ModuleNotFoundError:
         # If we are calling this script from the aqua90m parent directory via
         # "python aqua90m/geofresh/basic_queries.py", we have to make it available on PATH:
@@ -581,6 +586,7 @@ if __name__ == "__main__":
         import aqua90m.utils.geojson_helpers as geojson_helpers
         import aqua90m.utils.exceptions as exc
         import aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
+        from temp_table_for_queries import _log_query_time
 
 
     # Get config
