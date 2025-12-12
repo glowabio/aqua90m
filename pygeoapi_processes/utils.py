@@ -1,5 +1,9 @@
 import json
 import logging
+import requests
+import urllib
+import tempfile
+import pandas as pd
 LOGGER = logging.getLogger(__name__)
 
 def return_hyperlink(output_name, requested_outputs):
@@ -62,3 +66,73 @@ def store_to_csv_file(output_name, pandas_df, job_metadata, job_id, download_dir
     }
 
     return outputs_dict
+
+
+def download_geojson(geojson_url):
+    LOGGER.debug(f'Downloading input GeoJSON from: {geojson_url}')
+
+    try:
+        resp = requests.get(geojson_url)
+
+    # Files stored on Nimbus: We get SSL error:
+    except requests.exceptions.SSLError as e:
+        LOGGER.warning(f'SSL error when downloading input data from {geojson_url}: {e}')
+        if ('nimbus.igb-berlin.de' in geojson_url and
+            'nimbus.igb-berlin.de' in str(e) and
+            'certificate verify failed' in str(e)):
+            resp = requests.get(geojson_url, verify=False)
+
+    try:
+        resp.raise_for_status()
+    except requests.HTTPError as e:
+        err_msg = f'Failed to download GeoJSON (HTTP {resp.status_code}) from {geojson_url}.'
+        LOGGER.error(err_msg)
+        raise exc.DataAccessException(err_msg)
+
+    geojson_content = resp.json()
+    return geojson_content
+
+
+def access_csv_comma_then_semicolon(csv_url_or_path):
+
+    # Try with a comma separator first:
+    dataframe = pd.read_csv(csv_url_or_path)
+
+    # If that failed, try semicolon:
+    if dataframe.shape[1] == 1:
+        LOGGER.debug(f'Found only one column (name "{dataframe.columns}"). Maybe it is not comma-separated, but comma-separated? Trying...')
+        dataframe = pd.read_csv(csv_url_or_path, sep=';')
+
+    return dataframe
+
+
+def access_csv_as_dataframe(csv_url_or_path):
+    LOGGER.debug(f'Accessing input CSV from: {csv_url_or_path}')
+
+    try:
+        input_df = access_csv_comma_then_semicolon(csv_url_or_path)
+        LOGGER.debug('Accessing input CSV... Done.')
+
+    except urllib.error.URLError as e:
+        LOGGER.warning(f'SSL error when downloading input CSV from {csv_url_or_path}: {e}')
+
+        # Files stored on Nimbus: We get SSL error:
+        if ('nimbus.igb-berlin.de' in csv_url_or_path and
+            'certificate verify failed' in str(e)):
+            LOGGER.debug('Will download input CSV with verify=False to a tempfile.')
+            resp = requests.get(csv_url_or_path, verify=False)
+            resp.raise_for_status()
+
+            mytempfile = tempfile.NamedTemporaryFile()
+            mytempfile.write(resp.content)
+            mytempfile.flush()
+            mytempfilename = mytempfile.name
+            LOGGER.debug(f'CSV file stored to tempfile successfully: {mytempfilename}')
+
+            input_df = access_csv_comma_then_semicolon(mytempfilename)
+            LOGGER.debug('Accessing input CSV... Done.')
+            mytempfile.close()
+
+    return input_df
+
+

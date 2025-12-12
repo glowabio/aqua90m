@@ -7,11 +7,7 @@ import os
 import sys
 import traceback
 import json
-import pandas as pd
 import psycopg2
-import requests
-import tempfile
-import urllib
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
 import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
@@ -274,21 +270,7 @@ class SnappedPointsStrahlerGetterPlural(BaseProcessor):
 
         ## Download GeoJSON if user provided URL:
         if points_geojson_url is not None:
-            try:
-                LOGGER.debug('Try downloading input GeoJSON from: %s' % points_geojson_url)
-                resp = requests.get(points_geojson_url)
-            except requests.exceptions.SSLError as e:
-                LOGGER.warning('SSL error when downloading input data from %s: %s' % (points_geojson_url, e))
-                if ('nimbus.igb-berlin.de' in points_geojson_url and
-                    'nimbus.igb-berlin.de' in str(e) and
-                    'certificate verify failed' in str(e)):
-                    resp = requests.get(points_geojson_url, verify=False)
-
-            if not resp.status_code == 200:
-                err_msg = 'Failed to download GeoJSON (HTTP %s) from %s.' % (resp.status_code, points_geojson_url)
-                LOGGER.error(err_msg)
-                raise exc.DataAccessException(err_msg)
-            points_geojson = resp.json()
+            points_geojson = utils.download_geojson(points_geojson_url)
 
         ## Handle GeoJSON case:
         if points_geojson is not None:
@@ -308,39 +290,7 @@ class SnappedPointsStrahlerGetterPlural(BaseProcessor):
 
         ## Handle CSV case:
         elif csv_url is not None:
-            LOGGER.debug('Accessing input CSV from: %s' % csv_url)
-            try:
-                input_df = pd.read_csv(csv_url) # tries comma first
-
-                if input_df.shape[1] == 1:
-                    LOGGER.debug('Found only one column (name "%s"). Maybe it is not comma-separated, but comma-separated? Trying...' % input_df.columns)
-                    input_df = pd.read_csv(csv_url, sep=';') # if comma failed, try semicolon
-
-                LOGGER.debug('Accessing input CSV... Done.')
-
-            # Files stored on Nimbus: We get SSL error:
-            except urllib.error.URLError as e:
-                LOGGER.warning('SSL error when downloading input CSV from %s: %s' % (csv_url, e))
-                if ('nimbus.igb-berlin.de' in csv_url and
-                    'certificate verify failed' in str(e)):
-                    LOGGER.debug('Will download input CSV with verify=False to a tempfile.')
-                    resp = requests.get(csv_url, verify=False)
-                    if resp.status_code == 200:
-                        mytempfile = tempfile.NamedTemporaryFile()
-                        mytempfile.write(resp.content)
-                        mytempfile.flush()
-                        mytempfilename = mytempfile.name
-                        LOGGER.debug("CSV file stored to tempfile successfully: %s" % mytempfilename)
-                        input_df = pd.read_csv(mytempfilename) # tries comma first
-                        if input_df.shape[1] == 1:
-                            LOGGER.debug('Found only one column (name "%s"). Maybe it is not comma-separated, but comma-separated? Trying...' % input_df.columns)
-                            input_df = pd.read_csv(mytempfilename, sep=';') # if comma failed, try semicolon
-
-                        mytempfile.close()
-                    else:
-                        err_msg = 'Could not download CSV input data from %s (HTTP %s)' % (csv_url, resp.status_code)
-                        LOGGER.error(err_msg)
-                        raise exc.DataAccessException(err_msg)
+            input_df = utils.access_csv_as_dataframe(csv_url)
 
             # Query database:
             LOGGER.info(f'PYGEOAPI USER PASSED STRAHLER {min_strahler}')
