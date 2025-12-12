@@ -23,13 +23,13 @@ def check_is_geometry_collection_points(points_geojson):
     if not 'geometries' in points_geojson:
         err_msg = 'GeometryCollection has to contain "geometries".'
         LOGGER.error(err_msg)
-        raise UserInputException(err_msg)
+        raise exc.UserInputException(err_msg)
 
     for point in points_geojson['geometries']:
         if not point['type'] == 'Point':
             err_msg = 'Geometries in GeometryCollection have to be points, not: %s' % point['type']
             LOGGER.error(err_msg)
-            raise UserInputException(err_msg)
+            raise exc.UserInputException(err_msg)
 
     return True
 
@@ -38,7 +38,7 @@ def check_feature_collection_property(points_geojson, mandatory_colname):
         if not mandatory_colname in feature['properties']:
             err_msg = "Please provide  '%s' for each Feature in the FeatureCollection. Missing in: %s" % (mandatory_colname, feature)
             LOGGER.error(err_msg)
-            raise UserInputException(err_msg)
+            raise exc.UserInputException(err_msg)
 
     return True
 
@@ -47,13 +47,13 @@ def check_is_feature_collection_points(points_geojson):
     if not 'features' in points_geojson:
         err_msg = 'FeatureCollection has to contain "features".'
         LOGGER.error(err_msg)
-        raise UserInputException(err_msg)
+        raise exc.UserInputException(err_msg)
 
     for feature in points_geojson['features']:
         if not feature['geometry']['type'] == 'Point':
             err_msg = 'Features in FeatureCollection have to be points, not: %s' % feature['type']
             LOGGER.error(err_msg)
-            raise UserInputException(err_msg)
+            raise exc.UserInputException(err_msg)
 
     return True
 
@@ -147,5 +147,5 @@ if __name__ == "__main__":
     try:
         res = check_feature_collection_property(feature_coll_missing, "site_id")
         raise RuntimeError("This should not have functioned!")
-    except UserInputException as e:
+    except exc.UserInputException as e:
         print('RESULT: %s' % e)
