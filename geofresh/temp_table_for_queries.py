@@ -26,10 +26,14 @@ except ModuleNotFoundError as e1:
         LOGGER.debug(msg)
 
 
-def populate_temp_table(cursor, tablename, list_of_insert_rows):
+def create_and_populate_temp_table(cursor, tablename_prefix, list_of_insert_rows):
+    tablename =_tablename(tablename_prefix)
     LOGGER.debug(f'Populating temp table "{tablename}"...')
 
-    # Inserting the information passed by the user:
+    # Create a temporary table with the basic information about the points:
+    _create_temp_table(cursor, tablename)
+
+    # Insert the information passed by the user:
     _fill_temp_table(cursor, tablename, list_of_insert_rows)
 
     # Generate a spatial index:
@@ -42,7 +46,7 @@ def populate_temp_table(cursor, tablename, list_of_insert_rows):
     _add_subcids(cursor, tablename, reg_ids)
 
     LOGGER.debug(f'Populating temp table "{tablename}"... done.')
-    return reg_ids
+    return tablename, reg_ids
 
 
 def _tablename(tablename_prefix):
@@ -109,8 +113,7 @@ def make_insertion_rows_from_dataframe(dataframe, colname_lon, colname_lat, coln
     return list_of_insert_rows
 
 
-def create_temp_table(cursor, tablename_prefix):
-    tablename =_tablename(tablename_prefix)
+def _create_temp_table(cursor, tablename):
     LOGGER.debug(f'Creating temporary table "{tablename}"...')
     # TODO WIP numeric or decimal or ...?
     # TODO: Is varchar a good type for expected site_ids?
@@ -204,6 +207,7 @@ def _add_subcids(cursor, tablename, reg_ids):
     _end = time.time()
     LOGGER.log(logging.TRACE, '**** TIME ************ query_sub_bas: %s' % (_end - _start))
     LOGGER.debug(f'Update subc_id, basin_id (st_intersects) in temporary table "{tablename}"... done.')
+
 
 def _log_query_time(start, comment):
     end = time.time()

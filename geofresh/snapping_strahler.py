@@ -316,8 +316,8 @@ def get_snapped_points_xy(conn, geojson=None, dataframe=None, colname_lon=None, 
     # A temporary table is created and populated with the lines above.
     cursor = conn.cursor()
     tablename_prefix = "snapping_strahler"
-    tablename = temp_table_for_queries.create_temp_table(cursor, tablename_prefix)
-    temp_table_for_queries.populate_temp_table(cursor, tablename, list_of_insert_rows)
+    tablename, reg_ids = temp_table_for_queries.create_and_populate_temp_table(
+        cursor, tablename_prefix, list_of_insert_rows)
 
     # Then, the nearest-neighbouring stream segments are added:
     _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler)
