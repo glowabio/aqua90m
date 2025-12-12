@@ -57,6 +57,24 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
 }'
 
 
+INPUT:  JSON
+OUTPUT: JSON
+curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points.json",
+    "colname_site_id": "my_site",
+    "result_format": "geojson",
+    "min_strahler": 5,
+    "add_distance": true
+  },
+  "outputs": {
+    "transmissionMode": "reference"
+  }
+}'
+
+
 # INPUT: MultiPoint
 # OUTPUT: FeatureCollection
 curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \

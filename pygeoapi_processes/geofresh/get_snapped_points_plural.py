@@ -52,6 +52,20 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution"
   }
 }'
 
+INPUT:  JSON
+OUTPUT: JSON
+curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points.json",
+    "colname_site_id": "my_site",
+    "result_format": "geojson"
+  },
+  "outputs": {
+    "transmissionMode": "reference"
+  }
+}'
 
 # INPUT: MultiPoint
 # OUTPUT: FeatureCollection

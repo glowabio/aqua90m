@@ -1,0 +1,23 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+           "type": "Feature",
+           "geometry": { "type": "Point", "coordinates": [9.931555, 54.695070]},
+           "properties": {
+               "my_site": "bla1",
+               "species_name": "Hase",
+               "species_id": "007"
+           }
+        },
+        {
+           "type": "Feature",
+           "geometry": { "type": "Point", "coordinates": [9.921555, 54.295070]},
+           "properties": {
+               "my_site": "bla2",
+               "species_name": "Delphin",
+               "species_id": "008"
+           }
+        }
+    ]
+}
