@@ -1,0 +1,97 @@
+{
+    "version": "0.0.1",
+    "id": "get-outlets",
+    "use_case": "hydrography90m",
+    "title": {"en": "Get outlets for a polygon"},
+    "description": {
+        "en": "Blah."
+    },
+    "jobControlOptions": ["sync-execute", "async-execute"],
+    "keywords": ["subcatchment", "GeoFRESH", "hydrography90m"],
+    "links": [{
+        "type": "text/html",
+        "rel": "about",
+        "title": "GeoFRESH website",
+        "href": "https://geofresh.org/",
+        "hreflang": "en-US"
+    },
+    {
+        "type": "text/html",
+        "rel": "about",
+        "title": "On Subcatchment Ids (Hydrography90m)",
+        "href": "https://hydrography.org/hydrography90m/hydrography90m_layers",
+        "hreflang": "en-US"
+    }],
+    "inputs": {
+        "polygon": {
+            "title": "Polygon (GeoJSON)",
+            "description": "TODO",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "min_strahler": {
+            "title": "Strahler",
+            "description": "TODO",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "add_geometry": {
+            "title": "Add geometry?",
+            "description": "TODO",
+            "schema": {
+                "type": "string"
+            },
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "comment": {
+            "title": "Comment",
+            "description": "Arbitrary string that will not be processed but returned, for user\"s convenience.",
+            "schema": {"type": "string"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": ["comment"]
+        }
+    },
+    "outputs": {
+        "outlets": {
+            "title": "Outlets inside that polygone",
+            "description": "",
+            "schema": {
+                "type": "object",
+                "contentMediaType": "application/json"
+            }
+        }
+    },
+    "example": {
+        "inputs": {
+            "min_strahler": 7,
+            "add_geometry": false,
+            "comment": "near helsinki",
+            "polygon": {
+                "type": "Polygon",
+                "coordinates": [[
+                    [ 24.99422594742927, 60.122188238921],
+                    [ 24.99422594742927, 60.287391694733],
+                    [ 24.52403906370872, 60.287391694733],
+                    [ 24.52403906370872, 60.122188238921],
+                    [ 24.99422594742927, 60.122188238921]
+                ]]
+            }
+        }
+    }
+}
+
