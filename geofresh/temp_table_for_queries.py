@@ -68,7 +68,7 @@ def make_insertion_rows_from_geojson(geojson, colname_site_id=None):
         raise exc.UserInputException(err_msg)
 
     LOGGER.debug(f'Created list of {len(list_of_insert_rows)} insert rows...')
-    LOGGER.debug(f'First insert row:\n{list_of_insert_rows[0]}')
+    LOGGER.debug(f'First insert row: {list_of_insert_rows[0]}')
     return list_of_insert_rows
 
 
@@ -82,13 +82,13 @@ def make_insertion_rows_from_dataframe(dataframe, colname_lon, colname_lat, coln
         list_of_insert_rows.append(row)
 
     LOGGER.debug(f'Created list of {len(list_of_insert_rows)} insert rows...')
-    LOGGER.debug(f'First insert row:\n{list_of_insert_rows[0]}')
+    LOGGER.debug(f'First insert row: {list_of_insert_rows[0]}')
     return list_of_insert_rows
 
 
 def create_and_populate_temp_table(cursor, tablename_prefix, list_of_insert_rows):
     tablename =_tablename(tablename_prefix)
-    LOGGER.debug(f'Populating temp table "{tablename}"...')
+    LOGGER.debug(f'Creating and populating temp table "{tablename}"...')
 
     # Create a temporary table with the basic information about the points:
     _create_temp_table(cursor, tablename)
@@ -116,69 +116,80 @@ def _tablename(tablename_prefix):
 
 def _create_temp_table(cursor, tablename):
     LOGGER.debug(f'Creating temporary table "{tablename}"...')
+
     # TODO WIP numeric or decimal or ...?
     # TODO: Is varchar a good type for expected site_ids?
-    query = f"""
+    query = f'''
     CREATE TEMP TABLE {tablename} (
-    site_id varchar(100),
-    lon decimal,
-    lat decimal,
-    subc_id integer,
-    basin_id integer,
-    reg_id smallint,
-    geom_user geometry(POINT, 4326)
+        site_id varchar(100),
+        lon decimal,
+        lat decimal,
+        subc_id integer,
+        basin_id integer,
+        reg_id smallint,
+        geom_user geometry(POINT, 4326)
     );
-    """
-    query = query.replace("\n", " ")
-    _start = time.time()
+    '''.replace("\n", " ")
+
+    ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
+    querystart = time.time()
     cursor.execute(query)
-    _end = time.time()
+    log_query_time(querystart, 'creating temp table')
     LOGGER.debug(f'Creating temporary table "{tablename}"... done.')
-    LOGGER.log(logging.TRACE, '**** TIME ************ query_create: %s' % (_end - _start))
     return tablename
 
 
 def _fill_temp_table(cursor, tablename, list_of_insert_rows):
     LOGGER.debug(f'Inserting into temporary table "{tablename}"...')
+
     list_of_insertions = ", ".join(list_of_insert_rows)
     query = f'INSERT INTO {tablename} (site_id, lon, lat, geom_user) VALUES {list_of_insertions};'
-    _start = time.time()
+
+    ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
+    querystart = time.time()
     cursor.execute(query)
-    _end = time.time()
+    log_query_time(querystart, 'inserting into temp table')
     LOGGER.debug(f'Inserting into temporary table "{tablename}"... done.')
-    LOGGER.log(logging.TRACE, '**** TIME ************ query_insert: %s' % (_end - _start))
 
 
 def _add_index(cursor, tablename):
     LOGGER.debug(f'Creating index for temporary table "{tablename}"...')
+
     query = f'CREATE INDEX IF NOT EXISTS temp_test_geom_user_idx ON {tablename} USING gist (geom_user);'
-    _start = time.time()
+
+    ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
+    querystart = time.time()
     cursor.execute(query)
-    _end = time.time()
+    log_query_time(querystart, 'adding spatial index')
+
     LOGGER.debug(f'Creating index for temporary table "{tablename}"... done.')
-    LOGGER.log(logging.TRACE, '**** TIME ************ query_index: %s' % (_end - _start))
 
 
 def _update_temp_table_regid(cursor, tablename):
 
     ## Add reg_id to temp table, get it returned:
     LOGGER.debug(f'Update reg_id (st_intersects) in temporary table "{tablename}"...')
-    query = f"""
-        WITH updater AS (
-            UPDATE {tablename}
-            SET reg_id = reg.reg_id
-            FROM regional_units reg
-            WHERE st_intersects({tablename}.geom_user, reg.geom)
-            RETURNING {tablename}.reg_id
-        )
-        SELECT DISTINCT reg_id FROM updater;
-    """
-    query = query.replace("\n", " ")
-    _start = time.time()
+    query = f'''
+    WITH updater AS (
+        UPDATE {tablename}
+        SET reg_id = reg.reg_id
+        FROM regional_units reg
+        WHERE st_intersects({tablename}.geom_user, reg.geom)
+        RETURNING {tablename}.reg_id
+    )
+    SELECT DISTINCT reg_id FROM updater;
+    '''.replace("\n", " ")
+
+    ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
+    querystart = time.time()
     cursor.execute(query)
-    _end = time.time()
+    log_query_time(querystart, 'updating temp table with reg_id')
+
     LOGGER.debug(f'Update reg_id (st_intersects) in temporary table "{tablename}"... done')
-    LOGGER.log(logging.TRACE, '**** TIME ************ query_reg: %s' % (_end - _start))
 
     ## Retrieve reg_id, for next query:
     LOGGER.log(logging.TRACE, 'Retrieving reg_ids (RETURNING from UPDATE query)...')
@@ -197,16 +208,22 @@ def _add_subcids(cursor, tablename, reg_ids):
 
     LOGGER.debug(f'Update subc_id, basin_id (st_intersects) in temporary table "{tablename}"...')
     reg_ids_string = ", ".join([str(elem) for elem in reg_ids])
-    query = f"""
-        UPDATE {tablename}
-        SET subc_id = sub.subc_id, basin_id = sub.basin_id
-        FROM sub_catchments sub
-        WHERE st_intersects({tablename}.geom_user, sub.geom) AND sub.reg_id IN ({reg_ids_string});
-    """
-    _start = time.time()
+    query = f'''
+    UPDATE {tablename}
+    SET
+        subc_id = sub.subc_id,
+        basin_id = sub.basin_id
+    FROM sub_catchments sub
+    WHERE
+        st_intersects({tablename}.geom_user, sub.geom)
+        AND sub.reg_id IN ({reg_ids_string});
+    '''.replace("\n", " ")
+
+    ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
+    querystart = time.time()
     cursor.execute(query)
-    _end = time.time()
-    LOGGER.log(logging.TRACE, '**** TIME ************ query_sub_bas: %s' % (_end - _start))
+    log_query_time(querystart, 'updating temp table with subc_id and basin_id')
     LOGGER.debug(f'Update subc_id, basin_id (st_intersects) in temporary table "{tablename}"... done.')
 
 

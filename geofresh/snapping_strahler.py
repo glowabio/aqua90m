@@ -33,15 +33,15 @@ except ModuleNotFoundError as e1:
 ### One point at a time ###
 ###########################
 
+# Just a wrapper!
 def get_snapped_point_geometry_coll(conn, lon, lat, strahler, basin_id, reg_id):
-    # Just a wrapper!
     # INPUT: lon, lat
     # OUTPUT: GeometryCollection (point, stream segment, connecting line)
     return _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_feature = False)
 
 
+# Just a wrapper!
 def get_snapped_point_feature_coll(conn, lon, lat, strahler, basin_id, reg_id):
-    # Just a wrapper!
     # INPUT: subc_id
     # OUTPUT: FeatureCollection (point, stream segment, connecting line)
     return _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_feature = True)
@@ -82,11 +82,11 @@ def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_fea
     {"type":"Point","coordinates":[9.940416667,54.690416667]} | 506252174 |        3
 
     """
-    query = '''
+    query = f'''
     SELECT 
         ST_AsText(ST_LineInterpolatePoint(
             closest.geom,
-            ST_LineLocatePoint(closest.geom, ST_SetSRID(ST_MakePoint({longitude}, {latitude}), 4326))
+            ST_LineLocatePoint(closest.geom, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))
         )),
         ST_AsText(closest.geom),
         closest.strahler,
@@ -96,21 +96,20 @@ def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_fea
             seg.subc_id,
             seg.strahler,
             seg.geom AS geom,
-            seg.geom <-> ST_SetSRID(ST_MakePoint({longitude}, {latitude}), 4326)::geometry AS dist
+            seg.geom <-> ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326)::geometry AS dist
         FROM hydro.stream_segments seg
         WHERE seg.strahler >= {strahler}
         ORDER BY dist
         LIMIT 1
     ) AS closest;
-    '''.format(strahler = strahler, longitude = lon, latitude = lat, basin_id = basin_id, reg_id = reg_id)
-    query = query.replace("\n", " ")
-    LOGGER.log(logging.TRACE, "SQL query: %s" % query)
+    '''.replace("\n", " ")
 
     ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
     cursor = conn.cursor()
-    LOGGER.log(logging.TRACE, 'Querying database...')
+    querystart = time.time()
     cursor.execute(query)
-    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
+    log_query_time(querystart, 'snapping-strahler-plus for one point')
 
     ### Get results and construct GeoJSON:
 
@@ -211,9 +210,8 @@ def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_fea
 ### Functions to be exposed ###
 ###############################
 
-
+# Just a wrapper!
 def get_snapped_points_json2json(conn, points_geojson, min_strahler, colname_site_id=None, add_distance=None):
-    # Just a wrapper
     # INPUT: GeoJSON (Multipoint)
     # OUTPUT: FeatureCollection (Point)
 
@@ -233,8 +231,9 @@ def get_snapped_points_json2json(conn, points_geojson, min_strahler, colname_sit
 
     return get_snapped_points_xy(conn, geojson = points_geojson, min_strahler = min_strahler, colname_site_id = colname_site_id, result_format="geojson", add_distance=add_distance)
 
+
+# Just a wrapper!
 def get_snapped_points_csv2csv(conn, input_df, min_strahler, colname_lon, colname_lat, colname_site_id, add_distance=None):
-    # Just a wrapper
     # INPUT: Pandas dataframe
     # OUTPUT: Pandas dataframe
     return get_snapped_points_xy(conn,
@@ -246,8 +245,9 @@ def get_snapped_points_csv2csv(conn, input_df, min_strahler, colname_lon, colnam
         min_strahler=min_strahler,
         add_distance=add_distance)
 
+
+# Just a wrapper!
 def get_snapped_points_csv2json(conn, input_df, min_strahler, colname_lon, colname_lat, colname_site_id, add_distance=None):
-    # Just a wrapper
     # INPUT: Pandas dataframe
     # OUTPUT: FeatureCollection (Point)
     return get_snapped_points_xy(conn,
@@ -259,8 +259,9 @@ def get_snapped_points_csv2json(conn, input_df, min_strahler, colname_lon, colna
         min_strahler=min_strahler,
         add_distance=add_distance)
 
+
+# Just a wrapper!
 def get_snapped_points_json2csv(conn, points_geojson, min_strahler, colname_lon, colname_lat, colname_site_id, add_distance=None):
-    # Just a wrapper
     # INPUT: GeoJSON (Multipoint)
     # OUTPUT: Pandas dataframe
 
@@ -286,6 +287,7 @@ def get_snapped_points_json2csv(conn, points_geojson, min_strahler, colname_lon,
         result_format="csv",
         min_strahler=min_strahler,
         add_distance=add_distance)
+
 
 ##################################
 ### Many points at a time      ###
@@ -341,32 +343,33 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
     # Note: The columns we UPDATE here (geom_closest, strahler_closest, subcid_closest)
     # have to exist in the temp table!
     query = f'''
-        ALTER TABLE {tablename}
+    ALTER TABLE {tablename}
         ADD COLUMN geom_closest geometry(LINESTRING, 4326),
         ADD COLUMN subcid_closest integer,
         ADD COLUMN strahler_closest integer;
-    '''
+    '''.replace("\n", "")
     cursor.execute(query)
 
     # Note: LATERAL makes the subquery run once per row of tablename.
     query = f'''
-        UPDATE {tablename} AS temp1
-        SET
-            geom_closest = closest.geom,
-            strahler_closest = closest.strahler,
-            subcid_closest = closest.subc_id
-        FROM {tablename} AS temp2
-        CROSS JOIN LATERAL (
-            SELECT seg.geom, seg.strahler, seg.subc_id
-            FROM stream_segments seg
-            WHERE seg.strahler >= {min_strahler}
-            ORDER BY seg.geom <-> ST_SetSRID(ST_MakePoint(temp2.lon, temp2.lat), 4326)
-            LIMIT 1
-        ) AS closest
-        WHERE temp1.subc_id = temp2.subc_id;
-    '''
-    query = query.replace("\n", " ")
-    LOGGER.debug('Updating database with closest query...')
+    UPDATE {tablename} AS temp1
+    SET
+        geom_closest = closest.geom,
+        strahler_closest = closest.strahler,
+        subcid_closest = closest.subc_id
+    FROM {tablename} AS temp2
+    CROSS JOIN LATERAL (
+        SELECT seg.geom, seg.strahler, seg.subc_id
+        FROM stream_segments seg
+        WHERE seg.strahler >= {min_strahler}
+        ORDER BY seg.geom <-> ST_SetSRID(ST_MakePoint(temp2.lon, temp2.lat), 4326)
+        LIMIT 1
+    ) AS closest
+    WHERE temp1.subc_id = temp2.subc_id;
+    '''.replace("\n", " ")
+
+    ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
     querystart = time.time()
     cursor.execute(query)
     log_query_time(querystart, 'adding nearest neighbours')
@@ -383,12 +386,15 @@ def _snapping_with_distances(cursor, tablename, result_format, colname_lon, coln
 
     # Compute snapped point, store in table:
     query = f'''
-        UPDATE {tablename} AS temp
+    UPDATE {tablename} AS temp
         SET geom_snapped = ST_LineInterpolatePoint(
             temp.geom_closest,
             ST_LineLocatePoint(temp.geom_closest, temp.geom_user)
         );
     '''.replace("\n", " ")
+
+    ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
     querystart = time.time()
     cursor.execute(query)
     log_query_time(querystart, 'computing snapped points and store in table')
@@ -405,8 +411,11 @@ def _snapping_with_distances(cursor, tablename, result_format, colname_lon, coln
         temp.strahler_closest,
         temp.subcid_closest,
         ST_Distance(temp.geom_user, temp.geom_snapped)
-    FROM {tablename} AS temp
+    FROM {tablename} AS temp;
     '''.replace("\n", " ")
+
+    ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
     querystart = time.time()
     cursor.execute(query)
     log_query_time(querystart, 'computing distances and retrieve results')
@@ -436,13 +445,13 @@ def _snapping_without_distances(cursor, tablename, result_format, colname_lon, c
         temp.strahler_closest,
         temp.subcid_closest
     FROM {tablename} AS temp
-    '''
-    query = query.replace("\n", " ")
-    LOGGER.debug('Querying database with snapping query...')
+    '''.replace("\n", " ")
+
+    ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
     querystart = time.time()
     cursor.execute(query)
     log_query_time(querystart, 'snapping without distances')
-    LOGGER.debug('Querying database with snapping query... DONE.')
     return _package_result(cursor, result_format, colname_lon, colname_lat, colname_site_id)
 
 

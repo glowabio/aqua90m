@@ -37,15 +37,15 @@ except ModuleNotFoundError as e1:
 ### One point at a time ###
 ###########################
 
+# Just a wrapper!
 def get_snapped_point_geometry_coll(conn, lon, lat, subc_id, basin_id, reg_id):
-    # Just a wrapper!
     # INPUT: subc_id
     # OUTPUT: GeometryCollection (point, stream segment, connecting line)
     return _get_snapped_point_plus(conn, lon, lat, subc_id, basin_id, reg_id, make_feature = False)
 
 
+# Just a wrapper!
 def get_snapped_point_feature_coll(conn, lon, lat, subc_id, basin_id, reg_id):
-    # Just a wrapper!
     # INPUT: subc_id
     # OUTPUT: FeatureCollection (point, stream segment, connecting line)
     return _get_snapped_point_plus(conn, lon, lat, subc_id, basin_id, reg_id, make_feature = True)
@@ -72,24 +72,27 @@ def _get_snapped_point_plus(conn, lon, lat, subc_id, basin_id, reg_id, make_feat
     (1 row)
 
     """
-    query = '''
+    query = f'''
     SELECT
-    ST_AsText(ST_LineInterpolatePoint(geom, ST_LineLocatePoint(geom, ST_SetSRID(ST_MakePoint({longitude}, {latitude}), 4326)))),
-    ST_AsText(geom),
-    strahler
+        ST_AsText(ST_LineInterpolatePoint(
+            geom,
+            ST_LineLocatePoint(geom, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))
+        )),
+        ST_AsText(geom),
+        strahler
     FROM hydro.stream_segments
-    WHERE subc_id = {subc_id}
-    AND basin_id = {basin_id}
-    AND reg_id = {reg_id}
-    '''.format(subc_id = subc_id, longitude = lon, latitude = lat, basin_id = basin_id, reg_id = reg_id)
-    query = query.replace("\n", " ")
-    LOGGER.log(logging.TRACE, "SQL query: %s" % query)
+    WHERE
+        subc_id = {subc_id}
+        AND basin_id = {basin_id}
+        AND reg_id = {reg_id}
+    '''.replace("\n", " ")
 
     ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
     cursor = conn.cursor()
-    LOGGER.log(logging.TRACE, 'Querying database...')
+    querystart = time.time()
     cursor.execute(query)
-    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
+    log_query_time(querystart, 'basic snapping (one point)')
 
     ### Get results and construct GeoJSON:
 
@@ -200,31 +203,35 @@ def get_snapped_point_feature(conn, lon, lat, subc_id, basin_id, reg_id):
             2 | POINT(9.931555 54.69625) | LINESTRING(9.929583333333333 54.69708333333333,9.930416666666668 54.69625,9.932083333333335 54.69625,9.933750000000002 54.694583333333334,9.934583333333334 54.694583333333334)
     (1 row)
     """
-    query = '''
+    query = f'''
     SELECT
-    ST_AsText(ST_LineInterpolatePoint(geom, ST_LineLocatePoint(geom, ST_SetSRID(ST_MakePoint({longitude}, {latitude}),4326)))),
-    geom,
-    strahler
+        ST_AsText(ST_LineInterpolatePoint(
+            geom,
+            ST_LineLocatePoint(geom, ST_SetSRID(ST_MakePoint({lon}, {lat}),4326))
+        )),
+        geom,
+        strahler
     FROM hydro.stream_segments
-    WHERE subc_id = {subc_id}
-    AND basin_id = {basin_id}
-    AND reg_id = {reg_id}
-    '''.format(subc_id = subc_id, longitude = lon, latitude = lat, basin_id = basin_id, reg_id = reg_id)
-    query = query.replace("\n", " ")
+    WHERE
+        subc_id = {subc_id}
+        AND basin_id = {basin_id}
+        AND reg_id = {reg_id}
+    '''.replace("\n", " ")
 
     ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
     cursor = conn.cursor()
-    LOGGER.log(logging.TRACE, 'Querying database...')
+    querystart = time.time()
     cursor.execute(query)
-    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
+    log_query_time(querystart, 'basic snapping (one point)')
 
     ### Get results and construct GeoJSON:
 
     # Get row from database:
     row = cursor.fetchone();
     if row is None:
-        LOGGER.warning("Received result_row None for point: lon=%s, lat=%s (subc_id %s). This is weird. Any point should be snappable, right?" % (lon, lat, subc_id))
-        err_msg = "Weird: Could not snap point lon=%s, lat=%s" % (lon, lat) 
+        LOGGER.warning("Received result_row None for point: lon={lon}, lat={lat} (subc_id {subc_id}). This is weird. Any point should be snappable, right?")
+        err_msg = f"Weird: Could not snap point lon={lon}, lat={lat}"
         LOGGER.error(err_msg)
         raise exc.GeoFreshNoResultException(err_msg)
         # Or return features with empty geometries:
@@ -277,21 +284,25 @@ def get_snapped_point_simplegeom(conn, lon, lat, subc_id, basin_id, reg_id):
             2 | POINT(9.931555 54.69625) | LINESTRING(9.929583333333333 54.69708333333333,9.930416666666668 54.69625,9.932083333333335 54.69625,9.933750000000002 54.694583333333334,9.934583333333334 54.694583333333334)
     (1 row)
     """
-    query = '''
+    query = f'''
     SELECT
-    ST_AsText(ST_LineInterpolatePoint(geom, ST_LineLocatePoint(geom, ST_SetSRID(ST_MakePoint({longitude}, {latitude}),4326))))
+    ST_AsText(ST_LineInterpolatePoint(
+        geom,
+        ST_LineLocatePoint(geom, ST_SetSRID(ST_MakePoint({lon}, {lat}),4326))
+    ))
     FROM hydro.stream_segments
-    WHERE subc_id = {subc_id}
-    AND basin_id = {basin_id}
-    AND reg_id = {reg_id}
-    '''.format(subc_id = subc_id, longitude = lon, latitude = lat, basin_id = basin_id, reg_id = reg_id)
-    query = query.replace("\n", " ")
+    WHERE
+        subc_id = {subc_id}
+        AND basin_id = {basin_id}
+        AND reg_id = {reg_id}
+    '''.replace("\n", " ")
 
     ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
     cursor = conn.cursor()
-    LOGGER.log(logging.TRACE, 'Querying database...')
+    querystart = time.time()
     cursor.execute(query)
-    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
+    log_query_time(querystart, 'basic snapping')
 
     ### Get results and construct GeoJSON:
 
@@ -315,8 +326,8 @@ def get_snapped_point_simplegeom(conn, lon, lat, subc_id, basin_id, reg_id):
 ### Many points at a time ###
 #############################
 
+# Just a wrapper
 def get_snapped_points_json2json(conn, points_geojson, colname_site_id = None):
-    # Just a wrapper
     # INPUT: GeoJSON (Multipoint)
     # OUTPUT: FeatureCollection (Point)
 
@@ -337,8 +348,8 @@ def get_snapped_points_json2json(conn, points_geojson, colname_site_id = None):
     return get_snapped_point_xy(conn, geojson = points_geojson, colname_site_id = colname_site_id, result_format="geojson")
 
 
+# Just a wrapper
 def get_snapped_points_csv2csv(conn, input_df, colname_lon, colname_lat, colname_site_id):
-    # Just a wrapper
     # INPUT: Pandas dataframe
     # OUTPUT: Pandas dataframe
     return get_snapped_point_xy(conn,
@@ -349,8 +360,8 @@ def get_snapped_points_csv2csv(conn, input_df, colname_lon, colname_lat, colname
         result_format="csv")
 
 
+# Just a wrapper
 def get_snapped_points_csv2json(conn, input_df, colname_lon, colname_lat, colname_site_id):
-    # Just a wrapper
     # INPUT: Pandas dataframe
     # OUTPUT: FeatureCollection (Point)
     return get_snapped_point_xy(conn,
@@ -361,8 +372,8 @@ def get_snapped_points_csv2json(conn, input_df, colname_lon, colname_lat, colnam
         result_format="geojson")
 
 
+# Just a wrapper
 def get_snapped_points_json2csv(conn, points_geojson, colname_lon, colname_lat, colname_site_id):
-    # Just a wrapper
     # INPUT: GeoJSON (Multipoint)
     # OUTPUT: Pandas dataframe
 
@@ -418,26 +429,31 @@ def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, c
 def _run_snapping_query(cursor, tablename, reg_id_set, result_format, colname_lon, colname_lat, colname_site_id):
     ## This does not write anything into the database:
     reg_ids_string = ", ".join([str(elem) for elem in reg_id_set])
-    query_snap = '''
+    query = f'''
     SELECT
-    poi.lon,
-    poi.lat,
-    poi.subc_id,
-    poi.basin_id,
-    poi.reg_id,
-    seg.strahler,
-    ST_AsText(ST_LineInterpolatePoint(seg.geom, ST_LineLocatePoint(seg.geom, poi.geom_user))),
-    poi.site_id
+        poi.lon,
+        poi.lat,
+        poi.subc_id,
+        poi.basin_id,
+        poi.reg_id,
+        seg.strahler,
+        ST_AsText(ST_LineInterpolatePoint(
+            seg.geom,
+            ST_LineLocatePoint(seg.geom, poi.geom_user)
+        )),
+        poi.site_id
     FROM hydro.stream_segments seg, {tablename} poi
-    WHERE seg.subc_id = poi.subc_id AND seg.reg_id IN ({reg_ids});
-    '''.format(tablename = tablename, reg_ids = reg_ids_string)
-    # TODO: Add ST_AsText(seg.geom) if you want the linestring!
-    query_snap = query_snap.replace("\n", " ")
-    LOGGER.debug('Querying database with snapping query...')
+    WHERE
+        seg.subc_id = poi.subc_id
+        AND seg.reg_id IN ({reg_ids_string});
+    '''.replace("\n", " ")
+
+    ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
     querystart = time.time()
-    cursor.execute(query_snap)
-    log_query_time(querystart, 'basic snapping')
-    LOGGER.debug('Querying database with snapping query... DONE.')
+    cursor.execute(query)
+    log_query_time(querystart, 'basic snapping (many points)')
+
     return _package_result(cursor, result_format, colname_lon, colname_lat, colname_site_id)
 
 
