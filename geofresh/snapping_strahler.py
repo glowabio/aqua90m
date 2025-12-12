@@ -320,7 +320,7 @@ def get_snapped_points_xy(conn, geojson=None, dataframe=None, colname_lon=None, 
     temp_table_for_queries.populate_temp_table(cursor, tablename, list_of_insert_rows)
 
     # Then, the nearest-neighbouring stream segments are added:
-    _fill_temptable_with_nearest_neighbours(cursor, tablename, min_strahler)
+    _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler)
 
     if add_distance:
         result_to_be_returned = _snapping_with_distances(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id)
@@ -333,7 +333,7 @@ def get_snapped_points_xy(conn, geojson=None, dataframe=None, colname_lon=None, 
     return result_to_be_returned
 
 
-def _fill_temptable_with_nearest_neighbours(cursor, tablename, min_strahler):
+def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
     # Fill the table with the geometry and properties of the nearest neighbour
     # stream segment. For this we compute the distance using <->, and sort by that.
     LOGGER.debug(f'Adding nearest neighbours to temporary table "{tablename}"...')
