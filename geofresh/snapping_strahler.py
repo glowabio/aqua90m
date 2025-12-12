@@ -316,7 +316,7 @@ def get_snapped_points_xy(conn, geojson=None, dataframe=None, colname_lon=None, 
     # A temporary table is created and populated with the lines above.
     cursor = conn.cursor()
     tablename_prefix = "snapping_strahler"
-    tablename = temp_table_for_queries.create_temp_table_for_strahler_snapping(cursor, tablename_prefix)
+    tablename = temp_table_for_queries.create_temp_table(cursor, tablename_prefix)
     temp_table_for_queries.populate_temp_table(cursor, tablename, list_of_insert_rows)
 
     # Then, the nearest-neighbouring stream segments are added:
@@ -340,6 +340,14 @@ def _fill_temptable_with_nearest_neighbours(cursor, tablename, min_strahler):
 
     # Note: The columns we UPDATE here (geom_closest, strahler_closest, subcid_closest)
     # have to exist in the temp table!
+    query = f'''
+        ALTER TABLE {tablename}
+        ADD COLUMN geom_closest geometry(LINESTRING, 4326),
+        ADD COLUMN subcid_closest integer,
+        ADD COLUMN strahler_closest integer;
+    '''
+    cursor.execute(query)
+
     # Note: LATERAL makes the subquery run once per row of tablename.
     query = f'''
         UPDATE {tablename} AS temp1
