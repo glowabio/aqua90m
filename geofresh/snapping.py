@@ -13,14 +13,14 @@ try:
     import aqua90m.utils.geojson_helpers as geojson_helpers
     import aqua90m.utils.exceptions as exc
     import aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
-    from aqua90m.geofresh.temp_table_for_queries import _log_query_time as _log_query_time
+    from aqua90m.geofresh.temp_table_for_queries import log_query_time as log_query_time
 except ModuleNotFoundError as e1:
     try:
         # If we are using this from pygeoapi:
         import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
         import pygeoapi.process.aqua90m.utils.exceptions as exc
         import pygeoapi.process.aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
-        from pygeoapi.process.aqua90m.geofresh.temp_table_for_queries import _log_query_time as _log_query_time
+        from pygeoapi.process.aqua90m.geofresh.temp_table_for_queries import log_query_time as log_query_time
     except ModuleNotFoundError as e2:
         msg = 'Module not found: '+e1.name+' (imported in '+__name__+').' + \
               ' If this is being run from' + \
@@ -436,7 +436,7 @@ def _run_snapping_query(cursor, tablename, reg_id_set, result_format, colname_lo
     LOGGER.debug('Querying database with snapping query...')
     querystart = time.time()
     cursor.execute(query_snap)
-    _log_query_time(querystart, 'basic snapping')
+    log_query_time(querystart, 'basic snapping')
     LOGGER.debug('Querying database with snapping query... DONE.')
     return _package_result(cursor, result_format, colname_lon, colname_lat, colname_site_id)
 
@@ -577,7 +577,7 @@ if __name__ == "__main__":
         import aqua90m.utils.geojson_helpers as geojson_helpers
         import aqua90m.utils.exceptions as exc
         import aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
-        from aqua90m.geofresh.temp_table_for_queries import _log_query_time as _log_query_time
+        from aqua90m.geofresh.temp_table_for_queries import log_query_time as log_query_time
     except ModuleNotFoundError:
         # If we are calling this script from the aqua90m parent directory via
         # "python aqua90m/geofresh/basic_queries.py", we have to make it available on PATH:
@@ -586,7 +586,7 @@ if __name__ == "__main__":
         import aqua90m.utils.geojson_helpers as geojson_helpers
         import aqua90m.utils.exceptions as exc
         import aqua90m.geofresh.temp_table_for_queries as temp_table_for_queries
-        from aqua90m.geofresh.temp_table_for_queries import _log_query_time as _log_query_time
+        from aqua90m.geofresh.temp_table_for_queries import log_query_time as log_query_time
 
 
     # Get config
