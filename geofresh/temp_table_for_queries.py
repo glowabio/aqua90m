@@ -26,33 +26,6 @@ except ModuleNotFoundError as e1:
         LOGGER.debug(msg)
 
 
-def create_and_populate_temp_table(cursor, tablename_prefix, list_of_insert_rows):
-    tablename =_tablename(tablename_prefix)
-    LOGGER.debug(f'Populating temp table "{tablename}"...')
-
-    # Create a temporary table with the basic information about the points:
-    _create_temp_table(cursor, tablename)
-
-    # Insert the information passed by the user:
-    _fill_temp_table(cursor, tablename, list_of_insert_rows)
-
-    # Generate a spatial index:
-    _add_index(cursor, tablename)
-
-    # For each point, find out and store and retrieve the reg_id:
-    reg_ids = _update_temp_table_regid(cursor, tablename)
-
-    # For each point, find out and store the basin_id and subc_id:
-    _add_subcids(cursor, tablename, reg_ids)
-
-    LOGGER.debug(f'Populating temp table "{tablename}"... done.')
-    return tablename, reg_ids
-
-
-def _tablename(tablename_prefix):
-    randomstring = str(uuid.uuid4()).replace('-', '')
-    return f'{tablename_prefix}_{randomstring}'
-
 
 def drop_temp_table(cursor, tablename):
     LOGGER.debug(f'Dropping temporary table "{tablename}"...')
@@ -111,6 +84,34 @@ def make_insertion_rows_from_dataframe(dataframe, colname_lon, colname_lat, coln
     LOGGER.debug(f'Created list of {len(list_of_insert_rows)} insert rows...')
     LOGGER.debug(f'First insert row:\n{list_of_insert_rows[0]}')
     return list_of_insert_rows
+
+
+def create_and_populate_temp_table(cursor, tablename_prefix, list_of_insert_rows):
+    tablename =_tablename(tablename_prefix)
+    LOGGER.debug(f'Populating temp table "{tablename}"...')
+
+    # Create a temporary table with the basic information about the points:
+    _create_temp_table(cursor, tablename)
+
+    # Insert the information passed by the user:
+    _fill_temp_table(cursor, tablename, list_of_insert_rows)
+
+    # Generate a spatial index:
+    _add_index(cursor, tablename)
+
+    # For each point, find out and store and retrieve the reg_id:
+    reg_ids = _update_temp_table_regid(cursor, tablename)
+
+    # For each point, find out and store the basin_id and subc_id:
+    _add_subcids(cursor, tablename, reg_ids)
+
+    LOGGER.debug(f'Populating temp table "{tablename}"... done.')
+    return tablename, reg_ids
+
+
+def _tablename(tablename_prefix):
+    randomstring = str(uuid.uuid4()).replace('-', '')
+    return f'{tablename_prefix}_{randomstring}'
 
 
 def _create_temp_table(cursor, tablename):
