@@ -18,7 +18,7 @@ import pygeoapi.process.aqua90m.utils.dataframe_utils as dataframe_utils
 
 '''
 # Filter occurrences by site_id:
-curl -X POST "http://localhost:5000/processes/filter-by-attribute/execution" \
+curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -32,7 +32,7 @@ curl -X POST "http://localhost:5000/processes/filter-by-attribute/execution" \
 }'
 
 # Filtering by species name: TODO: Missing example data!
-curl -X POST "http://localhost:5000/processes/filter-by-attribute/execution" \
+curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
 --data '{
   "inputs": {
         "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/xyz",
@@ -45,7 +45,7 @@ curl -X POST "http://localhost:5000/processes/filter-by-attribute/execution" \
 }'
 
 # Filter output from get-local-ids: TODO: Missing example data!
-curl -X POST "http://localhost:5000/processes/filter-by-attribute/execution" \
+curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -139,24 +139,13 @@ class FilterByAttributeProcessor(BaseProcessor):
             LOGGER.error(err_msg)
             raise NotImplementedError(err_msg)
 
-
-        ## Download GeoJSON if user provided URL:
+        ## Download if user provided URL:
+        input_df = None
         if points_geojson_url is not None:
-            try:
-                LOGGER.debug('Try downloading input GeoJSON from: %s' % points_geojson_url)
-                resp = requests.get(points_geojson_url)
-            except requests.exceptions.SSLError as e:
-                LOGGER.warning('SSL error when downloading input data from %s: %s' % (points_geojson_url, e))
-                if ('nimbus.igb-berlin.de' in points_geojson_url and
-                    'nimbus.igb-berlin.de' in str(e) and
-                    'certificate verify failed' in str(e)):
-                    resp = requests.get(points_geojson_url, verify=False)
+            points_geojson = utils.download_geojson(geojson_url)
+        elif csv_url is not None:
+            input_df = utils.access_csv_as_dataframe(csv_url)
 
-            if not resp.status_code == 200:
-                err_msg = 'Failed to download GeoJSON (HTTP %s) from %s.' % (resp.status_code, points_geojson_url)
-                LOGGER.error(err_msg)
-                raise exc.DataAccessException(err_msg)
-            points_geojson = resp.json()
 
         ##################
         ### Actual ... ###
@@ -183,47 +172,11 @@ class FilterByAttributeProcessor(BaseProcessor):
 
 
         ## Handle CSV case:
-        elif csv_url is not None:
-            LOGGER.debug('Accessing input CSV from: %s' % csv_url)
-            try:
-                input_df = pd.read_csv(csv_url) # tries comma first
-                if input_df.shape[1] == 1:
-                    LOGGER.debug('Found only one column (name "%s"). Maybe it is not comma-separated, but semicolon-separated? Trying...' % input_df.columns)
-                    input_df = pd.read_csv(csv_url, sep=';') # if comma failed, try semicolon
-
-                LOGGER.debug('Accessing input CSV... DONE. Found %s columns (names: %s)' % (input_df.shape[1], input_df.columns))
-
-            # Files stored on Nimbus: We get SSL error:
-            except urllib.error.URLError as e:
-                LOGGER.warning('SSL error when downloading input CSV from %s: %s' % (csv_url, e))
-                if ('nimbus.igb-berlin.de' in csv_url and
-                    'certificate verify failed' in str(e)):
-                    LOGGER.debug('Will download input CSV with verify=False to a tempfile.')
-                    resp = requests.get(csv_url, verify=False)
-                    if resp.status_code == 200:
-                        mytempfile = tempfile.NamedTemporaryFile()
-                        mytempfile.write(resp.content)
-                        mytempfile.flush()
-                        mytempfilename = mytempfile.name
-                        LOGGER.debug("CSV file stored to tempfile successfully: %s" % mytempfilename)
-                        input_df = pd.read_csv(mytempfilename) # tries comma first
-                        if input_df.shape[1] == 1:
-                            LOGGER.debug('Found only one column (name "%s"). Maybe it is not comma-separated, but semicolon-separated? Trying...' % input_df.columns)
-                            input_df = pd.read_csv(mytempfilename, sep=';') # if comma failed, try semicolon
-
-                        mytempfile.close()
-                    elif resp.status_code == 404:
-                        err_msg = 'Could not download CSV input data from %s, does not seem to exist (HTTP %s)' % (csv_url, resp.status_code)
-                        LOGGER.error(err_msg)
-                        raise exc.DataAccessException(err_msg)
-                    else:
-                        err_msg = 'Could not download CSV input data from %s (HTTP %s)' % (csv_url, resp.status_code)
-                        LOGGER.error(err_msg)
-                        raise exc.DataAccessException(err_msg)
-
-            # Filter dataframe
+        elif input_df is not None:
             LOGGER.debug('Input data frame has %s rows.' % input_df.shape[0])
             LOGGER.debug('Input data frame has %s columns: %s' % (input_df.shape[1], input_df.columns))
+
+            # Filter dataframe
             i = 0
             for keep_attribute in keep.keys():
                 i += 1
