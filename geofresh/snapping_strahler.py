@@ -401,6 +401,9 @@ def _snapping_with_distances(cursor, tablename, result_format, colname_lon, coln
     LOGGER.debug(f'Adding snapped points to temporary table "{tablename}"... done.')
 
     # Compute the distance, retrieve the snapped points:
+    # Note: ST_Distance operates on WGS84 and returns degrees, so we use ST_Transform
+    # to transform to a "geography", see explanation here:
+    # https://www.postgis.net/workshops/postgis-intro/geography.html
     LOGGER.debug(f'Retrieving snapped points from temporary table "{tablename}"...')
     query = f'''
     SELECT
@@ -410,6 +413,10 @@ def _snapping_with_distances(cursor, tablename, result_format, colname_lon, coln
         ST_AsText(temp.geom_snapped),
         temp.strahler_closest,
         temp.subcid_closest,
+        ST_Distance(
+            ST_Transform(temp.geom_user,4326)::geography,
+            ST_Transform(temp.geom_snapped,4326)::geography
+        ),
         ST_Distance(temp.geom_user, temp.geom_snapped)
     FROM {tablename} AS temp;
     '''.replace("\n", " ")
@@ -489,7 +496,8 @@ def _package_result_in_geojson(cursor, colname_site_id):
         strahler = row[4]
         subc_id = row[5]
         try:
-            distance = row[6] # optional
+            distance_metres = row[6] # optional
+            distance_degrees = row[7] # optional
         except IndexError as e:
             distance = None
 
@@ -510,8 +518,9 @@ def _package_result_in_geojson(cursor, colname_site_id):
         }
 
         # Add distance, if it was computed:
-        if distance is not None:
-            feature["properties"]["distance"] = distance
+        if distance_metres is not None:
+            feature["properties"]["distance_metres"] = distance_metres
+            feature["properties"]["distance_degrees"] = distance_degrees
 
         features.append(feature)
 
@@ -543,7 +552,8 @@ def _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_
         colname_lon+'_original',
         colname_lat+'_snapped',
         colname_lat+'_original',
-        'distance'
+        'distance_metres',
+        'distance_degrees'
     ]
 
     # Iterating over database results:
@@ -559,7 +569,8 @@ def _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_
         strahler = row[4]
         subc_id = row[5]
         try:
-            distance = row[6] # optional
+            distance_metres = row[6] # optional
+            distance_degrees = row[7] # optional
         except IndexError as e:
             distance = None
 
@@ -579,7 +590,8 @@ def _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_
             lon,
             lat_snapped,
             lat,
-            distance
+            distance_metres,
+            distance_degrees
         ])
 
     # Construct pandas dataframe from collected rows:
