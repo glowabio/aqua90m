@@ -46,6 +46,21 @@ curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
     }
 }'
 
+# Filter occurrences by site_id and latitude:
+curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+        "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+        "keep": {"site_id": ["FP1", "FP10", "FP20"]},
+        "conditions": {"longitude": "x<20.8"},
+        "comment": "barbus sites"
+    },
+    "outputs": {
+        "transmissionMode": "reference"
+    }
+}'
+
 # Filtering by species name: TODO: Missing example data!
 curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
 --data '{
@@ -137,6 +152,7 @@ class FilterByAttributeProcessor(BaseProcessor):
         comment = data.get('comment') # optional
         # Keep which attribute and values?
         keep = data.get('keep', None)
+        conditions = data.get('conditions', None)
 
         ## Check user inputs:
         #if csv_url is not None and colname_site_id is None:
@@ -145,7 +161,9 @@ class FilterByAttributeProcessor(BaseProcessor):
         #    raise ProcessorExecuteError(err_msg)
 
         # Error if missing...
-        utils.mandatory_parameters(dict(keep=keep))
+        utils.at_least_one_param(dict(
+            keep=keep,
+            conditions=conditions))
         utils.exactly_one_param(dict(
             points_geojson=points_geojson,
             points_geojson_url=points_geojson_url,
@@ -185,17 +203,29 @@ class FilterByAttributeProcessor(BaseProcessor):
 
         ## Handle CSV case:
         elif input_df is not None:
-            LOGGER.debug('Input data frame has %s rows.' % input_df.shape[0])
             LOGGER.debug('Input data frame has %s columns: %s' % (input_df.shape[1], input_df.columns))
+            LOGGER.debug('Input data frame has %s rows.' % input_df.shape[0])
 
             # Filter dataframe, iteratively:
-            for keep_attribute in keep.keys():
-                keep_values = keep[keep_attribute]
-                LOGGER.debug('Filtering based on column %s, keeping values %s' % (keep_attribute, keep_values))
-                input_df = dataframe_utils.filter_dataframe(input_df, keep_attribute, keep_values)
-                LOGGER.debug('Filtering based on column %s: kept %s lines.' % (keep_attribute, input_df.shape[0]))
-            LOGGER.debug('Filtering... DONE. Kept %s lines.' % input_df.shape[0])
-            output_df = input_df
+            if keep is not None:
+                for keep_attribute in keep.keys():
+                    keep_values = keep[keep_attribute]
+                    LOGGER.debug(f'Filtering based on column {keep_attribute}, keeping values {keep_values}')
+                    input_df = dataframe_utils.filter_dataframe(input_df, keep_attribute, keep_values)
+                    LOGGER.debug('Filtering based on column %s: kept %s lines.' % (keep_attribute, input_df.shape[0]))
+                LOGGER.debug('Filtering... DONE. Kept %s lines.' % input_df.shape[0])
+                output_df = input_df
+
+            # Filter dataframe by numeric condition, iteratively:
+            if conditions is not None:
+                for keep_attribute, condition in conditions.items():
+                    LOGGER.debug(f'Filtering based on column {keep_attribute}, keeping values {condition}')
+                    condition_dict = dataframe_utils.parse_filter_condition(condition, var="x")
+                    input_df = dataframe_utils.filter_dataframe_by_condition(
+                        input_df, keep_attribute, condition_dict)
+                    LOGGER.debug('Filtering based on column %s: kept %s lines.' % (keep_attribute, input_df.shape[0]))
+                LOGGER.debug('Filtering... DONE. Kept %s lines.' % input_df.shape[0])
+                output_df = input_df
 
 
         #####################

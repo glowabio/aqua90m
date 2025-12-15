@@ -36,6 +36,21 @@ def exactly_one_param(params_dict):
         raise ProcessorExecuteError(err_msg)
 
 
+def at_least_one_param(params_dict):
+    LOGGER.debug(f'At least one is mandatory: {params_dict.keys()}')
+    present = []
+    for paramname, paramval in params_dict.items():
+        if paramval is None:
+            LOGGER.debug(f'Absent:  {paramname}')
+        else:
+            LOGGER.debug(f'Present: {paramname}')
+            present.append(paramname)
+
+    if len(present) == 0:
+        err_msg = f"Missing parameter(s): {', '.join(params_dict.keys())}. Please provide at least one of them."
+        raise ProcessorExecuteError(err_msg)
+
+
 def return_hyperlink(output_name, requested_outputs):
 
     if requested_outputs is None:
