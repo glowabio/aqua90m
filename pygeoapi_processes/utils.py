@@ -8,7 +8,7 @@ from pygeoapi.process.base import ProcessorExecuteError
 LOGGER = logging.getLogger(__name__)
 
 
-def mandatory_parameters(params_dict):
+def mandatory_parameters(params_dict, additional_message=""):
     LOGGER.debug(f'Mandatory params: {params_dict.keys()}')
     missing = []
     for paramname, paramval in params_dict.items():
@@ -16,11 +16,11 @@ def mandatory_parameters(params_dict):
             missing.append(paramname)
 
     if len(missing) > 0:
-        err_msg = f"Missing parameter(s): {', '.join(missing)}. Please provide all of them."
+        err_msg = f"Missing parameter(s): {', '.join(missing)}. Please provide all of them.{additional_message}"
         raise ProcessorExecuteError(err_msg)
 
 
-def exactly_one_param(params_dict):
+def exactly_one_param(params_dict, additional_message=""):
     LOGGER.debug(f'Exactly one is mandatory: {params_dict.keys()}')
     present = []
     for paramname, paramval in params_dict.items():
@@ -31,14 +31,14 @@ def exactly_one_param(params_dict):
             present.append(paramname)
 
     if len(present) == 0:
-        err_msg = f"Missing parameter(s): {', '.join(params_dict.keys())}. Please provide exactly one of them."
+        err_msg = f"Missing parameter(s): {', '.join(params_dict.keys())}. Please provide exactly one of them.{additional_message}"
         raise ProcessorExecuteError(err_msg)
     elif len(present) > 1:
-        err_msg = f"Too many parameter(s): {', '.join(present)}. Please provide just one of them."
+        err_msg = f"Too many parameter(s): {', '.join(present)}. Please provide just one of them.{additional_message}"
         raise ProcessorExecuteError(err_msg)
 
 
-def at_least_one_param(params_dict):
+def at_least_one_param(params_dict, additional_message=""):
     LOGGER.debug(f'At least one is mandatory: {params_dict.keys()}')
     present = []
     for paramname, paramval in params_dict.items():
@@ -49,7 +49,7 @@ def at_least_one_param(params_dict):
             present.append(paramname)
 
     if len(present) == 0:
-        err_msg = f"Missing parameter(s): {', '.join(params_dict.keys())}. Please provide at least one of them."
+        err_msg = f"Missing parameter(s): {', '.join(params_dict.keys())}. Please provide at least one of them.{additional_message}"
         raise ProcessorExecuteError(err_msg)
 
 

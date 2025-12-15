@@ -16,6 +16,7 @@ from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
 import pygeoapi.process.aqua90m.utils.dataframe_utils as dataframe_utils
 import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
+import pygeoapi.process.aqua90m.utils.conversion as conversion
 
 '''
 # Filter occurrences by site_id:
@@ -140,6 +141,39 @@ curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
     }
 }'
 
+
+# Filter occurrences by site_id:
+curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+        "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+        "keep": {"site_id": ["FP1", "FP10", "FP20"]},
+        "comment": "barbus sites",
+        "result_format": "geojson",
+        "colname_lat": "latitude",
+        "colname_lon": "longitude"
+    },
+    "outputs": {
+        "transmissionMode": "reference"
+    }
+}'
+
+# Filter occurrences by site_id, but error due to omitting colnames:
+# Works (tested 2025-12-15)
+curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+        "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+        "keep": {"site_id": ["FP1", "FP10", "FP20"]},
+        "comment": "barbus sites",
+        "result_format": "geojson"
+    },
+    "outputs": {
+        "transmissionMode": "reference"
+    }
+}'
 '''
 
 
@@ -193,13 +227,14 @@ class FilterByAttributeProcessor(BaseProcessor):
     def _execute(self, data, requested_outputs):
 
         ## User inputs:
+        result_format = data.get('result_format', None)
         # GeoJSON, posted directly / to be downloaded via URL:
         points_geojson = data.get('points_geojson', None)
         points_geojson_url = data.get('points_geojson_url', None)
         # CSV, to be downloaded via URL
         csv_url = data.get('csv_url', None)
-        #colname_lon = data.get('colname_lon', 'lon')
-        #colname_lat = data.get('colname_lat', 'lat')
+        colname_lon = data.get('colname_lon', None)
+        colname_lat = data.get('colname_lat', None)
         #colname_site_id = data.get('colname_site_id', None)
         # Optional comment:
         comment = data.get('comment') # optional
@@ -242,6 +277,10 @@ class FilterByAttributeProcessor(BaseProcessor):
         ## Handle GeoJSON case:
         if points_geojson is not None:
 
+            # Format of the result defaults to the input format:
+            if result_format is None:
+                result_format = "geojson"
+
             # If a FeatureCollections is passed, check whether the property "site_id" (or similar)
             # is present in every feature:
             if points_geojson['type'] == 'FeatureCollection':
@@ -280,6 +319,15 @@ class FilterByAttributeProcessor(BaseProcessor):
             LOGGER.debug(f'Input data frame has {input_df.shape[1]} columns: {input_df.columns}.')
             LOGGER.debug(f'Input data frame has {input_df.shape[0]} rows.')
 
+            # Format of the result (defaults to the input format):
+            if result_format is None:
+                result_format = "csv"
+            elif result_format == "geojson":
+                msg = " If your input is CSV and you want GeoJSON output, specifying the names of the lon and lat column is mandatory."
+                utils.mandatory_parameters(
+                    dict(colname_lat=colname_lat, colname_lon=colname_lon),
+                    additional_message=msg)
+
             # Filter dataframe by value-list, iteratively:
             if keep is not None:
                 for keep_attribute, keep_values in keep.items():
@@ -305,10 +353,26 @@ class FilterByAttributeProcessor(BaseProcessor):
         ### Return result ###
         #####################
 
+        ## Convert result to other format, if explicitly requested:
+        if result_format == "csv" and output_df is None:
+            LOGGER.debug('User requested converting output to csv...')
+            # If the user specified column names, use those:
+            colname_lon = colname_lon or "lon"
+            colname_lat = colname_lat or "lat"
+            # Convert:
+            output_df = conversion.geojson_points_to_dataframe(
+                output_json, colname_lon="lon", colname_lat="lat")
+        elif result_format == 'geojson' and output_json is None:
+            LOGGER.debug('User requested converting output to geojson...')
+            output_json = conversion.dataframe_to_geojson_points(
+                output_df, colname_lon, colname_lat)
+
+
+
         do_return_link = utils.return_hyperlink('filtered_data', requested_outputs)
 
         ## Return CSV:
-        if output_df is not None:
+        if result_format == "csv":
             if do_return_link:
                 output_dict_with_url =  utils.store_to_csv_file('filtered_data', output_df,
                     self.metadata, self.job_id,
@@ -327,7 +391,7 @@ class FilterByAttributeProcessor(BaseProcessor):
                 raise NotImplementedError(err_msg)
 
         ## Return JSON:
-        elif output_json is not None:
+        elif result_format == "geojson":
             if comment is not None:
                 output_json['comment'] = comment
 
