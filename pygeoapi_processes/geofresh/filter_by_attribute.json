@@ -24,8 +24,17 @@
     }],
     "inputs": {
         "csv_url": {
-            "title": "Input table (by URL)",
+            "title": "Input table (CSV, by URL)",
             "description": "URL of the input table to be filtered. Please pass a URL.",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "points_geojson_url": {
+            "title": "Input data (GeoJSON FeatureCollection, by URL)",
+            "description": "URL of the GeoJSON FeatureCollection to be filtered. Please pass a URL.",
             "schema": {"type": "string"},
             "minOccurs": 1,
             "maxOccurs": 1,

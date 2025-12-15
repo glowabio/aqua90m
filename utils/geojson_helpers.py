@@ -4,10 +4,12 @@ LOGGER = logging.getLogger(__name__)
 try:
     # If the package is installed in local python PATH:
     import aqua90m.utils.exceptions as exc
+    import aqua90m.utils.dataframe_utils as dataframe_utils
 except ModuleNotFoundError as e1:
     try:
         # If we are using this from pygeoapi:
         import pygeoapi.process.aqua90m.utils.exceptions as exc
+        import pygeoapi.process.aqua90m.utils.dataframe_utils as dataframe_utils
     except ModuleNotFoundError as e2:
         msg = 'Module not found: '+e1.name+' (imported in '+__name__+').' + \
               ' If this is being run from' + \
@@ -34,7 +36,10 @@ def check_is_geometry_collection_points(points_geojson):
     return True
 
 def check_feature_collection_property(feature_coll, mandatory_colname):
+    LOGGER.debug(f'Checking if "{mandatory_colname}" in FeatureCollection...')
     for feature in feature_coll['features']:
+        LOGGER.debug(f'This feature: {feature}')
+        LOGGER.debug(f"Properties of this feature: {feature['properties']}")
         if not mandatory_colname in feature['properties']:
             err_msg = f"Please provide '{mandatory_colname}' for each Feature in the FeatureCollection. Missing in: {feature}"
             LOGGER.error(err_msg)
@@ -58,6 +63,47 @@ def check_is_feature_collection_points(points_geojson):
 
     return True
 
+
+def filter_geojson_by_condition(points_geojson, keep_attribute, condition_dict):
+    # Filter by numeric condition
+    LOGGER.debug(f'Filtering property "{keep_attribute}" (condition {condition_dict}).')
+
+    # Iterate over all features:
+    filtered_features = []
+    for feature in points_geojson['features']:
+        val = feature["properties"][keep_attribute]
+        LOGGER.debug(f'Property "{keep_attribute}" has value {val}.')
+        if dataframe_utils.matches_filter_condition(condition_dict, val):
+            # keep!!
+            # Collect results in list:
+            filtered_features.append(feature)
+
+    # Finished collecting the results, now make GeoJSON FeatureCollection:
+    feature_coll = {
+        "type": "FeatureCollection",
+        "features": filtered_features
+    }
+    return feature_coll
+
+
+def filter_geojson(points_geojson, keep_attribute, keep_values):
+    LOGGER.debug(f'Filtering property "{keep_attribute}" (condition: contains any of these: {keep_values}).')
+
+    # Iterate over all features:
+    filtered_features = []
+    for feature in points_geojson['features']:
+        val = feature["properties"][keep_attribute]
+        if val in keep_values:
+            # keep!!
+            # Collect results in list:
+            filtered_features.append(feature)
+
+    # Finished collecting the results, now make GeoJSON FeatureCollection:
+    feature_coll = {
+        "type": "FeatureCollection",
+        "features": filtered_features
+    }
+    return feature_coll
 
 
 if __name__ == "__main__":

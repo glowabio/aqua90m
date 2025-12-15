@@ -15,6 +15,7 @@ import pygeoapi.process.aqua90m.utils.exceptions as exc
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
 import pygeoapi.process.aqua90m.utils.dataframe_utils as dataframe_utils
+import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
 
 '''
 # Filter occurrences by site_id:
@@ -87,6 +88,31 @@ curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
     }
 }'
 
+# Filtering by condition, using GeoJSON input:
+curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
+--data '{
+  "inputs": {
+        "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points2.json",
+        "conditions": {"temperature": ">=30"},
+        "comment": "temperature"
+    },
+    "outputs": {
+        "transmissionMode": "reference"
+    }
+}'
+
+# Filtering by value, using GeoJSON input:
+curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
+--data '{
+  "inputs": {
+        "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points2.json",
+        "keep": {"site_id": [1, 5, 6]},
+        "comment": "filter site ids"
+    },
+    "outputs": {
+        "transmissionMode": "reference"
+    }
+}'
 '''
 
 
@@ -173,7 +199,7 @@ class FilterByAttributeProcessor(BaseProcessor):
         ## Download if user provided URL:
         input_df = None
         if points_geojson_url is not None:
-            points_geojson = utils.download_geojson(geojson_url)
+            points_geojson = utils.download_geojson(points_geojson_url)
         elif csv_url is not None:
             input_df = utils.access_csv_as_dataframe(csv_url)
 
@@ -191,15 +217,35 @@ class FilterByAttributeProcessor(BaseProcessor):
 
             # If a FeatureCollections is passed, check whether the property "site_id" (or similar)
             # is present in every feature:
-            #if points_geojson['type'] == 'FeatureCollection':
-            #    geojson_helpers.check_feature_collection_property(points_geojson, colname_site_id)
+            if points_geojson['type'] == 'FeatureCollection':
+                pass
+                #geojson_helpers.check_feature_collection_property(points_geojson, colname_site_id)
+            else:
+                err_msg = "Need a FeatureCollection to be able to filter."
 
-            # Query database:
-            #output_json = basic_queries.get_subcid_basinid_regid_for_all_2json(
-            #    conn, LOGGER, points_geojson, colname_site_id)
-            err_msg = "Cannot filter GeoJSON yet!"
-            LOGGER.error(err_msg)
-            raise NotImplementedError(err_msg)
+            # Filter geojson by value-list, iteratively:
+            if keep is not None:
+                for keep_attribute, keep_values in keep.items():
+                    LOGGER.debug(f'Filtering based on property {keep_attribute}, keeping values {keep_values}')
+                    geojson_helpers.check_feature_collection_property(points_geojson, keep_attribute)
+                    points_geojson = geojson_helpers.filter_geojson(points_geojson, keep_attribute, keep_values)
+                    LOGGER.debug(f'Filtering based on property {keep_attribute}: kept {len(points_geojson["features"])} features.')
+                LOGGER.debug(f'Filtering... DONE. Kept {len(points_geojson["features"])} features.')
+                output_json = points_geojson
+
+
+            # Filter geojson by numeric condition, iteratively:
+            if conditions is not None:
+                for keep_attribute, condition in conditions.items():
+                    LOGGER.debug(f'Filtering based on property {keep_attribute}, keeping values {condition}')
+                    geojson_helpers.check_feature_collection_property(points_geojson, keep_attribute)
+                    condition_dict = dataframe_utils.parse_filter_condition(condition, var="x")
+                    LOGGER.debug(f'FILTER CONDITION: {condition_dict}')
+                    points_geojson = geojson_helpers.filter_geojson_by_condition(
+                        points_geojson, keep_attribute, condition_dict)
+                    LOGGER.debug(f'Filtering based on property {keep_attribute}: kept {len(points_geojson["features"])} features.')
+                LOGGER.debug(f'Filtering... DONE. Kept {len(points_geojson["features"])} features.')
+                output_json = points_geojson
 
 
         ## Handle CSV case:
