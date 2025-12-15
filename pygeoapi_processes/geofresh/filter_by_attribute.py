@@ -31,6 +31,21 @@ curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
     }
 }'
 
+
+# Filter occurrences by site_id and latitude:
+curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+        "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+        "keep": {"site_id": ["FP1", "FP10", "FP20"], "latitude": [40.299111]},
+        "comment": "barbus sites"
+    },
+    "outputs": {
+        "transmissionMode": "reference"
+    }
+}'
+
 # Filtering by species name: TODO: Missing example data!
 curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
 --data '{
@@ -136,11 +151,6 @@ class FilterByAttributeProcessor(BaseProcessor):
             points_geojson_url=points_geojson_url,
             csv_url=csv_url))
 
-        if keep is not None and len(keep.items()) > 1:
-            err_msg = 'Cannot handle more than one keeper yet!'
-            LOGGER.error(err_msg)
-            raise NotImplementedError(err_msg)
-
         ## Download if user provided URL:
         input_df = None
         if points_geojson_url is not None:
@@ -178,17 +188,14 @@ class FilterByAttributeProcessor(BaseProcessor):
             LOGGER.debug('Input data frame has %s rows.' % input_df.shape[0])
             LOGGER.debug('Input data frame has %s columns: %s' % (input_df.shape[1], input_df.columns))
 
-            # Filter dataframe
-            i = 0
+            # Filter dataframe, iteratively:
             for keep_attribute in keep.keys():
-                i += 1
-                if i > 1:
-                    break # currently, only one attribute!
                 keep_values = keep[keep_attribute]
-
                 LOGGER.debug('Filtering based on column %s, keeping values %s' % (keep_attribute, keep_values))
-                output_df = dataframe_utils.filter_dataframe(input_df, keep_attribute, keep_values)
-                LOGGER.debug('Filtering... DONE. Kept %s lines.' % output_df.shape[0])
+                input_df = dataframe_utils.filter_dataframe(input_df, keep_attribute, keep_values)
+                LOGGER.debug('Filtering based on column %s: kept %s lines.' % (keep_attribute, input_df.shape[0]))
+            LOGGER.debug('Filtering... DONE. Kept %s lines.' % input_df.shape[0])
+            output_df = input_df
 
 
         #####################
