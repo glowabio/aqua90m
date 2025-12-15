@@ -61,7 +61,7 @@
         },
         "conditions": {
             "title": "Numerical conditions (<, >, <=, >=, ==)",
-            "description": "JSON dictionary of the form 'attribute-name': 'condition', e.g. 'latitude': 'x>=20' or 'concentration': '30<x<40'.",
+            "description": "JSON dictionary representing numerical conditions for numerical attributes, of the form 'attribute-name': 'condition', e.g. 'latitude': 'x>=20' or 'concentration': '30<x<40'.",
             "schema": {"type": "string"},
             "minOccurs": 1,
             "maxOccurs": 1,
@@ -81,7 +81,7 @@
     "outputs": {
         "filtered_data": {
             "title": "Filtered data",
-            "description": "The input list, but without the items whose values for the given attributes do not fall into the given list.",
+            "description": "The input data, but without the items (rows or features) whose values for the given attributes do not fall into the given list(s), or do not match the given condition(s).",
             "schema": {
                 "type": "object",
                 "contentMediaType": "application/json"

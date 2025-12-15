@@ -21,14 +21,14 @@ def filter_dataframe(input_df, keep_attribute, keep_values):
     return dataframe
 
 def filter_dataframe_by_condition(input_df, keep_attribute, condition_dict):
-    # Filter by a list of values to be kept
+    # Filter by numeric condition
 
     everything = []
 
     # Iterate over all rows:
     for row in input_df.itertuples(index=False):
         curr_value = getattr(row, keep_attribute)
-        if  matches_filter_condition(condition_dict, curr_value):
+        if matches_filter_condition(condition_dict, curr_value):
             # keep!!
             # Collect results in list:
             everything.append(row)
@@ -103,52 +103,12 @@ def parse_filter_condition(expr, var="x"):
     raise ValueError(f"Invalid expression: {expr}")
 
 
-def old():
-    # Range: 100<x<200
-    m = re.fullmatch(rf"(-?\d+(?:\.\d+)?)<{var}<(-?\d+(?:\.\d+)?)", expr)
-    if m:
-        return {
-            "type": "range",
-            "min": float(m.group(1)),
-            "max": float(m.group(2))
-        }
-
-    # Comparison: >=150, <200, ==42
-    m = re.fullmatch(r"(<=|>=|<|>|==)(-?\d+(?:\.\d+)?)", expr)
-    if m:
-        return {
-            "type": "comparison",
-            "op": m.group(1),
-            "value": float(m.group(2))
-        }
-
-    # Comparison, value on the left:
-    m = re.fullmatch(rf"(-?\d+(?:\.\d+)?)(<=|>=|<|>|==){var}", expr)
-    if m:
-        return {
-            "type": "comparison",
-            "op": FLIP_OP[m.group(2)],
-            "value": float(m.group(1))
-        }
-
-    # Single number → equality
-    m = re.fullmatch(r"-?\d+(?:\.\d+)?", expr)
-    if m:
-        return {
-            "type": "comparison",
-            "op": "==",
-            "value": float(expr)
-        }
-
-    raise ValueError(f"Invalid expression: {expr}")
-
-
 def matches_filter_condition(condition_dict, x):
 
     OPS = {
-        "<": operator.lt,
+        "<":  operator.lt,
         "<=": operator.le,
-        ">": operator.gt,
+        ">":  operator.gt,
         ">=": operator.ge,
         "==": operator.eq
     }

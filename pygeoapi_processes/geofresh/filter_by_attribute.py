@@ -62,12 +62,12 @@ curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
     }
 }'
 
-# Filtering by species name: TODO: Missing example data!
+# Filtering by species name:
 curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
 --data '{
   "inputs": {
-        "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/xyz",
-        "keep": {"species": ["Salaria fluviatilis", "Squalius peloponensis"]},
+        "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/species_occurrences_cuba_maxine.csv",
+        "keep": {"species": ["Sagittaria_lancifolia", "Salvinia_auriculata"]},
         "comment": "species list"
     },
     "outputs": {
@@ -282,8 +282,7 @@ class FilterByAttributeProcessor(BaseProcessor):
 
             # Filter dataframe by value-list, iteratively:
             if keep is not None:
-                for keep_attribute in keep.keys():
-                    keep_values = keep[keep_attribute]
+                for keep_attribute, keep_values in keep.items():
                     LOGGER.debug(f'Filtering based on column {keep_attribute}, keeping values {keep_values}')
                     input_df = dataframe_utils.filter_dataframe(input_df, keep_attribute, keep_values)
                     LOGGER.debug(f'Filtering based on column {keep_attribute} kept {input_df.shape[0]} rows.')
