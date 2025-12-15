@@ -113,6 +113,33 @@ curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
         "transmissionMode": "reference"
     }
 }'
+
+
+# Filtering by value, using GeoJSON input (directly):
+curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
+--data '{
+  "inputs": {
+        "points_geojson":
+            {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {"site_id": 1, "temperature": 20},
+                        "geometry": { "coordinates": [ 10.698832912677716, 53.51710727672125 ], "type": "Point" }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {"site_id": 2, "temperature": 30},
+                        "geometry": { "coordinates": [ 12.80898022975407, 52.42187129944509 ], "type": "Point" }
+                    }
+                ]
+            },
+        "keep": {"site_id": [1, 5, 6]},
+        "comment": "filter site ids"
+    }
+}'
+
 '''
 
 
