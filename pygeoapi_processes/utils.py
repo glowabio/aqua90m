@@ -9,27 +9,29 @@ LOGGER = logging.getLogger(__name__)
 
 
 def mandatory_parameters(params_dict):
+    LOGGER.debug(f'Mandatory params: {params_dict.keys()}')
     missing = []
     for paramname, paramval in params_dict.items():
         if paramval is None:
             missing.append(paramname)
 
     if len(missing) > 0:
-        err_msg = f"Missing parameter(s): {', '.join(missing)}"
+        err_msg = f"Missing parameter(s): {', '.join(missing)}. Please provide all of them."
         raise ProcessorExecuteError(err_msg)
 
 
 def exactly_one_param(params_dict):
+    LOGGER.debug(f'Exactly one is mandatory: {params_dict.keys()}')
     present = []
-    missing = []
     for paramname, paramval in params_dict.items():
         if paramval is None:
-            missing.append(paramname)
+            LOGGER.debug(f'Absent:  {paramname}')
         else:
+            LOGGER.debug(f'Present: {paramname}')
             present.append(paramname)
 
     if len(present) == 0:
-        err_msg = f"Missing parameter(s): {', '.join(params_dict.keys())}. Please provide one of them."
+        err_msg = f"Missing parameter(s): {', '.join(params_dict.keys())}. Please provide exactly one of them."
         raise ProcessorExecuteError(err_msg)
     elif len(present) > 1:
         err_msg = f"Too many parameter(s): {', '.join(present)}. Please provide just one of them."

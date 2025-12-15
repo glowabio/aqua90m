@@ -33,14 +33,15 @@ def check_is_geometry_collection_points(points_geojson):
 
     return True
 
-def check_feature_collection_property(points_geojson, mandatory_colname):
-    for feature in points_geojson['features']:
+def check_feature_collection_property(feature_coll, mandatory_colname):
+    for feature in feature_coll['features']:
         if not mandatory_colname in feature['properties']:
-            err_msg = "Please provide  '%s' for each Feature in the FeatureCollection. Missing in: %s" % (mandatory_colname, feature)
+            err_msg = f"Please provide '{mandatory_colname}' for each Feature in the FeatureCollection. Missing in: {feature}"
             LOGGER.error(err_msg)
             raise exc.UserInputException(err_msg)
 
     return True
+
 
 def check_is_feature_collection_points(points_geojson):
 

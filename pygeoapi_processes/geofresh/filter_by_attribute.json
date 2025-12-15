@@ -4,7 +4,7 @@
     "use_case": "hydrography90m",
     "title": {"en": "Filter by attribute"},
     "description": {
-        "en": "Filter a list of items by attribute. Only keep those items of the list that have one of the values of that attribute."
+        "en": "Filter a table (e.g. CSV) by attribute. Only keep those rows of the table that match all the conditions. You can give conditions for several columns."
     },
     "jobControlOptions": ["sync-execute", "async-execute"],
     "keywords": ["subcatchment", "GeoFRESH", "hydrography90m"],
@@ -24,8 +24,8 @@
     }],
     "inputs": {
         "csv_url": {
-            "title": "Bla",
-            "description": "Bla....",
+            "title": "Input table (by URL)",
+            "description": "URL of the input table to be filtered. Please pass a URL.",
             "schema": {"type": "string"},
             "minOccurs": 1,
             "maxOccurs": 1,
@@ -33,8 +33,17 @@
             "keywords": []
         },
         "keep": {
-            "title": "Which values of which attributes",
-            "description": "JSON dictionary of the form 'attribute-name': [list of attribute values]...",
+            "title": "Attribute values to keep (by equality)",
+            "description": "JSON dictionary of the form 'attribute-name': [list of attribute values], e.g.'species':['species1', 'species2'].",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "conditions": {
+            "title": "Numerical conditions (<, >, <=, >=, ==)",
+            "description": "JSON dictionary of the form 'attribute-name': 'condition', e.g. 'latitude': 'x>=20' or 'concentration': '30<x<40'.",
             "schema": {"type": "string"},
             "minOccurs": 1,
             "maxOccurs": 1,
@@ -43,7 +52,7 @@
         },
         "comment": {
             "title": "Comment",
-            "description": "Arbitrary string that will not be processed but returned, for user\"s convenience.",
+            "description": "Arbitrary string that will not be processed but returned, for user's convenience.",
             "schema": {"type": "string"},
             "minOccurs": 0,
             "maxOccurs": 1,

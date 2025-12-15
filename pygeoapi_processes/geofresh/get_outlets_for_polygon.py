@@ -39,6 +39,29 @@ curl -X POST https://${PYSERVER}/processes/get-outlets-for-polygon/execution \
   }
 }'
 
+curl -X POST https://${PYSERVER}/processes/get-outlets-for-polygon/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "min_strahler": 3,
+    "add_geometry": true,
+    "comment": "near helsinki",
+    "polygon": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [ 24.99422594742927, 60.122188238921],
+          [ 24.99422594742927, 60.287391694733],
+          [ 24.52403906370872, 60.287391694733],
+          [ 24.52403906370872, 60.122188238921],
+          [ 24.99422594742927, 60.122188238921]
+        ]
+      ]
+    }
+  }
+}'
+
+
 '''
 
 # Process metadata and description

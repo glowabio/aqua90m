@@ -153,6 +153,7 @@ class FilterByAttributeProcessor(BaseProcessor):
         # Keep which attribute and values?
         keep = data.get('keep', None)
         conditions = data.get('conditions', None)
+        # TODO: With the dictionary format, users cannot pass several conditions for one attribute, e.g. x>10 and x>5...
 
         ## Check user inputs:
         #if csv_url is not None and colname_site_id is None:
@@ -203,17 +204,17 @@ class FilterByAttributeProcessor(BaseProcessor):
 
         ## Handle CSV case:
         elif input_df is not None:
-            LOGGER.debug('Input data frame has %s columns: %s' % (input_df.shape[1], input_df.columns))
-            LOGGER.debug('Input data frame has %s rows.' % input_df.shape[0])
+            LOGGER.debug(f'Input data frame has {input_df.shape[1]} columns: {input_df.columns}.')
+            LOGGER.debug(f'Input data frame has {input_df.shape[0]} rows.')
 
-            # Filter dataframe, iteratively:
+            # Filter dataframe by value-list, iteratively:
             if keep is not None:
                 for keep_attribute in keep.keys():
                     keep_values = keep[keep_attribute]
                     LOGGER.debug(f'Filtering based on column {keep_attribute}, keeping values {keep_values}')
                     input_df = dataframe_utils.filter_dataframe(input_df, keep_attribute, keep_values)
-                    LOGGER.debug('Filtering based on column %s: kept %s lines.' % (keep_attribute, input_df.shape[0]))
-                LOGGER.debug('Filtering... DONE. Kept %s lines.' % input_df.shape[0])
+                    LOGGER.debug(f'Filtering based on column {keep_attribute} kept {input_df.shape[0]} rows.')
+                LOGGER.debug(f'Filtering... DONE. Kept {input_df.shape[0]} rows.')
                 output_df = input_df
 
             # Filter dataframe by numeric condition, iteratively:
@@ -223,8 +224,8 @@ class FilterByAttributeProcessor(BaseProcessor):
                     condition_dict = dataframe_utils.parse_filter_condition(condition, var="x")
                     input_df = dataframe_utils.filter_dataframe_by_condition(
                         input_df, keep_attribute, condition_dict)
-                    LOGGER.debug('Filtering based on column %s: kept %s lines.' % (keep_attribute, input_df.shape[0]))
-                LOGGER.debug('Filtering... DONE. Kept %s lines.' % input_df.shape[0])
+                    LOGGER.debug(f'Filtering based on column {keep_attribute}: kept {input_df.shape[0]} rows.')
+                LOGGER.debug(f'Filtering... DONE. Kept {input_df.shape[0]} rows.')
                 output_df = input_df
 
 
