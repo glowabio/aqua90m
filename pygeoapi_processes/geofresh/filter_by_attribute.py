@@ -121,7 +121,7 @@ class FilterByAttributeProcessor(BaseProcessor):
         # Optional comment:
         comment = data.get('comment') # optional
         # Keep which attribute and values?
-        keep = data.get('keep')
+        keep = data.get('keep', None)
 
         ## Check user inputs:
         #if csv_url is not None and colname_site_id is None:
@@ -129,12 +129,14 @@ class FilterByAttributeProcessor(BaseProcessor):
         #    err_msg = "Please provide the column name of the site ids inside your csv file (parameter colname_site_id)."
         #    raise ProcessorExecuteError(err_msg)
 
-        if keep is None:
-            LOGGER.error("Missing parameter: keep")
-            err_msg = "Please provide keep..."
-            raise ProcessorExecuteError(err_msg)
+        # Error if missing...
+        utils.mandatory_parameters(dict(keep=keep))
+        utils.exactly_one_param(dict(
+            points_geojson=points_geojson,
+            points_geojson_url=points_geojson_url,
+            csv_url=csv_url))
 
-        elif keep is not None and len(keep.items()) > 1:
+        if keep is not None and len(keep.items()) > 1:
             err_msg = 'Cannot handle more than one keeper yet!'
             LOGGER.error(err_msg)
             raise NotImplementedError(err_msg)
@@ -187,11 +189,6 @@ class FilterByAttributeProcessor(BaseProcessor):
                 LOGGER.debug('Filtering based on column %s, keeping values %s' % (keep_attribute, keep_values))
                 output_df = dataframe_utils.filter_dataframe(input_df, keep_attribute, keep_values)
                 LOGGER.debug('Filtering... DONE. Kept %s lines.' % output_df.shape[0])
-
-        else:
-            err_msg = 'Please provide either GeoJSON (points_geojson, points_geojson_url) or CSV data (csv_url).'
-            LOGGER.error(err_msg)
-            raise exc.UserInputException(err_msg)
 
 
         #####################

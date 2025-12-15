@@ -4,7 +4,37 @@ import requests
 import urllib
 import tempfile
 import pandas as pd
+from pygeoapi.process.base import ProcessorExecuteError
 LOGGER = logging.getLogger(__name__)
+
+
+def mandatory_parameters(params_dict):
+    missing = []
+    for paramname, paramval in params_dict.items():
+        if paramval is None:
+            missing.append(paramname)
+
+    if len(missing) > 0:
+        err_msg = f"Missing parameter(s): {', '.join(missing)}"
+        raise ProcessorExecuteError(err_msg)
+
+
+def exactly_one_param(params_dict):
+    present = []
+    missing = []
+    for paramname, paramval in params_dict.items():
+        if paramval is None:
+            missing.append(paramname)
+        else:
+            present.append(paramname)
+
+    if len(present) == 0:
+        err_msg = f"Missing parameter(s): {', '.join(params_dict.keys())}. Please provide one of them."
+        raise ProcessorExecuteError(err_msg)
+    elif len(present) > 1:
+        err_msg = f"Too many parameter(s): {', '.join(present)}. Please provide just one of them."
+        raise ProcessorExecuteError(err_msg)
+
 
 def return_hyperlink(output_name, requested_outputs):
 
