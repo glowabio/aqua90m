@@ -53,6 +53,14 @@ def at_least_one_param(params_dict, additional_message=""):
         raise ProcessorExecuteError(err_msg)
 
 
+def is_bool_parameters(params_dict, additional_message=""):
+    LOGGER.debug(f'All of these should be boolean: {params_dict.keys()}')
+    for paramname, paramval in params_dict.items():
+        if not type(paramval) == bool:
+            err_msg = f"Parameter '{paramname}' should be a boolean instead of '{type(paramval)}'.{additional_message}"
+            raise ProcessorExecuteError(err_msg)
+
+
 def return_hyperlink(output_name, requested_outputs):
 
     if requested_outputs is None:

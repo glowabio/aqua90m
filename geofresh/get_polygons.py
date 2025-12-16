@@ -176,9 +176,17 @@ def get_basin_polygon(conn, basin_id, reg_id, make_feature=False):
                 "basin_id": basin_id
             }
         }
-        return feature
+        fcoll = {
+            "type": "FeatureCollection",
+            "features": [feature]
+        }
+        return fcoll
     else:
-        return geometry
+        gcoll = {
+            "type": "GeometryCollection",
+            "geometries": [geometry]
+        }
+        return gcoll
 
 
 
