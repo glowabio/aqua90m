@@ -1,0 +1,5 @@
+pandas
+geomet
+psycopg2
+sshtunnel
+
