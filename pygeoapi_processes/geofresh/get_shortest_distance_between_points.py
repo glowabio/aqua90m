@@ -11,7 +11,7 @@ import json
 import psycopg2
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
-import pygeoapi.process.aqua90m.geofresh.routing as routing
+import pygeoapi.process.aqua90m.geofresh.distances as distances
 import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
 import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
 from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection_object_config
@@ -281,7 +281,7 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
 
             # Get distance - this is a JSON-ified matrix:
             # (Complete matrix, starts and ends are the same set!)
-            json_result = routing.get_dijkstra_distance_many(
+            json_result = distances.get_dijkstra_distance_many(
                 conn, all_subc_ids, all_subc_ids, reg_id, basin_id)
 
         ##################################
@@ -347,7 +347,7 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
 
             # Get distance - this is a JSON-ified matrix:
             # (Complete matrix, starts and ends are the same set!)
-            json_result = routing.get_dijkstra_distance_many(
+            json_result = distances.get_dijkstra_distance_many(
                 conn, all_subc_ids_start, all_subc_ids_end, reg_id, basin_id)
 
 
@@ -395,7 +395,7 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
                 raise ProcessorExecuteError(user_msg=err_msg)
 
             # Get distance - just a number:
-            dist = routing.get_dijkstra_distance_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
+            dist = distances.get_dijkstra_distance_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
             json_result = {
                 "distance": dist,
                 "from": subc_id1,
