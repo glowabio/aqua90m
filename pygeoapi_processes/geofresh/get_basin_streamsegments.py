@@ -83,6 +83,7 @@ class BasinStreamSegmentsGetter(BaseProcessor):
         super().__init__(processor_def, PROCESS_METADATA)
         self.supports_outputs = True
         self.job_id = None
+        self.process_id = self.metadata['id']
         self.config = None
 
         # Set config:
@@ -102,14 +103,14 @@ class BasinStreamSegmentsGetter(BaseProcessor):
 
 
     def execute(self, data, outputs=None):
-        LOGGER.debug('Start execution: %s (job %s)' % (self.metadata['id'], self.job_id))
-        LOGGER.debug('Inputs: %s' % data)
-        LOGGER.log(logging.TRACE, 'Requested outputs: %s' % outputs)
+        LOGGER.debug(f'Start execution: {self.process_id} (job {self.job_id})')
+        LOGGER.debug(f'Inputs: {data}')
+        LOGGER.log(logging.TRACE, f'Requested outputs: {outputs}')
 
         try:
             conn = get_connection_object_config(self.config)
             res = self._execute(data, outputs, conn)
-            LOGGER.debug('Finished execution: %s (job %s)' % (self.metadata['id'], self.job_id))
+            LOGGER.debug(f'Finished execution: {self.process_id} (job {self.job_id})')
             LOGGER.log(logging.TRACE, 'Closing connection...')
             conn.close()
             LOGGER.log(logging.TRACE, 'Closing connection... Done.')
@@ -118,13 +119,13 @@ class BasinStreamSegmentsGetter(BaseProcessor):
         except psycopg2.Error as e3:
             conn.close()
             err = f"{type(e3).__module__.removesuffix('.errors')}:{type(e3).__name__}: {str(e3).rstrip()}"
-            error_message = 'Database error: %s (%s)' % (err, str(e3))
+            error_message = f'Database error: {err} ({str(e3)}'
             LOGGER.error(error_message)
             raise ProcessorExecuteError(user_msg = error_message)
 
         except Exception as e:
             conn.close()
-            LOGGER.error('During process execution, this happened: %s' % e)
+            LOGGER.error(f'During process execution, this happened: {e}')
             print(traceback.format_exc())
             raise ProcessorExecuteError(e) # TODO: Can we feed e into ProcessExecuteError?
 
@@ -137,35 +138,37 @@ class BasinStreamSegmentsGetter(BaseProcessor):
         subc_id  = data.get('subc_id',  None) # optional, need either lonlat OR subc_id
         basin_id = data.get('basin_id', None) # optional, need either lonlat OR subc_id
         strahler_min = data.get('strahler_min', 0)
-        comment = data.get('comment') # optional
         geometry_only = data.get('geometry_only', False)
         add_segment_ids = data.get('add_segment_ids', False)
+        comment = data.get('comment') # optional
 
         # Check type:
-        if not type(geometry_only) == bool:
-            err_msg = f'Parameter "geometry_only" should be a boolean instead of a "{type(geometry_only)}".'
+        utils.is_bool_parameters(dict(geometry_only=geometry_only))
+        utils.is_bool_parameters(dict(add_segment_ids=add_segment_ids))
 
-        # Get reg_id, basin_id, subc_id
+        # Check presence:
+        utils.at_least_one_param({
+            "basin_id": basin_id,
+            "subc_id": subc_id,
+            "pair of coordinates (lon and lat)": (lon and lat)
+        })
+
+        ## Get reg_id, basin_id, subc_id - whatever is missing:
         if subc_id is not None:
-            LOGGER.info('Retrieving basin_id for subc_id %s' % subc_id)
+            LOGGER.info(f'Retrieving basin_id for subc_id {subc_id}')
             subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
                 conn, LOGGER, subc_id = subc_id)
         elif lon is not None and lat is not None:
-            LOGGER.info('Retrieving basin_id for lon, lat: %s, %s' % (lon, lat))
+            LOGGER.info(f'Retrieving basin_id for lon, lat: {lon}, {lat}')
             subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
                 conn, LOGGER, lon, lat)
         elif basin_id is not None:
             reg_id = basic_queries.get_regid_from_basinid(conn, LOGGER, basin_id)
-        else:
-            err_msg = "Missing input. Need either basin_id, subc_id, or lon+lat."
-            LOGGER.warn(err_msg)
-            raise ProcessorExecuteError(err_msg)
-
 
         # Get only geometry:
         if geometry_only:
 
-            LOGGER.debug('Now, getting stream segments for basin_id: %s' % basin_id)
+            LOGGER.debug(f'Now, getting stream segments for basin_id: {basin_id}')
             geometry_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll_by_basin(
                 conn, basin_id, reg_id, strahler_min = strahler_min)
         
@@ -186,7 +189,7 @@ class BasinStreamSegmentsGetter(BaseProcessor):
         # Get Feature:
         if not geometry_only:
 
-            LOGGER.debug('Now, getting stream segments for basin_id: %s' % basin_id)
+            LOGGER.debug(f'Now, getting stream segments for basin_id: {basin_id}')
             feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll_by_basin(
                 conn, basin_id, reg_id, strahler_min = strahler_min)
 
