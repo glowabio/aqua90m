@@ -165,52 +165,32 @@ class BasinStreamSegmentsGetter(BaseProcessor):
         elif basin_id is not None:
             reg_id = basic_queries.get_regid_from_basinid(conn, LOGGER, basin_id)
 
-        # Get only geometry:
+        ## Get GeoJSON geometry:
+        LOGGER.debug(f'Now, getting stream segments for basin_id: {basin_id}')
+        geojson_collection = None
         if geometry_only:
-
-            LOGGER.debug(f'Now, getting stream segments for basin_id: {basin_id}')
-            geometry_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll_by_basin(
+            geojson_collection = get_linestrings.get_streamsegment_linestrings_geometry_coll_by_basin(
                 conn, basin_id, reg_id, strahler_min = strahler_min)
-        
-            if comment is not None:
-                geometry_coll['comment'] = comment
-
-            # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
-            if utils.return_hyperlink('stream_segments', requested_outputs):
-                output_dict_with_url =  utils.store_to_json_file('stream_segments', geometry_coll,
-                    self.metadata, self.job_id,
-                    self.download_dir,
-                    self.download_url)
-                return 'application/json', output_dict_with_url
-            else:
-                return 'application/json', geometry_coll
-
-
-        # Get Feature:
-        if not geometry_only:
-
-            LOGGER.debug(f'Now, getting stream segments for basin_id: {basin_id}')
-            feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll_by_basin(
+        else:
+            geojson_collection = get_linestrings.get_streamsegment_linestrings_feature_coll_by_basin(
                 conn, basin_id, reg_id, strahler_min = strahler_min)
-
-            if comment is not None:
-                feature_coll['comment'] = comment
 
             if add_segment_ids:
                 segment_ids = []
-                for item in feature_coll['features']:
+                for item in geojson_collection['features']:
                     segment_ids.append(item["properties"]["subc_id"])
-                feature_coll['segment_ids'] = segment_ids
+                geojson_collection['segment_ids'] = segment_ids
+
+        if comment is not None:
+            geojson_collection['comment'] = comment
 
 
-            # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
-            if utils.return_hyperlink('stream_segments', requested_outputs):
-                output_dict_with_url =  utils.store_to_json_file('stream_segments', feature_coll,
-                    self.metadata, self.job_id,
-                    self.download_dir,
-                    self.download_url)
-                return 'application/json', output_dict_with_url
-            else:
-                return 'application/json', feature_coll
-
-
+        ## Return link to result (wrapped in JSON) if requested, or directly the JSON object:
+        if utils.return_hyperlink('stream_segments', requested_outputs):
+            output_dict_with_url =  utils.store_to_json_file('stream_segments', geojson_collection,
+                self.metadata, self.job_id,
+                self.download_dir,
+                self.download_url)
+            return 'application/json', output_dict_with_url
+        else:
+            return 'application/json', geojson_collection
