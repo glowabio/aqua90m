@@ -61,42 +61,52 @@ def get_subcatchment_polygons_geometry_coll(conn, subc_ids, basin_id, reg_id):
         }
         return geometry_coll
 
-    geometry_list = _get_subcatchment_polygons(conn, subc_ids, basin_id, reg_id, make_features = False)
-
-    return {
+    geojson_items = _get_subcatchment_polygons(conn, subc_ids, basin_id, reg_id, make_features = False)
+    geometry_coll = {
         "type": "GeometryCollection",
-        "geometries": geometry_list
+        "geometries": geojson_items
     }
+    return geometry_coll
 
 
 def _get_subcatchment_polygons(conn, subc_ids, basin_id, reg_id, make_features = True):
     # Private function. Should not be used outside this module, as it returns incomplete GeoJSON.
-
-    LOGGER.debug('Querying for polygons for %s subc_ids...' % len(subc_ids))
+    LOGGER.debug(f'Querying for polygons for {len(subc_ids)} subc_ids...')
 
     upstream_subcids.too_many_upstream_catchments(len(subc_ids), 'individual polygons')
 
-
-    ### Define query:
+    ## Define query:
     relevant_ids = ", ".join([str(elem) for elem in subc_ids])
     # e.g. 506250459, 506251015, 506251126, 506251712
-    query = '''
-    SELECT ST_AsText(geom), subc_id
+    query = f'''
+    SELECT
+        ST_AsText(geom),
+        subc_id
     FROM sub_catchments
-    WHERE subc_id IN ({relevant_ids})
-    AND basin_id = {basin_id}
-    AND reg_id = {reg_id}
-    '''.format(relevant_ids = relevant_ids, basin_id = basin_id, reg_id = reg_id)
+    WHERE
+        subc_id IN ({relevant_ids})
+        AND basin_id = {basin_id}
+        AND reg_id = {reg_id}
+    '''
 
-    ### Query database:
+    ## Query database:
     cursor = conn.cursor()
     LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
     LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
-    ### Get results and construct GeoJSON:
+    ## Get results and construct individual GeoJSON geometries:
+    ## (This is not a complete GeometryCollection or FeatureCollection yet!)
+    geojson_items = _package_query_result(cursor, make_features)
+    return geojson_items
+
+
+def _package_query_result(cursor, make_features):
+
+    ## Iterate over database query results and construct
+    ## GeoJSON geometries from it.
     LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
-    items = []
+    geojson_items = []
     while (True):
         row = cursor.fetchone()
         if row is None:
@@ -107,10 +117,10 @@ def _get_subcatchment_polygons(conn, subc_ids, basin_id, reg_id, make_features =
         if row[0] is not None:
             geometry = geomet.wkt.loads(row[0])
         else:
-            LOGGER.error('Subcatchment %s has no polygon!' % row[1]) # for example: 506469602
+            LOGGER.error(f'Subcatchment {row[1]} has no polygon!') # for example: 506469602
 
         if make_features:
-            items.append({
+            geojson_items.append({
                 "type": "Feature",
                 "geometry": geometry,
                 "properties": {
@@ -118,17 +128,12 @@ def _get_subcatchment_polygons(conn, subc_ids, basin_id, reg_id, make_features =
                 }
             })
         else:
-            items.append(geometry)
+            geojson_items.append(geometry)
 
-    return items
-
-
-
-
+    return geojson_items
 
 
 if __name__ == "__main__":
-
     # Logging
     verbose = True
     #logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)5s - %(message)s')
@@ -137,6 +142,7 @@ if __name__ == "__main__":
 
     from database_connection import connect_to_db
     from database_connection import get_connection_object
+    import upstream_subcids as upstream_subcids
 
     # Get config
     config_file_path = "./config.json"
@@ -171,16 +177,6 @@ if __name__ == "__main__":
     basin_id = 1292547
     reg_id = 58
 
-    # GeometryCollection (for several geometries):
-    print('\nSTART RUNNING FUNCTION: get_subcatchment_polygons_geometry_coll')
-    res = get_subcatchment_polygons_geometry_coll(conn, subc_ids, basin_id, reg_id)
-    print('RESULT:\n%s' % res)
-
-    # FeatureCollection (for several features):
-    print('\nSTART RUNNING FUNCTION: get_subcatchment_polygons_feature_coll')
-    res = get_subcatchment_polygons_feature_coll(conn, subc_ids, basin_id, reg_id)
-    print('RESULT:\n%s' % res)
-    
     # For just one Geometry:
     print('\nSTART RUNNING FUNCTION: get_subcatchment_polygons_geometry_coll')
     res = get_subcatchment_polygons_geometry_coll(conn, [one_subc_id], basin_id, reg_id)
@@ -192,3 +188,14 @@ if __name__ == "__main__":
     res = get_subcatchment_polygons_feature_coll(conn, [one_subc_id], basin_id, reg_id)
     res = res["features"][0]
     print('RESULT:\n%s' % res)
+
+    # GeometryCollection (for several geometries):
+    print('\nSTART RUNNING FUNCTION: get_subcatchment_polygons_geometry_coll')
+    res = get_subcatchment_polygons_geometry_coll(conn, subc_ids, basin_id, reg_id)
+    print('RESULT:\n%s' % res)
+
+    # FeatureCollection (for several features):
+    print('\nSTART RUNNING FUNCTION: get_subcatchment_polygons_feature_coll')
+    res = get_subcatchment_polygons_feature_coll(conn, subc_ids, basin_id, reg_id)
+    print('RESULT:\n%s' % res)
+
