@@ -133,6 +133,55 @@ def _package_query_result(cursor, make_features):
     return geojson_items
 
 
+def get_basin_polygon(conn, basin_id, reg_id, make_feature=False):
+
+    ## Define query:
+    query = f'''
+    SELECT
+        ST_AsText(geom),
+        basin_id
+    FROM basins
+    WHERE
+        basin_id = {basin_id}
+        AND reg_id = {reg_id}
+    '''
+
+    ## Query database:
+    cursor = conn.cursor()
+    LOGGER.log(logging.TRACE, 'Querying database...')
+    cursor.execute(query)
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
+
+    ## Iterate over database result rows (should be only one!)
+    i = 0
+    geometry = None
+    while (True):
+        row = cursor.fetchone()
+        if row is None:
+            break
+        i += 1
+        if (i>1): raise ValueError(f'Unexpected: Several basins found for basin_id {basin_id}.')
+
+        # Create GeoJSON geometry from the result row:
+        if row[0] is not None:
+            geometry = geomet.wkt.loads(row[0])
+        else:
+            raise ValueError(f'Basin {row[1]} has no polygon!')
+
+    if make_feature:
+        feature = {
+            "type": "Feature",
+            "geometry": geometry,
+            "properties": {
+                "basin_id": basin_id
+            }
+        }
+        return feature
+    else:
+        return geometry
+
+
+
 if __name__ == "__main__":
     # Logging
     verbose = True
@@ -176,6 +225,16 @@ if __name__ == "__main__":
     subc_ids = [506250459, 506251015, 506251126, 506251712]
     basin_id = 1292547
     reg_id = 58
+
+    # For just one Geometry:
+    print('\nSTART RUNNING FUNCTION: get_basin_polygon')
+    res = get_basin_polygon(conn, basin_id, reg_id, make_feature=False)
+    print('RESULT:\n%s' % res)
+
+    # For just one Feature:
+    print('\nSTART RUNNING FUNCTION: get_basin_polygon')
+    res = get_basin_polygon(conn, basin_id, reg_id, make_feature=True)
+    print('RESULT:\n%s' % res)
 
     # For just one Geometry:
     print('\nSTART RUNNING FUNCTION: get_subcatchment_polygons_geometry_coll')
