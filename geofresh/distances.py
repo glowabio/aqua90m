@@ -43,7 +43,7 @@ def get_dijkstra_distance_one(conn, start_subc_id, end_subc_id, reg_id, basin_id
     {
       '507291111': {'507291111': 0,     '507292222': 771.3, },
       '507292222': {'507291111': 771.3, '507292222': 0}
-
+    }
     '''
 
     ## Construct SQL query:
@@ -98,11 +98,11 @@ def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin
     '''
     Example output: It's a JSONified matrix!
     {
-      '507294699': {'507294699': 0,                 '507282720': 77136.30451583862, '507199553': 46228.42241668701, '507332148': 14313.99643707275, '507290955': 74875.18420028687},
-      '507282720': {'507294699': 77136.30451583862, '507282720': 0,                 '507199553': 64695.14314651489, '507332148': 78088.08876419067, '507290955': 123218.3441696167},
-      '507199553': {'507294699': 46228.42241668701, '507282720': 64695.14314651489, '507199553': 0,                 '507332148': 47180.20666503906, '507290955': 92310.46207046509},
-      '507332148': {'507294699': 14313.99643707275, '507282720': 78088.08876419067, '507199553': 47180.20666503906, '507332148': 0,                 '507290955': 75826.96844863892},
-      '507290955': {'507294699': 74875.18420028687, '507282720': 123218.3441696167, '507199553': 92310.46207046509, '507332148': 75826.96844863892, '507290955': 0}
+        "507282720": {"507282720": 0,                 "507199553": 64695.14314651489, "507290955": 123218.3441696167, "507294699": 77136.30451583862, "507332148": 78088.08876419067 },
+        "507199553": {"507282720": 64695.14314651489, "507199553": 0,                 "507290955": 92310.46207046509, "507294699": 46228.42241668701, "507332148": 47180.20666503906 },
+        "507290955": {"507282720": 123218.3441696167, "507199553": 92310.46207046509, "507290955": 0,                 "507294699": 74875.18420028687, "507332148": 75826.96844863892 },
+        "507294699": {"507282720": 77136.30451583862, "507199553": 46228.42241668701, "507290955": 74875.18420028687, "507294699": 0,                 "507332148": 14313.996437072754},
+        "507332148": {"507282720": 78088.08876419067, "507199553": 47180.20666503906, "507290955": 75826.96844863892, "507294699": 14313.996437072754,"507332148": 0                 }
     }
     '''
 
@@ -136,13 +136,20 @@ def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin
     cursor = conn.cursor()
     cursor.execute(query)
 
+    ## Extract results, first as a matrix (nested dict):
+    json_matrix = _result_to_matrix(cursor, subc_ids_start, subc_ids_end)
+    return json_matrix
+
+
+def _result_to_matrix(cursor, subc_ids_start, subc_ids_end):
+
     ## Construct result matrix:
     # TODO: JSON may not be the ideal type for returning a matrix!
-    results = {}
+    result_matrix = {}
     for start_id in subc_ids_start:
-        results[str(start_id)] = {}
+        result_matrix[str(start_id)] = {}
         for end_id in subc_ids_end:
-            results[str(start_id)][str(end_id)] = 0
+            result_matrix[str(start_id)][str(end_id)] = 0
 
     ## Iterate over the result rows:
     while True:
@@ -157,11 +164,10 @@ def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin
             agg_cost  = row[3]
             # Add this subc_id (integer) to the result matrix
             # (store the distance for this start-end-combination).
-            results[start_id][end_id] = agg_cost
+            result_matrix[start_id][end_id] = agg_cost
             LOGGER.log(logging.TRACE, f'Start {start_id} to end {end_id}, accumulated length {agg_cost}')
 
-    return results
-
+    return result_matrix
 
 
 
@@ -235,31 +241,26 @@ if __name__ == "__main__" and True:
 
 
     ## With few points:
-
     start_ids = set([subc_id_start, subc_id_end, other1])
     end_ids   = set([subc_id_start, subc_id_end, other1])
-
     print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_many')
-    res = get_dijkstra_distance_many(conn,
+    matrix = get_dijkstra_distance_many(conn,
         start_ids,
         end_ids,
         reg_id,
         basin_id)
-    print(f'RESULT: DISTANCE MATRIX: {res}')
+    print(f'\nRESULT: DISTANCE MATRIX\n{matrix}')
 
     ## With more points:
-
     start_ids = set([subc_id_start, subc_id_end, other1, other2, other3])
     end_ids   = set([subc_id_start, subc_id_end, other1, other2, other3])
-
-    if False: # because this writes a lot of output!
-        print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_many')
-        res = get_dijkstra_distance_many(conn,
-            start_ids,
-            end_ids,
-            reg_id,
-            basin_id)
-        print(f'RESULT: DISTANCE MATRIX: {res}')
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_many')
+    matrix = get_dijkstra_distance_many(conn,
+        start_ids,
+        end_ids,
+        reg_id,
+        basin_id)
+    print(f'\nRESULT: DISTANCE MATRIX:\n{matrix}')
 
 
 
