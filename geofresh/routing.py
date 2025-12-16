@@ -34,60 +34,64 @@ RETURNS SET OF (seq, path_seq, node, edge, cost, agg_cost)
 
 
 def get_dijkstra_ids_one(conn, start_subc_id, end_subc_id, reg_id, basin_id, silent=False):
-    #INPUT: subc_ids (start and end)
-    #OUTPUT: subc_ids (the entire path, incl. start and end)
+    # INPUT:  subc_ids (start and end)
+    # OUTPUT: subc_ids (the entire path, incl. start and end, as a list)
+
     if not silent:
-        LOGGER.debug('Compute route between subc_id %s and %s (in basin %s, region %s)' % (start_subc_id, end_subc_id, basin_id, reg_id))
+        LOGGER.debug('Compute route between subc_id {start_subc_id} and {end_subc_id} (in basin {basin_id}, region {reg_id})')
 
-
-    ### Define query:
-    ### Construct SQL query:
-    query = 'SELECT edge' # We are only interested in the subc_id of each line segment along the path.
-    query += '''
-    FROM pgr_dijkstra('
-        SELECT
-        subc_id AS id,
-        subc_id AS source,
-        target,
-        length AS cost
-        FROM hydro.stream_segments
-        WHERE reg_id = {reg_id}
-        AND basin_id = {basin_id}',
+    ## Construct SQL query:
+    ## Inner SELECT: Returns what the pgr_dijkstra needs: (id, source, target, cost).
+    ## We run pgr_routing as one-to-one here.
+    ## pgr_routing returns: (seq, path_seq, node, edge, cost, agg_cost)
+    ## We are only interested in the edges (subc_ids of the stream segments) along the path, so we only select
+    ## the edge, which is the id of the edge (in the inner SELECT, we defined "subc_id" as the id).
+    query = f'''
+    SELECT
+        edge
+    FROM pgr_dijkstra(
+        'SELECT
+            subc_id AS id,
+            subc_id AS source,
+            target,
+            length AS cost
+                FROM hydro.stream_segments
+                WHERE reg_id = {reg_id}
+                AND basin_id = {basin_id}',
         {start_subc_id},
         {end_subc_id},
-        directed := false);
-    '''.format(reg_id = reg_id, basin_id = basin_id, start_subc_id = start_subc_id, end_subc_id = end_subc_id)
-    query = query.replace("\n", " ")
-    query = query.replace("    ", "")
-    query = query.strip()
+        directed := false
+    );
+    '''.replace("    ", "").replace("\n", " ")
 
-    ### Query database:
+    ## Query database:
     cursor = conn.cursor()
     LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
     LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
-    ### Get results and construct GeoJSON:
+    ## Get results and make list:
     LOGGER.log(logging.TRACE, 'Iterating over the result rows...')
-    all_ids = [start_subc_id] # Adding start segment, as it is not included in database return!
+    # Adding start segment, as it is not included in database return:
+    all_ids = [start_subc_id]
     while (True):
         row = cursor.fetchone()
         if row is None: break
-        edge = row[0]
-
-        if edge == -1: # pgr_dijkstra returns -1 as the last edge...
+        subc_id = row[0]
+        if subc_id == -1: # pgr_dijkstra returns -1 as the last edge...
             pass
-
         else:
-            all_ids.append(edge) # these are already integer!
+            # add integer subc_id to list:
+            all_ids.append(subc_id)
 
     return all_ids
 
 
 def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id, return_csv=False, return_json=False):
     # We don't want a matrix, we want one path per pair of points - but for many!
-    # Input: CSV
-    # Output: JSON or CSV (but ugly CSV... as we have to store entire paths in one column.)
+    # INPUT:  CSV
+    # OUTPUT: JSON or CSV (but ugly CSV... as we have to store entire paths in one column.)
+
     everything = []
     subc_id_site_id = {}
 
@@ -105,8 +109,8 @@ def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id, return_
 
         # Stop if no site_id!
         if pd.isna(site_id):
-            err_msg = "Missing site_id in row %s (subc_id=%s, basin_id=%s, reg_id=%s)" % (i, subc_id, basin_id, reg_id)
-            LOGGER.error('(%s) %s' % (i, err_msg))
+            err_msg = f"Missing site_id in row {i} (subc_id={subc_id}, basin_id={basin_id}, reg_id={reg_id})"
+            LOGGER.error(f'({i}) {err_msg}')
             raise ValueError(err_msg)
             continue
 
@@ -116,17 +120,16 @@ def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id, return_
         # returning an empty list here make sense...
         if pd.isna(subc_id):
             # This can be the case if the point falls into the ocean...
-            err_msg = "Cannot compute downstream ids due to missing subc_id at site %s" % site_id
-            LOGGER.info('(%s) %s' % (i, err_msg))
+            err_msg = f"Cannot compute downstream ids due to missing subc_id at site {site_id}"
+            LOGGER.info(f'({i}) {err_msg}')
             #segment_ids = []
             continue
 
         # Unexpected case...
         elif pd.isna(basin_id) or pd.isna(reg_id):
             LOGGER.error('TODO CAN THIS HAPPEN AT ALL? Can we have invalid reg_id/basin_id if we have no valid subc_id?')
-            err_msg = "UNEXPECTED: Cannot compute downstream ids due to missing value(s) at site %s (subc_id=%s, basin_id=%s, reg_id=%s)" % \
-                      (site_id, subc_id, outlet_id, basin_id, reg_id)
-            LOGGER.error('(%s) %s' % (i, err_msg))
+            err_msg = f"UNEXPECTED: Cannot compute downstream ids due to missing value(s) at site {site_id} (subc_id={subc_id}, basin_id={basin_id}, reg_id={reg_id})"
+            LOGGER.error(f'({i}) {err_msg}')
             raise ValueError(err_msg)
 
         else:
@@ -143,7 +146,7 @@ def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id, return_
             outlet_id = -basin_id
 
             if str(subc_id) in subc_id_site_id.keys():
-                LOGGER.debug('(%s) Not computing for site %s: Downstream segments already computed for subc_id %s' % (i, site_id, subc_id))
+                LOGGER.debug(f'({i}) Not computing for site {site_id}: Downstream segments already computed for subc_id {subc_id}')
                 subc_id_site_id[str(subc_id)].append(site_id)
                 continue
 
@@ -154,13 +157,15 @@ def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id, return_
                 outlet_id = int(outlet_id)
                 basin_id = int(basin_id)
                 reg_id = int(reg_id)
-                LOGGER.log(logging.TRACE, '(%s) Computing downstream segments for site %s / for subc_id %s' % (i, site_id, subc_id))
+                LOGGER.log(logging.TRACE, f'({i}) Computing downstream segments for site {site_id} / for subc_id {subc_id}')
                 segment_ids = get_dijkstra_ids_one(conn, subc_id, outlet_id, reg_id, basin_id, silent=True)
                 # Keep the site_id as belonging this subc_id
                 subc_id_site_id[str(subc_id)] = [site_id]
 
 
         # Collect results for this row:
+        if not (return_csv or return_json): return_csv = True
+
         if return_csv:
             # Output CSV:  We need to make one string out of the segment ids!
             # TODO: Separating the segment ids by "+" is not cool, but how to do it...
@@ -181,42 +186,53 @@ def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id, return_
         return output_df
     elif return_json:
         # Add all the site_ids!
-        LOGGER.debug("Iterating over all %s items in 'everything'..." % len(everything))
+        LOGGER.debug(f"Iterating over all {len(everything)} items in 'everything'...")
         for item in everything:
             item["site_ids"] = subc_id_site_id[str(item["subc_id"])]
-            LOGGER.debug('To item %s, added %s site ids: %s' % (item["subc_id"], len(item["site_ids"]), item["site_ids"]))
+            LOGGER.debug(f'To item {item["subc_id"]}, added {len(item["site_ids"])} site ids: {item["site_ids"]}')
         output_json = {"downstream_segments_for_all_sites": everything}
         return output_json
 
 
 def get_dijkstra_ids_many(conn, subc_ids, reg_id, basin_id):
-    # INPUT: Set of subc_ids
+    # INPUT:  Set of subc_ids
     # OUTPUT: Route matrix (as JSON)
 
-    LOGGER.debug('Compute distance matrix between %s subc_ids (in basin %s, region %s)' % (len(subc_ids), basin_id, reg_id))
+    LOGGER.debug(f'Compute path matrix between {len(subc_ids)} subc_ids (in basin {basin_id}, region {reg_id})')
     # TODO What if not in one basin?
 
-    ### Construct SQL query:
+    ## Construct SQL query:
+    ## Inner SELECT: Returns what the pgr_dijkstra needs: (id, source, target, cost).
+    ## We run pgr_routing as many-to-many here: 
+    ##   We compute the paths from each start point to each end point,
+    ##   resulting in a matrix of paths (path from s1 to e1, from s1 to e2, from s1 to e3, ...).
+    ##   Each path consists of many edges/stream segments!
+    ## pgr_routing returns: (seq, path_seq, start_vid, end_vid, node, edge, cost, agg_cost)
+    ##   where start_vid and end_vid tell us which path, and then node/edge are the stream segment.
+    ## We are interested in all the edges (subc_ids of the stream segments) along the path,
+    ##   and for identifying the path, we need the ids of the start and end, so we select
+    ##   start_vid, end_vid and edge.
     nodes = 'ARRAY[%s]' % ','.join(str(x) for x in subc_ids)
-    query = 'SELECT start_vid, end_vid, edge'
-    query += '''
-    FROM pgr_dijkstra('
-        SELECT
-          subc_id AS id,
-          subc_id AS source,
-          target,
-          length AS cost
-          FROM hydro.stream_segments
-          WHERE reg_id = {reg_id}
-          AND basin_id = {basin_id}',
-        {starts},
-        {ends},
-        directed := false);
-    '''.format(reg_id = reg_id, basin_id = basin_id, starts = nodes, ends = nodes)
-    query = query.replace("\n", " ")
-    query = query.replace("    ", "")
-    query = query.strip()
-    LOGGER.log(logging.TRACE, "SQL query: %s" % query)
+    query = f'''
+    SELECT
+        start_vid,
+        end_vid,
+        edge
+    FROM pgr_dijkstra(
+        'SELECT
+            subc_id AS id,
+            subc_id AS source,
+            target,
+            length AS cost
+                FROM hydro.stream_segments
+                WHERE reg_id = {reg_id}
+                AND basin_id = {basin_id}',
+        {nodes},
+        {nodes},
+        directed := false
+    );
+    '''.replace("\n", " ").replace("    ", "").strip()
+    LOGGER.log(logging.TRACE, f"SQL query: {query}")
     # SQL query: SELECT edge FROM pgr_dijkstra(' SELECT   subc_id AS id,   subc_id AS source,   target,   length AS cost   FROM hydro.stream_segments   WHERE reg_id = 58   AND basin_id = 1294020', ARRAY[507294699,507282720,507199553,507332148,507290955], ARRAY[507294699,507282720,507199553,507332148,507290955], directed := false);
     
     ### Query database:
@@ -225,7 +241,7 @@ def get_dijkstra_ids_many(conn, subc_ids, reg_id, basin_id):
     cursor.execute(query)
     LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
-    ### Construct result matrix:
+    ## Construct result matrix:
     # TODO: JSON may not be the ideal type for returning a matrix!
     results_json = {}
     for start_id in subc_ids:
@@ -233,34 +249,37 @@ def get_dijkstra_ids_many(conn, subc_ids, reg_id, basin_id):
         for end_id in subc_ids:
             results_json[str(start_id)][str(end_id)] = [start_id] # TODO: check: Have to add start id?
 
-    ### Iterating over the result rows:
-    LOGGER.log(logging.TRACE, "Template for results: %s" % results_json)
+    ## Iterating over the result rows:
+    LOGGER.log(logging.TRACE, f"Result matrix to be filled: {results_json}")
     LOGGER.log(logging.TRACE, "Iterating over results...")
     while True:
         row = cursor.fetchone()
         if row is None: break
         
         # Collect all the ids along the paths:
-        start_id  = row[0]
-        end_id    = row[1]
-        this_id   = row[2]
+        # Each path is defined by start and end, and consists of many edges/stream segments.
+        start_id  = str(row[0]) # start
+        end_id    = str(row[1]) # end
+        this_id   = row[2] # current edge/stream segment as integer
         if this_id == -1:
             pass
         else:
-            results_json[str(start_id)][str(end_id)].append(this_id)
-            LOGGER.log(logging.TRACE, 'Start %s to end %s, add this id %s' % (start_id, end_id, this_id))
+            # Add this subc_id (integer) to the matrix
+            # (to the list of stream segments for this start-end-combination).
+            results_json[start_id][end_id].append(this_id)
+            LOGGER.log(logging.TRACE, 'Start {start_id} to end {end_id}, add this id {this_id}')
 
     LOGGER.log(logging.TRACE, "Iterating over results... DONE.")
-    #LOGGER.log(logging.TRACE, "JSON result: %s" % results_json) # quite big!
+    #LOGGER.log(logging.TRACE, f"JSON result: {results_json}") # quite big!
 
     return results_json
 
 
 def get_dijkstra_distance_one(conn, start_subc_id, end_subc_id, reg_id, basin_id):
     # This simply returns one number!
-    # INPUT: Start and end (subc_id)
-    # OUTPUT: The distance (one number)!
-    LOGGER.debug('Compute distance between subc_id %s and %s (in basin %s, region %s)' % (start_subc_id, end_subc_id, basin_id, reg_id))
+    # INPUT:  Start and end (subc_id)
+    # OUTPUT: The distance (one number), which is the accumulated "length" attribute.
+    LOGGER.debug(f'Compute distance between subc_id {start_subc_id} and {end_subc_id} (in basin {basin_id}, region {reg_id})')
 
     '''
     The distance between two points (507291111, 507292222) is just a number.
@@ -272,34 +291,36 @@ def get_dijkstra_distance_one(conn, start_subc_id, end_subc_id, reg_id, basin_id
 
     '''
 
-    ### Construct SQL query:
-    query = 'SELECT edge, agg_cost'
-    query += '''
-    FROM pgr_dijkstra('
-        SELECT
-          subc_id AS id,
-          subc_id AS source,
-          target,
-          length AS cost
-          FROM hydro.stream_segments
-          WHERE reg_id = {reg_id}
-          AND basin_id = {basin_id}',
+    ## Construct SQL query:
+    ## We return the aggregated cost over the path, and as cost we use the attribute "length".
+    query = f'''
+    SELECT
+        edge,
+        agg_cost
+    FROM pgr_dijkstra(
+        'SELECT
+            subc_id AS id,
+            subc_id AS source,
+            target,
+            length AS cost
+            FROM hydro.stream_segments
+            WHERE reg_id = {reg_id}
+            AND basin_id = {basin_id}',
         {start_subc_id},
         {end_subc_id},
-        directed := false);
-    '''.format(reg_id = reg_id, basin_id = basin_id, start_subc_id = start_subc_id, end_subc_id = end_subc_id)
-    query = query.replace("\n", " ")
-    query = query.replace("    ", "")
-    query = query.strip()
-    LOGGER.log(logging.TRACE, "SQL query: %s" % query)
+        directed := false
+    );
+    '''.replace("\n", " ").replace("    ", "").strip()
+    LOGGER.log(logging.TRACE, f"SQL query: {query}")
 
-    ### Query database:
+    ## Query database:
     cursor = conn.cursor()
     LOGGER.log(logging.TRACE, 'Querying database...')
     cursor.execute(query)
     LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
-    ### Iterating over the result rows:
+    ## Iterate over the result rows to find the last row, and then get the accumulated
+    ## cost (which is the "length"), returned by the algorithm:
     dist = None
     while True:
         row = cursor.fetchone()
@@ -316,7 +337,7 @@ def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin
     # INPUT: Sets of subc_ids
     # OUTPUT: Distance matrix (as JSON)
 
-    LOGGER.debug('Compute distance matrix between %s subc_ids (in basin %s, region %s)' % (len(subc_ids_start | subc_ids_end), basin_id, reg_id))
+    LOGGER.debug(f'Compute distance matrix between {len(subc_ids_start | subc_ids_end)} subc_ids (in basin {basin_id}, region {reg_id})')
     # TODO What if not in one basin?
 
     '''
@@ -331,35 +352,36 @@ def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin
     '''
 
 
-    ### Construct SQL query:
+    ## Construct SQL query:
     nodes_start = 'ARRAY[%s]' % ','.join(str(x) for x in subc_ids_start)
-    nodes_end = 'ARRAY[%s]' % ','.join(str(x) for x in subc_ids_end)
-    query = 'SELECT edge, start_vid, end_vid, agg_cost'
-    query += '''
-    FROM pgr_dijkstra('
-        SELECT
-          subc_id AS id,
-          subc_id AS source,
-          target,
-          length AS cost
-          FROM hydro.stream_segments
-          WHERE reg_id = {reg_id}
-          AND basin_id = {basin_id}',
-        {starts},
-        {ends},
-        directed := false);
-    '''.format(reg_id = reg_id, basin_id = basin_id, starts = nodes_start, ends = nodes_end)
-    query = query.replace("\n", " ")
-    query = query.replace("    ", "")
-    query = query.strip()
-    LOGGER.log(logging.TRACE, "SQL query: %s" % query)
-    # SQL query: SELECT edge FROM pgr_dijkstra(' SELECT   subc_id AS id,   subc_id AS source,   target,   length AS cost   FROM hydro.stream_segments   WHERE reg_id = 58   AND basin_id = 1294020', ARRAY[507294699,507282720,507199553,507332148,507290955], ARRAY[507294699,507282720,507199553,507332148,507290955], directed := false);
+    nodes_end   = 'ARRAY[%s]' % ','.join(str(x) for x in subc_ids_end)
+    query = f'''
+    SELECT 
+        edge,
+        start_vid,
+        end_vid,
+        agg_cost
+    FROM pgr_dijkstra(
+        'SELECT
+            subc_id AS id,
+            subc_id AS source,
+            target,
+            length AS cost
+            FROM hydro.stream_segments
+            WHERE reg_id = {reg_id}
+            AND basin_id = {basin_id}',
+        {nodes_start},
+        {nodes_end},
+        directed := false
+    );
+    '''.replace("\n", " ").replace("    ", "").strip()
+    LOGGER.log(logging.TRACE, f"SQL query: {query}")
     
-    ### Query database:
+    ## Query database:
     cursor = conn.cursor()
     cursor.execute(query)
 
-    ### Construct result matrix:
+    ## Construct result matrix:
     # TODO: JSON may not be the ideal type for returning a matrix!
     results = {}
     for start_id in subc_ids_start:
@@ -367,21 +389,25 @@ def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin
         for end_id in subc_ids_end:
             results[str(start_id)][str(end_id)] = 0
 
-    ### Iterating over the result rows:
+    ## Iterate over the result rows:
     while True:
         row = cursor.fetchone()
         if row is None: break
         
         # We only look at the last edge of a path, as PostGIS returns agg_cost for us!
         if row[0] == -1: # if edge is -1...
-            start_id  = row[1]
-            end_id    = row[2]    
-            agg_cost  = row[3]        
-            results[str(start_id)][str(end_id)] = agg_cost
-            LOGGER.log(logging.TRACE, 'Start %s to end %s, accumulated length %s' % 
-                (start_id, end_id, agg_cost))
+            # Retrieve both nodes of the edge, and the accumulated cost/length:
+            start_id  = str(row[1])
+            end_id    = str(row[2])
+            agg_cost  = row[3]
+            # Add this subc_id (integer) to the result matrix
+            # (store the distance for this start-end-combination).
+            results[start_id][end_id] = agg_cost
+            LOGGER.log(logging.TRACE, f'Start {start_id} to end {end_id}, accumulated length {agg_cost}')
 
     return results
+
+
 
 
 ###############
@@ -424,20 +450,6 @@ if __name__ == "__main__":
     #database_username, database_password)
     LOGGER.debug('Connecting to database... DONE.')
 
-    ############################
-    ### Define start and end ###
-    ############################
-    basin_id = 1292547
-    reg_id = 58
-
-    #lon_start = 9.937520027160646
-    #lat_start = 54.69422745526058
-    subc_id_start = 506251713
-    #lon_end = 9.9217
-    #lat_end = 54.6917
-    subc_id_end = 506251712
-
-
 
 #################
 ### One route ###
@@ -445,47 +457,64 @@ if __name__ == "__main__":
 
 if __name__ == "__main__" and True:
 
-    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_one (just returns 5 ids)')
+    ## One example, returns 200 subc_ids:
+    subc_id_start  = 507294699
+    subc_id_end = 507282720
+    basin_id = 1294020
+    reg_id = 58
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_one (will return 200 ids)')
     res = get_dijkstra_ids_one(conn, subc_id_start, subc_id_end, reg_id, basin_id)
-    print('RESULT: ROUTE:\n%s' % res)
+    print(f'RESULT: ROUTE:\n{res}') # just the list of 200 ids
 
-    ####################
-    ### Add Geometry ###
-    ####################
-    
+    ## Another example, returns 5 subc_ids:
+    #lon_start = 9.937520027160646
+    #lat_start = 54.69422745526058
+    subc_id_start = 506251713
+    #lon_end = 9.9217
+    #lat_end = 54.6917
+    subc_id_end = 506251712
+    basin_id = 1292547
+    reg_id = 58
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_one (will return 5 ids)')
+    res = get_dijkstra_ids_one(conn, subc_id_start, subc_id_end, reg_id, basin_id)
+    print(f'RESULT: ROUTE:\n{res}') # just the list of ids
+
+
+    ######################
+    ### Add geometries ###
+    ######################
+
+    print('\nSTART PACKAGING IN GEOJSON...')
+
     # If you then want geometries for this, use functions
     # "get_streamsegment_linestrings_feature_coll" and
     # "get_streamsegment_linestrings_geometry_coll"
     # from module aqua90m.geofresh.get_linestrings:
     import get_linestrings
 
-    print('\nSTART PACKAGING IN GEOJSON...')
-
     # GeometryColl
     geom_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll(conn, res, basin_id, reg_id)
-    print('\nRESULT (GeometryCollection):\n%s' % geom_coll)
+    print(f'\nRESULT (GeometryCollection):\n{geom_coll}')
 
     # Feature Coll
     feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(conn, res, basin_id, reg_id)
-    print('\nRESULT (FeatureCollection/LineStrings):\n%s' % feature_coll)
+    print(f'\nRESULT (FeatureCollection/LineStrings):\n{feature_coll}')
 
-    #####################
-    ### One route,    ###
-    ###  one distance ###
-    #####################
+
+####################
+### One distance ###
+####################
+
+if __name__ == "__main__" and True:
 
     subc_id_start  = 507294699
     subc_id_end = 507282720
     basin_id = 1294020
     reg_id = 58
 
-    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_one')
-    res = get_dijkstra_ids_one(conn, subc_id_start, subc_id_end, reg_id, basin_id)
-    print('RESULT: ROUTE: %s' % res) # just the list of ids
-
     print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_one')
     res = get_dijkstra_distance_one(conn, subc_id_start, subc_id_end, reg_id, basin_id)
-    print('RESULT: DISTANCE: %s' % res) # just a number!
+    print(f'RESULT: DISTANCE:\n{res}') # just a number!
 
 
 ######################
@@ -498,17 +527,25 @@ if __name__ == "__main__" and True:
     other2 = 507332148
     other3 = 507290955
 
+    ## With few points:
+
+    start_ids = set([subc_id_start, subc_id_end, other1])
+    end_ids   = set([subc_id_start, subc_id_end, other1])
+
     print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_many')
     res = get_dijkstra_distance_many(conn,
-        [subc_id_start, subc_id_end, other1], reg_id, basin_id)
-    print('RESULT: DISTANCE MATRIX: %s' % res)
+        start_ids, end_ids, reg_id, basin_id)
+    print(f'RESULT: DISTANCE MATRIX: {res}')
 
-    # This writes a lot of output!
-    if False:
-        print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_many')
-        res = get_dijkstra_distance_many(conn,
-            [subc_id_start, subc_id_end, other1, other2, other3], reg_id, basin_id)
-        print('RESULT: DISTANCE MATRIX: %s' % res)
+    ## With more points:
+
+    start_ids = set([subc_id_start, subc_id_end, other1, other2, other3])
+    end_ids   = set([subc_id_start, subc_id_end, other1, other2, other3])
+
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_many')
+    res = get_dijkstra_distance_many(conn,
+        start_ids, end_ids, reg_id, basin_id)
+    print(f'RESULT: DISTANCE MATRIX: {res}')
 
 
 ###################
@@ -517,17 +554,21 @@ if __name__ == "__main__" and True:
 
 if __name__ == "__main__" and True:
 
-    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_many')
-    res = get_dijkstra_ids_many(conn,
-        [subc_id_start, subc_id_end, other1], reg_id, basin_id)
-    print('RESULT: ROUTE MATRIX: %s' % res)
+    other1 = 507199553
+    other2 = 507332148
+    other3 = 507290955
 
-    # This writes a lot of output!
-    if False:
-        print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_many')
-        res = get_dijkstra_ids_many(conn,
-            [subc_id_start, subc_id_end, other1, other2, other3], reg_id, basin_id)
-        print('RESULT: ROUTE MATRIX: %s' % res)
+    ## With few points:
+    start_ids = [subc_id_start, subc_id_end, other1]
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_many')
+    res = get_dijkstra_ids_many(conn, start_ids, reg_id, basin_id)
+    print(f'RESULT: ROUTE MATRIX: {res}')
+
+    ## With more points:
+    start_ids = [subc_id_start, subc_id_end, other1, other2, other3]
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_many')
+    res = get_dijkstra_ids_many(conn, start_ids, reg_id, basin_id)
+    print(f'RESULT: ROUTE MATRIX: {res}')
 
 
 ###################
@@ -556,6 +597,14 @@ if __name__ == "__main__" and True:
     print('\nPREPARE RUNNING FUNCTION: get_dijkstra_ids_to_outlet_one_loop')
     import basic_queries
     temp_df = basic_queries.get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, "lon", "lat", "site_id")
+    print(f'\n{temp_df}')
     print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_to_outlet_one_loop')
     res = get_dijkstra_ids_to_outlet_one_loop(conn, temp_df, "site_id")
-    print('RESULT: SEGMENTS IN DATAFRAME: %s' % res)
+    print(f'RESULT: SEGMENTS IN DATAFRAME: {res}')
+
+
+###################
+### Finally ... ###
+###################
+
+conn.close()
