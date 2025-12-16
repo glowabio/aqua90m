@@ -88,7 +88,7 @@ def get_dijkstra_distance_one(conn, start_subc_id, end_subc_id, reg_id, basin_id
     return dist
 
 
-def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin_id):
+def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin_id, result_format):
     # INPUT: Sets of subc_ids
     # OUTPUT: Distance matrix (as JSON)
 
@@ -104,6 +104,14 @@ def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin
         "507294699": {"507282720": 77136.30451583862, "507199553": 46228.42241668701, "507290955": 74875.18420028687, "507294699": 0,                 "507332148": 14313.996437072754},
         "507332148": {"507282720": 78088.08876419067, "507199553": 47180.20666503906, "507290955": 75826.96844863892, "507294699": 14313.996437072754,"507332148": 0                 }
     }
+
+    As a dataframe:
+        subc_ids      507282720     507199553      507290955     507294699     507332148
+    0  507282720       0.000000  64695.143147  123218.344170  77136.304516  78088.088764
+    1  507199553   64695.143147      0.000000   92310.462070  46228.422417  47180.206665
+    2  507290955  123218.344170  92310.462070       0.000000  74875.184200  75826.968449
+    3  507294699   77136.304516  46228.422417   74875.184200      0.000000  14313.996437
+    4  507332148   78088.088764  47180.206665   75826.968449  14313.996437      0.000000
     '''
 
 
@@ -138,7 +146,15 @@ def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin
 
     ## Extract results, first as a matrix (nested dict):
     json_matrix = _result_to_matrix(cursor, subc_ids_start, subc_ids_end)
-    return json_matrix
+
+    ## Make a dataframe from this, if requested:
+    if result_format == 'json':
+        return json_matrix
+    elif result_format == 'dataframe':
+        output_df = _matrix_to_dataframe(json_matrix, subc_ids_start, subc_ids_end)
+        return output_df
+    else:
+        raise ValueError(f'Unknown result format: {result_format}. Expected json or dataframe.')
 
 
 def _result_to_matrix(cursor, subc_ids_start, subc_ids_end):
@@ -168,6 +184,47 @@ def _result_to_matrix(cursor, subc_ids_start, subc_ids_end):
             LOGGER.log(logging.TRACE, f'Start {start_id} to end {end_id}, accumulated length {agg_cost}')
 
     return result_matrix
+
+def _matrix_to_dataframe(result_matrix, subc_ids_start, subc_ids_end):
+
+    # Construct result dataframe:
+    #   Basically a matrix, as dataframe/table/csv:
+    #   Column names will be the end subc_ids (first column contains the end subc_ids)
+    #   Row names will be the start subc_ids (first row contains the start subc_ids)
+    all_rows = []
+
+    # Define column names for dataframe: end ids
+    # First column contains the subcids
+    colnames = ["subc_ids"]
+    for end_id in subc_ids_end:
+        colnames.append(str(end_id))
+
+    # Fill all dataframe rows with distances
+    for start_id in subc_ids_start:
+
+        # Get the row of the matrix with the distances from start id to all end ids:
+        start_id = str(start_id)
+        matrix_row = result_matrix[start_id]
+        #LOGGER.debug(f'Matrix row for {start_id}: {matrix_row}')
+
+        # First item in the dataframe row is the start id:
+        row_dataframe = [start_id]
+
+        # Now fill with the distances:
+        for end_id in colnames:
+
+            # First colname is not an end id, but the title for the first column...
+            if end_id == 'subc_ids':
+                continue
+
+            # Retrieve the distance and add to row:
+            distance = matrix_row[str(end_id)]
+            row_dataframe.append(distance)
+
+        all_rows.append(row_dataframe)
+
+    output_df = pd.DataFrame(all_rows, columns=colnames)
+    return output_df
 
 
 
@@ -248,8 +305,23 @@ if __name__ == "__main__" and True:
         start_ids,
         end_ids,
         reg_id,
-        basin_id)
+        basin_id,
+        'json')
     print(f'\nRESULT: DISTANCE MATRIX\n{matrix}')
+    dataframe = _matrix_to_dataframe(matrix, start_ids, end_ids)
+    print(f'\nRESULT: DISTANCE DATAFRAME:\n{dataframe}')
+
+    ## With few points, asking directly for dataframe:
+    start_ids = set([subc_id_start, subc_id_end, other1])
+    end_ids   = set([subc_id_start, subc_id_end, other1])
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_many')
+    dataframe = get_dijkstra_distance_many(conn,
+        start_ids,
+        end_ids,
+        reg_id,
+        basin_id,
+        'dataframe')
+    print(f'\nRESULT: DISTANCE DATAFRAME:\n{dataframe}')
 
     ## With more points:
     start_ids = set([subc_id_start, subc_id_end, other1, other2, other3])
@@ -259,8 +331,11 @@ if __name__ == "__main__" and True:
         start_ids,
         end_ids,
         reg_id,
-        basin_id)
+        basin_id,
+        'json')
     print(f'\nRESULT: DISTANCE MATRIX:\n{matrix}')
+    dataframe = _matrix_to_dataframe(matrix, start_ids, end_ids)
+    print(f'\nRESULT: DISTANCE DATAFRAME:\n{dataframe}')
 
 
 

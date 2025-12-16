@@ -208,6 +208,8 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
         # Two separate sets of subcatchments:
         subc_ids_start = data.get('subc_ids_start', None)
         subc_ids_end = data.get('subc_ids_end', None)
+        # Output format (can be csv or json):
+        result_format = data.get('result_format', 'csv')
         # Comment:
         comment = data.get('comment') # optional
 
@@ -279,10 +281,16 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
                     LOGGER.warning(err_msg)
                     raise ProcessorExecuteError(user_msg=err_msg)
 
-            # Get distance - this is a JSON-ified matrix:
-            # (Complete matrix, starts and ends are the same set!)
-            json_result = distances.get_dijkstra_distance_many(
-                conn, all_subc_ids, all_subc_ids, reg_id, basin_id)
+            # Get distance:
+            if result_format == "csv":
+                dataframe = distances.get_dijkstra_distance_many(
+                    conn, all_subc_ids, all_subc_ids, reg_id, basin_id, "dataframe")
+                # TODO Have to store this to CSV!
+            else:
+                # As a JSON-ified matrix:
+                # (Complete matrix, starts and ends are the same set!)
+                json_result = distances.get_dijkstra_distance_many(
+                    conn, all_subc_ids, all_subc_ids, reg_id, basin_id, "json")
 
         ##################################
         ### Many points                ###
@@ -345,10 +353,16 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
                     LOGGER.warning(err_msg)
                     raise ProcessorExecuteError(user_msg=err_msg)
 
-            # Get distance - this is a JSON-ified matrix:
-            # (Complete matrix, starts and ends are the same set!)
-            json_result = distances.get_dijkstra_distance_many(
-                conn, all_subc_ids_start, all_subc_ids_end, reg_id, basin_id)
+            # Get distance:
+            if result_format == "csv":
+                dataframe = distances.get_dijkstra_distance_many(
+                    conn, all_subc_ids_start, all_subc_ids_end, reg_id, basin_id, "dataframe")
+                # TODO Have to store this to CSV!
+            else:
+                # As a JSON-ified matrix:
+                # (Complete matrix, starts and ends are the same set!)
+                json_result = distances.get_dijkstra_distance_many(
+                    conn, all_subc_ids_start, all_subc_ids_end, reg_id, basin_id, "json")
 
 
         #################
