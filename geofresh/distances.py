@@ -338,9 +338,8 @@ if __name__ == "__main__" and True:
     print(f'\nRESULT: DISTANCE DATAFRAME:\n{dataframe}')
 
 
-
 ###################
 ### Finally ... ###
 ###################
-
-conn.close()
+if __name__ == "__main__":
+    conn.close()

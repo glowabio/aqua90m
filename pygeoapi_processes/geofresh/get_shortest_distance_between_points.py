@@ -209,7 +209,7 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
         subc_ids_start = data.get('subc_ids_start', None)
         subc_ids_end = data.get('subc_ids_end', None)
         # Output format (can be csv or json):
-        result_format = data.get('result_format', 'csv')
+        result_format = data.get('result_format', 'json')
         # Comment:
         comment = data.get('comment') # optional
 
@@ -283,7 +283,7 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
 
             # Get distance:
             if result_format == "csv":
-                dataframe = distances.get_dijkstra_distance_many(
+                output_df = distances.get_dijkstra_distance_many(
                     conn, all_subc_ids, all_subc_ids, reg_id, basin_id, "dataframe")
                 # TODO Have to store this to CSV!
             else:
@@ -355,7 +355,7 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
 
             # Get distance:
             if result_format == "csv":
-                dataframe = distances.get_dijkstra_distance_many(
+                output_df = distances.get_dijkstra_distance_many(
                     conn, all_subc_ids_start, all_subc_ids_end, reg_id, basin_id, "dataframe")
                 # TODO Have to store this to CSV!
             else:
@@ -419,17 +419,40 @@ class ShortestDistanceBetweenPointsGetter(BaseProcessor):
             }
             # TODO: Like this, the output is quite different between the two!!
 
+        #####################
+        ### Return result ###
+        #####################
 
-        # For both:
-        if comment is not None:
-            json_result['comment'] = comment
+        do_return_link = utils.return_hyperlink('distances_matrix', requested_outputs)
 
-        # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
-        if utils.return_hyperlink('distances_matrix', requested_outputs):
-            output_dict_with_url =  utils.store_to_json_file('distances_matrix', json_result,
-                self.metadata, self.job_id,
+        ## Return CSV:
+        if output_df is not None:
+            if do_return_link:
+                output_dict_with_url =  utils.store_to_csv_file('distances_matrix', output_df,
+                    self.metadata, self.job_id,
                     self.download_dir,
                     self.download_url)
-            return 'application/json', output_dict_with_url
-        else:
-            return 'application/json', json_result
+
+                if comment is not None:
+                    output_dict_with_url['comment'] = comment
+
+                return 'application/json', output_dict_with_url
+            else:
+                err_msg = 'Not implemented return CSV data directly.'
+                LOGGER.error(err_msg)
+                raise NotImplementedError(err_msg)
+
+        ## Return JSON:
+        elif output_json is not None:
+            if comment is not None:
+                output_json['comment'] = comment
+
+            if do_return_link:
+                output_dict_with_url =  utils.store_to_json_file('distances_matrix', output_json,
+                    self.metadata, self.job_id,
+                    self.download_dir,
+                    self.download_url)
+                return 'application/json', output_dict_with_url
+
+            else:
+                return 'application/json', output_json
