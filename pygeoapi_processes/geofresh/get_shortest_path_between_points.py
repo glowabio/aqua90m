@@ -160,7 +160,7 @@ class ShortestPathBetweenPointsGetter(BaseProcessor):
         # TODO: From here on, I think it is exactly the same code as getting downstream
         # to sea! So: Modularize and import!
         LOGGER.debug('Getting network connection for subc_id: start = %s, end = %s' % (subc_id1, subc_id2))
-        segment_ids = routing.get_dijkstra_ids_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
+        segment_ids = routing.get_dijkstra_ids_one_to_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
 
         # Get geometry only:
         if geometry_only:

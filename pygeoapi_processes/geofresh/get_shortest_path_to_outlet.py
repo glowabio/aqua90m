@@ -151,7 +151,7 @@ class ShortestPathToOutletGetter(BaseProcessor):
 
         # Get subc_ids of the whole connection...
         LOGGER.debug('Getting network connection for subc_id: start = %s, end = %s' % (subc_id1, subc_id2))
-        segment_ids = routing.get_dijkstra_ids_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
+        segment_ids = routing.get_dijkstra_ids_one_to_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
 
         # Only return the ids, no geometry at all:
         if downstream_ids_only:

@@ -33,7 +33,7 @@ RETURNS SET OF (seq, path_seq, node, edge, cost, agg_cost)
 '''
 
 
-def get_dijkstra_ids_one(conn, start_subc_id, end_subc_id, reg_id, basin_id, silent=False):
+def get_dijkstra_ids_one_to_one(conn, start_subc_id, end_subc_id, reg_id, basin_id, silent=False):
     # INPUT:  subc_ids (start and end)
     # OUTPUT: subc_ids (the entire path, incl. start and end, as a list)
 
@@ -87,7 +87,7 @@ def get_dijkstra_ids_one(conn, start_subc_id, end_subc_id, reg_id, basin_id, sil
     return all_ids
 
 
-def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id, return_csv=False, return_json=False):
+def get_dijkstra_ids_to_outlet_loop(conn, input_df, colname_site_id, return_csv=False, return_json=False):
     # We don't want a matrix, we want one path per pair of points - but for many!
     # INPUT:  CSV
     # OUTPUT: JSON or CSV (but ugly CSV... as we have to store entire paths in one column.)
@@ -158,7 +158,7 @@ def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id, return_
                 basin_id = int(basin_id)
                 reg_id = int(reg_id)
                 LOGGER.log(logging.TRACE, f'({i}) Computing downstream segments for site {site_id} / for subc_id {subc_id}')
-                segment_ids = get_dijkstra_ids_one(conn, subc_id, outlet_id, reg_id, basin_id, silent=True)
+                segment_ids = get_dijkstra_ids_one_to_one(conn, subc_id, outlet_id, reg_id, basin_id, silent=True)
                 # Keep the site_id as belonging this subc_id
                 subc_id_site_id[str(subc_id)] = [site_id]
 
@@ -194,7 +194,7 @@ def get_dijkstra_ids_to_outlet_one_loop(conn, input_df, colname_site_id, return_
         return output_json
 
 
-def get_dijkstra_ids_many(conn, subc_ids, reg_id, basin_id):
+def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id):
     # INPUT:  Set of subc_ids
     # OUTPUT: Route matrix (as JSON)
 
@@ -328,8 +328,8 @@ if __name__ == "__main__" and True:
     subc_id_end = 507282720
     basin_id = 1294020
     reg_id = 58
-    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_one (will return 200 ids)')
-    res = get_dijkstra_ids_one(conn, subc_id_start, subc_id_end, reg_id, basin_id)
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_one_to_one (will return 200 ids)')
+    res = get_dijkstra_ids_one_to_one(conn, subc_id_start, subc_id_end, reg_id, basin_id)
     print(f'RESULT: ROUTE:\n{res}') # just the list of 200 ids
 
     ## Another example, returns 5 subc_ids:
@@ -341,8 +341,8 @@ if __name__ == "__main__" and True:
     subc_id_end = 506251712
     basin_id = 1292547
     reg_id = 58
-    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_one (will return 5 ids)')
-    res = get_dijkstra_ids_one(conn, subc_id_start, subc_id_end, reg_id, basin_id)
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_one_to_one (will return 5 ids)')
+    res = get_dijkstra_ids_one_to_one(conn, subc_id_start, subc_id_end, reg_id, basin_id)
     print(f'RESULT: ROUTE:\n{res}') # just the list of ids
 
 
@@ -379,14 +379,14 @@ if __name__ == "__main__" and True:
 
     ## With few points:
     start_ids = [subc_id_start, subc_id_end, other1]
-    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_many')
-    res = get_dijkstra_ids_many(conn, start_ids, reg_id, basin_id)
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_many_to_many')
+    res = get_dijkstra_ids_many_to_many(conn, start_ids, reg_id, basin_id)
     print(f'RESULT: ROUTE MATRIX: {res}')
 
     ## With more points:
     start_ids = [subc_id_start, subc_id_end, other1, other2, other3]
-    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_many')
-    res = get_dijkstra_ids_many(conn, start_ids, reg_id, basin_id)
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_many_to_many')
+    res = get_dijkstra_ids_many_to_many(conn, start_ids, reg_id, basin_id)
     print(f'RESULT: ROUTE MATRIX: {res}')
 
 
@@ -413,12 +413,12 @@ if __name__ == "__main__" and True:
     )
 
     ## Now, for each row, get the ids!
-    print('\nPREPARE RUNNING FUNCTION: get_dijkstra_ids_to_outlet_one_loop')
+    print('\nPREPARE RUNNING FUNCTION: get_dijkstra_ids_to_outlet_loop')
     import basic_queries
     temp_df = basic_queries.get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, "lon", "lat", "site_id")
     print(f'\n{temp_df}')
-    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_to_outlet_one_loop')
-    res = get_dijkstra_ids_to_outlet_one_loop(conn, temp_df, "site_id")
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_to_outlet_loop')
+    res = get_dijkstra_ids_to_outlet_loop(conn, temp_df, "site_id")
     print(f'RESULT: SEGMENTS IN DATAFRAME: {res}')
 
 

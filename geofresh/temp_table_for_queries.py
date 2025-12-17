@@ -142,6 +142,7 @@ def _create_temp_table(cursor, tablename):
 
 def _fill_temp_table(cursor, tablename, list_of_insert_rows):
     LOGGER.debug(f'Inserting into temporary table "{tablename}"...')
+    LOGGER.log(logging.TRACE, f'INSERTION ROWS: {list_of_insert_rows}')
 
     list_of_insertions = ", ".join(list_of_insert_rows)
     query = f'INSERT INTO {tablename} (site_id, lon, lat, geom_user) VALUES {list_of_insertions};'
@@ -200,7 +201,7 @@ def _update_temp_table_regid(cursor, tablename):
         reg_id = row[0]
         LOGGER.log(logging.TRACE, f'  Retrieved: {reg_id}')
         reg_id_set.add(reg_id)
-    LOGGER.debug(f'Set of reg_ids: {reg_id_set}')
+    LOGGER.debug(f'Set of distinct reg_ids present in the temp table: {reg_id_set}')
     return reg_id_set
 
 

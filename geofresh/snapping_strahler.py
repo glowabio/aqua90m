@@ -506,6 +506,9 @@ def _package_result_in_geojson(cursor, colname_site_id):
         except IndexError as e:
             distance = None
 
+        # For debugging, add any attribute to the last SELECT statement, and look at all of them here:
+        LOGGER.log(logging.TRACE, f'Result row: {row}')
+
         # Convert to GeoJSON:
         if snappedpoint_wkt is None:
             # If point is in the ocean...
@@ -580,6 +583,9 @@ def _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_
             distance_metres = row[6] # optional
         except IndexError as e:
             distance_metres = None
+
+        # For debugging, add any attribute to the last SELECT statement, and look at all of them here:
+        LOGGER.log(logging.TRACE, f'Result row: {row}')
 
         # Convert to GeoJSON:
         if snappedpoint_wkt is None:

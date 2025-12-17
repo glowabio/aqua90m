@@ -217,9 +217,9 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
 
             ## Next, for each row, get the downstream ids!
             if return_csv:
-                output_df = routing.get_dijkstra_ids_to_outlet_one_loop(conn, temp_df, colname_site_id, return_csv=True)
+                output_df = routing.get_dijkstra_ids_to_outlet_loop(conn, temp_df, colname_site_id, return_csv=True)
             elif return_json:
-                output_json = routing.get_dijkstra_ids_to_outlet_one_loop(conn, temp_df, colname_site_id, return_json=True)
+                output_json = routing.get_dijkstra_ids_to_outlet_loop(conn, temp_df, colname_site_id, return_json=True)
 
 
         #####################

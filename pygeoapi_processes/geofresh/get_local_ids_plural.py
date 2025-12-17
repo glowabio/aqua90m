@@ -23,7 +23,7 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 '''
 
 # Request with CSV input and CSV output:
-curl -X POST --location 'http://localhost:5000/processes/get-local-ids-plural/execution' \
+curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
@@ -31,6 +31,74 @@ curl -X POST --location 'http://localhost:5000/processes/get-local-ids-plural/ex
         "colname_lat": "latitude",
         "colname_lon": "longitude",
         "colname_site_id": "site_id",
+        "which_ids": "reg_id",
+        "comment": "schlei-near-rabenholz"
+    },
+    "outputs": {
+        "transmissionMode": "reference"
+    }
+}'
+
+curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
+--header 'Content-Type: application/json' \
+--data '{
+    "inputs": {
+        "points_geojson": {
+        "type": "GeometryCollection",
+        "geometries": [
+        {
+            "type": "Point",
+            "coordinates": [20.087421, 39.364848]
+        },
+        {
+            "type": "Point",
+            "coordinates": [27.846357, 36.548812]
+        },
+        {
+            "type": "Point",
+            "coordinates": [25.73764, 35.24806]
+        },
+        {
+            "type": "Point",
+            "coordinates": [24.17569, 35.50542]
+        }
+        ]
+        },
+        "which_ids": ["subc_id", "basin_id", "reg_id"],
+        "comment": "schlei-near-rabenholz"
+    },
+    "outputs": {
+        "transmissionMode": "reference"
+    }
+}'
+
+
+# FAILS: TODO:
+curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
+--header 'Content-Type: application/json' \
+--data '{
+    "inputs": {
+        "points_geojson": {
+        "type": "GeometryCollection",
+        "geometries": [
+        {
+            "type": "Point",
+            "coordinates": [20.087421, 39.364848]
+        },
+        {
+            "type": "Point",
+            "coordinates": [27.846357, 36.548812]
+        },
+        {
+            "type": "Point",
+            "coordinates": [25.73764, 35.24806]
+        },
+        {
+            "type": "Point",
+            "coordinates": [24.17569, 35.50542]
+        }
+        ]
+        },
         "which_ids": "reg_id",
         "comment": "schlei-near-rabenholz"
     },

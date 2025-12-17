@@ -161,8 +161,8 @@ class ShortestPathBetweenPointsGetterPlural(BaseProcessor):
 
         # Get subc_ids of the whole connection...
         #LOGGER.debug('Getting network connection for subc_id: start = %s, end = %s' % (subc_id1, subc_id2))
-        #segment_ids = routing.get_dijkstra_ids_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
-        some_json_result = routing.get_dijkstra_ids_many(conn, all_subc_ids, reg_id, basin_id)
+        #segment_ids = routing.get_dijkstra_ids_one_to_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
+        some_json_result = routing.get_dijkstra_ids_many_to_many(conn, all_subc_ids, reg_id, basin_id)
 
         if comment is not None:
             some_json_result['comment'] = comment
