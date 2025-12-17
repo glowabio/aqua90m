@@ -115,17 +115,19 @@ class LocalIdGetterPlural(BaseProcessor):
         # Optional comment:
         comment = data.get('comment') # optional
         # Which ids are requested:
-        which_ids = data.get('which_ids', 'subc_id, basin_id, reg_id')
-        which_ids = which_ids.replace(' ', '')
-        which_ids = which_ids.split(',')
+        which_ids = data.get('which_ids', ['subc_id', 'basin_id', 'reg_id'])
 
         ## Check user inputs:
+        if type(which_ids) == type('bla') and not type(which_ids) == type([]):
+            # If user did not put the word into a list...
+            which_ids = [which_ids]
 
         if csv_url is not None and colname_site_id is None:
             LOGGER.error("Missing parameter: colname_site_id")
             err_msg = "Please provide the column name of the site ids inside your csv file (parameter colname_site_id)."
             raise ProcessorExecuteError(err_msg)
 
+        LOGGER.debug(f'User requested ids: {which_ids}')
         possible_ids = ['subc_id', 'basin_id', 'reg_id']
         if not all([some_id in possible_ids for some_id in which_ids]):
             err_msg = "The requested ids have to be one or several of: %s (you provided %s)" % (possible_ids, which_ids)

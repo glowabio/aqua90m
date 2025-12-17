@@ -47,7 +47,7 @@
         },
         "which_ids": {
             "title": "Requested ids",
-            "description": "Whether we should return only regional unit id (reg_id), or also basin id (basin_id), or also subcatchment id (subc_id). Please provide the requested ids as a comma-separated list, e.g. 'reg_id,basin_id,subc_id'",
+            "description": "Whether we should return only regional unit id (reg_id), or also basin id (basin_id), or also subcatchment id (subc_id). Please provide the requested ids as a JSON list of strings, e.g. ['reg_id', 'basin_id', 'subc_id']",
             "schema": {"type": "string"},
             "minOccurs": 1,
             "maxOccurs": 1,
