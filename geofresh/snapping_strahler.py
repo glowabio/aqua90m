@@ -351,6 +351,13 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
     cursor.execute(query)
 
     # Note: LATERAL makes the subquery run once per row of tablename.
+    # Note: In the WHERE clause, we match based on the point geometry passed
+    # by the user. Site_id could be another candidate. Previously, we used
+    # subc_id, BUT not all points get assigned a subc_id, basin_id, reg_id.
+    # Those that fall in the ocean - or on the coast just slightly outside the
+    # polygons of table "reg" - don't have one. By using "geom_user", they are
+    # snapped anyway, and the user has to decide whether they are land or sea...
+    # Old "WHERE": ... WHERE temp1.subc_id = temp2.subc_id;
     query = f'''
     UPDATE {tablename} AS temp1
     SET
@@ -365,7 +372,7 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
         ORDER BY seg.geom <-> ST_SetSRID(ST_MakePoint(temp2.lon, temp2.lat), 4326)
         LIMIT 1
     ) AS closest
-    WHERE temp1.subc_id = temp2.subc_id;
+    WHERE temp1.geom_user = temp2.geom_user;
     '''.replace("\n", " ")
 
     ### Query database:
