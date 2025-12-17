@@ -500,7 +500,12 @@ def _package_result_in_geojson(cursor, colname_site_id):
             distance = None
 
         # Convert to GeoJSON:
-        snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
+        if snappedpoint_wkt is None:
+            # If point is in the ocean...
+            LOGGER.debug(f'This point has no ids assigned, so it may be off the coast: site_id={site_id}, lon={lon}, lat={lat}.')
+            snappedpoint_simplegeom = None
+        else:
+            snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
 
         # Construct Feature:
         feature = {
@@ -570,11 +575,17 @@ def _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_
             distance = None
 
         # Convert to GeoJSON:
-        snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
-
-        # Extract snapped coordinates:
-        lon_snapped = snappedpoint_simplegeom['coordinates'][0]
-        lat_snapped = snappedpoint_simplegeom['coordinates'][1]
+        if snappedpoint_wkt is None:
+            # If point is in the ocean...
+            LOGGER.debug(f'This point has no ids assigned, so it may be off the coast: site_id={site_id}, lon={lon}, lat={lat}.')
+            snappedpoint_simplegeom = None
+            lon_snapped = None
+            lat_snapped = None
+        else:
+            snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
+            # Extract snapped coordinates:
+            lon_snapped = snappedpoint_simplegeom['coordinates'][0]
+            lat_snapped = snappedpoint_simplegeom['coordinates'][1]
 
         # Append the line to dataframe:
         everything.append([
