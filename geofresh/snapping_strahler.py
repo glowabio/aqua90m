@@ -579,7 +579,7 @@ def _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_
         try:
             distance_metres = row[6] # optional
         except IndexError as e:
-            distance = None
+            distance_metres = None
 
         # Convert to GeoJSON:
         if snappedpoint_wkt is None:
