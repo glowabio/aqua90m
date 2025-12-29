@@ -425,5 +425,6 @@ if __name__ == "__main__" and True:
 ###################
 ### Finally ... ###
 ###################
+if __name__ == "__main__":
+    conn.close()
 
-conn.close()
