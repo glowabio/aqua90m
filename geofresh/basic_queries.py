@@ -447,7 +447,15 @@ def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname
         subc_ids.append(str(subc_id))
 
     # Finished collecting the results, now make pandas dataframe:
-    dataframe = pd.DataFrame(everything, columns=['site_id', 'reg_id', 'basin_id', 'subc_id'])
+    dataframe = pd.DataFrame(
+        everything,
+        columns=['site_id', 'reg_id', 'basin_id', 'subc_id']
+    ).astype({
+        'site_id': 'string',   # nullable string
+        'reg_id': 'Int64',     # nullable integer
+        'basin_id': 'Int64',
+        'subc_id': 'Int64'
+    })
 
     # Change them to integers:
     # TODO: Pandas format, better use .astype() during pd.DataFrame (above)
