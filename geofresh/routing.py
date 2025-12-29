@@ -153,36 +153,41 @@ def _collect_departing_points_by_region_and_basin(input_df, colname_site_id):
             departing_points[reg_id][basin_id][subc_id] = set()
         departing_points[reg_id][basin_id][subc_id].add(site_id)
 
+    LOGGER.info(f'DEPPPP {departing_points}')
+
     return departing_points
 
 
 def _iterate_outlets_dataframe(departing_points):
 
-    # Iterate over all departure points: # TODO: Looping may not be the best...
+    # Will construct a dataframe from this:
     everything = []
+
+    # Iterate over all regions/basins:
+    # Note: All ids are strings, so we cast to int, and the site_ids are a set of strings
     for reg_id, all_basins in departing_points.items():
-        LOGGER.debug(f'Regional unit: {reg_id}')
         reg_id = int(reg_id)
 
+        # Now, for each basin, run a one-to-many routing query,
+        # as one basin has just one outlet:
         for basin_id, all_subcids in all_basins.items():
-            LOGGER.debug(f'Basin: {basin_id}')
+            LOGGER.debug(f'Basin: {basin_id} (in regional unit {reg_id})')
             basin_id = int(basin_id)
-
-            # Outlet has the id minus-basin!
             outlet_id = -basin_id
+            start_ids = all_subcids.keys() # strings
+            segments_by_start_id = get_dijkstra_ids_one_to_many(conn, start_ids, outlet_id, reg_id, basin_id)
+            # This returned a dict: One list of segment ids (the path to outlet) per start subc_id.
 
-            for subc_id, all_site_ids in all_subcids.items():
-                LOGGER.debug(f'Computing downstream segments for subc_id {subc_id} (sites: {all_site_ids})')
-                LOGGER.log(logging.TRACE, f'Computing downstream segments for subc_id {subc_id} (sites: {all_site_ids})')
-                subc_id = int(subc_id)
-                segment_ids = get_dijkstra_ids_one_to_one(conn, subc_id, outlet_id, reg_id, basin_id, silent=True)
+            # Package in JSON list:
+            for start_id, segment_ids in segments_by_start_id.items():
+                all_site_ids = all_subcids[start_id]
 
-                # Collect results for this departure point:
+                # Collect results per subcid / per departure point:
                 # Output CSV:  We need to make one string out of the segment ids!
                 # TODO: Separating the segment ids by "+" is not cool, but how to do it...
                 segment_ids_str = "+".join([str(elem) for elem in segment_ids])
                 site_ids_str    = "+".join([str(elem) for elem in all_site_ids])
-                everything.append([reg_id, basin_id, subc_id, segment_ids_str, site_ids_str])
+                everything.append([reg_id, basin_id, start_id, segment_ids_str, site_ids_str])
 
     # Finished collecting the results, now return dataframe:
     output_df = pd.DataFrame(everything,
@@ -561,15 +566,15 @@ if __name__ == "__main__" and True:
     )
 
     # Less points, just one basin:
-    #input_df = pd.DataFrame(
-    #    [
-    #        ['a',  10.698832912677716, 53.51710727672125],
-    #        ['b',  12.80898022975407,  52.42187129944509],
-    #        ['g', 10.041155219078064, 53.07006147583069],
-    #        ['gg', 10.042726993560791, 53.06911450500803],
-    #        ['ggg', 10.039894580841064, 53.06869677412868]
-    #    ], columns=['site_id', 'lon', 'lat']
-    #)
+    input_df = pd.DataFrame(
+        [
+            ['a',  10.698832912677716, 53.51710727672125],
+            ['b',  12.80898022975407,  52.42187129944509],
+            ['g', 10.041155219078064, 53.07006147583069],
+            ['gg', 10.042726993560791, 53.06911450500803],
+            ['ggg', 10.039894580841064, 53.06869677412868]
+        ], columns=['site_id', 'lon', 'lat']
+    )
 
     print('\nPREPARE RUNNING FUNCTION: get_dijkstra_ids_to_outlet_loop')
     ## Now, for each row, get the ids!
