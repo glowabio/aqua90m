@@ -198,29 +198,36 @@ def _iterate_outlets_dataframe(departing_points):
 
 def _iterate_outlets_json(departing_points):
 
-    # Iterate over all departure points: # TODO: Looping may not be the best...
+    # Either return as a JSON dictionary, by subc_id:
+    #everything = {}
+    # Or return as a JSON list:
     everything = []
+
+    # Iterate over all regions/basins:
+    # Note: All ids are strings, so we cast to int, and the site_ids are a set of strings
     for reg_id, all_basins in departing_points.items():
-        LOGGER.debug(f'Regional unit: {reg_id}')
         reg_id = int(reg_id)
 
+        # Now, for each basin, run a one-to-many routing query,
+        # as one basin has just one outlet:
         for basin_id, all_subcids in all_basins.items():
-            LOGGER.debug(f'Basin: {basin_id}')
+            LOGGER.debug(f'Basin: {basin_id} (in regional unit {reg_id})')
             basin_id = int(basin_id)
-
-            # Outlet has the id minus-basin!
             outlet_id = -basin_id
+            start_ids = all_subcids.keys()
+            segments_by_start_id = get_dijkstra_ids_one_to_many(conn, start_ids, outlet_id, reg_id, basin_id)
+            # This returned a dict: One list of segment ids (the path to outlet) per start subc_id.
 
-            for subc_id, all_site_ids in all_subcids.items():
-                LOGGER.log(logging.TRACE, f'Computing downstream segments for subc_id {subc_id} (sites: {all_site_ids})')
-                LOGGER.debug(f'Computing downstream segments for subc_id {subc_id} (sites: {all_site_ids})')
-                subc_id = int(subc_id)
-                segment_ids = get_dijkstra_ids_one_to_one(conn, subc_id, outlet_id, reg_id, basin_id, silent=True)
-
-                # Collect results for this departure point:
+            # Package in JSON list:
+            for start_id, segment_ids in segments_by_start_id.items():
+                all_site_ids = all_subcids[start_id]
+                # Either return as a JSON dictionary, by subc_id:
+                #everything[start_id] = segment_ids
+                # Or return as a JSON list:
                 everything.append({
-                    "subc_id": subc_id,
+                    "subc_id": int(start_id),
                     "basin_id": basin_id,
+                    "outlet_id": outlet_id,
                     "reg_id": reg_id,
                     "num_downstream_ids": len(segment_ids),
                     "downstream_segments": segment_ids,
@@ -312,6 +319,78 @@ def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id):
     return results_json
 
 
+def get_dijkstra_ids_one_to_many(conn, start_subc_ids, end_subc_id, reg_id, basin_id):
+    # INPUT:  Set of subc_ids (in one basin)
+    # OUTPUT: JSON dict: One path (list of subc_ids) per start_subc_id.
+
+    LOGGER.debug(f'Compute paths from {len(start_subc_ids)} subc_ids to outlet (in basin {basin_id}, region {reg_id})')
+
+    ## Construct SQL query:
+    ## Inner SELECT: Returns what the pgr_dijkstra needs: (id, source, target, cost).
+    ## We run pgr_routing as one-to-many here:
+    ##   We compute the paths from each start point to one end point (the outlet),
+    ##   resulting in a list of paths (path from s1 to o, from s1 to o, from s1 to o, ...).
+    ##   Each path consists of many edges/stream segments!
+    ## pgr_routing returns: (seq, path_seq, start_vid, node, edge, cost, agg_cost)
+    ##   where start_vid tells us which path, and then node/edge are the stream segments.
+    ## We are interested in all the edges (subc_ids of the stream segments) along the path,
+    ##   and for identifying the path, we need the id of the start, so we select
+    ##   start_vid and edge.
+    start_nodes = 'ARRAY[%s]' % ','.join(str(x) for x in start_subc_ids)
+    query = f'''
+    SELECT
+        start_vid,
+        edge
+    FROM pgr_dijkstra(
+        'SELECT
+            subc_id AS id,
+            subc_id AS source,
+            target,
+            length AS cost
+                FROM hydro.stream_segments
+                WHERE reg_id = {reg_id}
+                AND basin_id = {basin_id}',
+        {start_nodes},
+        {end_subc_id},
+        directed := false
+    );
+    '''.replace("\n", " ").replace("    ", "").strip()
+    LOGGER.log(logging.TRACE, f"SQL query: {query}")
+
+    ### Query database:
+    cursor = conn.cursor()
+    LOGGER.log(logging.TRACE, 'Querying database...')
+    cursor.execute(query)
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
+
+    ## Construct result JSON object:
+    segments_by_start_id = {}
+    for start_id in start_subc_ids:
+        segments_by_start_id[str(start_id)] = []
+
+    ## Iterating over the result rows:
+    LOGGER.log(logging.TRACE, f"Result dict to be filled: {segments_by_start_id}")
+    LOGGER.log(logging.TRACE, "Iterating over results...")
+    while True:
+        row = cursor.fetchone()
+        if row is None: break
+
+        # Collect all the ids along the paths:
+        # Each path is defined by its start, and consists of many edges/stream segments.
+        start_id  = str(row[0]) # start
+        this_id   = row[1] # current edge/stream segment as integer
+        if this_id == -1:
+            pass
+        else:
+            # Add this subc_id (integer) to the matrix
+            # (to the list of stream segments for this start-end-combination).
+            segments_by_start_id[start_id].append(this_id)
+            LOGGER.log(logging.TRACE, 'Start {start_id} to end {end_id}, add this id {this_id}')
+
+    LOGGER.log(logging.TRACE, "Iterating over results... DONE.")
+    #LOGGER.log(logging.TRACE, f"JSON result: {results_json}") # quite big!
+
+    return segments_by_start_id
 
 ###############
 ### Testing ###
@@ -434,8 +513,10 @@ if __name__ == "__main__" and True:
 if __name__ == "__main__" and True:
     import basic_queries
 
-    ## Input: dataframe, output dataframe, with site_id!
-    ## Note: g, gg, ggg are in the same subcatchment.
+    # Input: dataframe, output dataframe, with site_id!
+    # Note: g, gg, ggg are in the same subcatchment.
+
+    # More points, two basins/regional units:
     input_df = pd.DataFrame(
         [
             ['a',  10.698832912677716, 53.51710727672125],
@@ -451,10 +532,22 @@ if __name__ == "__main__" and True:
         ], columns=['site_id', 'lon', 'lat']
     )
 
+    # Less points, just one basin:
+    #input_df = pd.DataFrame(
+    #    [
+    #        ['a',  10.698832912677716, 53.51710727672125],
+    #        ['b',  12.80898022975407,  52.42187129944509],
+    #        ['g', 10.041155219078064, 53.07006147583069],
+    #        ['gg', 10.042726993560791, 53.06911450500803],
+    #        ['ggg', 10.039894580841064, 53.06869677412868]
+    #    ], columns=['site_id', 'lon', 'lat']
+    #)
+
     print('\nPREPARE RUNNING FUNCTION: get_dijkstra_ids_to_outlet_loop')
     ## Now, for each row, get the ids!
     temp_df = basic_queries.get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, "lon", "lat", "site_id")
     print(f'\n{temp_df}')
+
     print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_to_outlet_loop')
     res = get_dijkstra_ids_to_outlet_loop(conn, temp_df, "site_id", return_csv=True)
     print(f'RESULT: SEGMENTS IN DATAFRAME: {res}')
