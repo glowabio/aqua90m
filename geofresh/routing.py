@@ -112,10 +112,10 @@ def _collect_departing_points_by_region_and_basin(input_df, colname_site_id):
         i += 1
 
         # Extract values from CSV:
-        site_id   = getattr(row, colname_site_id)
-        subc_id   = getattr(row, "subc_id")
-        basin_id  = getattr(row, "basin_id")
-        reg_id    = getattr(row, "reg_id")
+        site_id   = getattr(row, colname_site_id) # string
+        subc_id   = getattr(row, "subc_id")  # nullable int
+        basin_id  = getattr(row, "basin_id") # nullable int
+        reg_id    = getattr(row, "reg_id")   # nullable int
 
         # Stop if no site_id!
         # Does this work with strings?
@@ -142,13 +142,8 @@ def _collect_departing_points_by_region_and_basin(input_df, colname_site_id):
             LOGGER.error(f'({i}) {err_msg}')
             raise ValueError(err_msg)
 
-        # Cast to strings (to be able to use as dict keys...)
-        site_id = str(site_id)
-        subc_id = str(subc_id)
-        basin_id = str(basin_id)
-        reg_id = str(reg_id)
-
         # Store departing point in dictionary
+        # using integers as keys
         LOGGER.log(logging.TRACE, f'({i}) Storing departure point for site {site_id} / for subc_id {subc_id}')
         if not reg_id in departing_points.keys():
             departing_points[reg_id] = {}
@@ -293,6 +288,7 @@ def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id):
 
     ## Construct result matrix:
     # TODO: JSON may not be the ideal type for returning a matrix!
+    # TODO: Use integers as dict keys here too!
     results_json = {}
     for start_id in subc_ids:
         results_json[str(start_id)] = {}
@@ -369,10 +365,10 @@ def get_dijkstra_ids_one_to_many(conn, start_subc_ids, end_subc_id, reg_id, basi
     cursor.execute(query)
     LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
-    ## Construct result JSON object:
+    ## Construct result JSON dict (using integer key):
     segments_by_start_id = {}
     for start_id in start_subc_ids:
-        segments_by_start_id[str(start_id)] = []
+        segments_by_start_id[start_id] = []
 
     ## Iterating over the result rows:
     LOGGER.log(logging.TRACE, f"Result dict to be filled: {segments_by_start_id}")
@@ -383,8 +379,8 @@ def get_dijkstra_ids_one_to_many(conn, start_subc_ids, end_subc_id, reg_id, basi
 
         # Collect all the ids along the paths:
         # Each path is defined by its start, and consists of many edges/stream segments.
-        start_id  = str(row[0]) # start
-        this_id   = row[1] # current edge/stream segment as integer
+        start_id  = row[0] # departure point subc_id(integer)
+        this_id   = row[1] # current edge/stream segment (integer)
         if this_id == -1:
             pass
         else:
