@@ -35,6 +35,10 @@ def drop_temp_table(cursor, tablename):
 
 
 def make_insertion_rows_from_geojson(geojson, colname_site_id=None):
+    '''
+    From an input GeoJSON object, make SQL rows that can be used as INSERT statements,
+    to populate a temporary table with site_id, lon, lat and a geom.
+    '''
     list_of_insert_rows = []
     # TODO: How to deal with missing site_ids? Maybe fill with NULL values, or
     # not create that column if it is not needed?
@@ -73,6 +77,10 @@ def make_insertion_rows_from_geojson(geojson, colname_site_id=None):
 
 
 def make_insertion_rows_from_dataframe(dataframe, colname_lon, colname_lat, colname_site_id):
+    '''
+    From an input dataframe, make SQL rows that can be used as INSERT statements,
+    to populate a temporary table with site_id, lon, lat and a geom.
+    '''
     list_of_insert_rows = []
     for row in dataframe.itertuples(index=False):
         lon = getattr(row, colname_lon)
