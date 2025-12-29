@@ -166,10 +166,18 @@ def _iterate_outlets_dataframe(departing_points):
     # Iterate over all regions/basins:
     # Note: All ids are strings, so we cast to int, and the site_ids are a set of strings
     for reg_id, all_basins in departing_points.items():
-        reg_id = int(reg_id)
+
+        # Add empty item for ocean case:
+        if reg_id is None:
+            all_site_ids = all_basins[None][None]
+            LOGGER.debug(f'Compute paths to outlet for these sites not possible: {all_site_ids}')
+            site_ids_str    = "+".join([str(elem) for elem in all_site_ids])
+            everything.append([None, None, None, None, site_ids_str])
+            continue
 
         # Now, for each basin, run a one-to-many routing query,
         # as one basin has just one outlet:
+        reg_id = int(reg_id)
         for basin_id, all_subcids in all_basins.items():
             LOGGER.debug(f'Basin: {basin_id} (in regional unit {reg_id})')
             basin_id = int(basin_id)
@@ -193,9 +201,9 @@ def _iterate_outlets_dataframe(departing_points):
     output_df = pd.DataFrame(everything,
         columns=['reg_id', 'basin_id', 'subc_id', 'downstream_segments', 'site_ids']
     ).astype({
-        'reg_id':   'int64',
-        'basin_id': 'int64',
-        'subc_id':  'int64',
+        'reg_id':   'Int64', # nullable int
+        'basin_id': 'Int64', # nullable int
+        'subc_id':  'Int64', # nullable int
         'downstream_segments': 'string',
         'site_ids': 'string'
     })
@@ -566,15 +574,15 @@ if __name__ == "__main__" and True:
     )
 
     # Less points, just one basin:
-    input_df = pd.DataFrame(
-        [
-            ['a',  10.698832912677716, 53.51710727672125],
-            ['b',  12.80898022975407,  52.42187129944509],
-            ['g', 10.041155219078064, 53.07006147583069],
-            ['gg', 10.042726993560791, 53.06911450500803],
-            ['ggg', 10.039894580841064, 53.06869677412868]
-        ], columns=['site_id', 'lon', 'lat']
-    )
+    #input_df = pd.DataFrame(
+    #    [
+    #        ['a',  10.698832912677716, 53.51710727672125],
+    #        ['b',  12.80898022975407,  52.42187129944509],
+    #        ['g', 10.041155219078064, 53.07006147583069],
+    #        ['gg', 10.042726993560791, 53.06911450500803],
+    #        ['ggg', 10.039894580841064, 53.06869677412868]
+    #    ], columns=['site_id', 'lon', 'lat']
+    #)
 
     print('\nPREPARE RUNNING FUNCTION: get_dijkstra_ids_to_outlet_loop')
     ## Now, for each row, get the ids!
