@@ -395,8 +395,8 @@ def get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson, colname
 
 
 def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname_lon, colname_lat, colname_site_id):
-    # Input: Pandas Dataframe
-    # Output: Pandas Dataframe
+    # Input:  Pandas Dataframe (with site_id, lon, lat)
+    # Output: Pandas Dataframe (with site_id, reg_id, basin_id, subc_id)
 
     # Create list to be filled and converted to Pandas dataframe:
     everything = []
@@ -409,22 +409,24 @@ def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname
     # TODO: This is not super efficient, but the quickest to implement :)
     # TODO: Read this for alternatives to iteration: https://stackoverflow.com/questions/16476924/how-can-i-iterate-over-rows-in-a-pandas-dataframe
     num = input_dataframe.shape[0]
-    LOGGER.debug('Getting subcatchment for %s lon, lat pairs...' % num)
+    LOGGER.debug(f'Getting subcatchment for {num} lon, lat pairs...')
 
+    # Retrieve using column index, not colname - this is faster:
+    colidx_lon = input_dataframe.columns.get_loc(colname_lon)
+    colidx_lat = input_dataframe.columns.get_loc(colname_lat)
+    colidx_site_id = input_dataframe.columns.get_loc(colname_site_id)
+
+    # Iterate over rows:
     for row in input_dataframe.itertuples(index=False):
 
         # Get coordinates from input:
-        #lon = row.lon
-        #lat = row.lat
-        #site_id = row.site_id
-        # TODO OPTIMIZE: getattr may not be the fastest way of accessing this...
-        lon = getattr(row, colname_lon)
-        lat = getattr(row, colname_lat)
-        site_id = getattr(row, colname_site_id)
+        lon = row[colidx_lon]
+        lat = row[colidx_lat]
+        site_id = row[colidx_site_id]
 
         # Query database:
         try:
-            LOGGER.log(logging.TRACE, 'Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
+            LOGGER.log(logging.TRACE, f'Getting subcatchment for lon, lat: {lon},{lat}')
             subc_id, basin_id, reg_id = get_subcid_basinid_regid_from_lonlat(
                 conn, LOGGER, lon, lat)
         except exc.GeoFreshNoResultException as e:
@@ -448,6 +450,7 @@ def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname
     dataframe = pd.DataFrame(everything, columns=['site_id', 'reg_id', 'basin_id', 'subc_id'])
 
     # Change them to integers:
+    # TODO: Pandas format, better use .astype() during pd.DataFrame (above)
     dataframe[['reg_id', 'basin_id', 'subc_id']] = dataframe[['reg_id', 'basin_id', 'subc_id']].apply(pd.to_numeric)
 
     # Extensive logging of stats:
@@ -492,19 +495,24 @@ def get_basinid_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname_lon, c
     # TODO: This is not super efficient, but the quickest to implement :)
     # TODO: Read this for alternatives to iteration: https://stackoverflow.com/questions/16476924/how-can-i-iterate-over-rows-in-a-pandas-dataframe
     num = input_dataframe.shape[0]
-    LOGGER.debug('Getting basin_id, reg_id for %s lon, lat pairs...' % num)
+    LOGGER.debug(f'Getting basin_id, reg_id for {num} lon, lat pairs...')
 
+    # Retrieve using column index, not colname - this is faster:
+    colidx_lon = input_dataframe.columns.get_loc(colname_lon)
+    colidx_lat = input_dataframe.columns.get_loc(colname_lat)
+    colidx_site_id = input_dataframe.columns.get_loc(colname_site_id)
+
+    # Iterate over rows:
     for row in input_dataframe.itertuples(index=False):
 
         # Get coordinates from input:
-        # TODO OPTIMIZE: getattr may not be the fastest way of accessing this...
-        lon = getattr(row, colname_lon)
-        lat = getattr(row, colname_lat)
-        site_id = getattr(row, colname_site_id)
+        lon = row[colidx_lon]
+        lat = row[colidx_lat]
+        site_id = row[colidx_site_id]
 
         # Query database:
         try:
-            LOGGER.log(logging.TRACE, 'Getting basin_id, reg_id for lon, lat: %s, %s' % (lon, lat))
+            LOGGER.log(logging.TRACE, f'Getting basin_id, reg_id for lon, lat: {lon}, {lat}')
             basin_id, reg_id = get_basinid_regid_from_lonlat(
                 conn, LOGGER, lon, lat)
         except exc.GeoFreshNoResultException as e:
@@ -533,19 +541,24 @@ def get_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname_lon, colname_l
     # TODO: This is not super efficient, but the quickest to implement :)
     # TODO: Read this for alternatives to iteration: https://stackoverflow.com/questions/16476924/how-can-i-iterate-over-rows-in-a-pandas-dataframe
     num = input_dataframe.shape[0]
-    LOGGER.debug('Getting reg_id for %s lon, lat pairs...' % num)
+    LOGGER.debug(f'Getting reg_id for {num} lon, lat pairs...')
 
+    # Retrieve using column index, not colname - this is faster:
+    colidx_lon = input_dataframe.columns.get_loc(colname_lon)
+    colidx_lat = input_dataframe.columns.get_loc(colname_lat)
+    colidx_site_id = input_dataframe.columns.get_loc(colname_site_id)
+
+    # Iterate over rows:
     for row in input_dataframe.itertuples(index=False):
 
         # Get coordinates from input:
-        # TODO OPTIMIZE: getattr may not be the fastest way of accessing this...
-        lon = getattr(row, colname_lon)
-        lat = getattr(row, colname_lat)
-        site_id = getattr(row, colname_site_id)
+        lon = row[colidx_lon]
+        lat = row[colidx_lat]
+        site_id = row[colidx_site_id]
 
         # Query database:
         try:
-            LOGGER.log(logging.TRACE, 'Getting reg_id for lon, lat: %s, %s' % (lon, lat))
+            LOGGER.log(logging.TRACE, f'Getting reg_id for lon, lat: {lon}, {lat}')
             reg_id = get_regid_from_lonlat(conn, LOGGER, lon, lat)
         except exc.GeoFreshNoResultException as e:
             # For example, if the point is in the ocean.
@@ -574,18 +587,22 @@ def get_basinid_regid_for_all_from_subcid_1csv(conn, LOGGER, input_dataframe, co
     # TODO: This is not super efficient, but the quickest to implement :)
     # TODO: Read this for alternatives to iteration: https://stackoverflow.com/questions/16476924/how-can-i-iterate-over-rows-in-a-pandas-dataframe
     num = input_dataframe.shape[0]
-    LOGGER.debug('Getting basin_id, reg_id for %s subc_ids...' % num)
+    LOGGER.debug(f'Getting basin_id, reg_id for {num} subc_ids...')
 
+    # Retrieve using column index, not colname - this is faster:
+    colidx_subc_id = input_dataframe.columns.get_loc(colname_subc_id)
+    colidx_site_id = input_dataframe.columns.get_loc(colname_site_id)
+
+    # Iterate over rows:
     for row in input_dataframe.itertuples(index=False):
 
         # Get coordinates from input:
-        # TODO OPTIMIZE: getattr may not be the fastest way of accessing this...
-        subc_id = getattr(row, colname_subc_id)
-        site_id = getattr(row, colname_site_id)
+        subc_id = row[colidx_subc_id]
+        site_id = row[colidx_site_id]
 
         # Query database:
         try:
-            LOGGER.log(logging.TRACE, 'Getting basin_id, reg_id for subc_id %s' % subc_id)
+            LOGGER.log(logging.TRACE, f'Getting basin_id, reg_id for subc_id {subc_id}')
             basin_id, reg_id = get_basinid_regid_from_subcid(
                 conn, LOGGER, subc_id)
         except exc.GeoFreshNoResultException as e:
@@ -877,5 +894,6 @@ if __name__ == "__main__" and True:
     print('\nSTART RUNNING FUNCTION: get_basinid_regid_for_all_from_subcid_1csv (input: dataframe, output: dataframe)')
     res = get_basinid_regid_for_all_from_subcid_1csv(conn, LOGGER, example_dataframe2, 'subc_id', 'site_id')
     print('RESULT:\n%s' % res)
+
 
 
