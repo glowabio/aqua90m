@@ -407,6 +407,16 @@ if __name__ == "__main__":
     from database_connection import connect_to_db
     from database_connection import get_connection_object
 
+    try:
+        # If the package is properly installed, thus it is findable by python on PATH:
+        import aqua90m.utils.exceptions as exc
+    except ModuleNotFoundError:
+        # If we are calling this script from the aqua90m parent directory via
+        # "python aqua90m/geofresh/basic_queries.py", we have to make it available on PATH:
+        import sys, os
+        sys.path.append(os.getcwd())
+        import aqua90m.utils.exceptions as exc
+
     # Get config
     config_file_path = "./config.json"
     with open(config_file_path, 'r') as config_file:
