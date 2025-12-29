@@ -23,9 +23,8 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 '''
 # Request only the ids:
-curl -i -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet-plural/execution" \
+curl -i -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet-plural/execution \
 --header "Content-Type: application/json" \
---header "Prefer: respond-async" \
 --data '{
   "inputs": {
         "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
@@ -170,41 +169,12 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
                 geojson_helpers.check_feature_collection_property(points_geojson, colname_site_id)
 
         ## Handle CSV case:
-        ## TODO: Bring download csv to utils!
         elif csv_url is not None:
 
             # Download CSV:
             LOGGER.debug('Accessing input CSV from: %s' % csv_url)
-            try:
-                input_df = pd.read_csv(csv_url) # tries comma first
-                if input_df.shape[1] == 1:
-                    LOGGER.debug('Found only one column (name "%s"). Maybe it is not comma-separated, but semicolon-separated? Trying...' % input_df.columns)
-                    input_df = pd.read_csv(csv_url, sep=';') # if comma failed, try semicolon
-
-                LOGGER.debug('Accessing input CSV... DONE. Found %s columns (names: %s)' % (input_df.shape[1], input_df.columns))
-
-            # Files stored on Nimbus: We get SSL error:
-            except urllib.error.URLError as e:
-                LOGGER.warning('SSL error when downloading input CSV from %s: %s' % (csv_url, e))
-                if ('nimbus.igb-berlin.de' in csv_url and
-                    'certificate verify failed' in str(e)):
-                    LOGGER.debug('Will download input CSV with verify=False to a tempfile.')
-                    resp = requests.get(csv_url, verify=False)
-                    if resp.status_code == 200:
-                        mytempfile = tempfile.NamedTemporaryFile()
-                        mytempfile.write(resp.content)
-                        mytempfile.flush()
-                        mytempfilename = mytempfile.name
-                        LOGGER.debug("CSV file stored to tempfile successfully: %s" % mytempfilename)
-                        input_df = pd.read_csv(mytempfilename) # tries comma first
-                        if input_df.shape[1] == 1:
-                            LOGGER.debug('Found only one column (name "%s"). Maybe it is not comma-separated, but semicolon-separated? Trying...' % input_df.columns)
-                            input_df = pd.read_csv(mytempfilename, sep=';') # if comma failed, try semicolon
-                        mytempfile.close()
-                    else:
-                        err_msg = 'Could not download CSV input data from %s (HTTP %s)' % (csv_url, resp.status_code)
-                        LOGGER.error(err_msg)
-                        raise exc.DataAccessException(err_msg)
+            input_df = utils.access_csv_as_dataframe(csv_url)
+            LOGGER.debug('Accessing input CSV... DONE. Found %s columns (names: %s)' % (input_df.shape[1], input_df.columns))
 
             ## Now, for each row, get the ids (unless already present)!
             if 'subc_id' in input_df.columns:
@@ -261,3 +231,4 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
 
             else:
                 return 'application/json', output_json
+
