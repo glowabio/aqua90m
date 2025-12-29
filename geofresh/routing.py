@@ -125,15 +125,15 @@ def _collect_departing_points_by_region_and_basin(input_df, colname_site_id):
             raise ValueError(err_msg)
             continue
 
-        # Ocean case...
+        # No subc_id, e.g. ocean case (point falls into the ocean):
         # As we do not return the site_ids, but only subc_ids with downstream path, there is no point in returning
         # an empty list for subc_id "NaN"... If we ever switch back to returning downstream ids for each site_id,
         # returning an empty list here make sense...
         if pd.isna(subc_id):
-            # This can be the case if the point falls into the ocean...
-            err_msg = f"Cannot compute downstream ids due to missing subc_id at site {site_id}"
-            LOGGER.info(f'({i}) {err_msg}')
-            continue
+            msg = f"Cannot compute downstream ids due to missing subc_id at site '{site_id}'."
+            LOGGER.info(msg)
+            reg_id = basin_id = subc_id = None
+            # We catch this "None" later and add it to the result, so that at least the user is informed.
 
         # Unexpected case...
         elif pd.isna(basin_id) or pd.isna(reg_id):
@@ -207,10 +207,26 @@ def _iterate_outlets_json(departing_points):
     # Iterate over all regions/basins:
     # Note: All ids are strings, so we cast to int, and the site_ids are a set of strings
     for reg_id, all_basins in departing_points.items():
-        reg_id = int(reg_id)
+
+        # Add empty item for ocean case:
+        if reg_id is None:
+            all_site_ids = all_basins[None][None]
+            LOGGER.debug(f'Compute paths to outlet for these sites not possible: {all_site_ids}')
+            basin_id = None
+            everything.append({
+                "subc_id": None,
+                "basin_id": None,
+                "outlet_id": None,
+                "reg_id": None,
+                "num_downstream_ids": None,
+                "downstream_segments": None,
+                "site_ids": list(all_site_ids)
+            })
+            continue
 
         # Now, for each basin, run a one-to-many routing query,
         # as one basin has just one outlet:
+        reg_id = int(reg_id)
         for basin_id, all_subcids in all_basins.items():
             LOGGER.debug(f'Basin: {basin_id} (in regional unit {reg_id})')
             basin_id = int(basin_id)
@@ -559,7 +575,6 @@ if __name__ == "__main__" and True:
     ## Now, for each row, get the ids!
     temp_df = basic_queries.get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, "lon", "lat", "site_id")
     print(f'\n{temp_df}')
-
     print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_to_outlet_loop')
     res = get_dijkstra_ids_to_outlet_loop(conn, temp_df, "site_id", return_csv=True)
     print(f'RESULT: SEGMENTS IN DATAFRAME: {res}')
