@@ -112,10 +112,10 @@ def _collect_departing_points_by_region_and_basin(input_df, colname_site_id):
         i += 1
 
         # Extract values from CSV:
-        site_id   = str(getattr(row, colname_site_id))
-        subc_id   = str(getattr(row, "subc_id"))
-        basin_id  = str(getattr(row, "basin_id"))
-        reg_id    = str(getattr(row, "reg_id"))
+        site_id   = getattr(row, colname_site_id)
+        subc_id   = getattr(row, "subc_id")
+        basin_id  = getattr(row, "basin_id")
+        reg_id    = getattr(row, "reg_id")
 
         # Stop if no site_id!
         # Does this work with strings?
@@ -141,6 +141,12 @@ def _collect_departing_points_by_region_and_basin(input_df, colname_site_id):
             err_msg = f"UNEXPECTED: Cannot compute downstream ids due to missing value(s) at site {site_id} (subc_id={subc_id}, basin_id={basin_id}, reg_id={reg_id})"
             LOGGER.error(f'({i}) {err_msg}')
             raise ValueError(err_msg)
+
+        # Cast to strings (to be able to use as dict keys...)
+        site_id = str(site_id)
+        subc_id = str(subc_id)
+        basin_id = str(basin_id)
+        reg_id = str(reg_id)
 
         # Store departing point in dictionary
         LOGGER.log(logging.TRACE, f'({i}) Storing departure point for site {site_id} / for subc_id {subc_id}')
@@ -535,7 +541,7 @@ if __name__ == "__main__" and True:
             ['d',  16.651903948708565, 48.27779486850176],
             ['e',  19.201146608148463, 47.12192880511424],
             ['f',  24.432498016999062, 61.215505889934434],
-            #['sea',  8.090485, 54.119322],
+            ['sea',  8.090485, 54.119322],
             ['g', 10.041155219078064, 53.07006147583069],
             ['gg', 10.042726993560791, 53.06911450500803],
             ['ggg', 10.039894580841064, 53.06869677412868]
