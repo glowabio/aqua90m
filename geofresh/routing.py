@@ -87,7 +87,8 @@ def get_dijkstra_ids_one_to_one(conn, start_subc_id, end_subc_id, reg_id, basin_
     return all_ids
 
 
-def get_dijkstra_ids_to_outlet_loop(conn, input_df, colname_site_id, return_csv=False, return_json=False):
+def get_dijkstra_ids_to_outlet_plural(conn, input_df, colname_site_id, return_csv=False, return_json=False):
+    # TODO: Add input GeoJSON!
     # We don't want a matrix, we want one path per pair of points - but for many!
     # INPUT:  CSV
     # OUTPUT: JSON or CSV (but ugly CSV... as we have to store entire paths in one column.)
@@ -584,20 +585,20 @@ if __name__ == "__main__" and True:
     #    ], columns=['site_id', 'lon', 'lat']
     #)
 
-    print('\nPREPARE RUNNING FUNCTION: get_dijkstra_ids_to_outlet_loop')
+    print('\nPREPARE RUNNING FUNCTION: get_dijkstra_ids_to_outlet_plural')
     ## Now, for each row, get the ids!
     temp_df = basic_queries.get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, "lon", "lat", "site_id")
     print(f'\n{temp_df}')
-    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_to_outlet_loop')
-    res = get_dijkstra_ids_to_outlet_loop(conn, temp_df, "site_id", return_csv=True)
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_to_outlet_plural')
+    res = get_dijkstra_ids_to_outlet_plural(conn, temp_df, "site_id", return_csv=True)
     print(f'RESULT: SEGMENTS IN DATAFRAME: {res}')
 
-    print('\nPREPARE RUNNING FUNCTION: get_dijkstra_ids_to_outlet_loop')
+    print('\nPREPARE RUNNING FUNCTION: get_dijkstra_ids_to_outlet_plural')
     ## Now, for each row, get the ids!
     temp_df = basic_queries.get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, "lon", "lat", "site_id")
     print(f'\n{temp_df}')
-    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_to_outlet_loop')
-    res = get_dijkstra_ids_to_outlet_loop(conn, temp_df, "site_id", return_json=True)
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_to_outlet_plural')
+    res = get_dijkstra_ids_to_outlet_plural(conn, temp_df, "site_id", return_json=True)
     print(f'RESULT: SEGMENTS IN JSON: {res}')
 
 

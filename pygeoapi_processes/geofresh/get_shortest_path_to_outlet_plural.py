@@ -187,14 +187,20 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
                 temp_df = input_df
             else:
                 LOGGER.debug('Querying required columns (subc_id, basin_id, reg_id) for each point...')
+                # TODO: This calls a function that loops. Two possible solutions:
+                # Either I write a generic function "get_subcid_basinid_regid_for_all_1csv"
+                # that returns a data frame, instead of looping.
+                # Or I rewrite the entire routing thing with a temp table, which should be more efficient.
+                # Check out the new snapping method.
                 temp_df = basic_queries.get_subcid_basinid_regid_for_all_1csv(
                     conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
 
             ## Next, for each row, get the downstream ids!
             if return_csv:
-                output_df = routing.get_dijkstra_ids_to_outlet_loop(conn, temp_df, colname_site_id, return_csv=True)
+                # TODO Test, since I rewrote this!
+                output_df = routing.get_dijkstra_ids_to_outlet_plural(conn, temp_df, colname_site_id, return_csv=True)
             elif return_json:
-                output_json = routing.get_dijkstra_ids_to_outlet_loop(conn, temp_df, colname_site_id, return_json=True)
+                output_json = routing.get_dijkstra_ids_to_outlet_plural(conn, temp_df, colname_site_id, return_json=True)
 
 
         #####################
