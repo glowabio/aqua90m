@@ -91,23 +91,34 @@ def get_dijkstra_ids_to_outlet_loop(conn, input_df, colname_site_id, return_csv=
     # We don't want a matrix, we want one path per pair of points - but for many!
     # INPUT:  CSV
     # OUTPUT: JSON or CSV (but ugly CSV... as we have to store entire paths in one column.)
+    if not (return_csv or return_json): return_csv = True
 
-    everything = []
-    subc_id_site_id = {}
+    departing_points = _collect_departing_points_by_region_and_basin(input_df, colname_site_id)
+    if return_csv:
+        return _iterate_outlets_dataframe(departing_points)
+    elif return_json:
+        return _iterate_outlets_json(departing_points)
 
-    # Iterate over all rows: # TODO: Looping may not be the best...
+
+def _collect_departing_points_by_region_and_basin(input_df, colname_site_id):
+
+    # First, collect all departing points by iterating over an input dataframe.
+    # Store them by region_id and by basin_id, as we need those two values for
+    # the query.
+    departing_points = {}
+
     i = 0
     for row in input_df.itertuples(index=False):
         i += 1
-        segment_ids = None
 
         # Extract values from CSV:
-        site_id   = getattr(row, colname_site_id)
-        subc_id   = getattr(row, "subc_id")
-        basin_id  = getattr(row, "basin_id")
-        reg_id    = getattr(row, "reg_id")
+        site_id   = str(getattr(row, colname_site_id))
+        subc_id   = str(getattr(row, "subc_id"))
+        basin_id  = str(getattr(row, "basin_id"))
+        reg_id    = str(getattr(row, "reg_id"))
 
         # Stop if no site_id!
+        # Does this work with strings?
         if pd.isna(site_id):
             err_msg = f"Missing site_id in row {i} (subc_id={subc_id}, basin_id={basin_id}, reg_id={reg_id})"
             LOGGER.error(f'({i}) {err_msg}')
@@ -122,7 +133,6 @@ def get_dijkstra_ids_to_outlet_loop(conn, input_df, colname_site_id, return_csv=
             # This can be the case if the point falls into the ocean...
             err_msg = f"Cannot compute downstream ids due to missing subc_id at site {site_id}"
             LOGGER.info(f'({i}) {err_msg}')
-            #segment_ids = []
             continue
 
         # Unexpected case...
@@ -132,66 +142,93 @@ def get_dijkstra_ids_to_outlet_loop(conn, input_df, colname_site_id, return_csv=
             LOGGER.error(f'({i}) {err_msg}')
             raise ValueError(err_msg)
 
-        else:
+        # Store departing point in dictionary
+        LOGGER.log(logging.TRACE, f'({i}) Storing departure point for site {site_id} / for subc_id {subc_id}')
+        if not reg_id in departing_points.keys():
+            departing_points[reg_id] = {}
+        if not basin_id in departing_points[reg_id].keys():
+            departing_points[reg_id][basin_id] = {}
+        if not subc_id in departing_points[reg_id][basin_id].keys():
+            departing_points[reg_id][basin_id][subc_id] = set()
+        departing_points[reg_id][basin_id][subc_id].add(site_id)
 
-            # Cast to int if not NA! Otherwise the database query fails.
-            if not pd.isna(subc_id):
-                subc_id = int(subc_id)
-            if not pd.isna(basin_id):
-                basin_id = int(basin_id)
-            if not pd.isna(reg_id):
-                reg_id = int(reg_id)
+    return departing_points
+
+
+def _iterate_outlets_dataframe(departing_points):
+
+    # Iterate over all departure points: # TODO: Looping may not be the best...
+    everything = []
+    for reg_id, all_basins in departing_points.items():
+        LOGGER.debug(f'Regional unit: {reg_id}')
+        reg_id = int(reg_id)
+
+        for basin_id, all_subcids in all_basins.items():
+            LOGGER.debug(f'Basin: {basin_id}')
+            basin_id = int(basin_id)
 
             # Outlet has the id minus-basin!
             outlet_id = -basin_id
 
-            if str(subc_id) in subc_id_site_id.keys():
-                LOGGER.debug(f'({i}) Not computing for site {site_id}: Downstream segments already computed for subc_id {subc_id}')
-                subc_id_site_id[str(subc_id)].append(site_id)
-                continue
-
-            else:
-                # Now get the downstream ids from the database, for this point:
-                # (We need to cast to int, as they come as decimal numbers...)
+            for subc_id, all_site_ids in all_subcids.items():
+                LOGGER.debug(f'Computing downstream segments for subc_id {subc_id} (sites: {all_site_ids})')
+                LOGGER.log(logging.TRACE, f'Computing downstream segments for subc_id {subc_id} (sites: {all_site_ids})')
                 subc_id = int(subc_id)
-                outlet_id = int(outlet_id)
-                basin_id = int(basin_id)
-                reg_id = int(reg_id)
-                LOGGER.log(logging.TRACE, f'({i}) Computing downstream segments for site {site_id} / for subc_id {subc_id}')
                 segment_ids = get_dijkstra_ids_one_to_one(conn, subc_id, outlet_id, reg_id, basin_id, silent=True)
-                # Keep the site_id as belonging this subc_id
-                subc_id_site_id[str(subc_id)] = [site_id]
+
+                # Collect results for this departure point:
+                # Output CSV:  We need to make one string out of the segment ids!
+                # TODO: Separating the segment ids by "+" is not cool, but how to do it...
+                segment_ids_str = "+".join([str(elem) for elem in segment_ids])
+                site_ids_str    = "+".join([str(elem) for elem in all_site_ids])
+                everything.append([reg_id, basin_id, subc_id, segment_ids_str, site_ids_str])
+
+    # Finished collecting the results, now return dataframe:
+    output_df = pd.DataFrame(everything,
+        columns=['reg_id', 'basin_id', 'subc_id', 'downstream_segments', 'site_ids']
+    ).astype({
+        'reg_id':   'int64',
+        'basin_id': 'int64',
+        'subc_id':  'int64',
+        'downstream_segments': 'string',
+        'site_ids': 'string'
+    })
+    return output_df
 
 
-        # Collect results for this row:
-        if not (return_csv or return_json): return_csv = True
+def _iterate_outlets_json(departing_points):
 
-        if return_csv:
-            # Output CSV:  We need to make one string out of the segment ids!
-            # TODO: Separating the segment ids by "+" is not cool, but how to do it...
-            segment_ids_str = "+".join([str(elem) for elem in segment_ids])
-            everything.append([reg_id, basin_id, subc_id, segment_ids_str])
-        elif return_json:
-            everything.append({
-                "subc_id": subc_id,
-                "basin_id": basin_id,
-                "reg_id": reg_id,
-                "num_downstream_ids": len(segment_ids),
-                "downstream_segments": segment_ids
-            })
+    # Iterate over all departure points: # TODO: Looping may not be the best...
+    everything = []
+    for reg_id, all_basins in departing_points.items():
+        LOGGER.debug(f'Regional unit: {reg_id}')
+        reg_id = int(reg_id)
+
+        for basin_id, all_subcids in all_basins.items():
+            LOGGER.debug(f'Basin: {basin_id}')
+            basin_id = int(basin_id)
+
+            # Outlet has the id minus-basin!
+            outlet_id = -basin_id
+
+            for subc_id, all_site_ids in all_subcids.items():
+                LOGGER.log(logging.TRACE, f'Computing downstream segments for subc_id {subc_id} (sites: {all_site_ids})')
+                LOGGER.debug(f'Computing downstream segments for subc_id {subc_id} (sites: {all_site_ids})')
+                subc_id = int(subc_id)
+                segment_ids = get_dijkstra_ids_one_to_one(conn, subc_id, outlet_id, reg_id, basin_id, silent=True)
+
+                # Collect results for this departure point:
+                everything.append({
+                    "subc_id": subc_id,
+                    "basin_id": basin_id,
+                    "reg_id": reg_id,
+                    "num_downstream_ids": len(segment_ids),
+                    "downstream_segments": segment_ids,
+                    "site_ids": list(all_site_ids)
+                })
 
     # Finished collecting the results, now return JSON object:
-    if return_csv:
-        output_df = pd.DataFrame(everything, columns=['reg_id', 'basin_id', 'subc_id', 'downstream_segments'])
-        return output_df
-    elif return_json:
-        # Add all the site_ids!
-        LOGGER.debug(f"Iterating over all {len(everything)} items in 'everything'...")
-        for item in everything:
-            item["site_ids"] = subc_id_site_id[str(item["subc_id"])]
-            LOGGER.debug(f'To item {item["subc_id"]}, added {len(item["site_ids"])} site ids: {item["site_ids"]}')
-        output_json = {"downstream_segments_for_all_sites": everything}
-        return output_json
+    return everything
 
 
 def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id):
@@ -390,41 +427,50 @@ if __name__ == "__main__" and True:
     print(f'RESULT: ROUTE MATRIX: {res}')
 
 
-###################
-### CSV version ###
-###################
+##########################
+### To outlet, looping ###
+##########################
 
 if __name__ == "__main__" and True:
+    import basic_queries
 
     ## Input: dataframe, output dataframe, with site_id!
+    ## Note: g, gg, ggg are in the same subcatchment.
     input_df = pd.DataFrame(
         [
-            ['aa', 10.041155219078064, 53.07006147583069],
-            ['bb', 10.042726993560791, 53.06911450500803],
-            ['cc', 10.039894580841064, 53.06869677412868],
             ['a',  10.698832912677716, 53.51710727672125],
             ['b',  12.80898022975407,  52.42187129944509],
             ['c',  11.915323076217902, 52.730867141970464],
             ['d',  16.651903948708565, 48.27779486850176],
             ['e',  19.201146608148463, 47.12192880511424],
             ['f',  24.432498016999062, 61.215505889934434],
-            #['sea',  8.090485, 54.119322]
+            #['sea',  8.090485, 54.119322],
+            ['g', 10.041155219078064, 53.07006147583069],
+            ['gg', 10.042726993560791, 53.06911450500803],
+            ['ggg', 10.039894580841064, 53.06869677412868]
         ], columns=['site_id', 'lon', 'lat']
     )
 
-    ## Now, for each row, get the ids!
     print('\nPREPARE RUNNING FUNCTION: get_dijkstra_ids_to_outlet_loop')
-    import basic_queries
+    ## Now, for each row, get the ids!
     temp_df = basic_queries.get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, "lon", "lat", "site_id")
     print(f'\n{temp_df}')
     print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_to_outlet_loop')
-    res = get_dijkstra_ids_to_outlet_loop(conn, temp_df, "site_id")
+    res = get_dijkstra_ids_to_outlet_loop(conn, temp_df, "site_id", return_csv=True)
     print(f'RESULT: SEGMENTS IN DATAFRAME: {res}')
+
+    print('\nPREPARE RUNNING FUNCTION: get_dijkstra_ids_to_outlet_loop')
+    ## Now, for each row, get the ids!
+    temp_df = basic_queries.get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, "lon", "lat", "site_id")
+    print(f'\n{temp_df}')
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_to_outlet_loop')
+    res = get_dijkstra_ids_to_outlet_loop(conn, temp_df, "site_id", return_json=True)
+    print(f'RESULT: SEGMENTS IN JSON: {res}')
 
 
 ###################
 ### Finally ... ###
 ###################
+
 if __name__ == "__main__":
     conn.close()
-
