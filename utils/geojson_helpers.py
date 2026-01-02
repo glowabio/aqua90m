@@ -36,6 +36,10 @@ def check_is_geometry_collection_points(points_geojson):
     return True
 
 def check_feature_collection_property(feature_coll, mandatory_colname):
+    if mandatory_colname is None:
+        err_msg = f"Please provide the column name to check for each Feature in the FeatureCollection."
+        LOGGER.error(err_msg)
+        raise exc.UserInputException(err_msg)
     LOGGER.debug(f'Checking if "{mandatory_colname}" in FeatureCollection...')
     for feature in feature_coll['features']:
         LOGGER.debug(f'This feature: {feature}')
