@@ -23,7 +23,8 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 '''
 
-# Request with CSV input and output:
+## INPUT:  CSV
+## OUTPUT: CSV
 curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
 --header 'Content-Type: application/json' \
 --data '{
@@ -40,7 +41,54 @@ curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
     }
 }'
 
-# Request with GeoJSON input and output:
+## INPUT:  GeoJSON input (FeatureCollection)
+## OUTPUT: Plain JSON
+curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
+--header 'Content-Type: application/json' \
+--data '{
+    "inputs": {
+        "colname_site_id": "site_id",
+        "points_geojson": {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {"site_id": 1},
+                    "geometry": { "coordinates": [ 10.698832912677716, 53.51710727672125 ], "type": "Point" }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {"site_id": 2},
+                    "geometry": { "coordinates": [ 12.80898022975407, 52.42187129944509 ], "type": "Point" }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {"site_id": 3},
+                    "geometry": { "coordinates": [ 11.915323076217902, 52.730867141970464 ], "type": "Point" }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {"site_id": 4},
+                    "geometry": { "coordinates": [ 16.651903948708565, 48.27779486850176 ], "type": "Point" }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {"site_id": 5},
+                    "geometry": { "coordinates": [ 19.201146608148463, 47.12192880511424 ], "type": "Point" }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {"site_id": 6},
+                    "geometry": { "coordinates": [ 24.432498016999062, 61.215505889934434 ], "type": "Point" }
+                }
+            ]
+        },
+        "comment": "schlei-near-rabenholz"
+    }
+}'
+
+## INPUT:  GeoJSON input (GeometryCollection)
+## OUTPUT: Plain JSON
 curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
 --header 'Content-Type: application/json' \
 --data '{
@@ -109,6 +157,37 @@ curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
     }
 }'
 
+
+## Another Feature Collection
+curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
+--header 'Content-Type: application/json' \
+--data '{
+    "inputs": {
+        "colname_site_id": "site_id",
+        "points_geojson": {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {"site_id": 1},
+                    "geometry": { "coordinates": [ 10.041155219078064, 53.07006147583069 ], "type": "Point" }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {"site_id": 2},
+                    "geometry": { "coordinates": [ 10.042726993560791, 53.06911450500803 ], "type": "Point" }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {"site_id": 3},
+                    "geometry": { "coordinates": [ 10.039894580841064, 53.06869677412868 ], "type": "Point" }
+                }
+            ]
+        },
+        "comment": "schlei-near-rabenholz"
+    }
+}'
+
 '''
 
 # Process metadata and description
@@ -149,6 +228,8 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
             LOGGER.error("Missing parameter: colname_site_id")
             err_msg = "Please provide the column name of the site ids inside your csv file (parameter colname_site_id)."
             raise ProcessorExecuteError(err_msg)
+            # Note: colname_site_id is also needed if the user provided GeoJSON of
+            # type FeatureCollection (instead of type GeometryCollection).
 
         LOGGER.debug(f'User requested ids: {which_ids}')
         possible_ids = ['subc_id', 'basin_id', 'reg_id']
@@ -198,10 +279,10 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
                 output_json = basic_queries.get_subcid_basinid_regid_for_all_2json(
                     conn, LOGGER, points_geojson, colname_site_id)
             elif 'basin_id' in which_ids:
-                err_msg = "Currently, for GeoJSON input, only all ids can be returned. Please set which_ids to subc_id,basin_id,reg_id, or input a CSV file."
+                err_msg = "Currently, for GeoJSON input, only all ids can be returned. Please set which_ids to [subc_id,basin_id,reg_id], or input a CSV file."
                 raise NotImplementedError(err_msg) # TODO
             elif 'reg_id' in which_ids:
-                err_msg = "Currently, for GeoJSON input, only all ids can be returned. Please set which_ids to subc_id,basin_id,reg_id, or input a CSV file."
+                err_msg = "Currently, for GeoJSON input, only all ids can be returned. Please set which_ids to [subc_id,basin_id,reg_id], or input a CSV file."
                 raise NotImplementedError(err_msg) # TODO
             # Note: The case where users input subc_ids and want basin_id and reg_id cannot be
             # handled in GeoJSON, as GeoJSON must by definition contain coordinates!
@@ -288,7 +369,7 @@ if __name__ == '__main__':
 
 
     ## Test 1
-    print('TEST CASE 1: Request CSV input and output...', end="", flush=True)  # no newline
+    print('TEST CASE 1: CSV input and output...', end="", flush=True)  # no newline
     payload = {
         "inputs": {
             "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
@@ -306,7 +387,7 @@ if __name__ == '__main__':
     sanity_checks_basic(resp)
 
     ## Test 2
-    print('TEST CASE 2: Request GeoJSON input and output...', end="", flush=True)  # no newline
+    print('TEST CASE 2: GeoJSON input (GeometryCollection) and output...', end="", flush=True)  # no newline
     payload = {
         "inputs": {
             "points_geojson": {

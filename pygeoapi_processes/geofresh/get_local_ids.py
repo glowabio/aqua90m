@@ -89,7 +89,6 @@ PROCESS_METADATA = json.load(open(metadata_title_and_path))
 
 
 class LocalIdGetter(GeoFreshBaseProcessor):
-    # TODO: This can replace get_local_subcids... BUt this is not plural yet.
 
     def __init__(self, processor_def):
         super().__init__(processor_def, PROCESS_METADATA)

@@ -95,6 +95,10 @@ def make_insertion_rows_from_dataframe(dataframe, colname_lon, colname_lat, coln
 
 
 def create_and_populate_temp_table(cursor, tablename_prefix, list_of_insert_rows):
+    '''
+    Creating a temp table containing the columns:
+    site_id, lon, lat, subc_id, basin_id, reg_id, geom_user
+    '''
     tablename =_tablename(tablename_prefix)
     LOGGER.debug(f'Creating and populating temp table "{tablename}"...')
 
