@@ -26,7 +26,22 @@ curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
     "lat": 54.695070,
     "which_ids": "subc_id, basin_id, reg_id",
     "comment": "schlei-near-rabenholz"
-    }
+  }
+}'
+
+# Request all ids, but as file
+curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "which_ids": "subc_id, basin_id, reg_id",
+    "comment": "schlei-near-rabenholz"
+  },
+  "outputs": {
+    "transmissionMode": "reference"
+  }
 }'
 
 # Request only reg_id
@@ -38,7 +53,7 @@ curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
     "lat": 54.695070,
     "which_ids": "reg_id",
     "comment": "schlei-near-rabenholz"
-    }
+  }
 }'
 
 # Request only basin_id
@@ -50,7 +65,7 @@ curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
     "lat": 54.695070,
     "which_ids": "basin_id",
     "comment": "schlei-near-rabenholz"
-    }
+  }
 }'
 
 # Special case: Request all ids, when we know the subc_id!
@@ -61,7 +76,7 @@ curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
     "subc_id": 506250459,
     "which_ids": "subc_id, basin_id, reg_id",
     "comment": "schlei-near-rabenholz"
-    }
+  }
 }'
 
 '''
@@ -168,7 +183,7 @@ class LocalIdGetter(GeoFreshBaseProcessor):
 if __name__ == '__main__':
 
     import os
-    PYSERVER = os.getenv('PYSERVER')
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
     # For this to work, please define the PYSERVER before running python:
     # export PYSERVER="https://.../pygeoapi-dev"
     process_id = 'get-local-ids'
@@ -230,5 +245,23 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
+
+
+    ## Test 5
+    print('TEST CASE 5: Request all three ids, request links...', end="", flush=True)  # no newline
+    payload = {
+      "inputs": {
+        "lon": 9.931555,
+        "lat": 54.695070,
+        "which_ids": "subc_id, basin_id, reg_id",
+        "comment": "schlei-near-rabenholz"
+      },
+      "outputs": {
+        "transmissionMode": "reference"
+      }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
 
 

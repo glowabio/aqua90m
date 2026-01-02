@@ -23,7 +23,7 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 '''
 
-# Request with CSV input and CSV output:
+# Request with CSV input and output:
 curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
 --header 'Content-Type: application/json' \
 --data '{
@@ -40,30 +40,31 @@ curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
     }
 }'
 
+# Request with GeoJSON input and output:
 curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
         "points_geojson": {
-        "type": "GeometryCollection",
-        "geometries": [
-        {
-            "type": "Point",
-            "coordinates": [20.087421, 39.364848]
-        },
-        {
-            "type": "Point",
-            "coordinates": [27.846357, 36.548812]
-        },
-        {
-            "type": "Point",
-            "coordinates": [25.73764, 35.24806]
-        },
-        {
-            "type": "Point",
-            "coordinates": [24.17569, 35.50542]
-        }
-        ]
+            "type": "GeometryCollection",
+            "geometries": [
+                {
+                    "type": "Point",
+                    "coordinates": [20.087421, 39.364848]
+                },
+                {
+                    "type": "Point",
+                    "coordinates": [27.846357, 36.548812]
+                },
+                {
+                    "type": "Point",
+                    "coordinates": [25.73764, 35.24806]
+                },
+                {
+                    "type": "Point",
+                    "coordinates": [24.17569, 35.50542]
+                }
+            ]
         },
         "which_ids": ["subc_id", "basin_id", "reg_id"],
         "comment": "schlei-near-rabenholz"
@@ -74,31 +75,31 @@ curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
 }'
 
 
-# FAILS: TODO:
+# Not Implemented: TODO:
 curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
         "points_geojson": {
-        "type": "GeometryCollection",
-        "geometries": [
-        {
-            "type": "Point",
-            "coordinates": [20.087421, 39.364848]
-        },
-        {
-            "type": "Point",
-            "coordinates": [27.846357, 36.548812]
-        },
-        {
-            "type": "Point",
-            "coordinates": [25.73764, 35.24806]
-        },
-        {
-            "type": "Point",
-            "coordinates": [24.17569, 35.50542]
-        }
-        ]
+            "type": "GeometryCollection",
+            "geometries": [
+                {
+                    "type": "Point",
+                    "coordinates": [20.087421, 39.364848]
+                },
+                {
+                    "type": "Point",
+                    "coordinates": [27.846357, 36.548812]
+                },
+                {
+                    "type": "Point",
+                    "coordinates": [25.73764, 35.24806]
+                },
+                {
+                    "type": "Point",
+                    "coordinates": [24.17569, 35.50542]
+                }
+            ]
         },
         "which_ids": "reg_id",
         "comment": "schlei-near-rabenholz"
@@ -272,4 +273,71 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
         #####################
 
         return self.return_results('local_ids', requested_outputs, output_df=output_df, output_json=output_json, comment=comment)
+
+
+if __name__ == '__main__':
+
+    import os
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    process_id = 'get-local-ids-plural'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+
+
+    ## Test 1
+    print('TEST CASE 1: Request CSV input and output...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "colname_lat": "latitude",
+            "colname_lon": "longitude",
+            "colname_site_id": "site_id",
+            "which_ids": "reg_id",
+            "comment": "schlei-near-rabenholz"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+    ## Test 2
+    print('TEST CASE 2: Request GeoJSON input and output...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson": {
+                "type": "GeometryCollection",
+                "geometries": [
+                    {
+                        "type": "Point",
+                        "coordinates": [20.087421, 39.364848]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [27.846357, 36.548812]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [25.73764, 35.24806]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [24.17569, 35.50542]
+                    }
+                ]
+            },
+            "which_ids": ["subc_id", "basin_id", "reg_id"],
+            "comment": "schlei-near-rabenholz"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
 
