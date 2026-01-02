@@ -149,6 +149,14 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
             LOGGER.error("Missing parameter: colname_site_id")
             err_msg = "Please provide the column name of the site ids inside your csv file (parameter colname_site_id)."
             raise ProcessorExecuteError(err_msg)
+        elif points_geojson is not None and colname_site_id is None:
+            LOGGER.error("Missing parameter: colname_site_id")
+            err_msg = "Please provide the attribute name of the site ids inside your GeoJSON (parameter colname_site_id)."
+            raise ProcessorExecuteError(err_msg)
+        elif points_geojson_url is not None and colname_site_id is None:
+            LOGGER.error("Missing parameter: colname_site_id")
+            err_msg = "Please provide the attribute name of the site ids inside your GeoJSON file (parameter colname_site_id)."
+            raise ProcessorExecuteError(err_msg)
 
         LOGGER.debug(f'User requested ids: {which_ids}')
         possible_ids = ['subc_id', 'basin_id', 'reg_id']
