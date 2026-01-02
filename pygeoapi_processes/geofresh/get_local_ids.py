@@ -17,7 +17,7 @@ from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 '''
 
 # Request all ids
-curl -X POST "http://localhost:5000/processes/get-local-ids/execution" \
+curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -29,7 +29,7 @@ curl -X POST "http://localhost:5000/processes/get-local-ids/execution" \
 }'
 
 # Request only reg_id
-curl -X POST "http://localhost:5000/processes/get-local-ids/execution" \
+curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -41,7 +41,7 @@ curl -X POST "http://localhost:5000/processes/get-local-ids/execution" \
 }'
 
 # Request only basin_id
-curl -X POST "http://localhost:5000/processes/get-local-ids/execution" \
+curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -53,7 +53,7 @@ curl -X POST "http://localhost:5000/processes/get-local-ids/execution" \
 }'
 
 # Special case: Request all ids, when we know the subc_id!
-curl -X POST "http://localhost:5000/processes/get-local-ids/execution" \
+curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -62,7 +62,6 @@ curl -X POST "http://localhost:5000/processes/get-local-ids/execution" \
     "comment": "schlei-near-rabenholz"
     }
 }'
-
 
 '''
 
@@ -215,4 +214,73 @@ class LocalIdGetter(BaseProcessor):
             return 'application/json', output_dict_with_url
         else:
             return 'application/json', output_json
+
+
+
+if __name__ == '__main__':
+
+    import os
+    PYSERVER = os.getenv('PYSERVER')
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    process_id = 'get-local-ids'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+
+
+    ## Test 1
+    print('TEST CASE 1: Request all three ids...', end="", flush=True)  # no newline
+    payload = {
+      "inputs": {
+        "lon": 9.931555,
+        "lat": 54.695070,
+        "which_ids": "subc_id, basin_id, reg_id",
+        "comment": "schlei-near-rabenholz"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    ## Test 2
+    print('TEST CASE 2: Request only reg_id...', end="", flush=True)  # no newline
+    payload = {
+      "inputs": {
+        "lon": 9.931555,
+        "lat": 54.695070,
+        "which_ids": "reg_id",
+        "comment": "schlei-near-rabenholz"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    ## Test 3
+    print('TEST CASE 3: Request only basin_id...', end="", flush=True)  # no newline
+    payload = {
+      "inputs": {
+        "lon": 9.931555,
+        "lat": 54.695070,
+        "which_ids": "basin_id",
+        "comment": "schlei-near-rabenholz"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    ## Test 4
+    print('TEST CASE 4: Request all ids, knowing the subc_id...', end="", flush=True)  # no newline
+    payload = {
+      "inputs": {
+        "subc_id": 506250459,
+        "which_ids": "subc_id, basin_id, reg_id",
+        "comment": "schlei-near-rabenholz"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
 
