@@ -19,8 +19,9 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 
 '''
-INPUT: CSV
-OUTPUT: CSV
+# INPUT:  CSV
+# OUTPUT: CSV
+# Tested 2026-01-02 (commit 38cf498ca)
 curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -37,8 +38,9 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
   }
 }'
 
-INPUT: CSV
-OUTPUT: JSON
+# INPUT:  CSV File
+# OUTPUT: GeoJSON File (FeatureCollection)
+# Tested 2026-01-02 (commit 38cf498ca)
 curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -56,9 +58,9 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
   }
 }'
 
-
-INPUT:  JSON
-OUTPUT: JSON
+# INPUT:  GeoJSON File (FeatureCollection)
+# OUTPUT: GeoJSON File (FeatureCollection)
+# Tested 2026-01-02 (commit 38cf498ca)
 curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -74,9 +76,45 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
   }
 }'
 
+# INPUT:  GeoJSON File (GeometryCollection)
+# OUTPUT: GeoJSON File (FeatureCollection)
+# Tested 2026-01-02 (commit 38cf498ca)
+curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometrycollection_points.json",
+    "colname_site_id": "my_site",
+    "result_format": "geojson",
+    "min_strahler": 5,
+    "add_distance": true
+  },
+  "outputs": {
+    "transmissionMode": "reference"
+  }
+}'
 
-# INPUT: MultiPoint
-# OUTPUT: FeatureCollection
+# Requesting no distance
+# INPUT:  GeoJSON File (GeometryCollection)
+# OUTPUT: GeoJSON File (FeatureCollection)
+# Tested 2026-01-02 (commit 38cf498ca)
+curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometrycollection_points.json",
+    "result_format": "geojson",
+    "min_strahler": 5,
+    "add_distance": false
+  },
+  "outputs": {
+    "transmissionMode": "reference"
+  }
+}'
+
+# INPUT:  GeoJSON directly (MultiPoint)
+# OUTPUT: GeoJSON directly (FeatureCollection)
+# Tested 2026-01-02 (commit 38cf498ca)
 curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -94,8 +132,9 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
   }
 }'
 
-# INPUT: FeatureCollection
-# OUTPUT: FeatureCollection
+# INPUT:  GeoJSON directly (FeatureCollection)
+# OUTPUT: GeoJSON directly (FeatureCollection)
+# Tested 2026-01-02 (commit 38cf498ca)
 curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -129,8 +168,9 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
   }
 }'
 
-# INPUT: FeatureCollection
-# OUTPUT: CSV
+# INPUT:  GeoJSON directly (FeatureCollection)
+# OUTPUT: CSV File
+# Tested 2026-01-02 (commit 38cf498ca)
 curl -X POST "https://$PYSERVER/processes/get-snapped-points-strahler-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
