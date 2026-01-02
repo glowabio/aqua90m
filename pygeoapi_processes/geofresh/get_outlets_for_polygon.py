@@ -17,6 +17,10 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 
 '''
+## Without geometry
+## INPUT:  GeoJSON directly (Geometry: Polygon)
+## OUTPUT: Plain JSON directly
+## Tested 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-outlets-for-polygon/execution \
 --header "Content-Type: application/json" \
 --data '{
@@ -39,6 +43,10 @@ curl -X POST https://${PYSERVER}/processes/get-outlets-for-polygon/execution \
   }
 }'
 
+## With geometry
+## INPUT:  GeoJSON directly (Geometry: Polygon)
+## OUTPUT: GeoJSON directly (FeatureCollection)
+## Tested 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-outlets-for-polygon/execution \
 --header "Content-Type: application/json" \
 --data '{
@@ -62,6 +70,59 @@ curl -X POST https://${PYSERVER}/processes/get-outlets-for-polygon/execution \
 }'
 
 
+## With geometry
+## INPUT:  GeoJSON File (Geometry: Polygon)
+## OUTPUT: GeoJSON File (FeatureCollection)
+## Tested 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-outlets-for-polygon/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "min_strahler": 3,
+    "add_geometry": true,
+    "comment": "near helsinki",
+    "polygon_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometry_polygon.json"
+  },
+  "outputs": {
+    "transmissionMode": "reference"
+  }
+}'
+
+## With geometry
+## INPUT:  GeoJSON File (Feature: Polygon)
+## OUTPUT: GeoJSON File (FeatureCollection)
+## Tested 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-outlets-for-polygon/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "min_strahler": 3,
+    "add_geometry": true,
+    "comment": "near helsinki",
+    "polygon_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_feature_polygon.json"
+  },
+  "outputs": {
+    "transmissionMode": "reference"
+  }
+}'
+
+## Without geometry
+## INPUT:  GeoJSON File (Geometry: Polygon)
+## OUTPUT: Plain JSON File
+## Tested 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-outlets-for-polygon/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "min_strahler": 3,
+    "add_geometry": false,
+    "comment": "near helsinki",
+    "polygon_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometry_polygon.json"
+  },
+  "outputs": {
+    "transmissionMode": "reference"
+  }
+}'
 '''
 
 # Process metadata and description
