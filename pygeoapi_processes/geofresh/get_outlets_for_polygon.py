@@ -135,6 +135,10 @@ class OutletGetter(BaseProcessor):
         if polygon_geojson_url is not None:
             polygon_geojson = utils.download_geojson(polygon_geojson_url)
             LOGGER.debug(f'Downloaded GeoJSON: {polygon_geojson}')
+            ## Can not use Features:
+            if polygon_geojson["type"] == "Feature":
+                polygon_geojson = polygon_geojson["geometry"]
+                LOGGER.debug(f'Modified GeoJSON: {polygon_geojson}')
 
         if add_geometry:
             featurecoll = outlets.get_outlet_streamsegments_in_polygon(conn,
