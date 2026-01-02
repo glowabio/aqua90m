@@ -219,12 +219,14 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
                 ncols=input_df.shape[1], colnames=input_df.columns))
 
             ## Now, for each row, get the ids (unless already present)!
-            if (
-                    ('subc_id' in input_df.columns) and
-                    ('basin_id' in input_df.columns) and
-                    ('reg_id' in input_df.columns) and
-                    (colname_site_id  in input_df.columns)
-                ):
+            if not (colname_site_id in input_df.columns):
+                err_msg = "Please add a column 'site_id' to your input dataframe."
+                LOGGER.error(err_msg)
+                raise ProcessorExecuteError(err_msg)
+            elif (('subc_id' in input_df.columns) and
+                  ('basin_id' in input_df.columns) and
+                  ('reg_id' in input_df.columns) and
+                  (colname_site_id  in input_df.columns)):
                 LOGGER.debug('Input dataframe already contains required columns (subc_id, basin_id, reg_id) for each point, using that...')
                 temp_df = input_df
             elif ('subc_id' in input_df.columns):
