@@ -96,9 +96,9 @@ def get_dijkstra_ids_to_outlet_plural(conn, input_df, colname_site_id, return_cs
 
     departing_points = _collect_departing_points_by_region_and_basin(input_df, colname_site_id)
     if return_csv:
-        return _iterate_outlets_dataframe(departing_points)
+        return _iterate_outlets_dataframe(conn, departing_points)
     elif return_json:
-        return _iterate_outlets_json(departing_points)
+        return _iterate_outlets_json(conn, departing_points)
 
 
 def _collect_departing_points_by_region_and_basin(input_df, colname_site_id):
@@ -154,12 +154,11 @@ def _collect_departing_points_by_region_and_basin(input_df, colname_site_id):
             departing_points[reg_id][basin_id][subc_id] = set()
         departing_points[reg_id][basin_id][subc_id].add(site_id)
 
-    LOGGER.info(f'DEPPPP {departing_points}')
-
+    LOGGER.info(f'Departing points (sorted by reg_id, basin_id, subc_id): {departing_points}')
     return departing_points
 
 
-def _iterate_outlets_dataframe(departing_points):
+def _iterate_outlets_dataframe(conn, departing_points):
 
     # Will construct a dataframe from this:
     everything = []
@@ -211,7 +210,7 @@ def _iterate_outlets_dataframe(departing_points):
     return output_df
 
 
-def _iterate_outlets_json(departing_points):
+def _iterate_outlets_json(conn, departing_points):
 
     # Either return as a JSON dictionary, by subc_id:
     #everything = {}
