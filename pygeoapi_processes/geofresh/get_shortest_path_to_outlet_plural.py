@@ -39,6 +39,23 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet-plural/ex
     }
 }'
 
+# Request CSV result:
+curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet-plural/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+        "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus_with_subcid.csv",
+        "colname_lon": "longitude",
+        "colname_lat": "latitude",
+        "colname_site_id": "site_id",
+        "downstream_ids_only": true,
+        "return_csv": true
+    },
+    "outputs": {
+        "transmissionMode": "reference"
+    }
+}'
+
 # Request JSON result:
 curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet-plural/execution \
 --header "Content-Type: application/json" \
@@ -210,6 +227,14 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
                 ):
                 LOGGER.debug('Input dataframe already contains required columns (subc_id, basin_id, reg_id) for each point, using that...')
                 temp_df = input_df
+            elif ('subc_id' in input_df.columns):
+                LOGGER.debug('Input dataframe already contains column subc_id, querying basin_id and reg_id for them...')
+                # This case is maybe not needed. Instead, users should send their stuff through get_ids in the beginning,
+                # during/after snapping.
+                subc_ids = input_df['subc_id'].astype(int).tolist()
+                temp_df = basic_queries.get_basinid_regid_from_subcid_plural(conn, LOGGER, subc_ids)
+                # Join back to input dataframe to add the site_ids:
+                temp_df = pd.merge(input_df, temp_df, on="subc_id")
             else:
                 LOGGER.debug('Querying required columns (subc_id, basin_id, reg_id) for each point...')
                 temp_df = basic_queries.get_subcid_basinid_regid_for_dataframe(

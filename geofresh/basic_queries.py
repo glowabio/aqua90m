@@ -278,6 +278,8 @@ def get_regid_from_basinid(conn, LOGGER, basin_id):
 
 
 def get_subcid_basinid_regid_for_dataframe(conn, tablename_prefix, input_df, colname_lon, colname_lat, colname_site_id):
+    # INPUT:  Dataframe with site_id, lon, lat
+    # OUTPUT: Dataframe with site_id, subc_id, basin_id, reg_id
     list_of_insert_rows = temp_tables.make_insertion_rows_from_dataframe(input_df, colname_lon, colname_lat, colname_site_id)
     cursor = conn.cursor()
     tablename, reg_ids = temp_tables.create_and_populate_temp_table(cursor, tablename_prefix, list_of_insert_rows)
@@ -291,6 +293,32 @@ def get_subcid_basinid_regid_for_dataframe(conn, tablename_prefix, input_df, col
     #    tablename, conn, index_col="subc_id", coerce_float=True, parse_dates=None, columns=None, chunksize=None)
     #LOGGER.debug('Reading pd.read_sql_table... Done.')
     temp_tables.drop_temp_table(cursor, tablename)
+    return output_df
+
+
+def get_basinid_regid_from_subcid_plural(conn, LOGGER, subc_ids):
+    # INPUT:  List of subc_ids (integers)
+    # OUTPUT: Dataframe with subc_id, basin_id, reg_id
+
+    ### Define query:
+    concatenated_subc_ids = ','.join(map(str, subc_ids))
+    query = f'''
+    SELECT subc_id, basin_id, reg_id
+    FROM sub_catchments
+    WHERE subc_id = ANY(ARRAY[{concatenated_subc_ids}])
+    '''.replace("\n", " ")
+
+    ### Query database:
+    #cursor = conn.cursor()
+    #LOGGER.log(logging.TRACE, 'Querying database...')
+    #cursor.execute(query)
+    #LOGGER.log(logging.TRACE, 'Querying database... DONE.')
+
+    ### Get results as a dataframe:
+    # read_sql requires the SQL and the connection
+    LOGGER.log(logging.TRACE, 'Querying database...')
+    output_df = pd.read_sql_query(query, conn)
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
     return output_df
 
 
