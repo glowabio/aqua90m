@@ -23,7 +23,7 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 '''
 # Request only the ids:
-curl -i -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet-plural/execution \
+curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet-plural/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -33,6 +33,22 @@ curl -i -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet-plural
         "colname_site_id": "site_id",
         "downstream_ids_only": true,
         "return_csv": true
+    },
+    "outputs": {
+        "transmissionMode": "reference"
+    }
+}'
+
+curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet-plural/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+        "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+        "colname_lon": "longitude",
+        "colname_lat": "latitude",
+        "colname_site_id": "site_id",
+        "downstream_ids_only": true,
+        "return_json": true
     },
     "outputs": {
         "transmissionMode": "reference"
@@ -111,8 +127,8 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
         # Output: GeoJSON with points, and for each point, a list of the downstream ids
 
         # User inputs
-        return_csv  = data.get('return_csv',  False)
-        return_json = data.get('return_json', False)
+        return_csv  = data.get('return_csv', None)
+        return_json = data.get('return_json', None)
         # CSV, to be downloaded via URL
         csv_url = data.get('csv_url', None)
         colname_lon = data.get('colname_lon', 'lon')
@@ -121,30 +137,37 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
         comment = data.get('comment', None)
         geometry_only = data.get('geometry_only', False)
         downstream_ids_only = data.get('downstream_ids_only', False)
-        add_downstream_ids = data.get('add_downstream_ids', True)
+        add_downstream_ids = data.get('add_downstream_ids', False)
         # GeoJSON:
         points_geojson = None # TODO
 
-        # Check parameters:
-        if csv_url is not None:
-            if colname_site_id is None:
-                err_msg = "If you provide a CSV file, you must provide colname_site_id!"
-                LOGGER.error(err_msg)
-                raise ProcessorExecuteError(err_msg)
-            if not downstream_ids_only:
-                err_msg = "Cannot return geometries for CSV input yet! (And probably never will, because returning geometry inside a CSV does not make sense...)"
-                LOGGER.error(err_msg)
-                raise NotImplementedError(err_msg)
-                # TODO: Any idea how to return linestrings in a csv? Is that required, or even desired at all?
+        ########################
+        ### Check parameters ###
+        ########################
 
-        if return_csv and return_json:
-            err_msg = "Please set either return_csv or return_json to true (not both)!"
+        utils.exactly_one_param(dict(return_csv=return_csv, return_json=return_json))
+
+        if not downstream_ids_only:
+            err_msg = "Cannot return geometries for CSV input yet! (And probably never will, because returning geometry inside a CSV does not make sense...)"
+            LOGGER.error(err_msg)
+            raise NotImplementedError(err_msg)
+            # TODO: Any idea how to return linestrings in a csv? Is that required, or even desired at all?
+
+        if geometry_only:
+            err_msg = "geometry_only: Returning geometry is not supported yet."
+            LOGGER.error(err_msg)
+            raise NotImplementedError(err_msg)
+
+        if add_downstream_ids:
+            err_msg = "geometry_only: Returning geometry with added downstream ids is not supported yet."
+            LOGGER.error(err_msg)
+            raise NotImplementedError(err_msg)
+
+        if csv_url is not None and colname_site_id is None:
+            err_msg = "If you provide a CSV file, you must provide colname_site_id!"
             LOGGER.error(err_msg)
             raise ProcessorExecuteError(err_msg)
-        if not return_csv and not return_json:
-            err_msg = "Please set either return_csv or return_json to true!"
-            LOGGER.error(err_msg)
-            raise ProcessorExecuteError(err_msg)
+
 
 
         ##################
@@ -172,9 +195,10 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
         elif csv_url is not None:
 
             # Download CSV:
-            LOGGER.debug('Accessing input CSV from: %s' % csv_url)
+            LOGGER.debug(f'Accessing input CSV from: {csv_url}')
             input_df = utils.access_csv_as_dataframe(csv_url)
-            LOGGER.debug('Accessing input CSV... DONE. Found %s columns (names: %s)' % (input_df.shape[1], input_df.columns))
+            LOGGER.debug('Accessing input CSV... DONE. Found {ncols} columns (names: {colnames})'.format(
+                ncols=input_df.shape[1], colnames=input_df.columns))
 
             ## Now, for each row, get the ids (unless already present)!
             if (
