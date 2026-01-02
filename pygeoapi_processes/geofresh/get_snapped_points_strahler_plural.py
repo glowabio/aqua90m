@@ -112,6 +112,33 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
   }
 }'
 
+# Requesting no distance
+# INPUT:  GeoJSON directly (GeometryCollection)
+# OUTPUT: GeoJSON directly (FeatureCollection)
+# Tested 2026-01-02 (commit 38cf498ca)
+curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "points_geojson": {
+        "type": "GeometryCollection",
+        "geometries": [
+            {
+                "type": "Point",
+                "coordinates": [9.931555, 54.695070]
+            },
+            {
+                "type": "Point",
+                "coordinates": [9.921555, 54.295070]
+            }
+        ]
+    },
+    "result_format": "geojson",
+    "min_strahler": 5,
+    "add_distance": false
+  }
+}'
+
 # INPUT:  GeoJSON directly (MultiPoint)
 # OUTPUT: GeoJSON directly (FeatureCollection)
 # Tested 2026-01-02 (commit 38cf498ca)
