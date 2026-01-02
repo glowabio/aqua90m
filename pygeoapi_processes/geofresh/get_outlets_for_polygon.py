@@ -123,13 +123,18 @@ class OutletGetter(BaseProcessor):
     def _execute(self, data, requested_outputs, conn):
 
         # User inputs
-        polygon_geojson = data.get('polygon')
+        # GeoJSON, posted directly
+        polygon_geojson = data.get('polygon', None)
+        # GeoJSON, to be downloaded via URL:
+        polygon_geojson_url = data.get('polygon_geojson_url', None)
         min_strahler = data.get('min_strahler')
         add_geometry = data.get('add_geometry', False)
         comment = data.get('comment') # optional
 
-        # Overall goal: Get the upstream subc_ids!
-        #LOGGER.info('START: Getting upstream subc_ids for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
+        ## Download GeoJSON if user provided URL:
+        if polygon_geojson_url is not None:
+            polygon_geojson = utils.download_geojson(polygon_geojson_url)
+            LOGGER.debug(f'Downloaded GeoJSON: {polygon_geojson}')
 
         if add_geometry:
             featurecoll = outlets.get_outlet_streamsegments_in_polygon(conn,
