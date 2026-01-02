@@ -22,8 +22,9 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 '''
 
-# Request with CSV input and CSV output:
-curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plural/execution' \
+# THIS IS EQUIVALENT TO: get-local-ids-plural
+# Request with CSV input and output:
+curl -X POST https://${PYSERVER}/processes/get-local-subcids-plural/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
@@ -39,12 +40,14 @@ curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plura
 }'
 
 
+# THIS IS EQUIVALENT TO: get-local-ids-plural
 # Request plain JSON (not GeoJSON: Cannot request Feature/Geometry, does not apply)
 # Input points: GeoJSON
-curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plural/execution' \
+curl -X POST https://${PYSERVER}/processes/get-local-subcids-plural/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
+        "colname_site_id": "site_id",
         "points_geojson": {
             "type": "FeatureCollection",
             "features": [
@@ -81,14 +84,19 @@ curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plura
             ]
         },
         "comment": "schlei-near-rabenholz"
+    },
+    "outputs": {
+        "transmissionMode": "reference"
     }
 }'
 
 
-curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plural/execution' \
+# THIS IS EQUIVALENT TO: get-local-ids-plural
+curl -X POST https://${PYSERVER}/processes/get-local-subcids-plural/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
+        "colname_site_id": "site_id",
         "points_geojson": {
             "type": "FeatureCollection",
             "features": [
@@ -110,13 +118,16 @@ curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plura
             ]
         },
         "comment": "schlei-near-rabenholz"
+    },
+    "outputs": {
+        "transmissionMode": "reference"
     }
 }'
 
 
 # Request plain JSON (not GeoJSON: Cannot request Feature/Geometry, does not apply)
 # Input points: Lonlat string
-curl -X POST --location 'http://localhost:5000/processes/get-local-subcids-plural/execution' \
+curl -X POST https://${PYSERVER}/processes/get-local-subcids-plural/execution \
 --header 'Content-Type: application/json' \
 --data '{
     "inputs": {
@@ -308,7 +319,14 @@ class LocalSubcidGetterPlural(BaseProcessor):
             LOGGER.error("Missing parameter: colname_site_id")
             err_msg = "Please provide the column name of the site ids inside your csv file (parameter colname_site_id)."
             raise ProcessorExecuteError(err_msg)
-
+        elif points_geojson is not None and colname_site_id is None:
+            LOGGER.error("Missing parameter: colname_site_id")
+            err_msg = "Please provide the attribute name of the site ids inside your GeoJSON (parameter colname_site_id)."
+            raise ProcessorExecuteError(err_msg)
+        elif points_geojson_url is not None and colname_site_id is None:
+            LOGGER.error("Missing parameter: colname_site_id")
+            err_msg = "Please provide the attribute name of the site ids inside your GeoJSON file (parameter colname_site_id)."
+            raise ProcessorExecuteError(err_msg)
 
         ## Download GeoJSON if user provided URL:
         if points_geojson_url is not None:
