@@ -19,8 +19,9 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 
 '''
-INPUT:  CSV
-OUTPUT: CSV
+## INPUT:  CSV File
+## OUTPUT: CSV File
+## Tested 2026-01-02
 curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -35,8 +36,9 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution"
   }
 }'
 
-INPUT:  CSV
-OUTPUT: JSON
+## INPUT:  CSV File
+## OUTPUT: GeoJSON File (FeatureCollection)
+## Tested 2026-01-02
 curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -52,8 +54,9 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution"
   }
 }'
 
-INPUT:  JSON
-OUTPUT: JSON
+## INPUT:  GeoJSON File (FeatureCollection)
+## OUTPUT: GeoJSON File (FeatureCollection)
+## Tested 2026-01-02
 curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -67,8 +70,9 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution"
   }
 }'
 
-# INPUT: MultiPoint
-# OUTPUT: FeatureCollection
+## INPUT:  GeoJSON directly (MultiPoint)
+## OUTPUT: GeoJSON directly (FeatureCollection)
+## Tested 2026-01-02
 curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -84,8 +88,9 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution"
   }
 }'
 
-# INPUT: FeatureCollection
-# OUTPUT: FeatureCollection
+## INPUT:  GeoJSON directly (FeatureCollection)
+## OUTPUT: GeoJSON directly (FeatureCollection)
+## Tested 2026-01-02
 curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -117,8 +122,9 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution"
   }
 }'
 
-# INPUT: FeatureCollection
-# OUTPUT: CSV
+## INPUT:  GeoJSON directly (FeatureCollection)
+## OUTPUT: CSV File
+## Tested 2026-01-02
 curl -X POST "https://$PYSERVER/processes/get-snapped-points-plural/execution" \
 --header "Content-Type: application/json" \
 --data '{
