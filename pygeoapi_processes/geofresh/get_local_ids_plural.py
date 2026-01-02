@@ -23,8 +23,10 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 '''
 
-## INPUT:  CSV
-## OUTPUT: CSV
+## Requesting only reg_id. CSV input and output.
+## INPUT:  CSV File
+## OUTPUT: CSV File
+## Tested 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
 --header 'Content-Type: application/json' \
 --data '{
@@ -41,8 +43,9 @@ curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
     }
 }'
 
-## INPUT:  GeoJSON input (FeatureCollection)
-## OUTPUT: Plain JSON
+## INPUT:  GeoJSON File (FeatureCollection)
+## OUTPUT: Plain JSON File
+## Tested 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
 --header 'Content-Type: application/json' \
 --data '{
@@ -56,9 +59,25 @@ curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
     }
 }'
 
+## INPUT:  GeoJSON File (GeometryCollection)
+## OUTPUT: Plain JSON File
+## Tested 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
+--header 'Content-Type: application/json' \
+--data '{
+    "inputs": {
+        "colname_site_id": "my_site",
+        "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometrycollection_points.json",
+        "comment": "schlei-near-rabenholz"
+    },
+    "outputs": {
+        "transmissionMode": "reference"
+    }
+}'
 
-## INPUT:  GeoJSON input (FeatureCollection)
-## OUTPUT: Plain JSON
+## INPUT:  GeoJSON directly (FeatureCollection)
+## OUTPUT: Plain JSON directly
+## Tested 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
 --header 'Content-Type: application/json' \
 --data '{
@@ -103,8 +122,9 @@ curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
     }
 }'
 
-## INPUT:  GeoJSON input (GeometryCollection)
-## OUTPUT: Plain JSON
+## INPUT:  GeoJSON directly (GeometryCollection)
+## OUTPUT: Plain JSON directly
+## Tested 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
 --header 'Content-Type: application/json' \
 --data '{
@@ -132,14 +152,12 @@ curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
         },
         "which_ids": ["subc_id", "basin_id", "reg_id"],
         "comment": "schlei-near-rabenholz"
-    },
-    "outputs": {
-        "transmissionMode": "reference"
     }
 }'
 
-
-# Not Implemented: TODO:
+## TODO: Not Implemented: Requesting only reg_id when input is GeoJSON
+## INPUT:  GeoJSON directly (GeometryCollection)
+## OUTPUT: Plain JSON directly
 curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
 --header 'Content-Type: application/json' \
 --data '{
@@ -173,8 +191,9 @@ curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
     }
 }'
 
-
-## Another Feature Collection
+## INPUT:  GeoJSON directly (FeatureCollection)
+## OUTPUT: Plain JSON File
+## Tested: 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
 --header 'Content-Type: application/json' \
 --data '{
@@ -201,6 +220,9 @@ curl -X POST https://${PYSERVER}/processes/get-local-ids-plural/execution \
             ]
         },
         "comment": "schlei-near-rabenholz"
+    },
+    "outputs": {
+        "transmissionMode": "reference"
     }
 }'
 
