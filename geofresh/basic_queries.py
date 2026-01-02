@@ -11,12 +11,14 @@ try:
     import aqua90m.utils.extent_helpers as extent_helpers
     import aqua90m.utils.geojson_helpers as geojson_helpers
     import aqua90m.utils.exceptions as exc
+    import aqua90m.geofresh.temp_table_for_queries as temp_tables
 except ModuleNotFoundError as e1:
     try:
         # If we are using this from pygeoapi:
         import pygeoapi.process.aqua90m.utils.extent_helpers as extent_helpers
         import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
         import pygeoapi.process.aqua90m.utils.exceptions as exc
+        import pygeoapi.process.aqua90m.geofresh.temp_table_for_queries as temp_tables
     except ModuleNotFoundError as e2:
         msg = 'Module not found: '+e1.name+' (imported in '+__name__+').' + \
               ' If this is being run from' + \
@@ -267,6 +269,30 @@ def get_regid_from_basinid(conn, LOGGER, basin_id):
         reg_id = row[0]
 
     return reg_id
+
+
+#################################
+### for many points at a time ###
+### without loops/iteration   ###
+#################################
+
+
+def get_subcid_basinid_regid_for_dataframe(conn, tablename_prefix, input_df, colname_lon, colname_lat, colname_site_id):
+    list_of_insert_rows = temp_tables.make_insertion_rows_from_dataframe(input_df, colname_lon, colname_lat, colname_site_id)
+    cursor = conn.cursor()
+    tablename, reg_ids = temp_tables.create_and_populate_temp_table(cursor, tablename_prefix, list_of_insert_rows)
+    query = f'''
+    SELECT site_id, subc_id, basin_id, reg_id
+    FROM {tablename}
+    '''.replace("\n", " ")
+    output_df = pd.read_sql_query(query, conn)
+    #LOGGER.debug('Reading pd.read_sql_table...')
+    #output_df = pd.read_sql_table(
+    #    tablename, conn, index_col="subc_id", coerce_float=True, parse_dates=None, columns=None, chunksize=None)
+    #LOGGER.debug('Reading pd.read_sql_table... Done.')
+    temp_tables.drop_temp_table(cursor, tablename)
+    return output_df
+
 
 
 #################################
