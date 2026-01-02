@@ -18,7 +18,7 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 '''
 # Request a GeometryCollection (LineStrings):
-curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execution" \
+curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -30,7 +30,7 @@ curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execut
 }'
 
 # Request a FeatureCollection (LineStrings):
-curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execution" \
+curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -43,13 +43,27 @@ curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execut
 }'
 
 # Request only the ids:
-curl -X POST "http://localhost:5000/processes/get-shortest-path-to-outlet/execution" \
+curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "lon": 9.937520027160646,
     "lat": 54.69422745526058,
     "downstream_ids_only": true
+    }
+}'
+
+# Request a FeatureCollection (LineStrings), but only up to strahler 3 (included)
+curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.937520027160646,
+    "lat": 54.69422745526058,
+    "geometry_only": false,
+    "add_downstream_ids": true,
+    "only_up_to_strahler": 4,
+    "comment": "bla"
     }
 }'
 
@@ -125,17 +139,21 @@ class ShortestPathToOutletGetter(BaseProcessor):
         geometry_only = data.get('geometry_only', False)
         downstream_ids_only = data.get('downstream_ids_only', False)
         add_downstream_ids = data.get('add_downstream_ids', True)
+        only_up_to_strahler = data.get('only_up_to_strahler', None)
+
+        # Parse int:
+        only_up_to_strahler = int(only_up_to_strahler) if only_up_to_strahler is not None else None
 
         # Overall goal: Get the dijkstra shortest path (as linestrings)!
 
         # Get reg_id, basin_id, subc_id
         if subc_id1 is not None:
             # (special case: user provided subc_id instead of lonlat!)
-            LOGGER.info('START: Getting dijkstra shortest path for subc_id %s to sea' % subc_id1)
+            LOGGER.info(f'START: Getting dijkstra shortest path for subc_id {subc_id1} to sea')
             subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
                 conn, LOGGER, subc_id = subc_id1)
         else:
-            LOGGER.info('START: Getting dijkstra shortest path for lon %s, lat %s to sea' % (lon_start, lat_start))
+            LOGGER.info(f'START: Getting dijkstra shortest path for lon {lon_start}, lat {lat_start} to sea')
             subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
                 conn, LOGGER, lon_start, lat_start)
 
@@ -150,8 +168,16 @@ class ShortestPathToOutletGetter(BaseProcessor):
         json_result = {}
 
         # Get subc_ids of the whole connection...
-        LOGGER.debug('Getting network connection for subc_id: start = %s, end = %s' % (subc_id1, subc_id2))
+        LOGGER.debug(f'Getting network connection for subc_id: start = {subc_id1}, end = {subc_id2}')
         segment_ids = routing.get_dijkstra_ids_one_to_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
+
+        # Filter by strahler, e.g. only strahler orders 1-3, by specifying only_up_to_strahler = 3
+        if only_up_to_strahler is not None:
+            LOGGER.debug(f'User requested to exclude {only_up_to_strahler} and higher...')
+            LOGGER.debug(f'Before filtering by strahler: {len(segment_ids)}')
+            segment_ids = filter_subcid_by_strahler(
+                conn, segment_ids, reg_id1, basin_id1, only_up_to_strahler)
+            LOGGER.debug(f'After filtering by strahler: {len(segment_ids)}')
 
         # Only return the ids, no geometry at all:
         if downstream_ids_only:
@@ -169,7 +195,7 @@ class ShortestPathToOutletGetter(BaseProcessor):
 
             # Add some info to the FeatureCollection:
             # TODO: Should we include the requested lon and lat? Maybe as a point?
-            json_result["description"] = "Downstream path from subcatchment %s to the outlet of its basin." % subc_id1
+            json_result["description"] = f"Downstream path from subcatchment {subc_id1} to the outlet of its basin."
             json_result["subc_id"] = subc_id1 # TODO how to name the point from where we route to outlet?
             json_result["outlet_id"] = subc_id2
             json_result["downstream_path_of"] = subc_id1
@@ -193,3 +219,27 @@ class ShortestPathToOutletGetter(BaseProcessor):
             return 'application/json', output_dict_with_url
         else:
             return 'application/json', json_result
+
+
+# Util for filtering
+def filter_subcid_by_strahler(conn, subc_ids, reg_id, basin_id, only_up_to_strahler):
+    # INPUT:  List of subc_ids (integers)
+    # OUTPUT: List of subc_ids (integers)
+
+    ## Check if strahler is integer:
+    only_up_to_strahler = int(only_up_to_strahler)
+
+    ## Get strahler attribute from database:
+    columns=['subc_id', 'basin_id', 'reg_id', 'strahler']
+    temp_df = basic_queries.get_basinid_regid_from_subcid_plural(
+        conn, LOGGER, subc_ids, columns=columns)
+    LOGGER.debug(f'BEFORE: {temp_df}')
+
+    ## Filter dataframe:
+    output_df = temp_df[temp_df["strahler"] <= only_up_to_strahler]
+    LOGGER.debug(f'AFTER: {output_df}')
+
+    ## Return list:
+    filtered_subc_ids = output_df["subc_id"].astype(int).tolist()
+    return filtered_subc_ids
+

@@ -296,26 +296,21 @@ def get_subcid_basinid_regid_for_dataframe(conn, tablename_prefix, input_df, col
     return output_df
 
 
-def get_basinid_regid_from_subcid_plural(conn, LOGGER, subc_ids):
+def get_basinid_regid_from_subcid_plural(conn, LOGGER, subc_ids, columns=['subc_id', 'basin_id', 'reg_id']):
     # INPUT:  List of subc_ids (integers)
     # OUTPUT: Dataframe with subc_id, basin_id, reg_id
+    # TODO: This does not use reg_id for querying...
 
     ### Define query:
-    concatenated_subc_ids = ','.join(map(str, subc_ids))
+    subc_ids = ','.join(map(str, subc_ids))
+    columns = ','.join(columns)
     query = f'''
-    SELECT subc_id, basin_id, reg_id
-    FROM sub_catchments
-    WHERE subc_id = ANY(ARRAY[{concatenated_subc_ids}])
+    SELECT {columns}
+    FROM stream_segments
+    WHERE subc_id = ANY(ARRAY[{subc_ids}])
     '''.replace("\n", " ")
 
-    ### Query database:
-    #cursor = conn.cursor()
-    #LOGGER.log(logging.TRACE, 'Querying database...')
-    #cursor.execute(query)
-    #LOGGER.log(logging.TRACE, 'Querying database... DONE.')
-
     ### Get results as a dataframe:
-    # read_sql requires the SQL and the connection
     LOGGER.log(logging.TRACE, 'Querying database...')
     output_df = pd.read_sql_query(query, conn)
     LOGGER.log(logging.TRACE, 'Querying database... DONE.')
