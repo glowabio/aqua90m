@@ -443,7 +443,7 @@ def get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson, colname
     return output
 
 
-def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname_lon, colname_lat, colname_site_id):
+def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id):
     # Input:  Pandas Dataframe (with site_id, lon, lat)
     # Output: Pandas Dataframe (with site_id, reg_id, basin_id, subc_id)
 
@@ -457,16 +457,16 @@ def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname
     # Iterate over points and call "get_subcid_basinid_regid" for each point:
     # TODO: This is not super efficient, but the quickest to implement :)
     # TODO: Read this for alternatives to iteration: https://stackoverflow.com/questions/16476924/how-can-i-iterate-over-rows-in-a-pandas-dataframe
-    num = input_dataframe.shape[0]
+    num = input_df.shape[0]
     LOGGER.debug(f'Getting subcatchment for {num} lon, lat pairs...')
 
     # Retrieve using column index, not colname - this is faster:
-    colidx_lon = input_dataframe.columns.get_loc(colname_lon)
-    colidx_lat = input_dataframe.columns.get_loc(colname_lat)
-    colidx_site_id = input_dataframe.columns.get_loc(colname_site_id)
+    colidx_lon = input_df.columns.get_loc(colname_lon)
+    colidx_lat = input_df.columns.get_loc(colname_lat)
+    colidx_site_id = input_df.columns.get_loc(colname_site_id)
 
     # Iterate over rows:
-    for row in input_dataframe.itertuples(index=False):
+    for row in input_df.itertuples(index=False):
 
         # Get coordinates from input:
         lon = row[colidx_lon]
@@ -496,7 +496,7 @@ def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname
         subc_ids.append(str(subc_id))
 
     # Finished collecting the results, now make pandas dataframe:
-    dataframe = pd.DataFrame(
+    output_df = pd.DataFrame(
         everything,
         columns=['site_id', 'reg_id', 'basin_id', 'subc_id']
     ).astype({
@@ -508,7 +508,7 @@ def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname
 
     # Change them to integers:
     # TODO: Pandas format, better use .astype() during pd.DataFrame (above)
-    dataframe[['reg_id', 'basin_id', 'subc_id']] = dataframe[['reg_id', 'basin_id', 'subc_id']].apply(pd.to_numeric)
+    output_df[['reg_id', 'basin_id', 'subc_id']] = output_df[['reg_id', 'basin_id', 'subc_id']].apply(pd.to_numeric)
 
     # Extensive logging of stats:
     LOGGER.log(logging.TRACE, 'Of %s points, ...' % num)
@@ -535,10 +535,10 @@ def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname
             LOGGER.log(logging.TRACE, '... %s points fall into subcatchment with subc_id %s' % (subc_id_counts[subc_id], subc_id))
 
     # Return result
-    return dataframe
+    return output_df
 
 
-def get_basinid_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname_lon, colname_lat, colname_site_id):
+def get_basinid_regid_for_all_1csv(conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id):
     # Input: Pandas Dataframe
     # Output: Pandas Dataframe
 
@@ -551,16 +551,16 @@ def get_basinid_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname_lon, c
     # Iterate over points and call "get_basinid_regid" for each point:
     # TODO: This is not super efficient, but the quickest to implement :)
     # TODO: Read this for alternatives to iteration: https://stackoverflow.com/questions/16476924/how-can-i-iterate-over-rows-in-a-pandas-dataframe
-    num = input_dataframe.shape[0]
+    num = input_df.shape[0]
     LOGGER.debug(f'Getting basin_id, reg_id for {num} lon, lat pairs...')
 
     # Retrieve using column index, not colname - this is faster:
-    colidx_lon = input_dataframe.columns.get_loc(colname_lon)
-    colidx_lat = input_dataframe.columns.get_loc(colname_lat)
-    colidx_site_id = input_dataframe.columns.get_loc(colname_site_id)
+    colidx_lon = input_df.columns.get_loc(colname_lon)
+    colidx_lat = input_df.columns.get_loc(colname_lat)
+    colidx_site_id = input_df.columns.get_loc(colname_site_id)
 
     # Iterate over rows:
-    for row in input_dataframe.itertuples(index=False):
+    for row in input_df.itertuples(index=False):
 
         # Get coordinates from input:
         lon = row[colidx_lon]
@@ -581,11 +581,11 @@ def get_basinid_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname_lon, c
         everything.append([site_id, reg_id, basin_id])
 
     # Finished collecting the results, now make pandas dataframe:
-    dataframe = pd.DataFrame(everything, columns=['site_id', 'reg_id', 'basin_id'])
-    return dataframe
+    output_df = pd.DataFrame(everything, columns=['site_id', 'reg_id', 'basin_id'])
+    return output_df
 
 
-def get_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname_lon, colname_lat, colname_site_id):
+def get_regid_for_all_1csv(conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id):
     # Input: Pandas Dataframe
     # Output: Pandas Dataframe
 
@@ -597,16 +597,16 @@ def get_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname_lon, colname_l
     # Iterate over points and call "get_regid" for each point:
     # TODO: This is not super efficient, but the quickest to implement :)
     # TODO: Read this for alternatives to iteration: https://stackoverflow.com/questions/16476924/how-can-i-iterate-over-rows-in-a-pandas-dataframe
-    num = input_dataframe.shape[0]
+    num = input_df.shape[0]
     LOGGER.debug(f'Getting reg_id for {num} lon, lat pairs...')
 
     # Retrieve using column index, not colname - this is faster:
-    colidx_lon = input_dataframe.columns.get_loc(colname_lon)
-    colidx_lat = input_dataframe.columns.get_loc(colname_lat)
-    colidx_site_id = input_dataframe.columns.get_loc(colname_site_id)
+    colidx_lon = input_df.columns.get_loc(colname_lon)
+    colidx_lat = input_df.columns.get_loc(colname_lat)
+    colidx_site_id = input_df.columns.get_loc(colname_site_id)
 
     # Iterate over rows:
-    for row in input_dataframe.itertuples(index=False):
+    for row in input_df.itertuples(index=False):
 
         # Get coordinates from input:
         lon = row[colidx_lon]
@@ -626,11 +626,11 @@ def get_regid_for_all_1csv(conn, LOGGER, input_dataframe, colname_lon, colname_l
         everything.append([site_id, reg_id])
 
     # Finished collecting the results, now make pandas dataframe:
-    dataframe = pd.DataFrame(everything, columns=['site_id', 'reg_id'])
-    return dataframe
+    output_df = pd.DataFrame(everything, columns=['site_id', 'reg_id'])
+    return output_df
 
 
-def get_basinid_regid_for_all_from_subcid_1csv(conn, LOGGER, input_dataframe, colname_subc_id, colname_site_id):
+def get_basinid_regid_for_all_from_subcid_1csv(conn, LOGGER, input_df, colname_subc_id, colname_site_id):
     # Input: Pandas Dataframe
     # Output: Pandas Dataframe
 
@@ -643,15 +643,15 @@ def get_basinid_regid_for_all_from_subcid_1csv(conn, LOGGER, input_dataframe, co
     # Iterate over points and call "get_basinid_regid" for each point:
     # TODO: This is not super efficient, but the quickest to implement :)
     # TODO: Read this for alternatives to iteration: https://stackoverflow.com/questions/16476924/how-can-i-iterate-over-rows-in-a-pandas-dataframe
-    num = input_dataframe.shape[0]
+    num = input_df.shape[0]
     LOGGER.debug(f'Getting basin_id, reg_id for {num} subc_ids...')
 
     # Retrieve using column index, not colname - this is faster:
-    colidx_subc_id = input_dataframe.columns.get_loc(colname_subc_id)
-    colidx_site_id = input_dataframe.columns.get_loc(colname_site_id)
+    colidx_subc_id = input_df.columns.get_loc(colname_subc_id)
+    colidx_site_id = input_df.columns.get_loc(colname_site_id)
 
     # Iterate over rows:
-    for row in input_dataframe.itertuples(index=False):
+    for row in input_df.itertuples(index=False):
 
         # Get coordinates from input:
         subc_id = row[colidx_subc_id]
@@ -671,8 +671,8 @@ def get_basinid_regid_for_all_from_subcid_1csv(conn, LOGGER, input_dataframe, co
         everything.append([site_id, subc_id, reg_id, basin_id])
 
     # Finished collecting the results, now make pandas dataframe:
-    dataframe = pd.DataFrame(everything, columns=['site_id', 'subc_id', 'reg_id', 'basin_id'])
-    return dataframe
+    output_df = pd.DataFrame(everything, columns=['site_id', 'subc_id', 'reg_id', 'basin_id'])
+    return output_df
 
 
 #######################

@@ -8,8 +8,8 @@ def dataframe_to_geojson_points(input_df, colname_lon, colname_lat):
     features = []
 
     # Retrieve using column index, not colname - this is faster:
-    colidx_lon = input_dataframe.columns.get_loc(colname_lon)
-    colidx_lat = input_dataframe.columns.get_loc(colname_lat)
+    colidx_lon = input_df.columns.get_loc(colname_lon)
+    colidx_lat = input_df.columns.get_loc(colname_lat)
     for row in input_df.itertuples(index=False):
         lon = row[colidx_lon]
         lat = row[colidx_lat]

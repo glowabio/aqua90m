@@ -76,7 +76,7 @@ def make_insertion_rows_from_geojson(geojson, colname_site_id=None):
     return list_of_insert_rows
 
 
-def make_insertion_rows_from_dataframe(dataframe, colname_lon, colname_lat, colname_site_id):
+def make_insertion_rows_from_dataframe(input_df, colname_lon, colname_lat, colname_site_id):
     '''
     From an input dataframe, make SQL rows that can be used as INSERT statements,
     to populate a temporary table with site_id, lon, lat and a geom.
@@ -84,11 +84,11 @@ def make_insertion_rows_from_dataframe(dataframe, colname_lon, colname_lat, coln
     list_of_insert_rows = []
 
     # Retrieve using column index, not colname - this is faster:
-    colidx_lon = input_dataframe.columns.get_loc(colname_lon)
-    colidx_lat = input_dataframe.columns.get_loc(colname_lat)
-    colidx_site_id = input_dataframe.columns.get_loc(colname_site_id)
+    colidx_lon = input_df.columns.get_loc(colname_lon)
+    colidx_lat = input_df.columns.get_loc(colname_lat)
+    colidx_site_id = input_df.columns.get_loc(colname_site_id)
 
-    for row in dataframe.itertuples(index=False):
+    for row in input_df.itertuples(index=False):
         lon = row[colidx_lon]
         lat = row[colidx_lat]
         site_id = row[colidx_site_id]

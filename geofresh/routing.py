@@ -109,10 +109,10 @@ def _collect_departing_points_by_region_and_basin(input_df, colname_site_id):
     departing_points = {}
 
     # Retrieve using column index, not colname - this is faster:
-    colidx_site_id  = input_dataframe.columns.get_loc(colname_site_id)
-    colidx_subc_id  = input_dataframe.columns.get_loc("subc_id")
-    colidx_basin_id = input_dataframe.columns.get_loc("basin_id")
-    colidx_reg_id   = input_dataframe.columns.get_loc("reg_id")
+    colidx_site_id  = input_df.columns.get_loc(colname_site_id)
+    colidx_subc_id  = input_df.columns.get_loc("subc_id")
+    colidx_basin_id = input_df.columns.get_loc("basin_id")
+    colidx_reg_id   = input_df.columns.get_loc("reg_id")
 
     i = 0
     for row in input_df.itertuples(index=False):

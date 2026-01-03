@@ -10,7 +10,7 @@ def filter_dataframe(input_df, keep_attribute, keep_values):
 
     # Iterate over all rows:
     # Retrieve using column index, not colname - this is faster:
-    colidx = input_dataframe.columns.get_loc(keep_attribute)
+    colidx = input_df.columns.get_loc(keep_attribute)
     for row in input_df.itertuples(index=False):
         curr_value = row[colidx]
 
@@ -20,8 +20,8 @@ def filter_dataframe(input_df, keep_attribute, keep_values):
             everything.append(row)
 
     # Finished collecting the results, now make pandas dataframe:
-    dataframe = pd.DataFrame(everything)
-    return dataframe
+    output_df = pd.DataFrame(everything)
+    return output_df
 
 def filter_dataframe_by_condition(input_df, keep_attribute, condition_dict):
     # Filter by numeric condition
@@ -30,7 +30,7 @@ def filter_dataframe_by_condition(input_df, keep_attribute, condition_dict):
 
     # Iterate over all rows:
     # Retrieve using column index, not colname - this is faster:
-    colidx = input_dataframe.columns.get_loc(keep_attribute)
+    colidx = input_df.columns.get_loc(keep_attribute)
     for row in input_df.itertuples(index=False):
         curr_value = row[colidx]
 
@@ -40,8 +40,8 @@ def filter_dataframe_by_condition(input_df, keep_attribute, condition_dict):
             everything.append(row)
 
     # Finished collecting the results, now make pandas dataframe:
-    dataframe = pd.DataFrame(everything)
-    return dataframe
+    output_df = pd.DataFrame(everything)
+    return output_df
 
 
 def parse_filter_condition(expr, var="x"):
@@ -183,3 +183,4 @@ if __name__ == "__main__":
     print(f'Keep {keep_attribute} ({condition}): {condition_dict}')
     out_df2 = filter_dataframe_by_condition(out_df, keep_attribute, condition_dict)
     print('OUT 2: %s' % out_df2)
+
