@@ -185,5 +185,3 @@ class OutletGetter(GeoFreshBaseProcessor):
         ################
 
         return self.return_results('outlets', requested_outputs, output_df=None, output_json=output_json, comment=comment)
-
-

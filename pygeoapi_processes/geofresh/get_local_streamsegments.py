@@ -102,5 +102,3 @@ class LocalStreamSegmentsGetter(GeoFreshBaseProcessor):
             # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             return self.return_results('stream_segment', requested_outputs, output_df=None, output_json=streamsegment_feature, comment=comment)
 
-
-

@@ -160,4 +160,3 @@ class UpstreamStreamSegmentsGetter(GeoFreshBaseProcessor):
 
             # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             return self.return_results('upstream_stream_segments', requested_outputs, output_df=None, output_json=feature_coll, comment=comment)
-

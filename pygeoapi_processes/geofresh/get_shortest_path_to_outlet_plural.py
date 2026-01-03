@@ -222,4 +222,3 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
         #####################
 
         return self.return_results('downstream_path', requested_outputs, output_df=output_df, output_json=output_json, comment=comment)
-

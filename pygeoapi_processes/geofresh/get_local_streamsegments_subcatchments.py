@@ -49,7 +49,6 @@ curl -X POST https://${PYSERVER}/processes/get-local-streamsegments-subcatchment
     }
 }'
 
-
 '''
 
 # Process metadata and description
@@ -130,5 +129,4 @@ class LocalStreamSegmentSubcatchmentGetter(GeoFreshBaseProcessor):
 
             # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             return self.return_results('stream_segment_subcatchment', requested_outputs, output_df=None, output_json=feature_coll, comment=comment)
-
 

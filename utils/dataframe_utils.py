@@ -183,4 +183,3 @@ if __name__ == "__main__":
     print(f'Keep {keep_attribute} ({condition}): {condition_dict}')
     out_df2 = filter_dataframe_by_condition(out_df, keep_attribute, condition_dict)
     print('OUT 2: %s' % out_df2)
-

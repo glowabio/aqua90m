@@ -356,6 +356,3 @@ class SnappedPointsStrahlerGetterPlural(GeoFreshBaseProcessor):
         #####################
 
         return self.return_results('snapped_points', requested_outputs, output_df=output_df, output_json=output_json, comment=comment)
-
-
-

@@ -96,5 +96,3 @@ class SnappedPointsGetter(GeoFreshBaseProcessor):
 
             # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             return self.return_results('snapped_point', requested_outputs, output_df=None, output_json=snappedpoint_feature, comment=comment)
-
-

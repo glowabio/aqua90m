@@ -118,5 +118,3 @@ class UpstreamBboxGetter(GeoFreshBaseProcessor):
 
             # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             return self.return_results('bbox', requested_outputs, output_df=None, output_json=bbox_feature, comment=comment)
-
-

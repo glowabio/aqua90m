@@ -119,5 +119,3 @@ class SnappedPointsGetterPlus(GeoFreshBaseProcessor):
             feature_coll["features"].append(subcatchment_feature)
 
             return self.return_results('snapped_point', requested_outputs, output_df=None, output_json=feature_coll, comment=comment)
-
-

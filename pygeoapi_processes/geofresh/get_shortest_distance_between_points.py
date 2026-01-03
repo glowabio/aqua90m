@@ -126,7 +126,6 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-distance-between-points/
   }
 }'
 
-
 '''
 
 # Process metadata and description
@@ -387,4 +386,3 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         #####################
 
         return self.return_results('distances_matrix', requested_outputs, output_df=output_df, output_json=json_result, comment=comment)
-
