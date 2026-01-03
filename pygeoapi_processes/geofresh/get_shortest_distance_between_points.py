@@ -61,7 +61,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-distance-between-points/
 ############################################
 
 # Input: Multipoint (one set of points)
-# Tested: 2026-01-02 WIP
+# Tested: 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-shortest-distance-between-points/execution \
 --header "Content-Type: application/json" \
 --data '{
@@ -80,7 +80,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-distance-between-points/
 
 
 # Input: Multipoint (two separate set of points)
-# Tested: 2026-01-02 TODO
+# Tested: 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-shortest-distance-between-points/execution \
 --header "Content-Type: application/json" \
 --data '{
@@ -104,7 +104,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-distance-between-points/
 }'
 
 # Input: One set of subc_ids
-# Tested: 2026-01-02 TODO
+# Tested: 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-shortest-distance-between-points/execution \
 --header "Content-Type: application/json" \
 --data '{
@@ -115,7 +115,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-distance-between-points/
 }'
 
 # Input: Two sets of subc_ids
-# Tested: 2026-01-02 TODO
+# Tested: 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-shortest-distance-between-points/execution \
 --header "Content-Type: application/json" \
 --data '{

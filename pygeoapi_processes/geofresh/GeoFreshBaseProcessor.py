@@ -65,6 +65,7 @@ class GeoFreshBaseProcessor(BaseProcessor):
             LOGGER.error(f'During process execution, this happened: {e}')
             print(traceback.format_exc())
             raise ProcessorExecuteError(e) # TODO: Can we feed e into ProcessExecuteError?
+            #TODO OR: raise ProcessorExecuteError(e, user_msg=e.message)
 
 
     def _execute(self, data, requested_outputs, conn):

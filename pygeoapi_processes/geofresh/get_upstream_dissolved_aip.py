@@ -19,7 +19,7 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 '''
 # Request a URL to simple Geometry (Polygon) (just one, not a collection):
-curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" \
+curl -X POST https://${PYSERVER}/processes/get-upstream-dissolved/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -31,7 +31,7 @@ curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" 
 }'
 
 # Request (directly) a simple Geometry (Polygon) (just one, not a collection):
-curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" \
+curl -X POST https://${PYSERVER}/processes/get-upstream-dissolved/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -44,7 +44,7 @@ curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" 
 }'
 
 # Request a URL to Feature (Polygon) (just one, not a collection):
-curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" \
+curl -X POST https://${PYSERVER}/processes/get-upstream-dissolved/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -56,7 +56,7 @@ curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" 
 }'
 
 # Request a URL to FeatureCollection (Polygon):
-curl -X POST "http://localhost:5000/processes/get-upstream-dissolved/execution" \
+curl -X POST https://${PYSERVER}/processes/get-upstream-dissolved/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {

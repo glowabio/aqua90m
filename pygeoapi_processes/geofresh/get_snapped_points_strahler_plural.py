@@ -22,8 +22,8 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 '''
 # INPUT:  CSV
 # OUTPUT: CSV
-# Tested 2026-01-02 (commit 38cf498ca)
-curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \
+# Tested 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -42,7 +42,7 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
 # INPUT:  CSV File
 # OUTPUT: GeoJSON File (FeatureCollection)
 # Tested 2026-01-02 (commit 38cf498ca)
-curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \
+curl -X POST https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -62,7 +62,7 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
 # INPUT:  GeoJSON File (FeatureCollection)
 # OUTPUT: GeoJSON File (FeatureCollection)
 # Tested 2026-01-02 (commit 38cf498ca)
-curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \
+curl -X POST https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -80,7 +80,7 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
 # INPUT:  GeoJSON File (GeometryCollection)
 # OUTPUT: GeoJSON File (FeatureCollection)
 # Tested 2026-01-02 (commit 38cf498ca)
-curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \
+curl -X POST https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -99,7 +99,7 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
 # INPUT:  GeoJSON File (GeometryCollection)
 # OUTPUT: GeoJSON File (FeatureCollection)
 # Tested 2026-01-02 (commit 38cf498ca)
-curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \
+curl -X POST https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -117,7 +117,7 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
 # INPUT:  GeoJSON directly (GeometryCollection)
 # OUTPUT: GeoJSON directly (FeatureCollection)
 # Tested 2026-01-02 (commit 38cf498ca)
-curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \
+curl -X POST https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -143,7 +143,7 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
 # INPUT:  GeoJSON directly (MultiPoint)
 # OUTPUT: GeoJSON directly (FeatureCollection)
 # Tested 2026-01-02 (commit 38cf498ca)
-curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \
+curl -X POST https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -163,7 +163,7 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
 # INPUT:  GeoJSON directly (FeatureCollection)
 # OUTPUT: GeoJSON directly (FeatureCollection)
 # Tested 2026-01-02 (commit 38cf498ca)
-curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution" \
+curl -X POST https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -199,7 +199,7 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-strahler-plural/e
 # INPUT:  GeoJSON directly (FeatureCollection)
 # OUTPUT: CSV File
 # Tested 2026-01-02 (commit 38cf498ca)
-curl -X POST "https://$PYSERVER/processes/get-snapped-points-strahler-plural/execution" \
+curl -X POST https://${PYSERVER}/processes/get-snapped-points-strahler-plural/execution \
 --header "Content-Type: application/json" \
 --data '{
   "outputs": {

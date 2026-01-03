@@ -26,7 +26,7 @@ by using different process id, and not by adding parameters.
 
 # Request a GeometryCollection (Point, 2x LineString):
 # Tested: 2026-01-02
-curl -X POST "https://${PYSERVER}/processes/get-snapped-point-plus/execution" \
+curl -X POST https://${PYSERVER}/processes/get-snapped-point-plus/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -39,7 +39,7 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-point-plus/execution" \
 
 # Request a FeatureCollection (Point, 2x LineString, Polygon):
 # Tested: 2026-01-02
-curl -X POST "https://${PYSERVER}/processes/get-snapped-point-plus/execution" \
+curl -X POST https://${PYSERVER}/processes/get-snapped-point-plus/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
