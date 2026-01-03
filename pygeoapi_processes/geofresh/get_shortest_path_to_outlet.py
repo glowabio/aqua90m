@@ -45,7 +45,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet/execution
 }'
 
 # Request only the ids:
-# Tested: 2026-01-02, but returns entire thing!
+# Tested: 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet/execution \
 --header "Content-Type: application/json" \
 --data '{
@@ -200,7 +200,7 @@ class ShortestPathToOutletGetter(BaseProcessor):
                 conn, segment_ids, basin_id1, reg_id1)
 
         # Get FeatureCollection
-        if not geometry_only:
+        if not geometry_only and not downstream_ids_only:
             json_result = get_linestrings.get_streamsegment_linestrings_feature_coll(
                 conn, segment_ids, basin_id1, reg_id1)
 
