@@ -33,8 +33,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points-plur
         [9.9312, 54.6933]
       ]
     },
-    "comment": "located in schlei area",
-    "geometry_only": "todo"
+    "comment": "located in schlei area"
   }
 }'
 
@@ -46,8 +45,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points-plur
 --data '{
   "inputs": {
     "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometry_multipoint.json",
-    "comment": "not sure where",
-    "geometry_only": "todo"
+    "comment": "not sure where"
   }
 }'
 
@@ -59,8 +57,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points-plur
 --data '{
   "inputs": {
     "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometry_multipoint.json",
-    "comment": "not sure where",
-    "geometry_only": "todo"
+    "comment": "not sure where"
   },
   "outputs": {
     "transmissionMode": "reference"
@@ -76,8 +73,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points-plur
 --data '{
   "inputs": {
     "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometrycollection_points_samebasin.json",
-    "comment": "not sure where",
-    "geometry_only": "todo"
+    "comment": "not sure where"
   },
   "outputs": {
     "transmissionMode": "reference"
@@ -93,8 +89,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points-plur
 --data '{
   "inputs": {
     "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points_samebasin.json",
-    "comment": "not sure where",
-    "geometry_only": "todo"
+    "comment": "not sure where"
   }
 }'
 
@@ -107,8 +102,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points-plur
 --data '{
   "inputs": {
     "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points.json",
-    "comment": "not sure where",
-    "geometry_only": "todo"
+    "comment": "not sure where"
   }
 }'
 
@@ -188,12 +182,13 @@ class ShortestPathBetweenPointsGetterPlural(BaseProcessor):
         #subc_id_start = data.get('subc_id_start', None) # optional, need either lonlat OR subc_id
         #subc_id_end = data.get('subc_id_end', None)     # optional, need either lonlat OR subc_id
         comment = data.get('comment') # optional
-        add_segment_ids = data.get('add_segment_ids', 'true')
-        geometry_only = data.get('geometry_only', 'false')
+        #add_segment_ids = data.get('add_segment_ids', True) # TODO Implement param 'add_segment_ids'
+        #geometry_only = data.get('geometry_only', False) # TODO Implement param 'geometry_only'
 
-        # Parse booleans
-        add_segment_ids = (add_segment_ids.lower() == 'true')
-        geometry_only = (geometry_only.lower() == 'true')
+        ## Check if boolean:
+        #utils.is_bool_parameters(dict(
+        #    add_segment_ids=add_segment_ids,
+        #    geometry_only=geometry_only))
 
         ## Download GeoJSON if user provided URL:
         if points_geojson_url is not None:
