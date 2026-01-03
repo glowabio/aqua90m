@@ -9,6 +9,7 @@ import sys
 import traceback
 import json
 import psycopg2
+from pygeoapi.process.aqua90m.pygeoapi_processes.geofresh.GeoFreshBaseProcessor import GeoFreshBaseProcessor
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
 import pygeoapi.process.aqua90m.geofresh.routing as routing
@@ -56,58 +57,10 @@ metadata_title_and_path = script_title_and_path.replace('.py', '.json')
 PROCESS_METADATA = json.load(open(metadata_title_and_path))
 
 
-class ShortestPathBetweenPointsGetter(BaseProcessor):
+class ShortestPathBetweenPointsGetter(GeoFreshBaseProcessor):
 
     def __init__(self, processor_def):
         super().__init__(processor_def, PROCESS_METADATA)
-        self.supports_outputs = True
-        self.job_id = None
-        self.config = None
-
-        # Set config:
-        config_file_path = os.environ.get('AQUA90M_CONFIG_FILE', "./config.json")
-        with open(config_file_path, 'r') as config_file:
-            self.config = json.load(config_file)
-            self.download_dir = self.config['download_dir']
-            self.download_url = self.config['download_url']
-
-
-    def set_job_id(self, job_id: str):
-        self.job_id = job_id
-
-
-    def __repr__(self):
-        return f'<ShortestPathBetweenPointsGetter> {self.name}'
-
-
-    def execute(self, data, outputs=None):
-        LOGGER.debug('Start execution: %s (job %s)' % (self.metadata['id'], self.job_id))
-        LOGGER.debug('Inputs: %s' % data)
-        LOGGER.log(logging.TRACE, 'Requested outputs: %s' % outputs)
-
-        try:
-            conn = get_connection_object_config(self.config)
-            res = self._execute(data, outputs, conn)
-            LOGGER.debug('Finished execution: %s (job %s)' % (self.metadata['id'], self.job_id))
-            LOGGER.log(logging.TRACE, 'Closing connection...')
-            conn.close()
-            LOGGER.log(logging.TRACE, 'Closing connection... Done.')
-            return res
-
-        except psycopg2.Error as e3:
-            conn.close()
-            err = f"{type(e3).__module__.removesuffix('.errors')}:{type(e3).__name__}: {str(e3).rstrip()}"
-            error_message = 'Database error: %s (%s)' % (err, str(e3))
-            LOGGER.error(error_message)
-            raise ProcessorExecuteError(user_msg = error_message)
-
-        except Exception as e:
-            conn.close()
-            LOGGER.error('During process execution, this happened: %s' % e)
-            print(traceback.format_exc())
-            raise ProcessorExecuteError(e) # TODO: Can we feed e into ProcessExecuteError?
-            #TODO OR: raise ProcessorExecuteError(e, user_msg=e.message)
-
 
     def _execute(self, data, requested_outputs, conn):
 
@@ -170,18 +123,8 @@ class ShortestPathBetweenPointsGetter(BaseProcessor):
             geometry_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll(
                 conn, segment_ids, basin_id1, reg_id1)
 
-            if comment is not None:
-                geometry_coll['comment'] = comment
-
             # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
-            if utils.return_hyperlink('connecting_path', requested_outputs):
-                output_dict_with_url =  utils.store_to_json_file('connecting_path', geometry_coll,
-                    self.metadata, self.job_id,
-                    self.download_dir,
-                    self.download_url)
-                return 'application/json', output_dict_with_url
-            else:
-                return 'application/json', geometry_coll
+            return self.return_results('connecting_path', requested_outputs, output_df=None, output_json=geometry_coll, comment=comment)
 
 
         # Get FeatureCollection
@@ -198,15 +141,7 @@ class ShortestPathBetweenPointsGetter(BaseProcessor):
             if add_segment_ids:
                 feature_coll["subc_ids"] = segment_ids
 
-            if comment is not None:
-                feature_coll['comment'] = comment
-
             # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
-            if utils.return_hyperlink('connecting_path', requested_outputs):
-                output_dict_with_url =  utils.store_to_json_file('connecting_path', feature_coll,
-                    self.metadata, self.job_id,
-                    self.download_dir,
-                    self.download_url)
-                return 'application/json', output_dict_with_url
-            else:
-                return 'application/json', feature_coll
+            return self.return_results('connecting_path', requested_outputs, output_df=None, output_json=feature_coll, comment=comment)
+
+
