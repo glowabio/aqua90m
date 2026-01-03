@@ -15,13 +15,14 @@ import os
 
 PYSERVER = os.getenv('PYSERVER')
 # For this to work, please define the PYSERVER before running python:
-# export PYSERVER="https://.../pygeoapi-dev"
+# export PYSERVER="myhost.de/pygeoapi-dev"
 
 #################
 ### Constants ###
 #################
 
 RAISE_ERROR=True
+PYSERVER = f'https://{PYSERVER}'
 
 process_ids_one_pair = [
     "get-upstream-bbox",
