@@ -17,20 +17,17 @@ import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
 import pygeoapi.process.aqua90m.utils.dataframe_utils as dataframe_utils
 
 '''
-# Filter occurrences by site_id: TODO: Missing example data!
-curl -i -X POST "http://localhost:5000/processes/filter-attribute-by-list/execution" \
+curl -X POST https://${PYSERVER}/processes/filter-attribute-by-list/execution \
 --header "Content-Type: application/json" \
---header "Prefer: respond-async" \
 --data '{
   "inputs": {
-        "items_json_url": "https://aqua.igb-berlin.de/download/outputs-downstream_path-get-shortest-path-to-outlet-plural-22d6ca92-2600-11f0-ba7f-6fbdd8a35584.json",
-        "keep": {"downstream_segments": [561603988, 561707768, 561634372, 561641579, 561659621, 561661100, 561662529, 561665813, 561668697]}
+        "items_json_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/outputs-downstream_path-get-shortest-path-to-outlet-plural_shortened.json",
+        "keep": {"downstream_segments": [560096607, 560097862, 560099758, 560164915, 560164283, 560168646, 560166133]}
     },
     "outputs": {
         "transmissionMode": "reference"
     }
 }'
-
 '''
 
 
