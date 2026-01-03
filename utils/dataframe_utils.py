@@ -9,8 +9,11 @@ def filter_dataframe(input_df, keep_attribute, keep_values):
     everything = []
 
     # Iterate over all rows:
+    # Retrieve using column index, not colname - this is faster:
+    colidx = input_dataframe.columns.get_loc(keep_attribute)
     for row in input_df.itertuples(index=False):
-        curr_value = getattr(row, keep_attribute)
+        curr_value = row[colidx]
+
         if curr_value in keep_values:
             # keep!!
             # Collect results in list:
@@ -26,8 +29,11 @@ def filter_dataframe_by_condition(input_df, keep_attribute, condition_dict):
     everything = []
 
     # Iterate over all rows:
+    # Retrieve using column index, not colname - this is faster:
+    colidx = input_dataframe.columns.get_loc(keep_attribute)
     for row in input_df.itertuples(index=False):
-        curr_value = getattr(row, keep_attribute)
+        curr_value = row[colidx]
+
         if matches_filter_condition(condition_dict, curr_value):
             # keep!!
             # Collect results in list:

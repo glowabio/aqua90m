@@ -6,9 +6,13 @@ def dataframe_to_geojson_points(input_df, colname_lon, colname_lat):
     LOGGER.debug(f'Input data frame has {input_df.shape[1]} columns: {input_df.columns}.')
 
     features = []
+
+    # Retrieve using column index, not colname - this is faster:
+    colidx_lon = input_dataframe.columns.get_loc(colname_lon)
+    colidx_lat = input_dataframe.columns.get_loc(colname_lat)
     for row in input_df.itertuples(index=False):
-        lon = getattr(row, colname_lon)
-        lat = getattr(row, colname_lat)
+        lon = row[colidx_lon]
+        lat = row[colidx_lat]
         feature = {
           "type": "Feature",
           "geometry": {

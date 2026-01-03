@@ -226,7 +226,7 @@ class SnappedPointsGetterPlural(BaseProcessor):
 
         # User inputs
         #input_points_geojson = data.get('points')
-        #geometry_only = data.get('geometry_only', 'false')
+        #geometry_only = data.get('geometry_only', False)
         #comment = data.get('comment') # optional
 
         # User inputs:
