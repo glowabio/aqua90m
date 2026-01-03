@@ -104,22 +104,7 @@ class FilterAttributeByListProcessor(BaseProcessor):
 
         ## Download JSON if user provided URL:
         if items_json_url is not None:
-            try:
-                LOGGER.debug('Try downloading input JSON from: %s' % items_json_url)
-                resp = requests.get(items_json_url)
-            except requests.exceptions.SSLError as e:
-                LOGGER.warning('SSL error when downloading input data from %s: %s' % (items_json_url, e))
-                if ('nimbus.igb-berlin.de' in items_json_url and
-                    'nimbus.igb-berlin.de' in str(e) and
-                    'certificate verify failed' in str(e)):
-                    resp = requests.get(items_json_url, verify=False)
-
-            if not resp.status_code == 200:
-                err_msg = 'Failed to download JSON (HTTP %s) from %s.' % (resp.status_code, items_json_url)
-                LOGGER.error(err_msg)
-                raise exc.DataAccessException(err_msg)
-            items_json = resp.json()
-
+            items_json = utils.download_geojson(items_json_url)
 
         ##################
         ### Actual ... ###
@@ -191,6 +176,8 @@ class FilterAttributeByListProcessor(BaseProcessor):
 
         ## Handle CSV case:
         elif csv_url is not None:
+
+            input_df = utils.access_csv_as_dataframe(csv_url)
 
             err_msg = "Cannot filter CSV yet!"
             LOGGER.error(err_msg)
