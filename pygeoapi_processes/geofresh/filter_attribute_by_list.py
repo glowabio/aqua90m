@@ -43,8 +43,11 @@ class FilterAttributeByListProcessor(BaseProcessor):
     def __init__(self, processor_def):
         super().__init__(processor_def, PROCESS_METADATA)
         self.supports_outputs = True
+        self.process_id = self.metadata["id"]
         self.job_id = None
         self.config = None
+        self.download_dir = None
+        self.download_url = None
 
         # Set config:
         config_file_path = os.environ.get('AQUA90M_CONFIG_FILE', "./config.json")
@@ -63,19 +66,20 @@ class FilterAttributeByListProcessor(BaseProcessor):
 
 
     def execute(self, data, outputs=None):
-        LOGGER.debug('Start execution: %s (job %s)' % (self.metadata['id'], self.job_id))
-        LOGGER.debug('Inputs: %s' % data)
-        LOGGER.log(logging.TRACE, 'Requested outputs: %s' % outputs)
+        LOGGER.debug(f'Start execution: {self.process_id} (job {self.job_id})')
+        LOGGER.debug(f'Inputs: {data}')
+        LOGGER.log(logging.TRACE, 'Requested outputs: {outputs}')
 
         try:
             res = self._execute(data, outputs)
-            LOGGER.debug('Finished execution: %s (job %s)' % (self.metadata['id'], self.job_id))
+            LOGGER.debug(f'Finished execution: {self.process_id} (job {self.job_id})')
             return res
 
         except Exception as e:
-            LOGGER.error('During process execution, this happened: %s' % e)
+            LOGGER.error(f'During process execution, this happened: {e}')
             print(traceback.format_exc())
-            raise ProcessorExecuteError(e) from e # TODO: Can we feed e into ProcessExecuteError?
+            raise ProcessorExecuteError(e) # TODO: Can we feed e into ProcessExecuteError?
+            #TODO OR: raise ProcessorExecuteError(e, user_msg=e.message)
 
 
     def _execute(self, data, requested_outputs):
@@ -153,6 +157,7 @@ class FilterAttributeByListProcessor(BaseProcessor):
             for item in items_json:
                 i += 1
                 LOGGER.debug('Filtering item %s/%s.' % (i, num_items))
+                # This item may be a dict...
 
                 j = 0
                 for keep_attribute in keep.keys():
@@ -201,20 +206,29 @@ class FilterAttributeByListProcessor(BaseProcessor):
         ### Return result ###
         #####################
 
-        do_return_link = utils.return_hyperlink('filtered_data', requested_outputs)
+        return self.return_results('filtered_data', requested_outputs, output_df=output_df, output_json=output_json, comment=None)
+
+
+
+
+
+    def return_results(self, resultname, requested_outputs, output_df=None, output_json=None, comment=None):
+        # Note: This return_results() is the same as in GeoFreshBaseProcessor, but
+        # redefined here, as we don't need all the database functionality that comes
+        # with GeoFreshBaseProcessor.
+
+        do_return_link = utils.return_hyperlink(resultname, requested_outputs)
 
         ## Return CSV:
         if output_df is not None:
             if do_return_link:
-                output_dict_with_url =  utils.store_to_csv_file('filtered_data', output_df,
+                output_dict_with_url =  utils.store_to_csv_file(resultname, output_df,
                     self.metadata, self.job_id,
                     self.download_dir,
-                    self.download_url)#
+                    self.download_url)
 
                 if comment is not None:
                     output_dict_with_url['comment'] = comment
-
-                LOGGER.debug('Outputs: %s' % output_dict_with_url)
 
                 return 'application/json', output_dict_with_url
             else:
@@ -224,11 +238,12 @@ class FilterAttributeByListProcessor(BaseProcessor):
 
         ## Return JSON:
         elif output_json is not None:
+
             if comment is not None:
                 output_json['comment'] = comment
 
             if do_return_link:
-                output_dict_with_url =  utils.store_to_json_file('filtered_data', output_json,
+                output_dict_with_url =  utils.store_to_json_file(resultname, output_json,
                     self.metadata, self.job_id,
                     self.download_dir,
                     self.download_url)
