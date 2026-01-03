@@ -25,7 +25,7 @@ curl -X POST https://${PYSERVER}/processes/get-local-streamsegments/execution \
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
-    "geometry_only": "true",
+    "geometry_only": true,
     "comment": "schlei-near-rabenholz"
     }
 }'
@@ -38,7 +38,7 @@ curl -X POST https://${PYSERVER}/processes/get-local-streamsegments/execution \
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
-    "geometry_only": "false",
+    "geometry_only": false,
     "comment": "schlei-near-rabenholz"
     }
 }'
@@ -65,10 +65,10 @@ class LocalStreamSegmentsGetter(GeoFreshBaseProcessor):
         lat = data.get('lat', None)
         subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
         comment = data.get('comment') # optional
-        geometry_only = data.get('geometry_only', 'false')
+        geometry_only = data.get('geometry_only', False)
 
-        # Parse booleans
-        geometry_only = (geometry_only.lower() == 'true')
+        # Check type:
+        utils.is_bool_parameters(dict(geometry_only=geometry_only))
 
         # Get reg_id, basin_id, subc_id
         if subc_id is not None:
