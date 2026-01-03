@@ -104,7 +104,7 @@ class FilterAttributeByListProcessor(BaseProcessor):
 
         ## Download JSON if user provided URL:
         if items_json_url is not None:
-            items_json = utils.download_geojson(items_json_url)
+            items_json = utils.download_json(items_json_url)
 
         ##################
         ### Actual ... ###

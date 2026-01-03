@@ -123,30 +123,36 @@ def store_to_csv_file(output_name, pandas_df, job_metadata, job_id, download_dir
 
     return outputs_dict
 
+def download_json(json_url):
+    LOGGER.debug(f'Downloading input JSON from: {json_url}')
+    return _download_json(json_url)
 
 def download_geojson(geojson_url):
     LOGGER.debug(f'Downloading input GeoJSON from: {geojson_url}')
+    return _download_json(geojson_url)
+
+def _download_json(json_url):
 
     try:
-        resp = requests.get(geojson_url)
+        resp = requests.get(json_url)
 
     # Files stored on Nimbus: We get SSL error:
     except requests.exceptions.SSLError as e:
-        LOGGER.warning(f'SSL error when downloading input data from {geojson_url}: {e}')
-        if ('nimbus.igb-berlin.de' in geojson_url and
+        LOGGER.warning(f'SSL error when downloading input data from {json_url}: {e}')
+        if ('nimbus.igb-berlin.de' in json_url and
             'nimbus.igb-berlin.de' in str(e) and
             'certificate verify failed' in str(e)):
-            resp = requests.get(geojson_url, verify=False)
+            resp = requests.get(json_url, verify=False)
 
     try:
         resp.raise_for_status()
     except requests.HTTPError as e:
-        err_msg = f'Failed to download GeoJSON (HTTP {resp.status_code}) from {geojson_url}.'
+        err_msg = f'Failed to download JSON (HTTP {resp.status_code}) from {json_url}.'
         LOGGER.error(err_msg)
         raise exc.DataAccessException(err_msg)
 
-    geojson_content = resp.json()
-    return geojson_content
+    json_content = resp.json()
+    return json_content
 
 
 def access_csv_comma_then_semicolon(csv_url_or_path):
