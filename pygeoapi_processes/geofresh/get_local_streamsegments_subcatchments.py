@@ -18,31 +18,32 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 '''
 Note:
-TODO FIXME:
-This should be replaced by using the normal get_stream_segment.py with parameter add_subcatchment,
+TODO FIXME: This should be replaced by using the normal get_stream_segment.py with parameter add_subcatchment,
 but then I need to change my test HTML client, which currently only can make different process calls
 by using different process id, and not by adding parameters.
 
 # Request a GeometryCollection (LineStrings):
-curl -X POST "http://localhost:5000/processes/get-local-streamsegments-subcatchments/execution" \
+# Tested: 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-local-streamsegments-subcatchments/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
-    "geometry_only": "true",
+    "geometry_only": true,
     "comment": "schlei-near-rabenholz"
     }
 }'
 
 # Request a FeatureCollection (LineStrings):
-curl -X POST "http://localhost:5000/processes/get-local-streamsegments-subcatchments/execution" \
+# Tested: 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-local-streamsegments-subcatchments/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
-    "geometry_only": "false",
+    "geometry_only": false,
     "comment": "schlei-bei-rabenholz"
     }
 }'
@@ -115,10 +116,10 @@ class LocalStreamSegmentSubcatchmentGetter(BaseProcessor):
         lat = data.get('lat', None)
         subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
         comment = data.get('comment') # optional
-        geometry_only = data.get('geometry_only', 'false')
+        geometry_only = data.get('geometry_only', False)
 
-        # Parse booleans
-        geometry_only = (geometry_only.lower() == 'true')
+        # Check if boolean:
+        utils.is_bool_parameters(dict(geometry_only=geometry_only))
 
         # Get reg_id, basin_id, subc_id
         if subc_id is not None:

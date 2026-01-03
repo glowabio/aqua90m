@@ -19,7 +19,8 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 # Request a FeatureCollection, based on a basin_id:
 # Output: Polygon (FeatureCollection)
-curl -X POST https://$PYSERVER/processes/get-basin-polygon/execution \
+# Tested: 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-basin-polygon/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -31,7 +32,8 @@ curl -X POST https://$PYSERVER/processes/get-basin-polygon/execution \
 
 # Request a simple GeometryCollection, based on a basin_id
 # Output: Polygon (GeometryCollection)
-curl -X POST "https://$PYSERVER/processes/get-basin-polygon/execution" \
+# Tested: 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-basin-polygon/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {

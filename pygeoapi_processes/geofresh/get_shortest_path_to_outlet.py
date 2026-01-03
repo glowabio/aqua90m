@@ -18,6 +18,7 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 '''
 # Request a GeometryCollection (LineStrings):
+# Tested: 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet/execution \
 --header "Content-Type: application/json" \
 --data '{
@@ -30,6 +31,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet/execution
 }'
 
 # Request a FeatureCollection (LineStrings):
+# Tested: 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet/execution \
 --header "Content-Type: application/json" \
 --data '{
@@ -43,6 +45,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet/execution
 }'
 
 # Request only the ids:
+# Tested: 2026-01-02, but returns entire thing!
 curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet/execution \
 --header "Content-Type: application/json" \
 --data '{
@@ -54,6 +57,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet/execution
 }'
 
 # Request a FeatureCollection (LineStrings), but only up to strahler 3 (included)
+# Tested: 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet/execution \
 --header "Content-Type: application/json" \
 --data '{
@@ -143,6 +147,13 @@ class ShortestPathToOutletGetter(BaseProcessor):
 
         # Parse int:
         only_up_to_strahler = int(only_up_to_strahler) if only_up_to_strahler is not None else None
+
+        # Check if boolean:
+        utils.is_bool_parameters(dict(
+            geometry_only=geometry_only,
+            downstream_ids_only=downstream_ids_only,
+            add_downstream_ids=add_downstream_ids,
+        ))
 
         # Overall goal: Get the dijkstra shortest path (as linestrings)!
 

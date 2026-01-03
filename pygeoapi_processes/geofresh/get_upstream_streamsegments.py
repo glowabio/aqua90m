@@ -19,26 +19,28 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 '''
 
 # Request a GeometryCollection (LineStrings):
-curl -X POST "http://localhost:5000/processes/get-upstream-streamsegments/execution" \
+# Tested: 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-upstream-streamsegments/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
-    "geometry_only": "true",
+    "geometry_only": true,
     "comment": "schlei-near-rabenholz"
     }
 }'
 
 # Request a FeatureCollection (LineStrings):
-curl -X POST "http://localhost:5000/processes/get-upstream-streamsegments/execution" \
+# Tested: 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-upstream-streamsegments/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
-    "geometry_only": "false",
-    "add_upstream_ids": "true",
+    "geometry_only": false,
+    "add_upstream_ids": true,
     "comment": "schlei-near-rabenholz"
     }
 }'
@@ -113,12 +115,14 @@ class UpstreamStreamSegmentsGetter(BaseProcessor):
         lat = data.get('lat', None)
         subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
         comment = data.get('comment') # optional
-        add_upstream_ids = data.get('add_upstream_ids', 'false')
-        geometry_only = data.get('geometry_only', 'false')
+        add_upstream_ids = data.get('add_upstream_ids', False)
+        geometry_only = data.get('geometry_only', False)
 
-        # Parse add_upstream_ids
-        geometry_only = (geometry_only.lower() == 'true')
-        add_upstream_ids = (add_upstream_ids.lower() == 'true')
+        # Check if boolean:
+        utils.is_bool_parameters(dict(
+            geometry_only=geometry_only,
+            add_upstream_ids=add_upstream_ids
+        ))
 
         # Overall goal: Get the upstream stream segments
         LOGGER.info('Getting upstream line segments for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))

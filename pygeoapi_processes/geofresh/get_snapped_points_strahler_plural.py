@@ -301,7 +301,7 @@ class SnappedPointsStrahlerGetterPlural(BaseProcessor):
 
         # User inputs
         #input_points_geojson = data.get('points')
-        #geometry_only = data.get('geometry_only', 'false')
+        #geometry_only = data.get('geometry_only', False)
         #comment = data.get('comment') # optional
 
         # User inputs:
@@ -330,6 +330,9 @@ class SnappedPointsStrahlerGetterPlural(BaseProcessor):
             err_msg = "Missing parameter 'add_distance'. Please provide a boolean value."
             LOGGER.error(err_msg)
             raise ProcessorExecuteError(err_msg)
+
+        ## Check if boolean:
+        utils.is_bool_parameters(dict(add_distance=add_distance))
 
 
         ## Potential outputs:

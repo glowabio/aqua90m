@@ -19,7 +19,8 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 # Request a FeatureCollection, based on a basin_id:
 # Output: LineStrings (FeatureCollection)
-curl -X POST "https://$PYSERVER/processes/get-basin-streamsegments/execution" \
+# Tested: 2026-01-02
+curl -X POST https://$PYSERVER/processes/get-basin-streamsegments/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -33,7 +34,8 @@ curl -X POST "https://$PYSERVER/processes/get-basin-streamsegments/execution" \
 
 # Request a simple GeometryCollection, based on a basin_id
 # Output: LineStrings (GeometryCollection)
-curl -X POST "https://$PYSERVER/processes/get-basin-streamsegments/execution" \
+# Tested: 2026-01-02
+curl -X POST https://$PYSERVER/processes/get-basin-streamsegments/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -45,6 +47,7 @@ curl -X POST "https://$PYSERVER/processes/get-basin-streamsegments/execution" \
 
 # Request a simple GeometryCollection, based on a subc_id
 # Output: LineStrings (GeometryCollection)
+# Tested: 2026-01-02
 curl -X POST "https://$PYSERVER/processes/get-basin-streamsegments/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -58,6 +61,7 @@ curl -X POST "https://$PYSERVER/processes/get-basin-streamsegments/execution" \
 
 # Request a simple GeometryCollection, based on lon+lat
 # Output: LineStrings (GeometryCollection)
+# Tested: 2026-01-02
 curl -X POST "https://$PYSERVER/processes/get-basin-streamsegments/execution" \
 --header "Content-Type: application/json" \
 --data '{
@@ -143,8 +147,10 @@ class BasinStreamSegmentsGetter(BaseProcessor):
         comment = data.get('comment') # optional
 
         # Check type:
-        utils.is_bool_parameters(dict(geometry_only=geometry_only))
-        utils.is_bool_parameters(dict(add_segment_ids=add_segment_ids))
+        utils.is_bool_parameters(dict(
+            geometry_only=geometry_only,
+            add_segment_ids=add_segment_ids
+        ))
 
         # Check presence:
         utils.at_least_one_param({

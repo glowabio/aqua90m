@@ -24,25 +24,27 @@ by using different process id, and not by adding parameters.
 
 
 # Request a GeometryCollection (Point, 2x LineString):
-curl -X POST "http://localhost:5000/processes/get-snapped-points/execution" \
+# Tested: 2026-01-02
+curl -X POST "https://${PYSERVER}/processes/get-snapped-point-plus/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
-    "geometry_only": "true",
+    "geometry_only": true,
     "comment": "schlei-bei-rabenholz"
     }
 }'
 
 # Request a FeatureCollection (Point, 2x LineString, Polygon):
-curl -X POST "http://localhost:5000/processes/get-snapped-points/execution" \
+# Tested: 2026-01-02
+curl -X POST "https://${PYSERVER}/processes/get-snapped-point-plus/execution" \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
-    "geometry_only": "false",
+    "geometry_only": false,
     "comment": "schlei-bei-rabenholz"
     }
 }'
@@ -116,11 +118,11 @@ class SnappedPointsGetterPlus(BaseProcessor):
         # User inputs
         lon = float(data.get('lon'))
         lat = float(data.get('lat'))
-        geometry_only = data.get('geometry_only', 'false')
+        geometry_only = data.get('geometry_only', False)
         comment = data.get('comment') # optional
 
-        # Parse booleans
-        geometry_only = (geometry_only.lower() == 'true')
+        # Check if boolean:
+        utils.is_bool_parameters(dict(geometry_only=geometry_only))
 
         # Get reg_id, basin_id, subc_id, upstream_ids
         LOGGER.info('START: Getting snapped point for lon, lat: %s, %s' % (lon, lat))

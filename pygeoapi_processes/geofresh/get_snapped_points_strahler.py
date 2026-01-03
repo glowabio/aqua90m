@@ -17,27 +17,29 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 '''
 
 # Request a simple GeometryCollection (Point):
-curl -X POST "http://localhost:5000/processes/get-snapped-points-strahler/execution" \
+# Tested: 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-snapped-points-strahler/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
     "strahler": 3,
-    "geometry_only": "true",
+    "geometry_only": true,
     "comment": "schlei-near-rabenholz"
     }
 }'
 
 # Request a FeatureCollection (Point):
-curl -X POST "http://localhost:5000/processes/get-snapped-points-strahler/execution" \
+# Tested: 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-snapped-points-strahler/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
     "strahler": 3,
-    "geometry_only": "false",
+    "geometry_only": false,
     "comment": "schlei-near-rabenholz"
     }
 }'
@@ -108,11 +110,11 @@ class SnappedPointsStrahlerGetter(BaseProcessor):
         lon = float(data.get('lon'))
         lat = float(data.get('lat'))
         strahler = float(data.get('strahler'))
-        geometry_only = data.get('geometry_only', 'false')
+        geometry_only = data.get('geometry_only', False)
         comment = data.get('comment') # optional
 
-        # Parse booleans
-        geometry_only = (geometry_only.lower() == 'true')
+        # Check if boolean:
+        utils.is_bool_parameters(dict(geometry_only=geometry_only))
 
         # Get reg_id, basin_id, subc_id
         LOGGER.info('START: Getting snapped point for lon, lat: %s, %s' % (lon, lat))

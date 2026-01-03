@@ -22,7 +22,9 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 
 '''
-# Request CSV result:
+## INPUT:  CSV file
+## OUTPUT: CSV file
+## Tested: 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet-plural/execution \
 --header "Content-Type: application/json" \
 --data '{
@@ -39,7 +41,10 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet-plural/ex
     }
 }'
 
-# Request CSV result:
+## INPUT:  CSV file
+## OUTPUT: CSV file
+## Tested: 2026-01-02
+## This contains subc_ids, so they will be used instead of lat lon... TODO Is this desired?
 curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet-plural/execution \
 --header "Content-Type: application/json" \
 --data '{
@@ -56,7 +61,9 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet-plural/ex
     }
 }'
 
-# Request JSON result:
+## INPUT:  CSV file
+## OUTPUT: Plain JSON file
+## Tested: 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet-plural/execution \
 --header "Content-Type: application/json" \
 --data '{
@@ -164,6 +171,13 @@ class ShortestPathToOutletGetterPlural(BaseProcessor):
         ########################
 
         utils.exactly_one_param(dict(return_csv=return_csv, return_json=return_json))
+
+        # Check if boolean:
+        utils.is_bool_parameters(dict(
+            geometry_only=geometry_only,
+            downstream_ids_only=downstream_ids_only,
+            add_downstream_ids=add_downstream_ids
+        ))
 
         if not downstream_ids_only:
             err_msg = "Cannot return geometries for CSV input yet! (And probably never will, because returning geometry inside a CSV does not make sense...)"

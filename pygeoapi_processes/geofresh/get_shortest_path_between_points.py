@@ -19,7 +19,8 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 '''
 # Request a GeometryCollection (LineStrings):
-curl -X POST "http://localhost:5000/processes/get-shortest-path-between-points/execution" \
+# Tested 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -27,12 +28,13 @@ curl -X POST "http://localhost:5000/processes/get-shortest-path-between-points/e
     "lat_start": 54.69422745526058,
     "lon_end": 9.9217,
     "lat_end": 54.6917,
-    "geometry_only": "true"
+    "geometry_only": true
     }
 }'
 
 # Request a FeatureCollection (LineStrings):
-curl -X POST "http://localhost:5000/processes/get-shortest-path-between-points/execution" \
+# Tested 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -40,8 +42,8 @@ curl -X POST "http://localhost:5000/processes/get-shortest-path-between-points/e
     "lat_start": 54.69422745526058,
     "lon_end": 9.9217,
     "lat_end": 54.6917,
-    "geometry_only": "false",
-    "add_segment_ids": "true",
+    "geometry_only": false,
+    "add_segment_ids": true,
     "comment": "test"
     }
 }'
@@ -117,12 +119,13 @@ class ShortestPathBetweenPointsGetter(BaseProcessor):
         subc_id_start = data.get('subc_id_start', None) # optional, need either lonlat OR subc_id
         subc_id_end = data.get('subc_id_end', None)     # optional, need either lonlat OR subc_id
         comment = data.get('comment') # optional
-        add_segment_ids = data.get('add_segment_ids', 'true')
-        geometry_only = data.get('geometry_only', 'false')
+        add_segment_ids = data.get('add_segment_ids', True)
+        geometry_only = data.get('geometry_only', False)
 
-        # Parse booleans
-        add_segment_ids = (add_segment_ids.lower() == 'true')
-        geometry_only = (geometry_only.lower() == 'true')
+        ## Check if boolean:
+        utils.is_bool_parameters(dict(
+            add_segment_ids=add_segment_ids,
+            geometry_only=geometry_only))
 
         # Overall goal: Get the dijkstra shortest path (as linestrings)!
         LOGGER.info('START: Getting dijkstra shortest path for lon %s, lat %s (or subc_id %s) to lon %s, lat %s (or subc_id %s)' % (
