@@ -18,8 +18,10 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 
 '''
-# Request some JSON, to be improved (TODO):
-curl -X POST "http://localhost:5000/processes/get-shortest-path-between-points-plural/execution" \
+## INPUT:  GeoJSON directly (Multipoint)
+## OUTPUT: Plain JSON directly
+## Tested 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points-plural/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
@@ -33,6 +35,35 @@ curl -X POST "http://localhost:5000/processes/get-shortest-path-between-points-p
     },
     "comment": "located in schlei area",
     "geometry_only": "todo"
+  }
+}'
+
+## INPUT:  GeoJSON File (Multipoint)
+## OUTPUT: Plain JSON directly
+## Tested 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points-plural/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometry_multipoint.json",
+    "comment": "not sure where",
+    "geometry_only": "todo"
+  }
+}'
+
+## INPUT:  GeoJSON File (Multipoint)
+## OUTPUT: Plain JSON File
+## Tested 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points-plural/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometry_multipoint.json",
+    "comment": "not sure where",
+    "geometry_only": "todo"
+  },
+  "outputs": {
+    "transmissionMode": "reference"
   }
 }'
 
@@ -101,7 +132,10 @@ class ShortestPathBetweenPointsGetterPlural(BaseProcessor):
     def _execute(self, data, requested_outputs, conn):
 
         # User inputs
+        # GeoJSON, posted directly
         points = data.get('points', None)
+        # GeoJSON, to be downloaded via URL:
+        points_geojson_url = data.get('points_geojson_url', None)
         #lon_start = data.get('lon_start', None)
         #lat_start = data.get('lat_start', None)
         #lon_end = data.get('lon_end', None)
@@ -115,6 +149,11 @@ class ShortestPathBetweenPointsGetterPlural(BaseProcessor):
         # Parse booleans
         add_segment_ids = (add_segment_ids.lower() == 'true')
         geometry_only = (geometry_only.lower() == 'true')
+
+        ## Download GeoJSON if user provided URL:
+        if points_geojson_url is not None:
+            points = utils.download_geojson(points_geojson_url)
+            LOGGER.debug(f'Downloaded GeoJSON: {points}')
 
         # Overall goal: Get the dijkstra shortest path (as linestrings)!
         #LOGGER.info('START: Getting dijkstra shortest path for lon %s, lat %s (or subc_id %s) to lon %s, lat %s (or subc_id %s)' % (
