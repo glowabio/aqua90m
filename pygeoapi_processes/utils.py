@@ -5,6 +5,7 @@ import urllib
 import tempfile
 import pandas as pd
 from pygeoapi.process.base import ProcessorExecuteError
+import pygeoapi.process.aqua90m.utils.exceptions as exc
 LOGGER = logging.getLogger(__name__)
 
 
