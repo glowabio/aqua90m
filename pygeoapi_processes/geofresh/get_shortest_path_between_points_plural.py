@@ -67,6 +67,24 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points-plur
   }
 }'
 
+
+## INPUT:  GeoJSON File (GeometryCollection)
+## OUTPUT: Plain JSON File
+## Tested 2026-01-02
+curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points-plural/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometrycollection_points_samebasin.json",
+    "comment": "not sure where",
+    "geometry_only": "todo"
+  },
+  "outputs": {
+    "transmissionMode": "reference"
+  }
+}'
+
+
 ## INPUT:  GeoJSON File (FeatureCollection)
 ## OUTPUT: Plain JSON directly
 ## Tested 2026-01-02
@@ -193,6 +211,16 @@ class ShortestPathBetweenPointsGetterPlural(BaseProcessor):
         # TODO: Looping over features/points is not good. Also, we loop twice (for Geometry/Feature).
         if 'coordinates' in points:
             for lon, lat in points['coordinates']:
+                # TODO: Loop may not be most efficient!
+                LOGGER.debug('Now getting subc_id, basin_id, reg_id for lon %s, lat %s' % (lon, lat))
+                subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
+                    conn, LOGGER, lon, lat)
+                all_subc_ids.append(subc_id)
+                all_reg_ids.append(reg_id)
+                all_basin_ids.append(basin_id)
+        elif 'geometries' in points:
+            for geom in points['geometries']:
+                lon, lat = geom['coordinates']
                 # TODO: Loop may not be most efficient!
                 LOGGER.debug('Now getting subc_id, basin_id, reg_id for lon %s, lat %s' % (lon, lat))
                 subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
