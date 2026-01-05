@@ -69,7 +69,7 @@ def make_sync_request(pyserver, process_id, payload):
     resp = requests.post(url, json=payload, headers=HEADERS_SYNC)
     resp.raise_for_status()
     if not resp.status_code == 200:
-        msg = 'NOT OK: Responded with {resp.status_code} instead of 200.'
+        msg = f' NOT OK: Responded with {resp.status_code} instead of 200.'
         print(msg)
         if RAISE_ERROR: raise ValueError(msg)
         return None
@@ -82,7 +82,7 @@ def make_async_request(pyserver, process_id, payload):
     resp = requests.post(url, json=payload, headers=HEADERS_ASYNC)
     resp.raise_for_status()
     if not resp.status_code == 201:
-        msg = 'NOT OK: Responded with {resp.status_code} instead of 201.'
+        msg = f' NOT OK: Responded with {resp.status_code} instead of 201.'
         print(msg)
         if RAISE_ERROR: raise ValueError(msg)
         return None
@@ -103,7 +103,7 @@ def make_async_request(pyserver, process_id, payload):
         print('-', end="", flush=True)
         # Stop after too many attempts:
         if attempt >= 100:
-            msg = 'NOT OK: Stopping after 100 attempts.'
+            msg = ' NOT OK: Stopping after 100 attempts.'
             print(msg)
             if RAISE_ERROR: raise ValueError(msg)
             return None
@@ -127,7 +127,7 @@ def sanity_checks_geojson(resp, do_raise_error=True):
         pass
     else:
         ok = False
-        msg = 'NOT OK: Not a dict.'
+        msg = ' NOT OK: Not a dict.'
         print(msg)
         if do_raise_error: raise ValueError(msg)
         return False
@@ -137,7 +137,7 @@ def sanity_checks_geojson(resp, do_raise_error=True):
         pass
     else:
         ok = False
-        msg ='NOT OK: Invalid GeoJSON: No "type".'
+        msg =' NOT OK: Invalid GeoJSON: No "type".'
         print(msg)
         if do_raise_error: raise ValueError(msg)
         return False
@@ -147,7 +147,7 @@ def sanity_checks_geojson(resp, do_raise_error=True):
         geojson_obj = geojson.loads(resp.text)  # can also use geojson.dumps(data)
     except (ValueError, TypeError) as e:
         ok = False
-        msg = f'NOT OK: Invalid GeoJSON: {e}'
+        msg = f' NOT OK: Invalid GeoJSON: {e}'
         print(msg)
         if do_raise_error: raise ValueError(msg)
         return False
@@ -169,7 +169,7 @@ def sanity_checks_basic(resp, do_raise_error=True):
         pass
     else:
         ok = False
-        msg = 'NOT OK: Not a dict.'
+        msg = ' NOT OK: Not a dict.'
         print(msg)
         if do_raise_error: raise ValueError(msg)
         return False

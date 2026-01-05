@@ -57,7 +57,10 @@ def mandatory_parameters(params_dict, additional_message=""):
             missing.append(paramname)
 
     if len(missing) > 0:
-        err_msg = f"Missing parameter(s): {', '.join(missing)}. Please provide all of them.{additional_message}"
+        err_msg = (
+            f"Missing parameter(s): {', '.join(missing)}."
+            f" Please provide all of them.{additional_message}"
+        )
         raise ProcessorExecuteError(err_msg)
 
 
@@ -72,10 +75,16 @@ def exactly_one_param(params_dict, additional_message=""):
             present.append(paramname)
 
     if len(present) == 0:
-        err_msg = f"Missing parameter(s): {', '.join(params_dict.keys())}. Please provide exactly one of them.{additional_message}"
+        err_msg = (
+            f"Missing parameter(s): {', '.join(params_dict.keys())}."
+            f" Please provide exactly one of them.{additional_message}"
+        )
         raise ProcessorExecuteError(err_msg)
     elif len(present) > 1:
-        err_msg = f"Too many parameter(s): {', '.join(present)}. Please provide just one of them.{additional_message}"
+        err_msg = (
+            f"Too many parameter(s): {', '.join(present)}."
+            f" Please provide just one of them.{additional_message}"
+        )
         raise ProcessorExecuteError(err_msg)
 
 
@@ -90,15 +99,21 @@ def at_least_one_param(params_dict, additional_message=""):
             present.append(paramname)
 
     if len(present) == 0:
-        err_msg = f"Missing parameter(s): {', '.join(params_dict.keys())}. Please provide at least one of them.{additional_message}"
+        err_msg = (
+            f"Missing parameter(s): {', '.join(params_dict.keys())}."
+            f" Please provide at least one of them.{additional_message}"
+        )
         raise ProcessorExecuteError(err_msg)
 
 
 def is_bool_parameters(params_dict, additional_message=""):
-    LOGGER.debug(f'All of these should be boolean: {params_dict.keys()}')
+    LOGGER.debug(f'Checking parameters: All of these should be boolean: {params_dict.keys()}')
     for paramname, paramval in params_dict.items():
         if not type(paramval) == bool:
-            err_msg = f"Parameter '{paramname}' should be a boolean instead of '{type(paramval)}'.{additional_message}"
+            err_msg = (
+                f"Malformed parameter: '{paramname}' should be a boolean "
+                f"instead of '{type(paramval).__name__}'.{additional_message}"
+            )
             raise ProcessorExecuteError(err_msg)
 
 
@@ -212,7 +227,10 @@ def access_csv_comma_then_semicolon(csv_url_or_path):
 
     # If that failed, try semicolon:
     if dataframe.shape[1] == 1:
-        LOGGER.debug(f'Found only one column (name "{dataframe.columns}"). Maybe it is not comma-separated, but comma-separated? Trying...')
+        LOGGER.debug(
+            f'Found only one column (name "{dataframe.columns}").'
+            f' Maybe it is not comma-separated, but comma-separated? Trying...'
+        )
         dataframe = pd.read_csv(csv_url_or_path, sep=';')
 
     return dataframe

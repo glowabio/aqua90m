@@ -136,7 +136,7 @@ class LocalIdGetter(GeoFreshBaseProcessor):
         # Check ids:
         possible_ids = ['subc_id', 'basin_id', 'reg_id']
         if not all([some_id in possible_ids for some_id in which_ids]):
-            err_msg = "The requested ids have to be one or several of: %s (you provided %s)" % (possible_ids, which_ids)
+            err_msg = f"The requested ids have to be one or several of: {possible_ids} (you provided {which_ids})"
             LOGGER.error(err_msg)
             raise exc.UserInputException(err_msg)
 
@@ -151,30 +151,30 @@ class LocalIdGetter(GeoFreshBaseProcessor):
                 LOGGER.debug('Special case: User provided a subc_id...')
                 basin_id, reg_id = basic_queries.get_basinid_regid(
                     conn, LOGGER, subc_id = input_subc_id)
-                LOGGER.debug('Special case: Returning reg_id (%s), basin_id (%s).' % (reg_id, basin_id))
+                LOGGER.debug(f'Special case: Returning reg_id ({reg_id}), basin_id ({basin_id}).')
                 subc_id = input_subc_id
 
             # Normal case: User provided lon, lat:
             elif 'subc_id' in which_ids:
-                LOGGER.log(logging.TRACE, 'Getting subc_id for lon, lat: %s, %s' % (lon, lat))
+                LOGGER.log(logging.TRACE, f'Getting subc_id for lon, lat: {lon}, {lat}')
                 subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
                     conn, LOGGER, lon, lat)
                 LOGGER.debug('FOUND: %s %s %s' % (subc_id, basin_id, reg_id))
 
             elif 'basin_id' in which_ids:
-                LOGGER.log(logging.TRACE, 'Getting basin_id for lon, lat: %s, %s' % (lon, lat))
+                LOGGER.log(logging.TRACE, f'Getting basin_id for lon, lat: {lon}, {lat}')
                 basin_id, reg_id = basic_queries.get_basinid_regid(
                     conn, LOGGER, lon, lat)
 
             elif 'reg_id' in which_ids:
-                LOGGER.log(logging.TRACE, 'Getting reg_id for lon, lat: %s, %s' % (lon, lat))
+                LOGGER.log(logging.TRACE, f'Getting reg_id for lon, lat: {lon}, {lat}')
                 reg_id = basic_queries.get_regid(
                     conn, LOGGER, lon, lat)
 
         except exc.GeoFreshNoResultException as e:
             # TODO: Improve! What I don't like about this: This should not be an exception, but probably
             # quite a normal case...
-            LOGGER.debug('Caught this: %s, adding site_id: %s' % (e, site_id))
+            LOGGER.debug(f'Caught this: {e}, adding site_id: %{site_id}')
             if site_id is not None:
                 err_msg = '%s (%s)' % (str(e), site_id)
                 raise exc.GeoFreshNoResultException(err_msg)
