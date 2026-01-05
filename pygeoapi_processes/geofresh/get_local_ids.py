@@ -18,25 +18,27 @@ from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 '''
 
 # Request all ids
+# Tested: 2025-01-05
 curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
-    "which_ids": "subc_id, basin_id, reg_id",
+    "which_ids": ["subc_id", "basin_id", "reg_id"],
     "comment": "schlei-near-rabenholz"
   }
 }'
 
 # Request all ids, but as file
+# Tested: 2025-01-05
 curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
-    "which_ids": "subc_id, basin_id, reg_id",
+    "which_ids": ["subc_id", "basin_id", "reg_id"],
     "comment": "schlei-near-rabenholz"
   },
   "outputs": {
@@ -69,12 +71,13 @@ curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
 }'
 
 # Special case: Request all ids, when we know the subc_id!
+# Tested: 2025-01-05
 curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "subc_id": 506250459,
-    "which_ids": "subc_id, basin_id, reg_id",
+    "which_ids": ["subc_id", "basin_id", "reg_id"],
     "comment": "schlei-near-rabenholz"
   }
 }'
@@ -102,9 +105,7 @@ class LocalIdGetter(GeoFreshBaseProcessor):
         input_subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
         comment = data.get('comment') # optional
         site_id = data.get('site_id') # optional
-        which_ids = data.get('which_ids', 'subc_id, basin_id, reg_id')
-        which_ids = which_ids.replace(' ', '')
-        which_ids = which_ids.split(',')
+        which_ids = data.get('which_ids', ['subc_id', 'basin_id', 'reg_id'])
 
         possible_ids = ['subc_id', 'basin_id', 'reg_id']
         if not all([some_id in possible_ids for some_id in which_ids]):
