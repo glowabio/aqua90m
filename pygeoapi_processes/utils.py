@@ -119,13 +119,12 @@ def is_bool_parameters(params_dict, additional_message=""):
 
 def check_type_parameter(paramname, paramval, paramtype, additional_message=""):
     LOGGER.debug(f'Checking parameter {paramname}...')
-    for paramname, paramval in params_dict.items():
-        if not type(paramval) == paramtype:
-            err_msg = (
-                f"Malformed parameter: '{paramname}' should be a {paramtype.__name__} "
-                f"instead of '{type(paramval).__name__}'.{additional_message}"
-            )
-            raise ProcessorExecuteError(err_msg)
+    if not type(paramval) == paramtype:
+        err_msg = (
+            f"Malformed parameter: '{paramname}' should be a {paramtype.__name__} "
+            f"instead of '{type(paramval).__name__}'.{additional_message}"
+        )
+        raise ProcessorExecuteError(err_msg)
 
 def return_hyperlink(output_name, requested_outputs):
 

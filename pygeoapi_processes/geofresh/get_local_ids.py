@@ -131,7 +131,7 @@ class LocalIdGetter(GeoFreshBaseProcessor):
         utils.check_type_parameter('which_ids', which_ids, list)
 
         # Check if either subc_id or both lon and lat are provided:
-        utils.params_lonlat_or_subcid(lon, lat, subc_id)
+        utils.params_lonlat_or_subcid(lon, lat, input_subc_id)
 
         # Check ids:
         possible_ids = ['subc_id', 'basin_id', 'reg_id']
