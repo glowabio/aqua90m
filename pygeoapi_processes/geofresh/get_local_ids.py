@@ -47,6 +47,7 @@ curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
 }'
 
 # Request only reg_id
+# Tested: 2025-01-05
 curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
 --header "Content-Type: application/json" \
 --data '{
@@ -58,7 +59,21 @@ curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
   }
 }'
 
+# Request only reg_id, better:
+# Tested: 2025-01-05
+curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "lon": 9.931555,
+    "lat": 54.695070,
+    "which_ids": ["reg_id"],
+    "comment": "schlei-near-rabenholz"
+  }
+}'
+
 # Request only basin_id
+# Tested: 2025-01-05
 curl -X POST https://${PYSERVER}/processes/get-local-ids/execution \
 --header "Content-Type: application/json" \
 --data '{
@@ -107,6 +122,12 @@ class LocalIdGetter(GeoFreshBaseProcessor):
         site_id = data.get('site_id') # optional
         which_ids = data.get('which_ids', ['subc_id', 'basin_id', 'reg_id'])
 
+        # Possibly correct user inputs:
+        if not isinstance(which_ids, list) and isinstance(which_ids, str):
+            # If user did not put the word into a list...
+            which_ids = [which_ids]
+
+        # Check ids:
         possible_ids = ['subc_id', 'basin_id', 'reg_id']
         if not all([some_id in possible_ids for some_id in which_ids]):
             err_msg = "The requested ids have to be one or several of: %s (you provided %s)" % (possible_ids, which_ids)
