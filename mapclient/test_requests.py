@@ -67,7 +67,13 @@ def make_sync_request(pyserver, process_id, payload):
     # First and only request:
     url = f'{pyserver}/processes/{process_id}/execution'
     resp = requests.post(url, json=payload, headers=HEADERS_SYNC)
-    resp.raise_for_status()
+    try:
+        resp.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        print(f' NOT OK: {e.response.json()["description"]}')
+        if RAISE_ERROR: raise e
+
+    # If we get another successful code than 200 (e.g. 201)
     if not resp.status_code == 200:
         msg = f' NOT OK: Responded with {resp.status_code} instead of 200.'
         print(msg)
@@ -80,7 +86,13 @@ def make_async_request(pyserver, process_id, payload):
     # First request
     url = f'{pyserver}/processes/{process_id}/execution'
     resp = requests.post(url, json=payload, headers=HEADERS_ASYNC)
-    resp.raise_for_status()
+    try:
+        resp.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        print(f' NOT OK: {e.response.json()["description"]}')
+        if RAISE_ERROR: raise e
+
+    # If we get another successful code than 201 (e.g. 200)
     if not resp.status_code == 201:
         msg = f' NOT OK: Responded with {resp.status_code} instead of 201.'
         print(msg)
