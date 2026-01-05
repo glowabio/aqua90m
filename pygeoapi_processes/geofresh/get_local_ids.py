@@ -210,6 +210,7 @@ class LocalIdGetter(GeoFreshBaseProcessor):
 if __name__ == '__main__':
 
     import os
+    import requests
     PYSERVER = f'https://{os.getenv("PYSERVER")}'
     # For this to work, please define the PYSERVER before running python:
     # export PYSERVER="https://.../pygeoapi-dev"
@@ -219,69 +220,76 @@ if __name__ == '__main__':
     from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
 
 
-    ## Test 1
     print('TEST CASE 1: Request all three ids...', end="", flush=True)  # no newline
     payload = {
       "inputs": {
         "lon": 9.931555,
         "lat": 54.695070,
-        "which_ids": "subc_id, basin_id, reg_id",
-        "comment": "schlei-near-rabenholz"
+        "which_ids": ["subc_id", "basin_id", "reg_id"],
+        "comment": "test1"
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
 
 
-    ## Test 2
     print('TEST CASE 2: Request only reg_id...', end="", flush=True)  # no newline
     payload = {
       "inputs": {
         "lon": 9.931555,
         "lat": 54.695070,
-        "which_ids": "reg_id",
-        "comment": "schlei-near-rabenholz"
+        "which_ids": ["reg_id"],
+        "comment": "test2"
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
 
 
-    ## Test 3
-    print('TEST CASE 3: Request only basin_id...', end="", flush=True)  # no newline
+    print('TEST CASE 3: Request only reg_id, as string...', end="", flush=True)  # no newline
+    payload = {
+      "inputs": {
+        "lon": 9.931555,
+        "lat": 54.695070,
+        "which_ids": "reg_id",
+        "comment": "test3"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+    print('TEST CASE 4: Request only basin_id...', end="", flush=True)  # no newline
     payload = {
       "inputs": {
         "lon": 9.931555,
         "lat": 54.695070,
         "which_ids": "basin_id",
-        "comment": "schlei-near-rabenholz"
+        "comment": "test4"
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
 
 
-    ## Test 4
-    print('TEST CASE 4: Request all ids, knowing the subc_id...', end="", flush=True)  # no newline
+    print('TEST CASE 5: Request all ids, knowing the subc_id...', end="", flush=True)  # no newline
     payload = {
       "inputs": {
         "subc_id": 506250459,
-        "which_ids": "subc_id, basin_id, reg_id",
-        "comment": "schlei-near-rabenholz"
+        "which_ids": ["subc_id", "basin_id", "reg_id"],
+        "comment": "test5"
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
 
 
-    ## Test 5
-    print('TEST CASE 5: Request all three ids, request links...', end="", flush=True)  # no newline
+    print('TEST CASE 6: Request all three ids as JSON file...', end="", flush=True)  # no newline
     payload = {
       "inputs": {
         "lon": 9.931555,
         "lat": 54.695070,
-        "which_ids": "subc_id, basin_id, reg_id",
-        "comment": "schlei-near-rabenholz"
+        "which_ids": ["subc_id", "basin_id", "reg_id"],
+        "comment": "test6"
       },
       "outputs": {
         "transmissionMode": "reference"
@@ -289,6 +297,22 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
+
+
+    print('TEST CASE 7: Will fail: Format of input...', end="", flush=True)  # no newline
+    payload = {
+      "inputs": {
+        "lon": "9.931555",
+        "lat": 54.695070,
+        "which_ids": ["subc_id", "basin_id", "reg_id"],
+        "comment": "test7"
+        }
+    }
+    try:
+        resp = make_sync_request(PYSERVER, process_id, payload)
+        raise ValueError("Expected error that did not happen...")
+    except requests.exceptions.HTTPError as e:
+        print(f'TEST CASE 7: EXPECTED: {e.response.json()["description"]}')
 
 
 

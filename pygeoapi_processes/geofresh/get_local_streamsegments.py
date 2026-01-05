@@ -104,3 +104,101 @@ class LocalStreamSegmentsGetter(GeoFreshBaseProcessor):
             # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             return self.return_results('stream_segment', requested_outputs, output_df=None, output_json=streamsegment_feature, comment=comment)
 
+
+
+if __name__ == '__main__':
+
+    import os
+    import requests
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    process_id = 'get-local-streamsegments'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
+
+
+    print('TEST CASE 1: Request geometry_only...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": 9.931555,
+            "lat": 54.695070,
+            "geometry_only": True,
+            "comment": "test1"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    LOGGER.debug('RESP: %s' % resp.json)
+    sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 2: Request full result...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": 9.931555,
+            "lat": 54.695070,
+            "geometry_only": False,
+            "comment": "test2"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 3: Input subc_id...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "subc_id": 507044912,
+            "geometry_only": True,
+            "comment": "test3"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 4: Will fail: Input str lon...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": "will-fail",
+            "lat": 54.695070,
+            "geometry_only": False,
+            "comment": "test4"
+        }
+    }
+    try:
+        resp = make_sync_request(PYSERVER, process_id, payload)
+        raise ValueError("Expected error that did not happen...")
+    except requests.exceptions.HTTPError as e:
+        print(f'TEST CASE 4: EXPECTED: {e.response.json()["description"]}')
+
+    print('TEST CASE 5: Will fail: Missing input lon...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lat": 54.695070,
+            "geometry_only": False,
+            "comment": "test5"
+        }
+    }
+    try:
+        resp = make_sync_request(PYSERVER, process_id, payload)
+        raise ValueError("Expected error that did not happen...")
+    except requests.exceptions.HTTPError as e:
+        print(f'TEST CASE 5: EXPECTED: {e.response.json()["description"]}')
+
+    print('TEST CASE 6: Will fail: Input str subc_id...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "subc_id": "will-fail",
+            "geometry_only": False,
+            "comment": "test6"
+        }
+    }
+    try:
+        resp = make_sync_request(PYSERVER, process_id, payload)
+        raise ValueError("Expected error that did not happen...")
+    except requests.exceptions.HTTPError as e:
+        print(f'TEST CASE 6: EXPECTED: {e.response.json()["description"]}')
+

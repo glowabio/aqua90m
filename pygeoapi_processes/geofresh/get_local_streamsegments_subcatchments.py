@@ -132,3 +132,60 @@ class LocalStreamSegmentSubcatchmentGetter(GeoFreshBaseProcessor):
             # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             return self.return_results('stream_segment_subcatchment', requested_outputs, output_df=None, output_json=feature_coll, comment=comment)
 
+
+if __name__ == '__main__':
+
+    import os
+    import requests
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    process_id = 'get-local-streamsegments-subcatchments'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
+
+
+    print('TEST CASE 1: Request geometry_only...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": 9.931555,
+            "lat": 54.695070,
+            "geometry_only": True,
+            "comment": "test1"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    LOGGER.debug('RESP: %s' % resp.json)
+    sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 2: Request full result...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": 9.931555,
+            "lat": 54.695070,
+            "geometry_only": False,
+            "comment": "test2"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 3: Will fail: Wrong format...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": 9.931555,
+            "lat": 54.695070,
+            "geometry_only": "false",
+            "comment": "test3"
+        }
+    }
+    try:
+        resp = make_sync_request(PYSERVER, process_id, payload)
+        raise ValueError("Expected error that did not happen...")
+    except requests.exceptions.HTTPError as e:
+        print(f'TEST CASE 3: EXPECTED: {e.response.json()["description"]}')
+
