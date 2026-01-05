@@ -64,9 +64,11 @@ class LocalStreamSegmentsGetter(GeoFreshBaseProcessor):
         lon = data.get('lon', None)
         lat = data.get('lat', None)
         subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
-        comment = data.get('comment') # optional
         geometry_only = data.get('geometry_only', False)
+        comment = data.get('comment') # optional
 
+        # Check if either subc_id or both lon and lat are provided:
+        utils.params_lonlat_or_subcid(lon, lat, subc_id)
         # Check type:
         utils.is_bool_parameters(dict(geometry_only=geometry_only))
 
