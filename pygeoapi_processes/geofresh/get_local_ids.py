@@ -127,6 +127,12 @@ class LocalIdGetter(GeoFreshBaseProcessor):
             # If user did not put the word into a list...
             which_ids = [which_ids]
 
+        # Check type:
+        utils.check_type_parameter('which_ids', which_ids, list)
+
+        # Check if either subc_id or both lon and lat are provided:
+        utils.params_lonlat_or_subcid(lon, lat, subc_id)
+
         # Check ids:
         possible_ids = ['subc_id', 'basin_id', 'reg_id']
         if not all([some_id in possible_ids for some_id in which_ids]):
