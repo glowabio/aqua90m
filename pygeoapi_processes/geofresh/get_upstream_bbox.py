@@ -19,28 +19,28 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 
 '''
 # Request a simple Geometry (Polygon) (just one, not a collection):
-# Tested: 2026-01-02
+# Tested: 2026-01-06
 curl -X POST https://${PYSERVER}/processes/get-upstream-bbox/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
-    "geometry_only": "true",
+    "geometry_only": true,
     "comment": "schlei-near-rabenholz"
     }
 }'
 
 # Request a Feature (Polygon) (just one, not a collection):
-# Tested: 2026-01-02
+# Tested: 2026-01-06
 curl -X POST https://${PYSERVER}/processes/get-upstream-bbox/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "lon": 9.931555,
     "lat": 54.695070,
-    "geometry_only": "false",
-    "add_upstream_ids": "true",
+    "geometry_only": false,
+    "add_upstream_ids": true,
     "comment": "schlei-bei-rabenholz"
     }
 }'
@@ -67,12 +67,8 @@ class UpstreamBboxGetter(GeoFreshBaseProcessor):
         lat = data.get('lat', None)
         subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
         comment = data.get('comment', None) # optional
-        add_upstream_ids = data.get('add_upstream_ids', 'false')
-        geometry_only = data.get('geometry_only', 'false')
-
-        # Parse booleans
-        add_upstream_ids = (add_upstream_ids.lower() == 'true')
-        geometry_only = (geometry_only.lower() == 'true')
+        add_upstream_ids = data.get('add_upstream_ids', False)
+        geometry_only = data.get('geometry_only', False)
 
         # Check if boolean:
         utils.is_bool_parameters(dict(
