@@ -99,10 +99,11 @@ class ShortestPathToOutletGetter(GeoFreshBaseProcessor):
         add_downstream_ids = data.get('add_downstream_ids', True)
         only_up_to_strahler = data.get('only_up_to_strahler', None)
 
-        # Parse int:
-        only_up_to_strahler = int(only_up_to_strahler) if only_up_to_strahler is not None else None
+        # Check if either subc_id or both lon and lat are provided:
+        utils.params_lonlat_or_subcid(lon_start, lat_start, subc_id1)
 
-        # Check if boolean:
+        # Check types:
+        utils.check_type_parameter('only_up_to_strahler', only_up_to_strahler, int, none_allowed=True)
         utils.is_bool_parameters(dict(
             geometry_only=geometry_only,
             downstream_ids_only=downstream_ids_only,

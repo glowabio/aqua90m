@@ -71,10 +71,14 @@ class UpstreamDissolvedGetter(GeoFreshBaseProcessor):
         geometry_only = data.get('geometry_only', False)
         add_upstream_ids = data.get('add_upstream_ids', True)
 
-        ## Check if boolean:
+        # Check if boolean:
         utils.is_bool_parameters(dict(
             add_upstream_ids=add_upstream_ids,
-            geometry_only=geometry_only))
+            geometry_only=geometry_only
+        ))
+
+        # Check if either subc_id or both lon and lat are provided:
+        utils.params_lonlat_or_subcid(lon, lat, subc_id)
 
         # Overall goal: Get the upstream polygon (as one dissolved)!
         LOGGER.info(f'START: Getting upstream dissolved polygon for lon, lat: {lon}, {lat} (or subc_id {subc_id})')

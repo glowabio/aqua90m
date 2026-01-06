@@ -98,8 +98,15 @@ class UpstreamDissolvedGetter(GeoFreshBaseProcessor):
         get_json_directly = data.get('get_json_directly', 'false') # Default: Return URL!
         subc_id = None # Needed below...
 
-        # Parse booleans...
+        # Parse booleans...  TODO: AIP Legacy, in future these should be booleans directly!
         get_json_directly = (get_json_directly.lower() == 'true')
+
+        # Check if either subc_id or both lon and lat are provided:
+        utils.params_lonlat_or_subcid(lon, lat, subc_id)
+
+        # Check types:
+        utils.check_type_parameter('get_type', get_type, str)
+        utils.is_bool_parameters(dict(get_json_directly=get_json_directly))
 
         # Overall goal: Get the upstream polygon (as one dissolved)!
         LOGGER.info(f'START PROCESS: Getting upstream dissolved polygon for lon, lat: {lon}, {lat} (or subc_id {subc_id})')

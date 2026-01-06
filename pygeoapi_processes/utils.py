@@ -117,9 +117,11 @@ def is_bool_parameters(params_dict, additional_message=""):
             raise ProcessorExecuteError(err_msg)
 
 
-def check_type_parameter(paramname, paramval, paramtype, additional_message=""):
+def check_type_parameter(paramname, paramval, paramtype, none_allowed=False, additional_message=""):
     LOGGER.debug(f'Checking parameter {paramname}...')
-    if not type(paramval) == paramtype:
+    if none_allowed and paramval is None:
+        pass
+    elif not type(paramval) == paramtype:
         err_msg = (
             f"Malformed parameter: '{paramname}' should be a {paramtype.__name__} "
             f"instead of '{type(paramval).__name__}'.{additional_message}"

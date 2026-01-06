@@ -55,6 +55,9 @@ class UpstreamSubcidGetter(GeoFreshBaseProcessor):
         subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
         comment = data.get('comment') # optional
 
+        # Check if either subc_id or both lon and lat are provided:
+        utils.params_lonlat_or_subcid(lon, lat, subc_id)
+
         # Overall goal: Get the upstream subc_ids!
         LOGGER.info(f'START: Getting upstream subc_ids for lon, lat: {lon}, {lat} (or subc_id {subc_id})')
 

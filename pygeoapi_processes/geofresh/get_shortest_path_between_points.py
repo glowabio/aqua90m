@@ -75,7 +75,11 @@ class ShortestPathBetweenPointsGetter(GeoFreshBaseProcessor):
         add_segment_ids = data.get('add_segment_ids', True)
         geometry_only = data.get('geometry_only', False)
 
-        ## Check if boolean:
+        # Check if either subc_id or both lon and lat are provided:
+        utils.params_lonlat_or_subcid(lon_start, lat_start, subc_id_start)
+        utils.params_lonlat_or_subcid(lon_end, lat_end, subc_id_end)
+
+        # Check if boolean:
         utils.is_bool_parameters(dict(
             add_segment_ids=add_segment_ids,
             geometry_only=geometry_only))

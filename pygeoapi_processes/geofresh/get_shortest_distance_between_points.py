@@ -175,6 +175,14 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         ### Validate user inputs ###
         ############################
 
+        # Check type:
+        utils.check_type_parameter('which_ids', which_ids, list)
+
+        # Check if either subc_id or both lon and lat are provided:
+        utils.params_lonlat_or_subcid(lon_start, lat_start, subc_id_start)
+        utils.params_lonlat_or_subcid(lon_end,   lat_end,   subc_id_end)
+
+
         if points is not None:
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are the same)...')
         elif lon_start is not None and lat_start is not None and lon_end is not None and lat_end is not None:

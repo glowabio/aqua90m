@@ -96,6 +96,9 @@ class UpstreamSubcatchmentGetter(GeoFreshBaseProcessor):
             geometry_only=geometry_only
         ))
 
+        # Check if either subc_id or both lon and lat are provided:
+        utils.params_lonlat_or_subcid(lon, lat, subc_id)
+
         # Overall goal: Get the upstream polygons (individual ones)
         LOGGER.info(f'START: Getting upstream polygons (individual ones) for lon, lat: {lon}, {lat} (or subc_id {subc_id})')
 

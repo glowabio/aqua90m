@@ -74,6 +74,15 @@ class UpstreamBboxGetter(GeoFreshBaseProcessor):
         add_upstream_ids = (add_upstream_ids.lower() == 'true')
         geometry_only = (geometry_only.lower() == 'true')
 
+        # Check if boolean:
+        utils.is_bool_parameters(dict(
+            add_upstream_ids=add_upstream_ids,
+            geometry_only=geometry_only
+        ))
+
+        # Check if either subc_id or both lon and lat are provided:
+        utils.params_lonlat_or_subcid(lon, lat, subc_id)
+
         # Overall goal: Get the upstream stream segments!
         LOGGER.info(f'START: Getting upstream bbox for lon, lat: {lon}, {lat} (or subc_id {subc_id})')
 

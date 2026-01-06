@@ -79,6 +79,9 @@ class UpstreamStreamSegmentsGetter(GeoFreshBaseProcessor):
             add_upstream_ids=add_upstream_ids
         ))
 
+        # Check if either subc_id or both lon and lat are provided:
+        utils.params_lonlat_or_subcid(lon, lat, subc_id)
+
         # Overall goal: Get the upstream stream segments
         LOGGER.info(f'Getting upstream line segments for lon, lat: {lon}, {lat} (or subc_id {subc_id})')
 

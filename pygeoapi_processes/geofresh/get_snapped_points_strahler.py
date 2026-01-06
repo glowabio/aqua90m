@@ -68,8 +68,12 @@ class SnappedPointsStrahlerGetter(GeoFreshBaseProcessor):
         geometry_only = data.get('geometry_only', False)
         comment = data.get('comment') # optional
 
-        # Check if boolean:
+        # Check types:
         utils.is_bool_parameters(dict(geometry_only=geometry_only))
+        utils.check_type_parameter('strahler', strahler, int)
+
+        # Check if both lon and lat are provided:
+        utils.params_lonlat_or_subcid(lon, lat, None)
 
         # Get reg_id, basin_id, subc_id
         LOGGER.info(f'START: Getting snapped point for lon, lat: {lon}, {lat}')

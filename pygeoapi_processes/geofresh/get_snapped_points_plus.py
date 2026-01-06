@@ -76,6 +76,9 @@ class SnappedPointsGetterPlus(GeoFreshBaseProcessor):
         geometry_only = data.get('geometry_only', False)
         comment = data.get('comment') # optional
 
+        # Check if both lon and lat are provided:
+        utils.params_lonlat_or_subcid(lon, lat, None)
+
         # Check if boolean:
         utils.is_bool_parameters(dict(geometry_only=geometry_only))
 
