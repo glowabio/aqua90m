@@ -144,3 +144,68 @@ class BasinStreamSegmentsGetter(GeoFreshBaseProcessor):
         ## Return link to result (wrapped in JSON) if requested, or directly the JSON object:
         return self.return_results('stream_segments', requested_outputs, output_df=None, output_json=geojson_collection, comment=comment)
 
+
+if __name__ == '__main__':
+
+    import os
+    import requests
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    print('_____________________________________________________')
+    process_id = 'get-basin-streamsegments'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
+
+
+    print('TEST CASE 1: Input: basin_id, output: FeatureCollection...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "basin_id": 1288419,
+            "geometry_only": False,
+            "strahler_min": 4,
+            "add_segment_ids": True,
+            "comment": "test1"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 2: Input: basin_id, output: GeometryCollection...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "basin_id": 1288419,
+            "geometry_only": True,
+            "comment": "test2"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 3: Input: subc_id, output: GeometryCollection...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "subc_id": 506586041,
+            "geometry_only": True,
+            "comment": "test3"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 4: Input: lon, lat, output: GeometryCollection...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": 8.278198242187502,
+            "lat": 53.54910661890981,
+            "geometry_only": True,
+            "comment": "test3"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)

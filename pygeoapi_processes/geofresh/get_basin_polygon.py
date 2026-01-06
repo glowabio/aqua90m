@@ -82,3 +82,41 @@ class BasinPolygonGetter(GeoFreshBaseProcessor):
         # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
         return self.return_results('polygon', requested_outputs, output_df=None, output_json=geojson_item, comment=comment)
 
+
+if __name__ == '__main__':
+
+    import os
+    import requests
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    print('_____________________________________________________')
+    process_id = 'get-basin-polygon'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
+
+
+    print('TEST CASE 1: Input: basin_id, output: FeatureCollection...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "basin_id": 1288419,
+            "geometry_only": False,
+            "comment": "test1"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 2: Input: basin_id, output: GeometryCollection...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "basin_id": 1288419,
+            "geometry_only": True,
+            "comment": "test2"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)

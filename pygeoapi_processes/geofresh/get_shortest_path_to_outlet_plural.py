@@ -222,3 +222,75 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
         #####################
 
         return self.return_results('downstream_path', requested_outputs, output_df=output_df, output_json=output_json, comment=comment)
+
+if __name__ == '__main__':
+
+    import os
+    import requests
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    print('_____________________________________________________')
+    process_id = 'get-shortest-path-to-outlet-plural'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
+
+
+    print('TEST CASE 1: Input CSV file, output CSV file...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "colname_lon": "longitude",
+            "colname_lat": "latitude",
+            "colname_site_id": "site_id",
+            "downstream_ids_only": True,
+            "return_csv": True,
+            "comment": "test1"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    ## This contains subc_ids, so they will be used instead of lat lon... TODO Is this desired?
+    print('TEST CASE 2: Like test case 1 but based on subc_id...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus_with_subcid.csv",
+            "colname_lon": "longitude",
+            "colname_lat": "latitude",
+            "colname_site_id": "site_id",
+            "downstream_ids_only": True,
+            "return_csv": True,
+            "comment": "test2"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 3: Input CSV file, output JSON file...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "colname_lon": "longitude",
+            "colname_lat": "latitude",
+            "colname_site_id": "site_id",
+            "downstream_ids_only": True,
+            "return_json": True,
+            "comment": "test3"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)

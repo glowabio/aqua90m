@@ -264,3 +264,160 @@ class SnappedPointsGetterPlural(GeoFreshBaseProcessor):
 
         return self.return_results('snapped_points', requested_outputs, output_df=output_df, output_json=output_json, comment=comment)
 
+
+if __name__ == '__main__':
+
+    import os
+    import requests
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    print('_____________________________________________________')
+    process_id = 'get-snapped-points-plural'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
+
+
+    print('TEST CASE 1: Input CSV file, output CSV file...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "colname_lon": "longitude",
+            "colname_lat": "latitude",
+            "colname_site_id": "site_id",
+            "comment": "test1"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 2: Cross: Input CSV file, output GeoJSON file (FeatureCollection)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "colname_lon": "longitude",
+            "colname_lat": "latitude",
+            "colname_site_id": "site_id",
+            "result_format": "geojson",
+            "comment": "test2"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 3: Cross: Input GeoJSON file (FeatureCollection), output GeoJSON file (FeatureCollection)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points.json",
+            "colname_site_id": "my_site",
+            "result_format": "geojson",
+            "comment": "test3"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 4: Input GeoJSON directly (MultiPoint), output GeoJSON directly (FeatureCollection)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson": {
+                "type": "MultiPoint",
+                "coordinates": [
+                    [9.937520027160646, 54.69422745526058],
+                    [9.9217, 54.6917],
+                    [9.9312, 54.6933]
+                ]
+            },
+            "comment": "test4"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 5: Input GeoJSON directly (FeatureCollection), output GeoJSON directly (FeatureCollection)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "colname_site_id": "my_site",
+            "points_geojson": {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [9.931555, 54.695070]},
+                        "properties": {
+                            "my_site": "bla1",
+                            "species_name": "Hase",
+                            "species_id": "007"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [9.921555, 54.295070]},
+                        "properties": {
+                            "my_site": "bla2",
+                            "species_name": "Delphin",
+                            "species_id": "008"
+                        }
+                    }
+                ]
+            },
+            "comment": "test5"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 6: Cross: Input GeoJSON directly (FeatureCollection), output CSV file...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "colname_site_id": "my_site",
+            "result_format": "csv",
+            "colname_lon": "long_wgs84",
+            "colname_lat": "lat_wgs84",
+            "points_geojson": {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [9.931555, 54.695070]},
+                        "properties": {
+                            "my_site": "bla1",
+                            "species_name": "Hase",
+                            "species_id": "007"
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [9.921555, 54.295070]},
+                        "properties": {
+                            "my_site": "bla2",
+                            "species_name": "Delphin",
+                            "species_id": "008"
+                        }
+                    }
+                ]
+            },
+            "comment": "test6"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)

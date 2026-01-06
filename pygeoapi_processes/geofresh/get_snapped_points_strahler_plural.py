@@ -356,3 +356,236 @@ class SnappedPointsStrahlerGetterPlural(GeoFreshBaseProcessor):
         #####################
 
         return self.return_results('snapped_points', requested_outputs, output_df=output_df, output_json=output_json, comment=comment)
+
+
+
+if __name__ == '__main__':
+
+    import os
+    import requests
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    print('_____________________________________________________')
+    process_id = 'get-snapped-points-strahler-plural'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
+
+
+    print('TEST CASE 1: Input CSV file, output CSV file...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "colname_lon": "longitude",
+            "colname_lat": "latitude",
+            "colname_site_id": "site_id",
+            "min_strahler": 5,
+            "add_distance": True,
+            "comment": "test1"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 2: Cross: Input CSV file, output GeoJSON file...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "colname_lon": "longitude",
+            "colname_lat": "latitude",
+            "colname_site_id": "site_id",
+            "result_format": "geojson",
+            "min_strahler": 5,
+            "add_distance": True,
+            "comment": "test2"
+        },
+          "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 3: Input GeoJSON file (FeatureCollection), output GeoJSON file...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points.json",
+            "colname_site_id": "my_site",
+            "result_format": "geojson",
+            "min_strahler": 5,
+            "add_distance": True,
+            "comment": "test3"
+        },
+          "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 4: Input GeoJSON file (GeometryCollection), output GeoJSON file...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometrycollection_points.json",
+            "colname_site_id": "my_site",
+            "result_format": "geojson",
+            "min_strahler": 5,
+            "add_distance": True,
+            "comment": "test4"
+        },
+          "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 5: Like test case 4 but no distance', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometrycollection_points.json",
+            "colname_site_id": "my_site",
+            "result_format": "geojson",
+            "min_strahler": 5,
+            "add_distance": False,
+            "comment": "test5"
+        },
+          "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 6: Input GeoJSON directly (GeometryCollection), output GeoJSON directly...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson": {
+                "type": "GeometryCollection",
+                "geometries": [
+                    {
+                        "type": "Point",
+                        "coordinates": [9.931555, 54.695070]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [9.921555, 54.295070]
+                    }
+                ]
+            },
+            "result_format": "geojson",
+            "min_strahler": 5,
+            "add_distance": False,
+            "comment": "test6"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 7: Input GeoJSON directly (MultiPoint), output GeoJSON directly...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "min_strahler": 5,
+            "add_distance": True,
+            "points_geojson": {
+                "type": "MultiPoint",
+                "coordinates": [
+                    [9.937520027160646, 54.69422745526058],
+                    [9.9217, 54.6917],
+                    [9.9312, 54.6933]
+                ]
+            },
+            "comment": "test7"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 8: Input GeoJSON directly (FeatureCollection), output GeoJSON directly (FeatureCollection)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "colname_site_id": "my_site",
+            "min_strahler": 5,
+            "add_distance": True,
+            "points_geojson": {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [9.931555, 54.695070]},
+                        "properties": {
+                            "my_site": "bla1",
+                            "species_name": "Hase",
+                            "species_id": "007"
+                       }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [9.921555, 54.295070]},
+                        "properties": {
+                            "my_site": "bla2",
+                            "species_name": "Delphin",
+                            "species_id": "008"
+                        }
+                    }
+                ]
+            },
+            "comment": "test8"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 9: Cross: Input GeoJSON directly (FeatureCollection), output CSV file...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "result_format": "csv",
+            "colname_lon": "long_wgs84",
+            "colname_lat": "lat_wgs84",
+            "colname_site_id": "my_site",
+            "min_strahler": 5,
+            "add_distance": True,
+            "points_geojson": {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [9.931555, 54.695070]},
+                        "properties": {
+                            "my_site": "bla1",
+                            "species_name": "Hase",
+                            "species_id": "007"
+                       }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": { "type": "Point", "coordinates": [9.921555, 54.295070]},
+                        "properties": {
+                            "my_site": "bla2",
+                            "species_name": "Delphin",
+                            "species_id": "008"
+                        }
+                    }
+                ]
+            },
+            "comment": "test9"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)

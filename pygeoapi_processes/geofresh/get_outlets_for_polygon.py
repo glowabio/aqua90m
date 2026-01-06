@@ -185,3 +185,112 @@ class OutletGetter(GeoFreshBaseProcessor):
         ################
 
         return self.return_results('outlets', requested_outputs, output_df=None, output_json=output_json, comment=comment)
+
+
+
+if __name__ == '__main__':
+
+    import os
+    import requests
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    print('_____________________________________________________')
+    process_id = 'get-outlets-for-polygon'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
+
+
+    print('TEST CASE 1: Input GeoJSON directly (Polygon), output plain JSON directly...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "min_strahler": 3,
+            "add_geometry": False,
+            "polygon": {
+                "type": "Polygon",
+                "coordinates": [[
+                    [ 24.99422594742927, 60.122188238921],
+                    [ 24.99422594742927, 60.287391694733],
+                    [ 24.52403906370872, 60.287391694733],
+                    [ 24.52403906370872, 60.122188238921],
+                    [ 24.99422594742927, 60.122188238921]
+                ]]
+            },
+            "comment": "test1"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 2: Like test 1, but with geometry, output GeoJSON directly (FeatureCollection)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "min_strahler": 3,
+            "add_geometry": True,
+            "polygon": {
+                "type": "Polygon",
+                "coordinates": [[
+                    [ 24.99422594742927, 60.122188238921],
+                    [ 24.99422594742927, 60.287391694733],
+                    [ 24.52403906370872, 60.287391694733],
+                    [ 24.52403906370872, 60.122188238921],
+                    [ 24.99422594742927, 60.122188238921]
+                ]]
+            },
+            "comment": "test2"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 3: Input GeoJSON file (Polygon), output GeoJSON file (FeatureCollection)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "min_strahler": 3,
+            "add_geometry": True,
+            "polygon_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometry_polygon.json",
+            "comment": "test3"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 4: Input GeoJSON file (Feature: Polygon), output GeoJSON file (FeatureCollection)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "min_strahler": 3,
+            "add_geometry": True,
+            "polygon_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_feature_polygon.json",
+            "comment": "test4"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 5: Input GeoJSON file (Geometry: Polygon), output Plain JSON file...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "min_strahler": 3,
+            "add_geometry": False,
+            "polygon_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometry_polygon.json",
+            "comment": "test5"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+  

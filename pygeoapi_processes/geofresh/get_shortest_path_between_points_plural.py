@@ -258,3 +258,100 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
         #    else:
         #        return 'application/json', feature_coll
 
+
+
+if __name__ == '__main__':
+
+    import os
+    import requests
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    print('_____________________________________________________')
+    process_id = 'get-shortest-path-between-points-plural'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
+
+
+    print('TEST CASE 1: Input GeoJSON directly (Multipoint), output plain JSON directly...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points": {
+                "type": "MultiPoint",
+                "coordinates": [
+                    [9.937520027160646, 54.69422745526058],
+                    [9.9217, 54.6917],
+                    [9.9312, 54.6933]
+                ]
+            },
+            "comment": "test1"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 2: Input GeoJSON File (Multipoint), output plain JSON directly...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometry_multipoint.json",
+            "comment": "test2"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 3: Input GeoJSON File (Multipoint), output plain JSON file...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometry_multipoint.json",
+            "comment": "test3"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 4: Input GeoJSON File (GeometryCollection), output plain JSON file...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometrycollection_points_samebasin.json",
+            "comment": "test4"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 5: Input GeoJSON File (FeatureCollection), output plain JSON directly...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points_samebasin.json",
+            "comment": "test5"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 6: Will fail because not in one basin...', end="", flush=True)  # no newline
+    payload = {
+      "inputs": {
+            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points.json",
+            "comment": "test6"
+        }
+    }
+    try:
+        resp = make_sync_request(PYSERVER, process_id, payload)
+        raise ValueError("Expected error that did not happen...")
+    except requests.exceptions.HTTPError as e:
+        print(f'TEST CASE 6: EXPECTED: {e.response.json()["description"]}')
