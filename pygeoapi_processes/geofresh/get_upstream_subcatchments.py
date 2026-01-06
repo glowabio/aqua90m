@@ -93,10 +93,11 @@ class UpstreamSubcatchmentGetter(GeoFreshBaseProcessor):
         # Check if boolean:
         utils.is_bool_parameters(dict(
             add_upstream_ids=add_upstream_ids,
-            geometry_only=geometry_only))
+            geometry_only=geometry_only
+        ))
 
         # Overall goal: Get the upstream polygons (individual ones)
-        LOGGER.info('START: Getting upstream polygons (individual ones) for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
+        LOGGER.info(f'START: Getting upstream polygons (individual ones) for lon, lat: {lon}, {lat} (or subc_id {subc_id})')
 
         # Get reg_id, basin_id, subc_id
         if subc_id is not None:
@@ -113,7 +114,7 @@ class UpstreamSubcatchmentGetter(GeoFreshBaseProcessor):
 
         # Get geometry only:
         if geometry_only:
-            LOGGER.debug('...Getting upstream catchment polygons for subc_id: %s' % subc_id)
+            LOGGER.debug(f'...Getting upstream catchment polygons for subc_id: {subc_id}')
             geometry_coll = get_polygons.get_subcatchment_polygons_geometry_coll(
                 conn, upstream_ids, basin_id, reg_id)
             LOGGER.debug('END: Received GeometryCollection: %s' % str(geometry_coll)[0:50])
@@ -123,12 +124,12 @@ class UpstreamSubcatchmentGetter(GeoFreshBaseProcessor):
 
         # Get FeatureCollection
         if not geometry_only:
-            LOGGER.debug('...Getting upstream catchment polygons for subc_id: %s' % subc_id)
+            LOGGER.debug(f'...Getting upstream catchment polygons for subc_id: {subc_id}')
             feature_coll = get_polygons.get_subcatchment_polygons_feature_coll(
                 conn, upstream_ids, basin_id, reg_id, add_upstream_ids)
             LOGGER.debug('END: Received FeatureCollection: %s' % str(feature_coll)[0:50])
 
-            feature_coll['description'] = "Upstream subcatchments of subcatchment %s." % subc_id
+            feature_coll['description'] = f"Upstream subcatchments of subcatchment {subc_id}."
             feature_coll['upstream_catchment_of'] = subc_id
 
             # Return link to result (wrapped in JSON) if requested, or directly the JSON object:

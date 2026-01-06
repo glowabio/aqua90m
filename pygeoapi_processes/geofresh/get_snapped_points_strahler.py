@@ -72,7 +72,7 @@ class SnappedPointsStrahlerGetter(GeoFreshBaseProcessor):
         utils.is_bool_parameters(dict(geometry_only=geometry_only))
 
         # Get reg_id, basin_id, subc_id
-        LOGGER.info('START: Getting snapped point for lon, lat: %s, %s' % (lon, lat))
+        LOGGER.info(f'START: Getting snapped point for lon, lat: {lon}, {lat}')
         subc_id_before_snap, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
             conn, LOGGER, lon, lat) # TODO WIP We only need basin and region!
 
@@ -80,7 +80,7 @@ class SnappedPointsStrahlerGetter(GeoFreshBaseProcessor):
         if geometry_only:
 
             # Get snapped point:
-            LOGGER.debug('... Now, getting snapped point for strahler order %s (as simple geometry)' % strahler)
+            LOGGER.debug(f'... Now, getting snapped point for strahler order {strahler} (as simple geometry)')
             snappedpoint_simplegeom = snapping_strahler.get_snapped_point_geometry_coll(conn, lon, lat, strahler, basin_id, reg_id)
 
             # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
@@ -91,7 +91,7 @@ class SnappedPointsStrahlerGetter(GeoFreshBaseProcessor):
         if not geometry_only:
 
             # Get snapped point:
-            LOGGER.debug('... Now, getting snapped point for strahler %s (as feature)' % strahler)
+            LOGGER.debug(f'... Now, getting snapped point for strahler {strahler} (as feature)')
             snappedpoint_feature_coll = snapping_strahler.get_snapped_point_feature_coll(conn, lon, lat, strahler, basin_id, reg_id)
 
             snappedpoint_feature_coll['subc_id_before_snapping'] = subc_id_before_snap

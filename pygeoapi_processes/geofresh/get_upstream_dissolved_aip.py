@@ -88,7 +88,7 @@ class UpstreamDissolvedGetter(GeoFreshBaseProcessor):
 
         # TODO: Must change behaviour based on content of requested_outputs.
         # So far, I ignore them...
-        LOGGER.debug('Content of requested_outputs: %s' % requested_outputs)
+        LOGGER.debug(f'Content of requested_outputs: {requested_outputs}')
 
         # User inputs
         lon = data.get('lon', None)
@@ -102,7 +102,7 @@ class UpstreamDissolvedGetter(GeoFreshBaseProcessor):
         get_json_directly = (get_json_directly.lower() == 'true')
 
         # Overall goal: Get the upstream polygon (as one dissolved)!
-        LOGGER.info('START PROCESS: Getting upstream dissolved polygon for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
+        LOGGER.info(f'START PROCESS: Getting upstream dissolved polygon for lon, lat: {lon}, {lat} (or subc_id {subc_id})')
 
         # Get reg_id, basin_id, subc_id
         if subc_id is not None:
@@ -114,12 +114,12 @@ class UpstreamDissolvedGetter(GeoFreshBaseProcessor):
                 conn, LOGGER, lon, lat)
 
         # Get upstream_catchment_ids
-        LOGGER.debug('Requesting upstream catchment ids for subc_id: %s' % subc_id)
+        LOGGER.debug(f'Requesting upstream catchment ids for subc_id: {subc_id}')
         upstream_catchment_ids = upstream_subcids.get_upstream_catchment_ids_incl_itself(
             conn, subc_id, basin_id, reg_id)
 
         # Get geometry (three types)
-        LOGGER.debug('Requesting dissolved polygon of upstream catchment for subc_id: %s' % subc_id)
+        LOGGER.debug(f'Requesting dissolved polygon of upstream catchment for subc_id: {subc_id}')
         geojson_object = {}
         if get_type.lower() == 'polygon':
             geojson_object = dissolved.get_dissolved_simplegeom(

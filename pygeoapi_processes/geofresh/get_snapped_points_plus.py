@@ -80,12 +80,12 @@ class SnappedPointsGetterPlus(GeoFreshBaseProcessor):
         utils.is_bool_parameters(dict(geometry_only=geometry_only))
 
         # Get reg_id, basin_id, subc_id, upstream_ids
-        LOGGER.info('START: Getting snapped point for lon, lat: %s, %s' % (lon, lat))
+        LOGGER.info(f'START: Getting snapped point for lon, lat: {lon}, {lat}')
         subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
             conn, LOGGER, lon, lat)
 
         # Get snapped point:
-        LOGGER.debug('... Now, getting snapped point and friends for subc_id: %s' % subc_id)
+        LOGGER.debug(f'... Now, getting snapped point and friends for subc_id: {subc_id}')
 
         # Return only geometry:
         if geometry_only:

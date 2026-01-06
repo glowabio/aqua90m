@@ -80,7 +80,7 @@ class UpstreamStreamSegmentsGetter(GeoFreshBaseProcessor):
         ))
 
         # Overall goal: Get the upstream stream segments
-        LOGGER.info('Getting upstream line segments for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
+        LOGGER.info(f'Getting upstream line segments for lon, lat: {lon}, {lat} (or subc_id {subc_id})')
 
         # Get reg_id, basin_id, subc_id
         if subc_id is not None:
@@ -101,7 +101,7 @@ class UpstreamStreamSegmentsGetter(GeoFreshBaseProcessor):
         LOGGER.debug("Querying for cumulative length...")
         cum_length_by_strahler = get_linestrings.get_accum_length_by_strahler(
             conn, upstream_ids, basin_id, reg_id)
-        LOGGER.debug("Querying for cumulative length DONE: %s" % cum_length_by_strahler)
+        LOGGER.debug(f"Querying for cumulative length DONE: {cum_length_by_strahler}")
 
         # Log interesting cases:
         if len(upstream_ids) == 0:
@@ -119,7 +119,7 @@ class UpstreamStreamSegmentsGetter(GeoFreshBaseProcessor):
                     "geometries": []
                 }
             else:
-                LOGGER.debug('... Getting upstream catchment line segments for subc_id: %s' % subc_id)
+                LOGGER.debug(f'... Getting upstream catchment line segments for subc_id: {subc_id}')
                 geometry_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll(conn, upstream_ids, basin_id, reg_id)
 
             LOGGER.debug('END: Received GeometryCollection: %s' % str(geometry_coll)[0:50])
@@ -145,7 +145,7 @@ class UpstreamStreamSegmentsGetter(GeoFreshBaseProcessor):
 
             else:
                 # Note: The feature collection contains the strahler order for each feature (each stream segment)
-                LOGGER.debug('... Getting upstream catchment line segments for subc_id: %s' % subc_id)
+                LOGGER.debug(f'... Getting upstream catchment line segments for subc_id: {subc_id}')
                 feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(
                     conn, upstream_ids, basin_id, reg_id)
 

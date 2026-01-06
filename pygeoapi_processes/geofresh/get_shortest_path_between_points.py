@@ -81,8 +81,10 @@ class ShortestPathBetweenPointsGetter(GeoFreshBaseProcessor):
             geometry_only=geometry_only))
 
         # Overall goal: Get the dijkstra shortest path (as linestrings)!
-        LOGGER.info('START: Getting dijkstra shortest path for lon %s, lat %s (or subc_id %s) to lon %s, lat %s (or subc_id %s)' % (
-            lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end))
+        LOGGER.info(
+            f'START: Getting dijkstra shortest path for lon {lon_start}, lat {lat_start} (or'
+            f' subc_id {subc_id_start}) to lon {lon_end}, lat {lat_end} (or subc_id {subc_id_end})'
+        )
 
         # Get reg_id, basin_id, subc_id
         # Point 1:
@@ -103,19 +105,19 @@ class ShortestPathBetweenPointsGetter(GeoFreshBaseProcessor):
         # Check if same region and basin?
         # TODO: Can we route via the sea then??
         if not reg_id1 == reg_id2:
-            err_msg = 'Start and end are in different regions (%s and %s) - this cannot work.' % (reg_id1, reg_id2)
+            err_msg = f'Start and end are in different regions ({reg_id1} and {reg_id2}) - this cannot work.'
             LOGGER.warning(err_msg)
             raise ProcessorExecuteError(user_msg=err_msg)
 
         if not basin_id1 == basin_id2:
-            err_msg = 'Start and end are in different basins (%s and %s) - this cannot work.' % (basin_id1, basin_id2)
+            err_msg = f'Start and end are in different basins ({basin_id1} and {basin_id2}) - this cannot work.'
             LOGGER.warning(err_msg)
             raise ProcessorExecuteError(user_msg=err_msg)
 
         # Get subc_ids of the whole connection...
         # TODO: From here on, I think it is exactly the same code as getting downstream
         # to sea! So: Modularize and import!
-        LOGGER.debug('Getting network connection for subc_id: start = %s, end = %s' % (subc_id1, subc_id2))
+        LOGGER.debug(f'Getting network connection for subc_id: start = {subc_id1}, end = {subc_id2}')
         segment_ids = routing.get_dijkstra_ids_one_to_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
 
         # Get geometry only:
@@ -135,7 +137,7 @@ class ShortestPathBetweenPointsGetter(GeoFreshBaseProcessor):
 
             # Add some info to the FeatureCollection:
             # TODO: Should we include the requested lon and lat? Maybe as a point?
-            feature_coll["description"] = "Connecting path between %s and %s" % (subc_id1, subc_id2)
+            feature_coll["description"] = f"Connecting path between {subc_id1} and {subc_id2}"
             feature_coll["start_subc_id"] = subc_id1 # TODO how to name the start point of routing?
             feature_coll["target_subc_id"] = subc_id2 # TODO how to name the end point of routing?
             if add_segment_ids:

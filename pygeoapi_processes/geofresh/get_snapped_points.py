@@ -71,7 +71,7 @@ class SnappedPointsGetter(GeoFreshBaseProcessor):
         utils.is_bool_parameters(dict(geometry_only=geometry_only))
 
         # Get reg_id, basin_id, subc_id
-        LOGGER.info('START: Getting snapped point for lon, lat: %s, %s' % (lon, lat))
+        LOGGER.info(f'START: Getting snapped point for lon, lat: {lon}, {lat}')
         subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
             conn, LOGGER, lon, lat)
 
@@ -79,7 +79,7 @@ class SnappedPointsGetter(GeoFreshBaseProcessor):
         if geometry_only:
 
             # Get snapped point:
-            LOGGER.debug('... Now, getting snapped point for subc_id (as simple geometry): %s' % subc_id)
+            LOGGER.debug(f'... Now, getting snapped point for subc_id (as simple geometry): {subc_id}')
             snappedpoint_simplegeom = snapping.get_snapped_point_simplegeom(
                 conn, lon, lat, subc_id, basin_id, reg_id)
 
@@ -90,7 +90,7 @@ class SnappedPointsGetter(GeoFreshBaseProcessor):
         if not geometry_only:
 
             # Get snapped point:
-            LOGGER.debug('... Now, getting snapped point for subc_id (as feature): %s' % subc_id)
+            LOGGER.debug(f'... Now, getting snapped point for subc_id (as feature): {subc_id}')
             snappedpoint_feature = snapping.get_snapped_point_feature(
                 conn, lon, lat, subc_id, basin_id, reg_id)
 

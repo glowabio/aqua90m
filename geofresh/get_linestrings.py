@@ -77,7 +77,7 @@ def get_streamsegment_linestrings_geometry_coll(conn, subc_ids, basin_id, reg_id
         else:
             # Geometry errors that happen when two segments flow into one outlet (Vanessa, 17 June 2024)
             # For example, subc_id 506469602, when routing from 507056424 to outlet -1294020
-            LOGGER.error('Subcatchment %s has no geometry!' % row[1]) # for example: 506469602
+            LOGGER.error(f'Subcatchment {row[1]} has no geometry!') # for example: 506469602
             # Features with empty geometries:
             # A geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
             # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
@@ -275,7 +275,7 @@ def get_streamsegment_linestrings_geometry_coll_by_basin(conn, basin_id, reg_id,
         else:
             # Geometry errors that happen when two segments flow into one outlet (Vanessa, 17 June 2024)
             # For example, subc_id 506469602, when routing from 507056424 to outlet -1294020
-            LOGGER.error('Subcatchment %s has no geometry!' % row[1]) # for example: 506469602
+            LOGGER.error(f'Subcatchment {row[1]} has no geometry!') # for example: 506469602
             # Features with empty geometries:
             # A geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
             # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2

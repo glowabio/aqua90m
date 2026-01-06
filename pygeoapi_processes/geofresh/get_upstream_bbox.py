@@ -75,7 +75,7 @@ class UpstreamBboxGetter(GeoFreshBaseProcessor):
         geometry_only = (geometry_only.lower() == 'true')
 
         # Overall goal: Get the upstream stream segments!
-        LOGGER.info('START: Getting upstream bbox for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
+        LOGGER.info(f'START: Getting upstream bbox for lon, lat: {lon}, {lat} (or subc_id {subc_id})')
 
         # Get reg_id, basin_id, subc_id
         if subc_id is not None:
@@ -113,7 +113,7 @@ class UpstreamBboxGetter(GeoFreshBaseProcessor):
 
             # Add some info to the Feature:
             # TODO: Should we include the requested lon and lat? Maybe as a point? Then FeatureCollection?
-            bbox_feature["description"] = "Bounding box of the upstream catchment of subcatchment %s" % subc_id
+            bbox_feature["description"] = f"Bounding box of the upstream catchment of subcatchment {subc_id}"
             bbox_feature["bbox_of_upstream_catchment_of"] = subc_id
 
             # Return link to result (wrapped in JSON) if requested, or directly the JSON object:

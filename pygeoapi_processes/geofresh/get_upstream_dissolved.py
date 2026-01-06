@@ -77,7 +77,7 @@ class UpstreamDissolvedGetter(GeoFreshBaseProcessor):
             geometry_only=geometry_only))
 
         # Overall goal: Get the upstream polygon (as one dissolved)!
-        LOGGER.info('START: Getting upstream dissolved polygon for lon, lat: %s, %s (or subc_id %s)' % (lon, lat, subc_id))
+        LOGGER.info(f'START: Getting upstream dissolved polygon for lon, lat: {lon}, {lat} (or subc_id {subc_id})')
 
         # Get reg_id, basin_id, subc_id
         if subc_id is not None:
@@ -87,12 +87,12 @@ class UpstreamDissolvedGetter(GeoFreshBaseProcessor):
         else:
             subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
                 conn, LOGGER, lon, lat)
-        LOGGER.debug('Found subc_id=%s, basin_id=%s, reg_id=%s' % (subc_id, basin_id, reg_id))
+        LOGGER.debug(f'Found subc_id={subc_id}, basin_id={basin_id}, reg_id={reg_id}')
 
         # Get upstream id
         upstream_ids = upstream_subcids.get_upstream_catchment_ids_incl_itself(
             conn, subc_id, basin_id, reg_id)
-        LOGGER.debug('Found %s upstream ids' % len(upstream_ids))
+        LOGGER.debug(f'Found {len(upstream_ids)} upstream ids')
 
         # Return only geometry:
         if geometry_only:
