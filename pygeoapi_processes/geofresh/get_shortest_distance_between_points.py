@@ -148,6 +148,7 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         ### User inputs: ###
         ####################
 
+        # Singular case:
         # Two points:
         lon_start = data.get('lon_start', None)
         lat_start = data.get('lat_start', None)
@@ -156,6 +157,8 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         # Two subcatchments:
         subc_id_start = data.get('subc_id_start', None) # optional, need either lonlat OR subc_id
         subc_id_end = data.get('subc_id_end', None)     # optional, need either lonlat OR subc_id
+
+        # Plural case:
         # Set of points (Multipoint):
         points = data.get('points', None)
         # Two separate sets of points (Multipoint):
@@ -166,6 +169,7 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         # Two separate sets of subcatchments:
         subc_ids_start = data.get('subc_ids_start', None)
         subc_ids_end = data.get('subc_ids_end', None)
+
         # Output format (can be csv or json):
         result_format = data.get('result_format', 'json')
         # Comment:
@@ -175,13 +179,27 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         ### Validate user inputs ###
         ############################
 
-        # Check type:
-        utils.check_type_parameter('which_ids', which_ids, list)
-
-        # Check if either subc_id or both lon and lat are provided:
-        utils.params_lonlat_or_subcid(lon_start, lat_start, subc_id_start)
-        utils.params_lonlat_or_subcid(lon_end,   lat_end,   subc_id_end)
-
+        # Singular case: Check if either subc_id or both lon and lat are provided:
+        inputs_singular = [
+            lon_start, lat_start, subc_id_start,
+            lon_end,   lat_end,   subc_id_end
+        ]
+        if any(v is not None for v in inputs_singular):
+            LOGGER.debug('Singular case...')
+            utils.params_lonlat_or_subcid(lon_start, lat_start, subc_id_start)
+            utils.params_lonlat_or_subcid(lon_end,   lat_end,   subc_id_end)
+        # Plural case: Check if any input points are given.
+        # This check does not cover everything: If *_start is given, *_end has to be too.
+        else:
+            LOGGER.debug('Plural case...')
+            utils.at_least_one_param(dict(
+                points=points,
+                points_start=points_start,
+                points_end=points_end,
+                subc_ids=subc_ids,
+                subc_ids_start=subc_ids_start,
+                subc_ids_end=subc_ids_end
+            ))
 
         if points is not None:
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are the same)...')
@@ -394,3 +412,119 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         #####################
 
         return self.return_results('distances_matrix', requested_outputs, output_df=output_df, output_json=json_result, comment=comment)
+
+
+
+if __name__ == '__main__':
+
+    import os
+    import requests
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    print('_____________________________________________________')
+    process_id = 'get-shortest-distance-between-points'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
+
+    ###########################################
+    ### Simple:                             ###
+    ### Request distance between two points ###
+    ###########################################
+
+    print('TEST CASE 1: Simple: Request distance between two points, based on lonlat...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon_start": 9.937520027160646,
+            "lat_start": 54.69422745526058,
+            "lon_end": 9.9217,
+            "lat_end": 54.6917,
+            "comment": "test1"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 2: Simple: Request distance between two points, based on subc_ids...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "subc_id_start": 506251713,
+            "subc_id_end": 506251712,
+            "comment": "test2"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    ############################################
+    ### Matrix:                              ###
+    ### Request distance between many points ###
+    ############################################
+
+    print('TEST CASE 3: Matrix: Request distances between many points. Input GeoJSON directly (Geometry: MultiPoint)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points": {
+                "type": "MultiPoint",
+                "coordinates": [
+                    [9.937520027160646, 54.69422745526058],
+                    [9.9217, 54.6917],
+                    [9.9312, 54.6933]
+                ]
+            },
+            "comment": "test3"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 4: Matrix: Request distances between two sets of points. Input GeoJSON directly (Geometry: MultiPoint)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_start": {
+                "type": "MultiPoint",
+                "coordinates": [
+                    [9.9217, 54.6917],
+                    [9.9312, 54.6933]
+                ]
+            },
+            "points_end": {
+                "type": "MultiPoint",
+                "coordinates": [
+                    [9.937520027160646, 54.69422745526058],
+                    [9.9217478273, 54.69173489023]
+                ]
+            },
+            "comment": "test4"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 5: Matrix: Request distances between many points, based on subc_ids...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "subc_ids": [506251712, 506251713, 506252055],
+            "comment": "test5"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 6: Matrix: Request distances between two sets of points, based on subc_ids...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "subc_ids_start": [506251712, 506252055],
+            "subc_ids_end": [506251712, 506251713],
+            "comment": "test6"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
