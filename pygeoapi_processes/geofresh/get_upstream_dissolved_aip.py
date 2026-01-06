@@ -228,6 +228,7 @@ if __name__ == '__main__':
     PYSERVER = f'https://{os.getenv("PYSERVER")}'
     # For this to work, please define the PYSERVER before running python:
     # export PYSERVER="https://.../pygeoapi-dev"
+    print('_____________________________________________________')
     process_id = 'get-upstream-dissolved'
     print(f'TESTING {process_id} at {PYSERVER}')
     from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
