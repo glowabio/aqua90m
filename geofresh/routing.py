@@ -219,9 +219,9 @@ def _iterate_outlets_dataframe(conn, departing_points):
 def _iterate_outlets_json(conn, departing_points):
 
     # Either return as a JSON dictionary, by subc_id:
-    #everything = {}
+    everything = {}
     # Or return as a JSON list:
-    everything = []
+    #everything = []
 
     # Iterate over all regions/basins:
     # Note: All ids are strings, so we cast to int, and the site_ids are a set of strings
@@ -232,7 +232,8 @@ def _iterate_outlets_json(conn, departing_points):
             all_site_ids = all_basins[None][None]
             LOGGER.debug(f'Compute paths to outlet for these sites not possible: {all_site_ids}')
             basin_id = None
-            everything.append({
+            #everything.append({...})
+            everything[None] = {
                 "subc_id": None,
                 "basin_id": None,
                 "outlet_id": None,
@@ -240,7 +241,7 @@ def _iterate_outlets_json(conn, departing_points):
                 "num_downstream_ids": None,
                 "downstream_segments": None,
                 "site_ids": list(all_site_ids)
-            })
+            }
             continue
 
         # Now, for each basin, run a one-to-many routing query,
@@ -257,10 +258,10 @@ def _iterate_outlets_json(conn, departing_points):
             # Package in JSON list:
             for start_id, segment_ids in segments_by_start_id.items():
                 all_site_ids = all_subcids[start_id]
-                # Either return as a JSON dictionary, by subc_id:
-                #everything[start_id] = segment_ids
-                # Or return as a JSON list:
-                everything.append({
+                # Either return as a JSON list:
+                #everything.append({...})
+                # Or return as a JSON dictionary, by subc_id:
+                everything[int(start_id)] = {
                     "subc_id": int(start_id),
                     "basin_id": basin_id,
                     "outlet_id": outlet_id,
@@ -268,7 +269,7 @@ def _iterate_outlets_json(conn, departing_points):
                     "num_downstream_ids": len(segment_ids),
                     "downstream_segments": segment_ids,
                     "site_ids": list(all_site_ids)
-                })
+                }
 
     # Finished collecting the results, now return JSON object:
     return everything
