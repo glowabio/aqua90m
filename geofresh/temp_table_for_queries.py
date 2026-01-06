@@ -29,7 +29,7 @@ except ModuleNotFoundError as e1:
 
 def drop_temp_table(cursor, tablename):
     LOGGER.debug(f'Dropping temporary table "{tablename}"...')
-    query = f"DROP TABLE IF EXISTS {tablename};"
+    query = f'DROP TABLE IF EXISTS {tablename};'
     cursor.execute(query)
     LOGGER.debug(f'Dropping temporary table "{tablename}"... done.')
 
@@ -147,7 +147,7 @@ def _create_temp_table(cursor, tablename):
         reg_id smallint,
         geom_user geometry(POINT, 4326)
     );
-    '''.replace("\n", " ")
+    '''
 
     ### Query database:
     LOGGER.log(logging.TRACE, "SQL query: {query}")
@@ -200,7 +200,7 @@ def _update_temp_table_regid(cursor, tablename):
         RETURNING {tablename}.reg_id
     )
     SELECT DISTINCT reg_id FROM updater;
-    '''.replace("\n", " ")
+    '''
 
     ### Query database:
     LOGGER.log(logging.TRACE, "SQL query: {query}")
@@ -236,7 +236,7 @@ def _add_subcids(cursor, tablename, reg_ids):
     WHERE
         st_intersects({tablename}.geom_user, sub.geom)
         AND sub.reg_id IN ({reg_ids_string});
-    '''.replace("\n", " ")
+    '''
 
     ### Query database:
     LOGGER.log(logging.TRACE, "SQL query: {query}")

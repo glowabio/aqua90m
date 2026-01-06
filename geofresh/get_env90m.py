@@ -208,16 +208,13 @@ def get_env90m_variables_by_subcid(conn, subc_ids, reg_id, variables):
         column_names_str = ", ".join([str(elem) for elem in column_names_list])
 
         ## Create SQL query:
-        LOGGER.log(logging.TRACE, "Now querying table %s for columns %s" % (table_name, column_names_list))
-        query = '''
+        query = f'''
         SELECT 
-        subc_id, {column_names}
+            subc_id, {column_names_str}
         FROM hydro.{table_name}
         WHERE subc_id IN ({relevant_ids})
-        AND reg_id = {reg_id}
-        '''.format(column_names = column_names_str, relevant_ids = relevant_ids,
-                   table_name = table_name, reg_id = reg_id)
-        query = query.replace("\n", " ")
+            AND reg_id = {reg_id}
+        '''
 
         ### Query database:
         cursor = conn.cursor()

@@ -84,7 +84,7 @@ def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id):
      506251252 | {506250459,506251015,506251126,506251252,506251712}
     (1 row)
     """
-    query = '''
+    query = f'''
     SELECT {subc_id}, array_agg(node)::bigint[] AS nodes 
     FROM pgr_connectedComponents('
         SELECT
@@ -98,10 +98,7 @@ def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id):
         AND basin_id = {basin_id}
         AND subc_id != {subc_id}
     ') WHERE component > 0 GROUP BY component;
-    '''.format(subc_id = subc_id, reg_id = reg_id, basin_id = basin_id)
-    query = query.replace("\n", " ")
-    query = query.replace("    ", "")
-    query = query.strip()
+    '''
 
     ### Query database:
     cursor = conn.cursor()

@@ -46,15 +46,14 @@ def get_streamsegment_linestrings_geometry_coll(conn, subc_ids, basin_id, reg_id
 
     relevant_ids = ", ".join([str(elem) for elem in subc_ids])
     # e.g. 506250459, 506251015, 506251126, 506251712
-    query = '''
+    query = f'''
     SELECT 
-    ST_AsText(geom), subc_id
+        ST_AsText(geom), subc_id
     FROM hydro.stream_segments
     WHERE subc_id IN ({relevant_ids})
-    AND reg_id = {reg_id}
-    AND basin_id = {basin_id}
-    '''.format(relevant_ids = relevant_ids, basin_id = basin_id, reg_id = reg_id)
-    query = query.replace("\n", " ")
+        AND reg_id = {reg_id}
+        AND basin_id = {basin_id}
+    '''
 
     ### Query database:
     cursor = conn.cursor()
@@ -114,15 +113,14 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id)
 
     relevant_ids = ", ".join([str(elem) for elem in subc_ids])
     # e.g. 506250459, 506251015, 506251126, 506251712
-    query = '''
+    query = f'''
     SELECT 
-    ST_AsText(geom), subc_id, strahler
+        ST_AsText(geom), subc_id, strahler
     FROM hydro.stream_segments
     WHERE subc_id IN ({relevant_ids})
-    AND reg_id = {reg_id}
-    AND basin_id = {basin_id}
-    '''.format(relevant_ids = relevant_ids, basin_id = basin_id, reg_id = reg_id)
-    query = query.replace("\n", " ")
+        AND reg_id = {reg_id}
+        AND basin_id = {basin_id}
+    '''
 
     ### Query database:
     cursor = conn.cursor()
@@ -176,13 +174,13 @@ def get_accum_length_by_strahler(conn, subc_ids, basin_id, reg_id):
 
     # Define query:
     relevant_ids = ", ".join([str(elem) for elem in subc_ids])
-    query = '''
+    query = f'''
     SELECT length, strahler
     FROM stream_segments
     WHERE subc_id IN ({relevant_ids})
-    AND reg_id = {reg_id}
-    AND basin_id = {basin_id}
-    '''.format(relevant_ids = relevant_ids, basin_id = basin_id, reg_id = reg_id)
+        AND reg_id = {reg_id}
+        AND basin_id = {basin_id}
+    '''
 
     # Query database:
     cursor = conn.cursor()
@@ -215,13 +213,13 @@ def get_accum_length_by_strahler(conn, subc_ids, basin_id, reg_id):
 def get_accum_length(conn, subc_ids, basin_id, reg_id):
 
     relevant_ids = ", ".join([str(elem) for elem in subc_ids])
-    query = '''
+    query = f'''
     SELECT length
     FROM stream_segments
     WHERE subc_id IN ({relevant_ids})
-    AND reg_id = {reg_id}
-    AND basin_id = {basin_id}
-    '''.format(relevant_ids = relevant_ids, basin_id = basin_id, reg_id = reg_id)
+        AND reg_id = {reg_id}
+        AND basin_id = {basin_id}
+    '''
 
     ### Query database:
     cursor = conn.cursor()
@@ -244,15 +242,14 @@ def get_accum_length(conn, subc_ids, basin_id, reg_id):
 
 def get_streamsegment_linestrings_geometry_coll_by_basin(conn, basin_id, reg_id, strahler_min=0):
 
-    query = '''
+    query = f'''
     SELECT 
-    ST_AsText(geom), subc_id, target, length, strahler
+        ST_AsText(geom), subc_id, target, length, strahler
     FROM hydro.stream_segments
     WHERE basin_id = {basin_id}
-    AND reg_id = {reg_id}
-    AND strahler >= {strahler_min}
-    '''.format(basin_id = basin_id, reg_id = reg_id, strahler_min = strahler_min)
-    query = query.replace("\n", " ")
+        AND reg_id = {reg_id}
+        AND strahler >= {strahler_min}
+    '''
 
     ### Query database:
     cursor = conn.cursor()
@@ -300,15 +297,14 @@ def get_streamsegment_linestrings_feature_coll_by_basin(conn, basin_id, reg_id, 
     '''
 
 
-    query = '''
-    SELECT 
-    ST_AsText(geom), subc_id, target, length, strahler
+    query = f'''
+    SELECT
+        ST_AsText(geom), subc_id, target, length, strahler
     FROM hydro.stream_segments
     WHERE basin_id = {basin_id}
-    AND reg_id = {reg_id}
-    AND strahler >= {strahler_min}
-    '''.format(basin_id = basin_id, reg_id = reg_id, strahler_min = strahler_min)
-    query = query.replace("\n", " ")
+        AND reg_id = {reg_id}
+        AND strahler >= {strahler_min}
+    '''
 
     ### Query database:
     cursor = conn.cursor()

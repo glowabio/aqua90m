@@ -65,7 +65,7 @@ def get_dijkstra_distance_one(conn, start_subc_id, end_subc_id, reg_id, basin_id
         {end_subc_id},
         directed := false
     );
-    '''.replace("\n", " ").replace("    ", "").strip()
+    '''
     LOGGER.log(logging.TRACE, f"SQL query: {query}")
 
     ## Query database:
@@ -137,7 +137,7 @@ def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin
         {nodes_end},
         directed := false
     );
-    '''.replace("\n", " ").replace("    ", "").strip()
+    '''
     LOGGER.log(logging.TRACE, f"SQL query: {query}")
     
     ## Query database:

@@ -60,12 +60,11 @@ def get_regid_from_lonlat(conn, LOGGER, lon, lat):
          58
     (1 row)
     """
-    query = """
+    query = f'''
     SELECT reg_id
     FROM regional_units
-    WHERE st_intersects(ST_SetSRID(ST_MakePoint({longitude}, {latitude}),4326), geom)
-    """.format(longitude = lon, latitude = lat)
-    query = query.replace("\n", " ")
+    WHERE st_intersects(ST_SetSRID(ST_MakePoint({lon}, {lat}),4326), geom)
+    '''
 
     ### Query database:
     cursor = conn.cursor()
@@ -115,12 +114,11 @@ def get_basinid_regid_from_lonlat(conn, LOGGER, lon, lat):
 
     Result: TODO
     """
-    query = """
+    query = f'''
     SELECT basin_id, reg_id
     FROM basins
-    WHERE st_intersects(ST_SetSRID(ST_MakePoint({longitude}, {latitude}), 4326), geom)
-    """.format(longitude = lon, latitude = lat)
-    query = query.replace("\n", " ")
+    WHERE st_intersects(ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326), geom)
+    '''
 
     ### Query database:
     cursor = conn.cursor()
@@ -145,12 +143,11 @@ def get_basinid_regid_from_subcid(conn, LOGGER, subc_id):
     # TODO: We need this in plural for geofresh.get_env90m_data_for_subcids.py
 
     ### Define query:
-    query = """
+    query = f'''
     SELECT basin_id, reg_id
     FROM sub_catchments
-    WHERE subc_id = {given_subc_id}
-    """.format(given_subc_id = subc_id)
-    query = query.replace("\n", " ")
+    WHERE subc_id = {subc_id}
+    '''
 
     ### Query database:
     cursor = conn.cursor()
@@ -214,15 +211,14 @@ def get_subcid_basinid_from_lonlat_regid(conn, LOGGER, lon, lat, reg_id):
     (1 row)
     """
 
-    query = """
+    query = f'''
     SELECT
-    subc_id,
-    basin_id
+        subc_id,
+        basin_id
     FROM sub_catchments
-    WHERE st_intersects(ST_SetSRID(ST_MakePoint({longitude}, {latitude}),4326), geom)
-    AND reg_id = {reg_id}
-    """.format(longitude = lon, latitude = lat, reg_id = reg_id)
-    query = query.replace("\n", " ")
+    WHERE st_intersects(ST_SetSRID(ST_MakePoint({lon}, {lat}),4326), geom)
+        AND reg_id = {reg_id}
+    '''
 
     ### Query database:
     cursor = conn.cursor()
@@ -246,12 +242,11 @@ def get_subcid_basinid_from_lonlat_regid(conn, LOGGER, lon, lat, reg_id):
 def get_regid_from_basinid(conn, LOGGER, basin_id):
 
     ### Define query:
-    query = """
+    query = f'''
     SELECT reg_id
     FROM hydro.basins
     WHERE basin_id = {basin_id}
-    """.format(basin_id = basin_id)
-    query = query.replace("\n", " ")
+    '''
 
     ### Query database:
     cursor = conn.cursor()
@@ -286,7 +281,7 @@ def get_subcid_basinid_regid_for_dataframe(conn, tablename_prefix, input_df, col
     query = f'''
     SELECT site_id, subc_id, basin_id, reg_id
     FROM {tablename}
-    '''.replace("\n", " ")
+    '''
     output_df = pd.read_sql_query(query, conn)
     #LOGGER.debug('Reading pd.read_sql_table...')
     #output_df = pd.read_sql_table(
@@ -308,7 +303,7 @@ def get_basinid_regid_from_subcid_plural(conn, LOGGER, subc_ids, columns=['subc_
     SELECT {columns}
     FROM stream_segments
     WHERE subc_id = ANY(ARRAY[{subc_ids}])
-    '''.replace("\n", " ")
+    '''
 
     ### Get results as a dataframe:
     LOGGER.log(logging.TRACE, 'Querying database...')

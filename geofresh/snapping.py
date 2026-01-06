@@ -85,7 +85,7 @@ def _get_snapped_point_plus(conn, lon, lat, subc_id, basin_id, reg_id, make_feat
         subc_id = {subc_id}
         AND basin_id = {basin_id}
         AND reg_id = {reg_id}
-    '''.replace("\n", " ")
+    '''
 
     ### Query database:
     LOGGER.log(logging.TRACE, "SQL query: {query}")
@@ -216,7 +216,7 @@ def get_snapped_point_feature(conn, lon, lat, subc_id, basin_id, reg_id):
         subc_id = {subc_id}
         AND basin_id = {basin_id}
         AND reg_id = {reg_id}
-    '''.replace("\n", " ")
+    '''
 
     ### Query database:
     LOGGER.log(logging.TRACE, "SQL query: {query}")
@@ -295,7 +295,7 @@ def get_snapped_point_simplegeom(conn, lon, lat, subc_id, basin_id, reg_id):
         subc_id = {subc_id}
         AND basin_id = {basin_id}
         AND reg_id = {reg_id}
-    '''.replace("\n", " ")
+    '''
 
     ### Query database:
     LOGGER.log(logging.TRACE, "SQL query: {query}")
@@ -446,7 +446,7 @@ def _run_snapping_query(cursor, tablename, reg_id_set, result_format, colname_lo
     WHERE
         seg.subc_id = poi.subc_id
         AND seg.reg_id IN ({reg_ids_string});
-    '''.replace("\n", " ")
+    '''
 
     ### Query database:
     LOGGER.log(logging.TRACE, "SQL query: {query}")

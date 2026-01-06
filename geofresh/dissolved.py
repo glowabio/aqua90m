@@ -73,13 +73,13 @@ def get_dissolved_simplegeom(conn, subc_ids, basin_id, reg_id):
     ### Define query:
     relevant_ids = ", ".join([str(elem) for elem in subc_ids])
     # e.g. 506250459, 506251015, 506251126, 506251712
-    query = """
+    query = f'''
     SELECT ST_AsText(ST_MemUnion(geom))
     FROM sub_catchments
     WHERE subc_id IN ({relevant_ids})
-    AND reg_id = {reg_id}
-    AND basin_id = {basin_id}
-    """.format(relevant_ids = relevant_ids, basin_id = basin_id, reg_id = reg_id)
+        AND reg_id = {reg_id}
+        AND basin_id = {basin_id}
+    '''
 
     ### Query database:
     cursor = conn.cursor()

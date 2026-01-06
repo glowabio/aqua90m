@@ -31,20 +31,15 @@ def get_outlet_subcids_in_polygon(conn, polygon_geojson, min_strahler=1):
     polygon_geojson_str = polygon_geojson_str.replace("'", '"')
 
     ### Define query:
-    query = '''
+    query = f'''
     SELECT subc_id, basin_id
     FROM stream_segments
     WHERE target = -basin_id
-    AND strahler >= {min_strahler}
-    AND ST_WITHIN(stream_segments.geom, ST_GeomFromGeoJSON(
-        '{polygon_geojson}'
-    ));
-    '''.format(min_strahler=min_strahler, polygon_geojson=polygon_geojson_str)
-
-    LOGGER.info(f'SQL QUERY : \n{query}\n')
-    #LOGGER.info(f'SQL QUERY PRE : \n{query}\n')
-    #query = query.replace("'", '"')
-    #LOGGER.info(f'SQL QUERY POST: \n{query}\n')
+        AND strahler >= {min_strahler}
+        AND ST_WITHIN(stream_segments.geom, ST_GeomFromGeoJSON(
+            '{polygon_geojson_str}'
+        ));
+    '''
 
     ### Query database:
     cursor = conn.cursor()
@@ -83,19 +78,15 @@ def get_outlet_streamsegments_in_polygon(conn, polygon_geojson, min_strahler=1):
     polygon_geojson_str = polygon_geojson_str.replace("'", '"')
 
     ### Define query:
-    query = '''
+    query = f'''
     SELECT subc_id, basin_id, geom
     FROM stream_segments
     WHERE target = -basin_id
-    AND strahler >= {min_strahler}
-    AND ST_WITHIN(stream_segments.geom, ST_GeomFromGeoJSON(
-        '{polygon_geojson}'
-    ));
-    '''.format(min_strahler=min_strahler, polygon_geojson=polygon_geojson_str)
-    LOGGER.info(f'SQL QUERY: \n{query}\n')
-    #LOGGER.info(f'SQL QUERY PRE : \n{query}\n')
-    #query = query.replace("'", '"')
-    #LOGGER.info(f'SQL QUERY POST: \n{query}\n')
+        AND strahler >= {min_strahler}
+        AND ST_WITHIN(stream_segments.geom, ST_GeomFromGeoJSON(
+            '{polygon_geojson_str}'
+        ));
+    '''
 
     ### Query database:
     cursor = conn.cursor()
