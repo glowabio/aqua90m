@@ -62,9 +62,9 @@ class SnappedPointsStrahlerGetter(GeoFreshBaseProcessor):
     def _execute(self, data, requested_outputs, conn):
 
         # User inputs
-        lon = float(data.get('lon'))
-        lat = float(data.get('lat'))
-        strahler = float(data.get('strahler'))
+        lon = data.get('lon')
+        lat = data.get('lat')
+        strahler = data.get('strahler')
         geometry_only = data.get('geometry_only', False)
         comment = data.get('comment') # optional
 
@@ -111,6 +111,7 @@ if __name__ == '__main__':
     PYSERVER = f'https://{os.getenv("PYSERVER")}'
     # For this to work, please define the PYSERVER before running python:
     # export PYSERVER="https://.../pygeoapi-dev"
+    print('_____________________________________________________')
     process_id = 'get-snapped-points-strahler'
     print(f'TESTING {process_id} at {PYSERVER}')
     from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
