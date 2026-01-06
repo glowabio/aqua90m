@@ -75,7 +75,7 @@ def get_regid_from_lonlat(conn, LOGGER, lon, lat):
     ### Get results and construct GeoJSON:
     row = cursor.fetchone()
     if row is None: # Ocean case:
-        err_msg = 'No reg_id found for lon %s, lat %s! Is this in the ocean?' % (lon, lat)
+        err_msg = f'No reg_id found for lon {lon}, lat {lat}! Is this in the ocean?'
         LOGGER.warning(err_msg)
         raise exc.GeoFreshNoResultException(err_msg)
 

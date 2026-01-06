@@ -205,9 +205,14 @@ def get_env90m_variables_by_subcid(conn, subc_ids, reg_id, variables):
                 else:
                     for statistic in possible_statistics:
                         column_names_list.append(variable+"_"+statistic)
-        column_names_str = ", ".join([str(elem) for elem in column_names_list])
+
+        # Make a string from the list:
+        # column_names_str = ', '.join([str(elem) for elem in column_names_list])
+        # uses less memory:
+        column_names_str = ','.join(map(str, column_names_list))
 
         ## Create SQL query:
+        LOGGER.log(logging.TRACE, f"Now querying table {table_name} for columns {column_names_list}")
         query = f'''
         SELECT 
             subc_id, {column_names_str}

@@ -258,7 +258,7 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
         which_ids = data.get('which_ids', ['subc_id', 'basin_id', 'reg_id'])
 
         ## Check user inputs:
-        if type(which_ids) == type('bla') and not type(which_ids) == type([]):
+        if not isinstance(which_ids, list) and isinstance(which_ids, str):
             # If user did not put the word into a list...
             which_ids = [which_ids]
 
