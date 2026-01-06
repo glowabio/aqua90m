@@ -149,3 +149,47 @@ class ShortestPathBetweenPointsGetter(GeoFreshBaseProcessor):
 
             # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             return self.return_results('connecting_path', requested_outputs, output_df=None, output_json=feature_coll, comment=comment)
+
+if __name__ == '__main__':
+
+    import os
+    import requests
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    process_id = 'get-shortest-path-between-points'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
+
+
+    print('TEST CASE 1: Request GeometryCollection...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon_start": 9.937520027160646,
+            "lat_start": 54.69422745526058,
+            "lon_end": 9.9217,
+            "lat_end": 54.6917,
+            "geometry_only": True,
+            "comment": "test1"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 2: Request FeatureCollection...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon_start": 9.937520027160646,
+            "lat_start": 54.69422745526058,
+            "lon_end": 9.9217,
+            "lat_end": 54.6917,
+            "geometry_only": False,
+            "add_segment_ids": True,
+            "comment": "test2"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)

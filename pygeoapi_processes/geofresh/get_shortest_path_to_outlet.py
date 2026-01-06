@@ -199,3 +199,70 @@ def filter_subcid_by_strahler(conn, subc_ids, reg_id, basin_id, only_up_to_strah
     filtered_subc_ids = output_df["subc_id"].astype(int).tolist()
     return filtered_subc_ids
 
+
+if __name__ == '__main__':
+
+    import os
+    import requests
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    process_id = 'get-shortest-path-to-outlet'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
+
+
+    print('TEST CASE 1: Request GeometryCollection...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": 9.937520027160646,
+            "lat": 54.69422745526058,
+            "geometry_only": True,
+            "comment": "test1"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 2: Request FeatureCollection...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": 9.937520027160646,
+            "lat": 54.69422745526058,
+            "geometry_only": False,
+            "add_downstream_ids": True,
+            "comment": "test2"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+    print('TEST CASE 3: Request Plain JSON...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": 9.937520027160646,
+            "lat": 54.69422745526058,
+            "downstream_ids_only": True,
+            "comment": "test3"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+    print('TEST CASE 4: Request FeatureCollection up to strahler 4...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": 9.937520027160646,
+            "lat": 54.69422745526058,
+            "geometry_only": False,
+            "add_downstream_ids": True,
+            "only_up_to_strahler": 4,
+            "comment": "test4"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+

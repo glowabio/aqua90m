@@ -219,3 +219,69 @@ class UpstreamDissolvedGetter(GeoFreshBaseProcessor):
             return 'application/json', geojson_object
 
 
+
+
+if __name__ == '__main__':
+
+    import os
+    import requests
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    process_id = 'get-upstream-dissolved'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
+
+
+    print('TEST CASE 1: Request URL to simple Geometry (Polygon)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": 9.931555,
+            "lat": 54.695070,
+            "get_type": "polygon",
+            "comment": "test1"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+    print('TEST CASE 2: Request simple Geometry (Polygon)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": 9.931555,
+            "lat": 54.695070,
+            "get_type": "polygon",
+            "get_json_directly": "true",
+            "comment": "test2"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+    print('TEST CASE 3: Request URL to simple Geometry (Polygon)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": 9.931555,
+            "lat": 54.695070,
+            "get_type": "feature",
+            "comment": "test3"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+    print('TEST CASE 4: Request simple Geometry (Polygon)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": 9.931555,
+            "lat": 54.695070,
+            "get_type": "feature",
+            "get_json_directly": "true",
+            "comment": "test5"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+

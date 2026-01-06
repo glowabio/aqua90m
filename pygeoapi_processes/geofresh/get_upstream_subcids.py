@@ -89,3 +89,30 @@ class UpstreamSubcidGetter(GeoFreshBaseProcessor):
 
         # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
         return self.return_results('upstream_ids', requested_outputs, output_df=None, output_json=output_json, comment=comment)
+
+
+
+if __name__ == '__main__':
+
+    import os
+    import requests
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    process_id = 'get-upstream-subcids'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
+
+
+    print('TEST CASE 1: Request plain JSON...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": 9.931555,
+            "lat": 54.695070,
+            "comment": "test1"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)

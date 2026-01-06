@@ -123,3 +123,43 @@ class UpstreamBboxGetter(GeoFreshBaseProcessor):
 
             # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             return self.return_results('bbox', requested_outputs, output_df=None, output_json=bbox_feature, comment=comment)
+
+
+if __name__ == '__main__':
+
+    import os
+    import requests
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    process_id = 'get-upstream-bbox'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
+
+
+    print('TEST CASE 1: Request simple Geometry (Polygon)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": 9.931555,
+            "lat": 54.695070,
+            "geometry_only": True,
+            "comment": "test1"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+    print('TEST CASE 2: Request simple Feature (Polygon)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon": 9.931555,
+            "lat": 54.695070,
+            "geometry_only": False,
+            "add_upstream_ids": True,
+            "comment": "test2"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
