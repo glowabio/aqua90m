@@ -309,7 +309,12 @@ def get_subcid_basinid_regid_for_geojson(conn, tablename_prefix, input_geojson, 
 def get_basinid_regid_from_subcid_plural(conn, LOGGER, subc_ids, columns=['subc_id', 'basin_id', 'reg_id']):
     # INPUT:  List of subc_ids (integers)
     # OUTPUT: Dataframe with subc_id, basin_id, reg_id
-    # TODO: This does not use reg_id for querying...
+    # Note: This query not include reg_id for faster finding of the row. it is
+    # not necessary, as we don't do spatial 'st_intersects' operation here, just
+    # comparing 'subc_id' values, so that should be fast enough.
+    # Furthermore, it wouldn't even be possible, as there is no way to retrieve
+    # a subcatchment's reg_id from the "regional_units" table before doing this
+    # query here.
 
     ### Define query:
     subc_ids = ','.join(map(str, subc_ids))

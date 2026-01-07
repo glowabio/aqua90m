@@ -316,46 +316,40 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
 
     def plural_symmetric(self, conn, points, subc_ids):
 
-        if subc_ids is not None:
-            LOGGER.debug('START: Getting dijkstra shortest distance between a number of subcatchments (start and end points are the same)...')
-            all_subc_ids = set(subc_ids)
-
-            # Should we also get all basin ids, reg ids?
-            # Or just one ... ?
-            basin_id, reg_id = basic_queries.get_basinid_regid_from_subcid(conn, LOGGER, subc_ids[0])
-            #for subc_id in all_subc_ids:
-            #    basin_id, reg_id = basic_queries.get_basinid_regid_from_subcid(conn, LOGGER, subc_id)
-            #    all_reg_ids.add(reg_id)
-            #    all_basin_ids.add(basin_id)
-
-        elif points is not None:
+        # Collect reg_id, basin_id, subc_id
+        if points is not None:
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are the same)...')
             temp_df = basic_queries.get_subcid_basinid_regid_for_geojson(conn, 'distance', points, colname_site_id=None)
             # TODO does this return NAs?
+        elif subc_ids is not None:
+            LOGGER.debug('START: Getting dijkstra shortest distance between a number of subcatchments (start and end points are the same)...')
+            all_subc_ids = set(subc_ids)
+            temp_df = basic_queries.get_basinid_regid_from_subcid_plural(conn, LOGGER, subc_ids)
+            # TODO does this return NAs?
 
-            # Check if same region?
-            if temp_df['reg_id'].nunique(dropna=False) == 1:
-                reg_id = temp_df['reg_id'].iloc[0]
-            else:
-                all_reg_ids = temp_df['reg_id'].unique()
-                err_msg = f'The input points are in different regions ({all_reg_ids}) - this cannot work.'
-                LOGGER.warning(err_msg)
-                raise ProcessorExecuteError(user_msg=err_msg)
+        # Check if same region?
+        if temp_df['reg_id'].nunique(dropna=False) == 1:
+            reg_id = temp_df['reg_id'].iloc[0]
+        else:
+            all_reg_ids = temp_df['reg_id'].unique()
+            err_msg = f'The input points are in different regions ({all_reg_ids}) - this cannot work.'
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(user_msg=err_msg)
 
-            # Check if same basin?
-            # TODO: FUTURE MUSIC: If start and end not in same basin, can we route via the sea?
-            if temp_df['basin_id'].nunique(dropna=False) == 1:
-                basin_id = temp_df['basin_id'].iloc[0]
-            else:
-                all_basin_ids = temp_df['basin_id'].unique()
-                err_msg = f'The input points are in different basins ({all_basin_ids}) - this cannot work.'
-                LOGGER.warning(err_msg)
-                raise ProcessorExecuteError(user_msg=err_msg)
+        # Check if same basin?
+        # TODO: FUTURE MUSIC: If start and end not in same basin, can we route via the sea?
+        if temp_df['basin_id'].nunique(dropna=False) == 1:
+            basin_id = temp_df['basin_id'].iloc[0]
+        else:
+            all_basin_ids = temp_df['basin_id'].unique()
+            err_msg = f'The input points are in different basins ({all_basin_ids}) - this cannot work.'
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(user_msg=err_msg)
 
-            # Get all unique subc_ids:
-            all_subc_ids = temp_df['subc_id'].unique()
+        # Get all unique subc_ids:
+        all_subc_ids = temp_df['subc_id'].unique()
 
-        # Return...
+        # Return what's needed for routing:
         return all_subc_ids, all_subc_ids, reg_id, basin_id
 
 
