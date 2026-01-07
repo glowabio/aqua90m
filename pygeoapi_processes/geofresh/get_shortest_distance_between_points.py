@@ -330,34 +330,30 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
 
         elif points is not None:
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are the same)...')
-            # Collect reg_id, basin_id, subc_id
-            all_subc_ids = set()
-            all_reg_ids = set()
-            all_basin_ids = set()
-            for lon, lat in points['coordinates']: # TODO: Maybe not do this loop based?
-                LOGGER.debug(f'Now getting subc_id, basin_id, reg_id for lon {lon}, lat {lat}')
-                subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
-                    conn, LOGGER, lon, lat)
-                all_subc_ids.add(subc_id)
-                all_reg_ids.add(reg_id)
-                all_basin_ids.add(basin_id)
+            temp_df = basic_queries.get_subcid_basinid_regid_for_geojson(conn, 'distance', points, colname_site_id=None)
+            # TODO does this return NAs?
 
             # Check if same region?
-            if len(all_reg_ids) == 1:
-                reg_id = next(iter(all_reg_ids))
+            if temp_df['reg_id'].nunique(dropna=False) == 1:
+                reg_id = temp_df['reg_id'].iloc[0]
             else:
+                all_reg_ids = temp_df['reg_id'].unique()
                 err_msg = f'The input points are in different regions ({all_reg_ids}) - this cannot work.'
                 LOGGER.warning(err_msg)
                 raise ProcessorExecuteError(user_msg=err_msg)
 
             # Check if same basin?
-            # TODO: FUTURE MUSTIC: If start and end not in same basin, can we route via the sea?
-            if len(all_basin_ids) == 1:
-                basin_id = next(iter(all_basin_ids))
+            # TODO: FUTURE MUSIC: If start and end not in same basin, can we route via the sea?
+            if temp_df['basin_id'].nunique(dropna=False) == 1:
+                basin_id = temp_df['basin_id'].iloc[0]
             else:
+                all_basin_ids = temp_df['basin_id'].unique()
                 err_msg = f'The input points are in different basins ({all_basin_ids}) - this cannot work.'
                 LOGGER.warning(err_msg)
                 raise ProcessorExecuteError(user_msg=err_msg)
+
+            # Get all unique subc_ids:
+            all_subc_ids = temp_df['subc_id'].unique()
 
         # Return...
         return all_subc_ids, all_subc_ids, reg_id, basin_id

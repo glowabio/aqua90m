@@ -291,6 +291,21 @@ def get_subcid_basinid_regid_for_dataframe(conn, tablename_prefix, input_df, col
     return output_df
 
 
+def get_subcid_basinid_regid_for_geojson(conn, tablename_prefix, input_geojson, colname_site_id=None):
+    # INPUT:  GeoJSON (MultiPoint or GeometryCollection or FeatureCollection)
+    # OUTPUT: Dataframe with site_id, subc_id, basin_id, reg_id
+    list_of_insert_rows = temp_tables.make_insertion_rows_from_geojson(input_geojson, colname_site_id=colname_site_id)
+    cursor = conn.cursor()
+    tablename, reg_ids = temp_tables.create_and_populate_temp_table(cursor, tablename_prefix, list_of_insert_rows)
+    query = f'''
+    SELECT site_id, subc_id, basin_id, reg_id
+    FROM {tablename}
+    '''
+    output_df = pd.read_sql_query(query, conn)
+    temp_tables.drop_temp_table(cursor, tablename)
+    return output_df
+
+
 def get_basinid_regid_from_subcid_plural(conn, LOGGER, subc_ids, columns=['subc_id', 'basin_id', 'reg_id']):
     # INPUT:  List of subc_ids (integers)
     # OUTPUT: Dataframe with subc_id, basin_id, reg_id
@@ -354,7 +369,7 @@ def get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson, colname
         num = len(iterate_over)
 
     # Iterate over points and call "get_subcid_basinid_regid" for each point:
-    # TODO: This is not super efficient, but the quickest to implement :)
+    # TODO: loop!! This is not super efficient, but the quickest to implement :)
     LOGGER.debug('Getting subcatchment for %s lon, lat pairs...' % num)
     for point in iterate_over: # either point or feature...
 
