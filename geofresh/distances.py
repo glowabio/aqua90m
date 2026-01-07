@@ -116,8 +116,8 @@ def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin
 
 
     ## Construct SQL query:
-    nodes_start = ','.join(str(x) for x in subc_ids_start)
-    nodes_end   = ','.join(str(x) for x in subc_ids_end)
+    nodes_start = ','.join(map(str, subc_ids_start))
+    nodes_end   = ','.join(map(str, subc_ids_end))
     query = f'''
     SELECT 
         edge,
