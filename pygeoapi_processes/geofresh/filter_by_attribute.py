@@ -76,12 +76,12 @@ curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
     }
 }'
 
-# Filter output from get-local-ids: TODO: Missing example data!
+# Filter output from get-local-ids:
 curl -X POST https://${PYSERVER}/processes/filter-by-attribute/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
-        "csv_url": "https://aqua.igb-berlin.de/download/outputs-local_ids-get-local-ids-plural-bb5be376-1adc-11f0-ba7f-6fbdd8a35584.csv",
+        "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/outputs-local_ids-get-local-ids-plural.csv",
         "keep": {"reg_id": [176]}
     },
     "outputs": {
@@ -418,3 +418,176 @@ class FilterByAttributeProcessor(BaseProcessor):
 
             else:
                 return 'application/json', output_json
+
+
+if __name__ == '__main__':
+
+    import os
+    import requests
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    print('_____________________________________________________')
+    process_id = 'filter-by-attribute'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
+
+
+    print('TEST CASE 1: Filter occurrences by site_id...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "keep": {"site_id": ["FP1", "FP10", "FP20"]},
+            "comment": "test1"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 2: Filter occurrences by site_id and latitude (equality)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "keep": {"site_id": ["FP1", "FP10", "FP20"], "latitude": [40.299111]},
+            "comment": "test2"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 3: Filter occurrences by site_id (equality) and latitude (smaller-than)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "keep": {"site_id": ["FP1", "FP10", "FP20"]},
+            "conditions": {"longitude": "x<20.8"},
+            "comment": "test3"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 4: Filter occurrences by species name (equality)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/species_occurrences_cuba_maxine.csv",
+            "keep": {"species": ["Sagittaria_lancifolia", "Salvinia_auriculata"]},
+            "comment": "test4"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 5: Filter occurrences by temperature (smaller-than-equals), GeoJSON file input...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points2.json",
+            "conditions": {"temperature": ">=30"},
+            "comment": "test5"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 6: Filter occurrences by site_id (equality), GeoJSON input directly...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson": {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {"site_id": 1, "temperature": 20},
+                        "geometry": { "coordinates": [ 10.698832912677716, 53.51710727672125 ], "type": "Point" }
+                    },
+                    {
+                        "type": "Feature",
+                        "properties": {"site_id": 2, "temperature": 30},
+                        "geometry": { "coordinates": [ 12.80898022975407, 52.42187129944509 ], "type": "Point" }
+                    }
+                ]
+            },
+            "keep": {"site_id": [1, 5, 6]},
+            "comment": "test6"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 7: Filter occurrences by site_id...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "keep": {"site_id": ["FP1", "FP10", "FP20"]},
+            "result_format": "geojson",
+            "colname_lat": "latitude",
+            "colname_lon": "longitude",
+            "comment": "test7"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 8: Will fail: Filter occurrences by site_id...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "keep": {"site_id": ["FP1", "FP10", "FP20"]},
+            "result_format": "geojson",
+            "comment": "test8"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    try:
+        resp = make_sync_request(PYSERVER, process_id, payload)
+        raise ValueError("Expected error that did not happen...")
+    except requests.exceptions.HTTPError as e:
+        print(f'TEST CASE 8: EXPECTED: {e.response.json()["description"]}')
+
+
+    print('TEST CASE 9: Filter output of get-local-ids-plural by reg_id...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/outputs-local_ids-get-local-ids-plural.csv",
+            "keep": {"reg_id": [9999]},
+            "comment": "test9"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+

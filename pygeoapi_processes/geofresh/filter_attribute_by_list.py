@@ -238,3 +238,34 @@ class FilterAttributeByListProcessor(BaseProcessor):
 
             else:
                 return 'application/json', output_json
+
+
+if __name__ == '__main__':
+
+    import os
+    import requests
+    PYSERVER = f'https://{os.getenv("PYSERVER")}'
+    # For this to work, please define the PYSERVER before running python:
+    # export PYSERVER="https://.../pygeoapi-dev"
+    print('_____________________________________________________')
+    process_id = 'filter-attribute-by-list'
+    print(f'TESTING {process_id} at {PYSERVER}')
+    from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
+
+
+    print('TEST CASE 1: Filter occurrences by site_id...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "items_json_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/outputs-downstream_path-get-shortest-path-to-outlet-plural_shortened.json",
+            "keep": {"downstream_segments": [560096607, 560097862, 560099758, 560164915, 560164283, 560168646, 560166133]},
+            "comment": "test1"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
