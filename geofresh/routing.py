@@ -177,7 +177,7 @@ def _iterate_outlets_dataframe(conn, departing_points):
         if reg_id is None:
             all_site_ids = all_basins[None][None]
             LOGGER.debug(f'Compute paths to outlet for these sites not possible: {all_site_ids}')
-            site_ids_str    = "+".join([str(elem) for elem in all_site_ids])
+            site_ids_str    = '+'.join(map(str, all_site_ids))
             everything.append([None, None, None, None, site_ids_str])
             continue
 
@@ -199,8 +199,8 @@ def _iterate_outlets_dataframe(conn, departing_points):
                 # Collect results per subcid / per departure point:
                 # Output CSV:  We need to make one string out of the segment ids!
                 # TODO: Separating the segment ids by "+" is not cool, but how to do it...
-                segment_ids_str = "+".join([str(elem) for elem in segment_ids])
-                site_ids_str    = "+".join([str(elem) for elem in all_site_ids])
+                segment_ids_str = '+'.join(map(str, segment_ids))
+                site_ids_str    = '+'.join(map(str, all_site_ids))
                 everything.append([reg_id, basin_id, start_id, segment_ids_str, site_ids_str])
 
     # Finished collecting the results, now return dataframe:

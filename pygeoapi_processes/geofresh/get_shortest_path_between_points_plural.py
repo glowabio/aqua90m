@@ -202,10 +202,10 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
         ### Validate input parameters ###
         #################################
 
-        #if not result_format == 'json' and not result_format == 'csv':
-        #    err_msg = f"Malformed parameter 'result_format': Format {result_format} not supported. Please specify 'csv' or 'json'."
-        #    LOGGER.error(err_msg)
-        #    raise ProcessorExecuteError(err_msg)
+        if not result_format == 'json' and not result_format == 'csv':
+            err_msg = f"Malformed parameter 'result_format': Format {result_format} not supported. Please specify 'csv' or 'json'."
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
 
 
         ###########################
