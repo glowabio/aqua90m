@@ -161,11 +161,19 @@ def _result_to_matrix(cursor, subc_ids_start, subc_ids_end):
 
     ## Construct result matrix:
     # TODO: JSON may not be the ideal type for returning a matrix!
+    # Note: Keys have to strings, otherwise pygeoapi will cause an
+    # error later on when serializing the results:
+    # "numpy.core._exceptions._UFuncNoLoopError: ufunc 'greater' did not contain a loop with signature matching types"
+    # Note: Values have to be native python numbers, not numpy numbers, otherwise
+    # pygeoapi will cause an error later on when serializing the results:
+    # "Object of type int64 is not JSON serializable"
+    # For some reason, this does not seem to be a problem here, so we don't
+    # have to cast, as we do in routing.py
     result_matrix = {}
     for start_id in subc_ids_start:
-        result_matrix[start_id] = {}
+        result_matrix[str(start_id)] = {}
         for end_id in subc_ids_end:
-            result_matrix[start_id][end_id] = 0
+            result_matrix[str(start_id)][str(end_id)] = 0
 
     ## Iterate over the result rows:
     while True:
@@ -175,8 +183,8 @@ def _result_to_matrix(cursor, subc_ids_start, subc_ids_end):
         # We only look at the last edge of a path, as PostGIS returns agg_cost for us!
         if row[0] == -1: # if edge is -1...
             # Retrieve both nodes of the edge, and the accumulated cost/length:
-            start_id  = row[1]
-            end_id    = row[2]
+            start_id  = str(row[1])
+            end_id    = str(row[2])
             agg_cost  = row[3]
             # Add this subc_id (integer) to the result matrix
             # (store the distance for this start-end-combination).

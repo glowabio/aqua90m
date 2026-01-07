@@ -324,12 +324,17 @@ def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id):
 
     ## Construct result matrix:
     # TODO: JSON may not be the ideal type for returning a matrix!
-    # TODO: Use integers as dict keys here too!
+    # Note: Keys have to strings, otherwise pygeoapi will cause an
+    # error later on when serializing the results:
+    # numpy.core._exceptions._UFuncNoLoopError: ufunc 'greater' did not contain a loop with signature matching types
+    # Note: Values have to be native python integers, not numpy integers, otherwise
+    # pygeoapi will cause an error later on when serializing the results:
+    # Object of type int64 is not JSON serializable
     results_json = {}
     for start_id in subc_ids:
         results_json[str(start_id)] = {}
         for end_id in subc_ids:
-            results_json[str(start_id)][str(end_id)] = [start_id] # TODO: check: Have to add start id?
+            results_json[str(start_id)][str(end_id)] = [int(start_id)] # TODO: check: Have to add start id?
 
     ## Iterating over the result rows:
     LOGGER.log(logging.TRACE, f"Result matrix to be filled: {results_json}")
@@ -342,7 +347,7 @@ def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id):
         # Each path is defined by start and end, and consists of many edges/stream segments.
         start_id  = str(row[0]) # start
         end_id    = str(row[1]) # end
-        this_id   = row[2] # current edge/stream segment as integer
+        this_id   = int(row[2]) # current edge/stream segment as integer
         if this_id == -1:
             pass
         else:
