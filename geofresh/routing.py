@@ -330,14 +330,14 @@ def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id):
     # Note: Values have to be native python integers, not numpy integers, otherwise
     # pygeoapi will cause an error later on when serializing the results:
     # Object of type int64 is not JSON serializable
-    results_json = {}
+    result_matrix = {}
     for start_id in subc_ids:
-        results_json[str(start_id)] = {}
+        result_matrix[str(start_id)] = {}
         for end_id in subc_ids:
-            results_json[str(start_id)][str(end_id)] = [int(start_id)] # TODO: check: Have to add start id?
+            result_matrix[str(start_id)][str(end_id)] = [int(start_id)] # TODO: check: Have to add start id?
 
     ## Iterating over the result rows:
-    LOGGER.log(logging.TRACE, f"Result matrix to be filled: {results_json}")
+    LOGGER.log(logging.TRACE, f"Result matrix to be filled: {result_matrix}")
     LOGGER.log(logging.TRACE, "Iterating over results...")
     while True:
         row = cursor.fetchone()
@@ -353,13 +353,13 @@ def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id):
         else:
             # Add this subc_id (integer) to the matrix
             # (to the list of stream segments for this start-end-combination).
-            results_json[start_id][end_id].append(this_id)
+            result_matrix[start_id][end_id].append(this_id)
             LOGGER.log(logging.TRACE, 'Start {start_id} to end {end_id}, add this id {this_id}')
 
     LOGGER.log(logging.TRACE, "Iterating over results... DONE.")
-    #LOGGER.log(logging.TRACE, f"JSON result: {results_json}") # quite big!
+    #LOGGER.log(logging.TRACE, f"JSON result: {result_matrix}") # quite big!
 
-    return results_json
+    return result_matrix
 
 
 def get_dijkstra_ids_one_to_many(conn, start_subc_ids, end_subc_id, reg_id, basin_id):
@@ -431,7 +431,6 @@ def get_dijkstra_ids_one_to_many(conn, start_subc_ids, end_subc_id, reg_id, basi
             LOGGER.log(logging.TRACE, 'Start {start_id} to end {end_id}, add this id {this_id}')
 
     LOGGER.log(logging.TRACE, "Iterating over results... DONE.")
-    #LOGGER.log(logging.TRACE, f"JSON result: {results_json}") # quite big!
 
     return segments_by_start_id
 
