@@ -275,7 +275,7 @@ def _iterate_outlets_json(conn, departing_points):
     return everything
 
 
-def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id):
+def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id, result_format='json'):
     # INPUT:  Set of subc_ids
     # OUTPUT: Route matrix (as JSON)
 
@@ -322,6 +322,22 @@ def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id):
     cursor.execute(query)
     LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
+    ## Extract results, first as a matrix (nested dict):
+    json_matrix = _result_to_matrix(cursor, subc_ids, subc_ids)
+
+    ## Make a dataframe from this, if requested:
+    if result_format == 'json':
+        return json_matrix
+    elif result_format == 'dataframe':
+        output_df = _matrix_to_dataframe(json_matrix, subc_ids, subc_ids)
+        return output_df
+    else:
+        raise ValueError(f'Unknown result format: {result_format}. Expected json or dataframe.')
+
+
+
+def _result_to_matrix(cursor, subc_ids_start, subc_ids_end):
+
     ## Construct result matrix:
     # TODO: JSON may not be the ideal type for returning a matrix!
     # Note: Keys have to strings, otherwise pygeoapi will cause an
@@ -331,9 +347,9 @@ def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id):
     # pygeoapi will cause an error later on when serializing the results:
     # Object of type int64 is not JSON serializable
     result_matrix = {}
-    for start_id in subc_ids:
+    for start_id in subc_ids_start:
         result_matrix[str(start_id)] = {}
-        for end_id in subc_ids:
+        for end_id in subc_ids_end:
             result_matrix[str(start_id)][str(end_id)] = [int(start_id)] # TODO: check: Have to add start id?
 
     ## Iterating over the result rows:
@@ -360,6 +376,49 @@ def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id):
     #LOGGER.log(logging.TRACE, f"JSON result: {result_matrix}") # quite big!
 
     return result_matrix
+
+
+def _matrix_to_dataframe(result_matrix, subc_ids_start, subc_ids_end):
+
+    # Construct result dataframe:
+    #   Basically a matrix, as dataframe/table/csv:
+    #   Column names will be the end subc_ids (first column contains the end subc_ids)
+    #   Row names will be the start subc_ids (first row contains the start subc_ids)
+    all_rows = []
+
+    # Define column names for dataframe: end ids
+    # First column contains the subcids
+    colnames = ["subc_ids"]
+    for end_id in subc_ids_end:
+        colnames.append(str(end_id))
+
+    # Fill all dataframe rows with distances
+    for start_id in subc_ids_start:
+
+        # Get the row of the matrix with the paths from start id to all end ids:
+        start_id = str(start_id)
+        matrix_row = result_matrix[start_id]
+        LOGGER.debug(f'Matrix row for {start_id}: {matrix_row}')
+
+        # First item in the dataframe row is the start id:
+        row_dataframe = [start_id]
+
+        # Now fill with the distances:
+        for end_id in colnames:
+
+            # First colname is not an end id, but the title for the first column...
+            if end_id == 'subc_ids':
+                continue
+
+            # Retrieve the distance and add to row:
+            path_list = matrix_row[str(end_id)]
+            path_list_str = '+'.join(map(str, path_list))
+            row_dataframe.append(path_list_str)
+
+        all_rows.append(row_dataframe)
+
+    output_df = pd.DataFrame(all_rows, columns=colnames)
+    return output_df
 
 
 def get_dijkstra_ids_one_to_many(conn, start_subc_ids, end_subc_id, reg_id, basin_id):

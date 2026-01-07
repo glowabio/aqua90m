@@ -334,17 +334,14 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
 
         # Get shortest path:
         if result_format == "csv":
-            err_msg = "Currently not implemented: Returning paths as csv."
-            raise NotImplementedError(err_msg)
-            #output_df = distances.get_dijkstra_distance_many(
-            #    conn, all_subc_ids_start, all_subc_ids_end, reg_id, basin_id, "dataframe")
-            #return self.return_results('distances_matrix', requested_outputs, output_df=output_df, comment=comment)
+            output_df = routing.get_dijkstra_ids_many_to_many(
+                conn, all_subc_ids, reg_id, basin_id, 'dataframe')
+            return self.return_results('paths_matrix', requested_outputs, output_df=output_df, comment=comment)
         else:
             # As a JSON-ified matrix:
-            json_result = routing.get_dijkstra_ids_many_to_many(conn, all_subc_ids, reg_id, basin_id)
+            json_result = routing.get_dijkstra_ids_many_to_many(
+                conn, all_subc_ids, reg_id, basin_id, 'json')
             LOGGER.debug(f'THIS IS THE MATRIX: {json_result}')
-            #json_result = distances.get_dijkstra_distance_many(
-            #    conn, all_subc_ids_start, all_subc_ids_end, reg_id, basin_id, "json")
             return self.return_results('paths_matrix', requested_outputs, output_json=json_result, comment=comment)
 
 
@@ -551,9 +548,24 @@ if __name__ == '__main__':
     print('TEST CASE 7: Matrix: Request paths between two sets of points, based on subc_ids...', end="", flush=True)  # no newline
     payload = {
         "inputs": {
-            "subc_ids_start": [506251712, 506252055],
-            "subc_ids_end": [506251712, 506251713],
+            "subc_ids": [506251712, 506252055, 506251712, 506251713],
+            "result_format": "json",
             "comment": "test7"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 8: Matrix as csv: Request paths between two sets of points, based on subc_ids...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "subc_ids": [506251712, 506252055, 506251712, 506251713],
+            "result_format": "csv",
+            "comment": "test8"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
