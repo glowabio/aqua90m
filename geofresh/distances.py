@@ -116,8 +116,8 @@ def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin
 
 
     ## Construct SQL query:
-    nodes_start = 'ARRAY[%s]' % ','.join(str(x) for x in subc_ids_start)
-    nodes_end   = 'ARRAY[%s]' % ','.join(str(x) for x in subc_ids_end)
+    nodes_start = ','.join(str(x) for x in subc_ids_start)
+    nodes_end   = ','.join(str(x) for x in subc_ids_end)
     query = f'''
     SELECT 
         edge,
@@ -133,8 +133,8 @@ def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin
             FROM hydro.stream_segments
             WHERE reg_id = {reg_id}
             AND basin_id = {basin_id}',
-        {nodes_start},
-        {nodes_end},
+        ARRAY[{nodes_start}],
+        ARRAY[{nodes_end}],
         directed := false
     );
     '''
@@ -163,9 +163,9 @@ def _result_to_matrix(cursor, subc_ids_start, subc_ids_end):
     # TODO: JSON may not be the ideal type for returning a matrix!
     result_matrix = {}
     for start_id in subc_ids_start:
-        result_matrix[str(start_id)] = {}
+        result_matrix[start_id] = {}
         for end_id in subc_ids_end:
-            result_matrix[str(start_id)][str(end_id)] = 0
+            result_matrix[start_id][end_id] = 0
 
     ## Iterate over the result rows:
     while True:
@@ -175,8 +175,8 @@ def _result_to_matrix(cursor, subc_ids_start, subc_ids_end):
         # We only look at the last edge of a path, as PostGIS returns agg_cost for us!
         if row[0] == -1: # if edge is -1...
             # Retrieve both nodes of the edge, and the accumulated cost/length:
-            start_id  = str(row[1])
-            end_id    = str(row[2])
+            start_id  = row[1]
+            end_id    = row[2]
             agg_cost  = row[3]
             # Add this subc_id (integer) to the result matrix
             # (store the distance for this start-end-combination).
