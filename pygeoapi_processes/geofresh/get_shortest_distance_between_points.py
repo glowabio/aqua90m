@@ -535,17 +535,10 @@ if __name__ == '__main__':
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
 
-
-    #############
-    ### Other ###
-    #############
-
-    print('TEST CASE 8: Will fail, wrong result_format...', end="", flush=True)  # no newline
+    print('TEST CASE 8: Will fail: Matrix: Request distances between many points, based on subc_ids...', end="", flush=True)  # no newline
     payload = {
         "inputs": {
-            "subc_ids_start": [506251712, 506252055],
-            "subc_ids_end": [506251712, 506251713],
-            "result_format": "blah",
+            "subc_ids": [506251712, 506251713, 506651748],
             "comment": "test8"
         }
     }
@@ -556,10 +549,17 @@ if __name__ == '__main__':
         print(f'TEST CASE 8: EXPECTED: {e.response.json()["description"]}')
 
 
-    print('TEST CASE 9: Will fail, missing input...', end="", flush=True)  # no newline
+
+    #############
+    ### Other ###
+    #############
+
+    print('TEST CASE 9: Will fail: Wrong result_format...', end="", flush=True)  # no newline
     payload = {
         "inputs": {
             "subc_ids_start": [506251712, 506252055],
+            "subc_ids_end": [506251712, 506251713],
+            "result_format": "blah",
             "comment": "test9"
         }
     }
@@ -570,14 +570,10 @@ if __name__ == '__main__':
         print(f'TEST CASE 9: EXPECTED: {e.response.json()["description"]}')
 
 
-    print('TEST CASE 10: Will fail, mismatching input...', end="", flush=True)  # no newline
+    print('TEST CASE 10: Will fail: Missing input...', end="", flush=True)  # no newline
     payload = {
         "inputs": {
-            "lon_start": 9.937520027160646,
-            "lat_start": 54.69422745526058,
-            "lon_end": 9.9217,
-            "lat_end": 54.6917,
-            "result_format": "csv",
+            "subc_ids_start": [506251712, 506252055],
             "comment": "test10"
         }
     }
@@ -586,3 +582,21 @@ if __name__ == '__main__':
         raise ValueError("Expected error that did not happen...")
     except requests.exceptions.HTTPError as e:
         print(f'TEST CASE 10: EXPECTED: {e.response.json()["description"]}')
+
+
+    print('TEST CASE 11: Will fail: Mismatching input...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon_start": 9.937520027160646,
+            "lat_start": 54.69422745526058,
+            "lon_end": 9.9217,
+            "lat_end": 54.6917,
+            "result_format": "csv",
+            "comment": "test11"
+        }
+    }
+    try:
+        resp = make_sync_request(PYSERVER, process_id, payload)
+        raise ValueError("Expected error that did not happen...")
+    except requests.exceptions.HTTPError as e:
+        print(f'TEST CASE 11: EXPECTED: {e.response.json()["description"]}')

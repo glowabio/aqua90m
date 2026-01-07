@@ -197,8 +197,6 @@ class FilterAttributeByListProcessor(BaseProcessor):
 
 
 
-
-
     def return_results(self, resultname, requested_outputs, output_df=None, output_json=None, comment=None):
         # Note: This return_results() is the same as in GeoFreshBaseProcessor, but
         # redefined here, as we don't need all the database functionality that comes
@@ -268,4 +266,3 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
-

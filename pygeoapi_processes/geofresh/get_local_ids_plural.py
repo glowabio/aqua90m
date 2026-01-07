@@ -295,6 +295,7 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
         # GeoJSON case:
         else:
             pass
+            # To check the GeoJSON, you first have to download it...
 
         LOGGER.debug(f'User requested ids: {which_ids}')
         possible_ids = ['subc_id', 'basin_id', 'reg_id']
