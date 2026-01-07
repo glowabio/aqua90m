@@ -88,7 +88,7 @@ def get_dijkstra_distance_one(conn, start_subc_id, end_subc_id, reg_id, basin_id
     return dist
 
 
-def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin_id, result_format):
+def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin_id, result_format='json'):
     # INPUT: Sets of subc_ids
     # OUTPUT: Distance matrix (as JSON)
 
