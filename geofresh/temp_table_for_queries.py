@@ -60,9 +60,12 @@ def make_insertion_rows_from_geojson(geojson, colname_site_id=None):
 
     elif geojson['type'] == 'FeatureCollection':
         LOGGER.debug('Found FeatureCollection...')
+        if colname_site_id is None:
+            site_id = 'none'
         for point in geojson['features']:
             lon, lat = point['geometry']['coordinates']
-            site_id = point['properties'][colname_site_id]
+            if colname_site_id is not None:
+                site_id = point['properties'][colname_site_id]
             row = f"('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
             list_of_insert_rows.append(row)
 

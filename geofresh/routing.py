@@ -293,7 +293,7 @@ def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id):
     ## We are interested in all the edges (subc_ids of the stream segments) along the path,
     ##   and for identifying the path, we need the ids of the start and end, so we select
     ##   start_vid, end_vid and edge.
-    nodes = 'ARRAY[%s]' % ','.join(str(x) for x in subc_ids)
+    nodes = ','.join(map(str, subc_ids))
     query = f'''
     SELECT
         start_vid,
@@ -308,11 +308,11 @@ def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id):
                 FROM hydro.stream_segments
                 WHERE reg_id = {reg_id}
                 AND basin_id = {basin_id}',
-        {nodes},
-        {nodes},
+        ARRAY[{nodes}],
+        ARRAY[{nodes}],
         directed := false
     );
-    '''.replace("\n", " ").replace("    ", "").strip()
+    '''
     LOGGER.log(logging.TRACE, f"SQL query: {query}")
     # SQL query: SELECT edge FROM pgr_dijkstra(' SELECT   subc_id AS id,   subc_id AS source,   target,   length AS cost   FROM hydro.stream_segments   WHERE reg_id = 58   AND basin_id = 1294020', ARRAY[507294699,507282720,507199553,507332148,507290955], ARRAY[507294699,507282720,507199553,507332148,507290955], directed := false);
     

@@ -97,13 +97,36 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points-plur
 ## Fails because not in one basin:
 ## INPUT:  GeoJSON File (FeatureCollection)
 ## OUTPUT: Plain JSON directly
-## Tested 2026-01-02 WIP
+## Tested 2026-01-02
 curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points-plural/execution \
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
     "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points.json",
     "comment": "not sure where"
+  }
+}'
+
+## INPUT:  subc_ids
+## OUTPUT: Plain JSON directly
+## Tested 2026-01-07
+curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points-plural/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+        "subc_ids": [506251712, 506252055, 506251712, 506251713],
+        "comment": "not sure where"
+  }
+}'
+
+## Not Implemented yet:
+curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points-plural/execution \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+        "subc_ids_start": [506251712, 506252055],
+        "subc_ids_end": [506251712, 506251713],
+        "comment": "not sure where"
   }
 }'
 
@@ -123,140 +146,299 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
 
     def _execute(self, data, requested_outputs, conn):
 
-        # User inputs
-        # GeoJSON, posted directly
-        points = data.get('points', None)
-        # GeoJSON, to be downloaded via URL:
-        points_geojson_url = data.get('points_geojson_url', None)
-        #lon_start = data.get('lon_start', None)
-        #lat_start = data.get('lat_start', None)
-        #lon_end = data.get('lon_end', None)
-        #lat_end = data.get('lat_end', None)
-        #subc_id_start = data.get('subc_id_start', None) # optional, need either lonlat OR subc_id
-        #subc_id_end = data.get('subc_id_end', None)     # optional, need either lonlat OR subc_id
-        comment = data.get('comment') # optional
-        #add_segment_ids = data.get('add_segment_ids', True) # TODO Implement param 'add_segment_ids'
-        #geometry_only = data.get('geometry_only', False) # TODO Implement param 'geometry_only'
+        ####################
+        ### User inputs: ###
+        ####################
 
-        ## Check if boolean:
-        #utils.is_bool_parameters(dict(
-        #    add_segment_ids=add_segment_ids,
-        #    geometry_only=geometry_only))
+        # Singular case:
+        # Two points:
+        lon_start = data.get('lon_start', None)
+        lat_start = data.get('lat_start', None)
+        lon_end = data.get('lon_end', None)
+        lat_end = data.get('lat_end', None)
+        # Two subcatchments:
+        subc_id_start = data.get('subc_id_start', None) # optional, need either lonlat OR subc_id
+        subc_id_end = data.get('subc_id_end', None)     # optional, need either lonlat OR subc_id
+
+        # Plural case:
+        # GeoJSON (e.g. Multipoint, GeometryCollection of Points,
+        # FeatureCollection of Points), posted directly:
+        points = data.get('points', None)
+        points_geojson_url = data.get('points_geojson_url', None)
+        # Two separate sets of points:
+        points_start = data.get('points_start', None)
+        points_end = data.get('points_end', None)
+        points_geojson_start_url = data.get('points_geojson_start_url', None)
+        points_geojson_end_url = data.get('points_geojson_end_url', None)
+        # Set of subcatchments:
+        subc_ids = data.get('subc_ids', None)
+        # Two separate sets of subcatchments:
+        subc_ids_start = data.get('subc_ids_start', None)
+        subc_ids_end = data.get('subc_ids_end', None)
+        # TODO: Allow passing CSV file!!!
+        # Output format (can be csv or json):
+        result_format = data.get('result_format', 'json')
+        # Comment:
+        comment = data.get('comment') # optional
+
+        ##############################
+        ### Download if applicable ###
+        ##############################
 
         ## Download GeoJSON if user provided URL:
         if points_geojson_url is not None:
             points = utils.download_geojson(points_geojson_url)
             LOGGER.debug(f'Downloaded GeoJSON: {points}')
 
-        # Overall goal: Get the dijkstra shortest path (as linestrings)!
-        #LOGGER.info('START: Getting dijkstra shortest path for lon %s, lat %s (or subc_id %s) to lon %s, lat %s (or subc_id %s)' % (
-        #    lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end))
+        if points_geojson_start_url is not None:
+            points_start = utils.download_geojson(points_geojson_start_url)
+            LOGGER.debug(f'Downloaded GeoJSON: {points_start}')
 
-        # Get reg_id, basin_id, subc_id
-        all_subc_ids = []
-        all_reg_ids = []
-        all_basin_ids = []
-        # TODO: Looping over features/points is not good. Also, we loop twice (for Geometry/Feature).
-        if 'coordinates' in points:
-            for lon, lat in points['coordinates']:
-                # TODO: Loop may not be most efficient!
-                LOGGER.debug('Now getting subc_id, basin_id, reg_id for lon %s, lat %s' % (lon, lat))
-                subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
-                    conn, LOGGER, lon, lat)
-                all_subc_ids.append(subc_id)
-                all_reg_ids.append(reg_id)
-                all_basin_ids.append(basin_id)
-        elif 'geometries' in points:
-            for geom in points['geometries']:
-                lon, lat = geom['coordinates']
-                # TODO: Loop may not be most efficient!
-                LOGGER.debug('Now getting subc_id, basin_id, reg_id for lon %s, lat %s' % (lon, lat))
-                subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
-                    conn, LOGGER, lon, lat)
-                all_subc_ids.append(subc_id)
-                all_reg_ids.append(reg_id)
-                all_basin_ids.append(basin_id)
-        elif 'features' in points:
-            for feature in points['features']:
-                lon, lat = feature['geometry']['coordinates']
-                # TODO: Loop may not be most efficient!
-                LOGGER.debug('Now getting subc_id, basin_id, reg_id for lon %s, lat %s' % (lon, lat))
-                subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
-                    conn, LOGGER, lon, lat)
-                all_subc_ids.append(subc_id)
-                all_reg_ids.append(reg_id)
-                all_basin_ids.append(basin_id)
+        if points_geojson_end_url is not None:
+            points_end = utils.download_geojson(points_geojson_end_url)
+            LOGGER.debug(f'Downloaded GeoJSON: {points_end}')
+
+        #################################
+        ### Validate input parameters ###
+        #################################
+
+        #if not result_format == 'json' and not result_format == 'csv':
+        #    err_msg = f"Malformed parameter 'result_format': Format {result_format} not supported. Please specify 'csv' or 'json'."
+        #    LOGGER.error(err_msg)
+        #    raise ProcessorExecuteError(err_msg)
+
+
+        ###########################
+        ### Plural or singular? ###
+        ###########################
+
+        # Singular or plural case?
+        singular = False
+        plural_symmetric = False
+        plural_asymmetric = False
+
+        # Decide based on which inputs were provided:
+        if not (lon_start is None
+            and lat_start is None
+            and lon_end is None
+            and lat_end is None
+            and subc_id_start is None
+            and subc_id_end is None
+            ):
+            LOGGER.debug('Singular case...')
+            singular = True
+        elif not(points is None
+             and points_start is None
+             and points_end is None
+             and subc_ids is None
+             and subc_ids_start is None
+             and subc_ids_end is None
+            ):
+            LOGGER.debug('Plural case...')
+        else:
+            err_msg = 'You must specify start and end point(s) as point(s) or subc_id(s).'
+            raise ProcessorExecuteError(err_msg)
+
+        if singular:
+            return self.singular_case(conn, lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end, requested_outputs, comment, result_format)
+        else:
+            return self.plural_case(conn, points, points_start, points_end, subc_ids, subc_ids_start, subc_ids_end, requested_outputs, comment, result_format)
+
+
+    def singular_case(self, conn, lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end, requested_outputs, comment, result_format):
+
+        err_msg = "Currently not implemented: Singular case."
+        raise NotImplementedError(err_msg)
+
+        '''
+        if not result_format == 'json':
+            err_msg = f'Returning path between two point as {result_format} is not implemented.'
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
+
+        # Check if either subc_id or both lon and lat are provided:
+        utils.params_lonlat_or_subcid(lon_start, lat_start, subc_id_start)
+        utils.params_lonlat_or_subcid(lon_end,   lat_end,   subc_id_end)
+
+        LOGGER.debug('START: Getting dijkstra shortest path between two points...')
+
+        # Potential outputs
+        json_result = None
+
+        # First, get the ids required for querying the database efficiently:
+        # Start point/start subcatchment:
+        if lon_start is not None and lat_start is not None:
+            subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
+                conn, LOGGER, lon_start, lat_start)
+        elif subc_id_start is not None:
+            subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
+                conn, LOGGER, subc_id = subc_id_start)
+
+        # End point/end subcatchment:
+        if lon_end is not None and lat_end is not None:
+            subc_id2, basin_id2, reg_id2 = basic_queries.get_subcid_basinid_regid(
+                conn, LOGGER, lon_end, lat_end)
+        elif subc_id_end is not None:
+            subc_id2, basin_id2, reg_id2 = basic_queries.get_subcid_basinid_regid(
+                conn, LOGGER, subc_id = subc_id_end)
 
         # Check if same region and basin?
-        # TODO: Can we route via the sea then??
-        if len(set(all_reg_ids)) == 1:
-            reg_id = all_reg_ids[0]
-        else:
-            err_msg = 'The input points are in different regions (%s) - this cannot work.' % set(all_reg_ids)
+        # TODO: FUTURE MUSTIC: If start and end not in same basin, can we route via the sea?
+        if not reg_id1 == reg_id2:
+            err_msg = f'Start and end are in different regions ({reg_id1} and {reg_id2}) - this cannot work.'
             LOGGER.warning(err_msg)
             raise ProcessorExecuteError(user_msg=err_msg)
 
-        if len(set(all_basin_ids)) == 1:
-            basin_id = all_basin_ids[0]
-        else:
-            err_msg = 'The input points are in different basins (%s) - this cannot work.' % set(all_basin_ids)
+        if not basin_id1 == basin_id2:
+            err_msg = f'Start and end are in different basins ({basin_id1} and {basin_id2}) - this cannot work.'
             LOGGER.warning(err_msg)
             raise ProcessorExecuteError(user_msg=err_msg)
 
-        #if not reg_id1 == reg_id2:
-        #    err_msg = 'Start and end are in different regions (%s and %s) - this cannot work.' % (reg_id1, reg_id2)
-        #    LOGGER.warning(err_msg)
-        #    raise ProcessorExecuteError(user_msg=err_msg)
+        # Get distance - just a number:
+        dist = distances.get_dijkstra_distance_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
+        json_result = {
+            "distance": dist,
+            "from": subc_id1,
+            "to": subc_id2,
+            "basin_id": basin_id1,
+            "reg_id": reg_id1
+        }
 
-        #if not basin_id1 == basin_id2:
-        #    err_msg = 'Start and end are in different basins (%s and %s) - this cannot work.' % (basin_id1, basin_id2)
-        #    LOGGER.warning(err_msg)
-        #    raise ProcessorExecuteError(user_msg=err_msg)
-
-        # Get subc_ids of the whole connection...
-        #LOGGER.debug('Getting network connection for subc_id: start = %s, end = %s' % (subc_id1, subc_id2))
-        #segment_ids = routing.get_dijkstra_ids_one_to_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
-        some_json_result = routing.get_dijkstra_ids_many_to_many(conn, all_subc_ids, reg_id, basin_id)
-
-        if comment is not None:
-            some_json_result['comment'] = comment
-
-        # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
-        return self.return_results('paths_matrix', requested_outputs, output_df=None, output_json=some_json_result, comment=comment)
-
-        # Get geometry only:
-        #if geometry_only:
-        #    geometry_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll(
-        #        conn, segment_ids, basin_id1, reg_id1)
-
-        #    if comment is not None:
-        #        geometry_coll['comment'] = comment
-
-        #    if self.return_hyperlink('connecting_path', requested_outputs):
-        #        return 'application/json', self.store_to_json_file('connecting_path', geometry_coll)
-        #    else:
-        #        return 'application/json', geometry_coll
+        return self.return_results('distances_matrix', requested_outputs, output_df=None, output_json=json_result, comment=comment)
+        '''
 
 
-        # Get FeatureCollection
-        #if not geometry_only:
+    def plural_case(self, conn, points, points_start, points_end, subc_ids, subc_ids_start, subc_ids_end, requested_outputs, comment, result_format):
 
-        #    feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(
-        #        conn, segment_ids, basin_id1, reg_id1, add_subc_ids = add_segment_ids)
+        # Symmetric or asymmetric matrix? I.e. are the start and end points
+        # the same, or different sets?
+        plural_symmetric = plural_asymmetric = False
+        if not(points is None and subc_ids is None):
+            LOGGER.debug('Plural case, symmetric matrix...')
+            plural_symmetric = True
+        elif not (subc_ids_start is None
+              and subc_ids_end is None
+              and points_start is None
+              and points_end is None
+            ):
+            LOGGER.debug('Plural case, asymmetric matrix...')
+            plural_asymmetric = True
 
-        #    # Add some info to the FeatureCollection:
-        #    feature_coll["description"] = "Connecting path between %s and %s" % (subc_id1, subc_id2)
-        #    feature_coll["start_subc_id"] = subc_id1 # TODO how to name the start point of routing?
-        #    feature_coll["target_subc_id"] = subc_id2 # TODO how to name the end point of routing?
-        #    # TODO: Should we include the requested lon and lat? Maybe as a point?
+        # Get sets of input points
+        if plural_symmetric:
+            all_subc_ids, _same_, reg_id, basin_id = self.plural_symmetric(conn, points, subc_ids)
+        elif plural_asymmetric:
+            err_msg = "Currently not implemented: Asymmetric case."
+            raise NotImplementedError(err_msg)
+            #TODO:all_subc_ids_start, all_subc_ids_end, reg_id, basin_id = self.plural_asymmetric(conn, points_start, points_end, subc_ids_start, subc_ids_end)
 
-        #    if comment is not None:
-        #        feature_coll['comment'] = comment
+        # Get shortest path:
+        if result_format == "csv":
+            err_msg = "Currently not implemented: Returning paths as csv."
+            raise NotImplementedError(err_msg)
+            #output_df = distances.get_dijkstra_distance_many(
+            #    conn, all_subc_ids_start, all_subc_ids_end, reg_id, basin_id, "dataframe")
+            #return self.return_results('distances_matrix', requested_outputs, output_df=output_df, comment=comment)
+        else:
+            # As a JSON-ified matrix:
+            json_result = routing.get_dijkstra_ids_many_to_many(conn, all_subc_ids, reg_id, basin_id)
+            LOGGER.debug(f'THIS IS THE MATRIX: {json_result}')
+            #json_result = distances.get_dijkstra_distance_many(
+            #    conn, all_subc_ids_start, all_subc_ids_end, reg_id, basin_id, "json")
+            return self.return_results('paths_matrix', requested_outputs, output_json=json_result, comment=comment)
 
-        #    if self.return_hyperlink('connecting_path', requested_outputs):
-        #        return 'application/json', self.store_to_json_file('connecting_path', feature_coll)
-        #    else:
-        #        return 'application/json', feature_coll
+
+    def plural_symmetric(self, conn, points, subc_ids):
+
+        # Collect reg_id, basin_id, subc_id
+        if points is not None:
+            LOGGER.debug('START: Getting dijkstra shortest path between a number of points (start and end points are the same)...')
+            temp_df = basic_queries.get_subcid_basinid_regid_for_geojson(conn, 'path', points, colname_site_id=None)
+            # TODO does this return NAs?
+        elif subc_ids is not None:
+            LOGGER.debug('START: Getting dijkstra shortest path between a number of subcatchments (start and end points are the same)...')
+            all_subc_ids = set(subc_ids)
+            temp_df = basic_queries.get_basinid_regid_from_subcid_plural(conn, LOGGER, subc_ids)
+            # TODO does this return NAs?
+
+        # Retrieve subc_ids from the dataframe, and check if basins and regions match:
+        all_subc_ids, reg_id, basin_id = self._get_ids_and_check(temp_df)
+
+        # Return what's needed for routing:
+        return all_subc_ids, all_subc_ids, reg_id, basin_id
+
+
+    def plural_asymmetric(self, conn, points_start, points_end, subc_ids_start, subc_ids_end):
+
+        # Collect reg_id, basin_id, subc_id
+        if points_start is not None and points_end is not None:
+            LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are different)...')
+            temp_df_start = basic_queries.get_subcid_basinid_regid_for_geojson(conn, 'distance', points_start, colname_site_id=None)
+            temp_df_end   = basic_queries.get_subcid_basinid_regid_for_geojson(conn, 'distance', points_end, colname_site_id=None)
+            # TODO does this return NAs?
+        elif subc_ids_start is not None and subc_ids_end is not None:
+            LOGGER.debug('START: Getting dijkstra shortest distance between a number of subcatchments (start and end points are different)...')
+            all_subc_ids_start = set(subc_ids_start)
+            all_subc_ids_end = set(subc_ids_end)
+            temp_df_start = basic_queries.get_basinid_regid_from_subcid_plural(conn, LOGGER, all_subc_ids_start)
+            temp_df_end = basic_queries.get_basinid_regid_from_subcid_plural(conn, LOGGER, all_subc_ids_end)
+            # TODO does this return NAs?
+
+        # Retrieve subc_ids from the dataframe, and check if basins and regions match:
+        all_subc_ids_start, reg_id1, basin_id1 = self._get_ids_and_check(temp_df_start)
+        all_subc_ids_end,   reg_id2, basin_id2 = self._get_ids_and_check(temp_df_end)
+
+        # We checked for same region and basin inside the start and end sets,
+        # but not between the sets. It could be that all starts points are in
+        # one region and all end points in another (unlikely but not impossible):
+        if not (reg_id1 == reg_id2):
+            err_msg = (
+                f'The input points are in different regions (start: {reg_id1},'
+                f' end: {reg_id2}) - this cannot work.'
+            )
+            LOGGER.warning(err_msg)
+            raise ProcessorExecuteError(user_msg=err_msg)
+
+        if not (basin_id1 == basin_id2):
+            err_msg = (
+                f'The input points are in different basins (start: {basin_id1},'
+                f' end: {basin_id2}) - this cannot work.'
+            )
+            LOGGER.warning(err_msg)
+            raise ProcessorExecuteError(user_msg=err_msg)
+
+        # Return what's needed for routing:
+        return all_subc_ids_start, all_subc_ids_end, reg_id1, basin_id1
+
+
+    def _get_ids_and_check(self, temp_df):
+        # Check if all rows of the dataframe have same basin and region,
+        # and return the set of subc_id values.
+
+        # Check if same region?
+        if temp_df['reg_id'].nunique(dropna=False) == 1:
+            reg_id = temp_df['reg_id'].iloc[0]
+        else:
+            all_reg_ids = temp_df['reg_id'].unique()
+            err_msg = f'The input points are in different regions ({all_reg_ids}) - this cannot work.'
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(user_msg=err_msg)
+
+        # Check if same basin?
+        # TODO: FUTURE MUSIC: If start and end not in same basin, can we route via the sea?
+        if temp_df['basin_id'].nunique(dropna=False) == 1:
+            basin_id = temp_df['basin_id'].iloc[0]
+        else:
+            all_basin_ids = temp_df['basin_id'].unique()
+            err_msg = f'The input points are in different basins ({all_basin_ids}) - this cannot work.'
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(user_msg=err_msg)
+
+        # Get all unique subc_ids:
+        all_subc_ids = temp_df['subc_id'].unique()
+
+        # Return what's needed for routing:
+        return all_subc_ids, reg_id, basin_id
 
 
 
@@ -274,6 +456,15 @@ if __name__ == '__main__':
     from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
     from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
 
+    #######################################
+    ### Simple:                         ###
+    ### Request path between two points ###
+    #######################################
+
+    ############################################
+    ### Matrix:                              ###
+    ### Request distance between many points ###
+    ############################################
 
     print('TEST CASE 1: Input GeoJSON directly (Multipoint), output plain JSON directly...', end="", flush=True)  # no newline
     payload = {
@@ -355,3 +546,15 @@ if __name__ == '__main__':
         raise ValueError("Expected error that did not happen...")
     except requests.exceptions.HTTPError as e:
         print(f'TEST CASE 6: EXPECTED: {e.response.json()["description"]}')
+
+
+    print('TEST CASE 7: Matrix: Request paths between two sets of points, based on subc_ids...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "subc_ids_start": [506251712, 506252055],
+            "subc_ids_end": [506251712, 506251713],
+            "comment": "test7"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
