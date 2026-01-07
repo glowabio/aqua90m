@@ -242,7 +242,10 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
 
     def _execute(self, data, requested_outputs, conn):
 
-        ## User inputs:
+        ####################
+        ### User inputs: ###
+        ####################
+
         # GeoJSON, posted directly / to be downloaded via URL:
         points_geojson = data.get('points_geojson', None)
         points_geojson_url = data.get('points_geojson_url', None)
@@ -252,27 +255,54 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
         colname_lat = data.get('colname_lat', None)
         colname_site_id = data.get('colname_site_id', None)
         colname_subc_id = data.get('colname_subc_id', None) # special case, optional
-        # Optional comment:
-        comment = data.get('comment') # optional
         # Which ids are requested:
         which_ids = data.get('which_ids', ['subc_id', 'basin_id', 'reg_id'])
+        # Optional comment:
+        comment = data.get('comment') # optional
 
-        ## Check user inputs:
+        ##########################
+        ### Check user inputs: ###
+        ##########################
+
+        # Check/adapt data type of which_ids param:
         if not isinstance(which_ids, list) and isinstance(which_ids, str):
             # If user did not put the word into a list...
             which_ids = [which_ids]
 
-        if csv_url is not None and colname_site_id is None:
-            LOGGER.error("Missing parameter: colname_site_id")
-            err_msg = "Please provide the column name of the site ids inside your csv file (parameter colname_site_id)."
-            raise ProcessorExecuteError(err_msg)
+        # Provide at least one type of input data:
+        utils.at_least_one_param(dict(
+            points_geojson=points_geojson,
+            points_geojson_url=points_geojson_url,
+            csv_url=csv_url
+        ))
+
+        # CSV case, check mandatory columns
+        if csv_url is not None:
+            if colname_subc_id is not None:
+                utils.mandatory_parameters(dict(
+                    colname_site_id=colname_site_id,
+                    colname_subc_id=colname_subc_id),
+                    additional_message=" (As you provided a CSV file and a subc_id column.)")
+            else:
+                utils.mandatory_parameters(dict(
+                    colname_site_id=colname_site_id,
+                    colname_lon=colname_lon,
+                    colname_lat=colname_lat),
+                    additional_message=" (As you provided a CSV file.)")
             # Note: colname_site_id is also needed if the user provided GeoJSON of
             # type FeatureCollection (instead of type GeometryCollection).
+
+        # GeoJSON case:
+        else:
+            pass
 
         LOGGER.debug(f'User requested ids: {which_ids}')
         possible_ids = ['subc_id', 'basin_id', 'reg_id']
         if not all([some_id in possible_ids for some_id in which_ids]):
-            err_msg = "The requested ids have to be one or several of: %s (you provided %s)" % (possible_ids, which_ids)
+            err_msg = (
+                f'The requested ids have to be one or several of:'
+                f' {possible_ids} (you provided {which_ids})'
+            )
             LOGGER.error(err_msg)
             raise exc.UserInputException(err_msg)
 
@@ -333,11 +363,6 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
             elif 'reg_id' in which_ids:
                 output_df = basic_queries.get_regid_for_all_1csv(# TODO: make int!
                     conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
-
-        else:
-            err_msg = 'Please provide either GeoJSON (points_geojson, points_geojson_url) or CSV data (csv_url).'
-            LOGGER.error(err_msg)
-            raise exc.UserInputException(err_msg)
 
 
         #####################
@@ -412,5 +437,6 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
+
 
 
