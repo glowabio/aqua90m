@@ -175,6 +175,15 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         # Comment:
         comment = data.get('comment') # optional
 
+        #################################
+        ### Validate input parameters ###
+        #################################
+
+        if not result_format == 'json' and not result_format == 'csv':
+            err_msg = f"Malformed parameter 'result_format': Format {result_format} not supported. Please specify 'csv' or 'json'."
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
+
         ###########################
         ### Plural or singular? ###
         ###########################
@@ -208,12 +217,17 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
 
         # TODO: Like this, the output is quite different between singular and plural!!
         if singular:
-            return self.singular_case(conn, lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end, requested_outputs, comment)
+            return self.singular_case(conn, lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end, requested_outputs, comment, result_format)
         else:
             return self.plural_case(conn, points, points_start, points_end, subc_ids, subc_ids_start, subc_ids_end, requested_outputs, comment, result_format)
 
 
-    def singular_case(self, conn, lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end, requested_outputs, comment):
+    def singular_case(self, conn, lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end, requested_outputs, comment, result_format):
+
+        if not result_format == 'json':
+            err_msg = f'Returning distance between two point as {result_format} is not implemented.'
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
 
         # Check if either subc_id or both lon and lat are provided:
         utils.params_lonlat_or_subcid(lon_start, lat_start, subc_id_start)
@@ -232,6 +246,7 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         elif subc_id_start is not None:
             subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
                 conn, LOGGER, subc_id = subc_id_start)
+
         # End point/end subcatchment:
         if lon_end is not None and lat_end is not None:
             subc_id2, basin_id2, reg_id2 = basic_queries.get_subcid_basinid_regid(
@@ -241,7 +256,7 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
                 conn, LOGGER, subc_id = subc_id_end)
 
         # Check if same region and basin?
-        # TODO: Can we route via the sea then??
+        # TODO: FUTURE MUSTIC: If start and end not in same basin, can we route via the sea?
         if not reg_id1 == reg_id2:
             err_msg = f'Start and end are in different regions ({reg_id1} and {reg_id2}) - this cannot work.'
             LOGGER.warning(err_msg)
@@ -320,26 +335,27 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
             all_reg_ids = set()
             all_basin_ids = set()
             for lon, lat in points['coordinates']: # TODO: Maybe not do this loop based?
-                LOGGER.debug('Now getting subc_id, basin_id, reg_id for lon %s, lat %s' % (lon, lat))
+                LOGGER.debug(f'Now getting subc_id, basin_id, reg_id for lon {lon}, lat {lat}')
                 subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
                     conn, LOGGER, lon, lat)
                 all_subc_ids.add(subc_id)
                 all_reg_ids.add(reg_id)
                 all_basin_ids.add(basin_id)
 
-            # Check if same region and basin?
-            # TODO: Can we route via the sea then??
+            # Check if same region?
             if len(all_reg_ids) == 1:
                 reg_id = next(iter(all_reg_ids))
             else:
-                err_msg = 'The input points are in different regions (%s) - this cannot work.' % all_reg_ids
+                err_msg = f'The input points are in different regions ({all_reg_ids}) - this cannot work.'
                 LOGGER.warning(err_msg)
                 raise ProcessorExecuteError(user_msg=err_msg)
 
+            # Check if same basin?
+            # TODO: FUTURE MUSTIC: If start and end not in same basin, can we route via the sea?
             if len(all_basin_ids) == 1:
                 basin_id = next(iter(all_basin_ids))
             else:
-                err_msg = 'The input points are in different basins (%s) - this cannot work.' % all_basin_ids
+                err_msg = f'The input points are in different basins ({all_basin_ids}) - this cannot work.'
                 LOGGER.warning(err_msg)
                 raise ProcessorExecuteError(user_msg=err_msg)
 
@@ -538,3 +554,55 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
+
+
+    #############
+    ### Other ###
+    #############
+
+    print('TEST CASE 8: Will fail, wrong result_format...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "subc_ids_start": [506251712, 506252055],
+            "subc_ids_end": [506251712, 506251713],
+            "result_format": "blah",
+            "comment": "test8"
+        }
+    }
+    try:
+        resp = make_sync_request(PYSERVER, process_id, payload)
+        raise ValueError("Expected error that did not happen...")
+    except requests.exceptions.HTTPError as e:
+        print(f'TEST CASE 8: EXPECTED: {e.response.json()["description"]}')
+
+
+    print('TEST CASE 9: Will fail, missing input...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "subc_ids_start": [506251712, 506252055],
+            "comment": "test9"
+        }
+    }
+    try:
+        resp = make_sync_request(PYSERVER, process_id, payload)
+        raise ValueError("Expected error that did not happen...")
+    except requests.exceptions.HTTPError as e:
+        print(f'TEST CASE 9: EXPECTED: {e.response.json()["description"]}')
+
+
+    print('TEST CASE 10: Will fail, mismatching input...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "lon_start": 9.937520027160646,
+            "lat_start": 54.69422745526058,
+            "lon_end": 9.9217,
+            "lat_end": 54.6917,
+            "result_format": "csv",
+            "comment": "test10"
+        }
+    }
+    try:
+        resp = make_sync_request(PYSERVER, process_id, payload)
+        raise ValueError("Expected error that did not happen...")
+    except requests.exceptions.HTTPError as e:
+        print(f'TEST CASE 10: EXPECTED: {e.response.json()["description"]}')
