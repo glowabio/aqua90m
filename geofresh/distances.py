@@ -89,7 +89,7 @@ def get_dijkstra_distance_one(conn, start_subc_id, end_subc_id, reg_id, basin_id
 
 
 def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin_id, result_format='json'):
-    # INPUT: Sets of subc_ids
+    # INPUT:  Sets of subc_ids
     # OUTPUT: Distance matrix (as JSON)
 
     LOGGER.debug(f'Compute distance matrix between {len(subc_ids_start | subc_ids_end)} subc_ids (in basin {basin_id}, region {reg_id})')

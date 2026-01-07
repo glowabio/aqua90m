@@ -159,21 +159,42 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         subc_id_end = data.get('subc_id_end', None)     # optional, need either lonlat OR subc_id
 
         # Plural case:
-        # Set of points (Multipoint):
+        # GeoJSON (e.g. Multipoint, GeometryCollection of Points,
+        # FeatureCollection of Points), posted directly:
         points = data.get('points', None)
-        # Two separate sets of points (Multipoint):
+        points_geojson_url = data.get('points_geojson_url', None)
+        # Two separate sets of points:
         points_start = data.get('points_start', None)
         points_end = data.get('points_end', None)
+        points_geojson_start_url = data.get('points_geojson_start_url', None)
+        points_geojson_end_url = data.get('points_geojson_end_url', None)
         # Set of subcatchments:
         subc_ids = data.get('subc_ids', None)
         # Two separate sets of subcatchments:
         subc_ids_start = data.get('subc_ids_start', None)
         subc_ids_end = data.get('subc_ids_end', None)
-
+        # TODO: Allow passing CSV file!!!
         # Output format (can be csv or json):
         result_format = data.get('result_format', 'json')
         # Comment:
         comment = data.get('comment') # optional
+
+        ##############################
+        ### Download if applicable ###
+        ##############################
+
+        ## Download GeoJSON if user provided URL:
+        if points_geojson_url is not None:
+            points = utils.download_geojson(points_geojson_url)
+            LOGGER.debug(f'Downloaded GeoJSON: {points}')
+
+        if points_geojson_start_url is not None:
+            points_start = utils.download_geojson(points_geojson_start_url)
+            LOGGER.debug(f'Downloaded GeoJSON: {points_start}')
+
+        if points_geojson_end_url is not None:
+            points_end = utils.download_geojson(points_geojson_end_url)
+            LOGGER.debug(f'Downloaded GeoJSON: {points_end}')
 
         #################################
         ### Validate input parameters ###
@@ -193,7 +214,7 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         plural_symmetric = False
         plural_asymmetric = False
         
-        # Which inputs 
+        # Decide based on which inputs were provided:
         if not (lon_start is None
             and lat_start is None
             and lon_end is None
@@ -470,6 +491,29 @@ if __name__ == '__main__':
     ### Matrix:                              ###
     ### Request distance between many points ###
     ############################################
+
+    print('TEST CASE a: Input GeoJSON File (FeatureCollection), output plain JSON directly...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points_samebasin.json",
+            "comment": "testa"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE b: Input GeoJSON File (FeatureCollection), output plain JSON directly...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson_start_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points_samebasin.json",
+            "points_geojson_end_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points_samebasin.json",
+            "comment": "testb"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
 
     print('TEST CASE 4: Matrix: Request distances between many points. Input GeoJSON directly (Geometry: MultiPoint)...', end="", flush=True)  # no newline
     payload = {
