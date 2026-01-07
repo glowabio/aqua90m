@@ -275,11 +275,11 @@ def _iterate_outlets_json(conn, departing_points):
     return everything
 
 
-def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id, result_format='json'):
-    # INPUT:  Set of subc_ids
+def get_dijkstra_ids_many_to_many(conn, subc_ids_start, subc_ids_end, reg_id, basin_id, result_format='json'):
+    # INPUT:  Sets of subc_ids
     # OUTPUT: Route matrix (as JSON)
 
-    LOGGER.debug(f'Compute path matrix between {len(subc_ids)} subc_ids (in basin {basin_id}, region {reg_id})')
+    LOGGER.debug(f'Compute path matrix between {len(subc_ids_start | subc_ids_end)} subc_ids (in basin {basin_id}, region {reg_id})')
     # TODO What if not in one basin?
 
     ## Construct SQL query:
@@ -293,7 +293,8 @@ def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id, result_forma
     ## We are interested in all the edges (subc_ids of the stream segments) along the path,
     ##   and for identifying the path, we need the ids of the start and end, so we select
     ##   start_vid, end_vid and edge.
-    nodes = ','.join(map(str, subc_ids))
+    nodes_start = ','.join(map(str, subc_ids_start))
+    nodes_end   = ','.join(map(str, subc_ids_end))
     query = f'''
     SELECT
         start_vid,
@@ -308,8 +309,8 @@ def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id, result_forma
                 FROM hydro.stream_segments
                 WHERE reg_id = {reg_id}
                 AND basin_id = {basin_id}',
-        ARRAY[{nodes}],
-        ARRAY[{nodes}],
+        ARRAY[{nodes_start}],
+        ARRAY[{nodes_end}],
         directed := false
     );
     '''
@@ -323,13 +324,13 @@ def get_dijkstra_ids_many_to_many(conn, subc_ids, reg_id, basin_id, result_forma
     LOGGER.log(logging.TRACE, 'Querying database... DONE.')
 
     ## Extract results, first as a matrix (nested dict):
-    json_matrix = _result_to_matrix(cursor, subc_ids, subc_ids)
+    json_matrix = _result_to_matrix(cursor, subc_ids_start, subc_ids_end)
 
     ## Make a dataframe from this, if requested:
     if result_format == 'json':
         return json_matrix
     elif result_format == 'dataframe':
-        output_df = _matrix_to_dataframe(json_matrix, subc_ids, subc_ids)
+        output_df = _matrix_to_dataframe(json_matrix, subc_ids_start, subc_ids_end)
         return output_df
     else:
         raise ValueError(f'Unknown result format: {result_format}. Expected json or dataframe.')
