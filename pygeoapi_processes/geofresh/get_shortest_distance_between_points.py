@@ -327,6 +327,60 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
             temp_df = basic_queries.get_basinid_regid_from_subcid_plural(conn, LOGGER, subc_ids)
             # TODO does this return NAs?
 
+        # Retrieve subc_ids from the dataframe, and check if basins and regions match:
+        all_subc_ids, reg_id, basin_id = self._get_ids_and_check(temp_df)
+
+        # Return what's needed for routing:
+        return all_subc_ids, all_subc_ids, reg_id, basin_id
+
+
+    def plural_asymmetric(self, conn, points_start, points_end, subc_ids_start, subc_ids_end):
+
+        # Collect reg_id, basin_id, subc_id
+        if points_start is not None and points_end is not None:
+            LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are different)...')
+            temp_df_start = basic_queries.get_subcid_basinid_regid_for_geojson(conn, 'distance', points_start, colname_site_id=None)
+            temp_df_end   = basic_queries.get_subcid_basinid_regid_for_geojson(conn, 'distance', points_end, colname_site_id=None)
+            # TODO does this return NAs?
+        elif subc_ids_start is not None and subc_ids_end is not None:
+            LOGGER.debug('START: Getting dijkstra shortest distance between a number of subcatchments (start and end points are different)...')
+            all_subc_ids_start = set(subc_ids_start)
+            all_subc_ids_end = set(subc_ids_end)
+            temp_df_start = basic_queries.get_basinid_regid_from_subcid_plural(conn, LOGGER, all_subc_ids_start)
+            temp_df_end = basic_queries.get_basinid_regid_from_subcid_plural(conn, LOGGER, all_subc_ids_end)
+            # TODO does this return NAs?
+
+        # Retrieve subc_ids from the dataframe, and check if basins and regions match:
+        all_subc_ids_start, reg_id1, basin_id1 = self._get_ids_and_check(temp_df_start)
+        all_subc_ids_end,   reg_id2, basin_id2 = self._get_ids_and_check(temp_df_end)
+
+        # We checked for same region and basin inside the start and end sets,
+        # but not between the sets. It could be that all starts points are in
+        # one region and all end points in another (unlikely but not impossible):
+        if not (reg_id1 == reg_id2):
+            err_msg = (
+                f'The input points are in different regions (start: {reg_id1},'
+                f' end: {reg_id2}) - this cannot work.'
+            )
+            LOGGER.warning(err_msg)
+            raise ProcessorExecuteError(user_msg=err_msg)
+
+        if not (basin_id1 == basin_id2):
+            err_msg = (
+                f'The input points are in different basins (start: {basin_id1},'
+                f' end: {basin_id2}) - this cannot work.'
+            )
+            LOGGER.warning(err_msg)
+            raise ProcessorExecuteError(user_msg=err_msg)
+
+        # Return what's needed for routing:
+        return all_subc_ids_start, all_subc_ids_end, reg_id1, basin_id1
+
+
+    def _get_ids_and_check(self, temp_df):
+        # Check if all rows of the dataframe have same basin and region,
+        # and return the set of subc_id values.
+
         # Check if same region?
         if temp_df['reg_id'].nunique(dropna=False) == 1:
             reg_id = temp_df['reg_id'].iloc[0]
@@ -350,71 +404,7 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         all_subc_ids = temp_df['subc_id'].unique()
 
         # Return what's needed for routing:
-        return all_subc_ids, all_subc_ids, reg_id, basin_id
-
-
-    def plural_asymmetric(self, conn, points_start, points_end, subc_ids_start, subc_ids_end):
-
-        if subc_ids_start is not None and subc_ids_end is not None:
-            LOGGER.debug('START: Getting dijkstra shortest distance between a number of subcatchments (start and end points are different)...')
-
-            all_subc_ids_start = set(subc_ids_start)
-            all_subc_ids_end = set(subc_ids_end)
-            # Should we also get all basin ids, reg ids?
-            # Or just one ... ?
-            basin_id, reg_id = basic_queries.get_basinid_regid_from_subcid(conn, LOGGER, subc_ids_start[0])
-            #for subc_id in all_subc_ids_start:
-            #    basin_id, reg_id = get_basinid_regid_from_subcid(conn, LOGGER, subc_id)
-            #    all_reg_ids_start.add(reg_id)
-            #    all_basin_ids_start.add(basin_id)
-            # same for end...
-
-        elif points_start is not None and points_end is not None:
-            LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are different)...')
-
-            # Collect reg_id, basin_id, subc_id
-            # TODO: Make this a function?! We do this 3 times...
-            all_subc_ids_start = set()
-            all_reg_ids_start = set()
-            all_basin_ids_start = set()
-            for lon, lat in points_start['coordinates']: # TODO: Maybe not do this loop based?
-                LOGGER.debug('Now getting subc_id, basin_id, reg_id for lon %s, lat %s' % (lon, lat))
-                subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
-                    conn, LOGGER, lon, lat)
-                all_subc_ids_start.add(subc_id)
-                all_reg_ids_start.add(reg_id)
-                all_basin_ids_start.add(basin_id)
-
-            all_subc_ids_end = set()
-            all_reg_ids_end = set()
-            all_basin_ids_end = set()
-            for lon, lat in points_end['coordinates']: # TODO: Maybe not do this loop based?
-                LOGGER.debug('Now getting subc_id, basin_id, reg_id for lon %s, lat %s' % (lon, lat))
-                subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
-                    conn, LOGGER, lon, lat)
-                all_subc_ids_end.add(subc_id)
-                all_reg_ids_end.add(reg_id)
-                all_basin_ids_end.add(basin_id)
-
-            # Check if same region and basin?
-            # TODO: Can we route via the sea then??
-            if len(all_reg_ids_start | all_reg_ids_end) == 1:
-                reg_id = all_reg_ids_start.pop()
-            else:
-                err_msg = 'The input points are in different regions (%s) - this cannot work.' % all_reg_ids_start | all_reg_ids_end
-                LOGGER.warning(err_msg)
-                raise ProcessorExecuteError(user_msg=err_msg)
-
-            if len(all_basin_ids_start | all_basin_ids_end) == 1:
-                basin_id = all_basin_ids_start.pop()
-            else:
-                err_msg = 'The input points are in different basins (%s) - this cannot work.' % all_basin_ids_start | all_basin_ids_end
-                LOGGER.warning(err_msg)
-                raise ProcessorExecuteError(user_msg=err_msg)
-
-        # Return...
-        return all_subc_ids_start, all_subc_ids_end, reg_id, basin_id
-
+        return all_subc_ids, reg_id, basin_id
 
 
 
