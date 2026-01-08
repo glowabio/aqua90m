@@ -207,6 +207,12 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
             LOGGER.error(err_msg)
             raise ProcessorExecuteError(err_msg)
 
+        if points is not None:
+            utils.check_is_geojson(points)
+        if points_start is not None:
+            utils.check_is_geojson(points_start)
+        if points_end is not None:
+            utils.check_is_geojson(points_end)
 
         ###########################
         ### Plural or singular? ###
