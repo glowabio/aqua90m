@@ -508,7 +508,7 @@ if __name__ == '__main__':
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
-    sanity_checks_basic(resp)
+    sanity_checks_geojson(resp)
 
 
     print('TEST CASE 6: Filter occurrences by site_id (equality), GeoJSON input directly...', end="", flush=True)  # no newline
@@ -537,7 +537,7 @@ if __name__ == '__main__':
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
-    sanity_checks_basic(resp)
+    sanity_checks_geojson(resp)
 
 
     print('TEST CASE 7: Filter occurrences by site_id...', end="", flush=True)  # no newline

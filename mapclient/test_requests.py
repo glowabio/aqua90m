@@ -144,6 +144,14 @@ def sanity_checks_geojson(resp, do_raise_error=True):
         if do_raise_error: raise ValueError(msg)
         return False
 
+    # Check if it is a file that has to be downloaded:
+    try:
+        url = resp_json['href']
+        resp_json = requests.get(url).json()
+        #print('DOWNLOADED RESULT GEOJSON FILE', end="", flush=True)  # no newline
+    except KeyError as e:
+        pass
+
     # Check that it has a 'type' key:
     if "type" in resp_json:
         pass
@@ -185,6 +193,19 @@ def sanity_checks_basic(resp, do_raise_error=True):
         print(msg)
         if do_raise_error: raise ValueError(msg)
         return False
+
+    # If it's a url, try downloading the file:
+    if 'href' in resp_json:
+        url = resp_json['href']
+        resp = requests.get(url)
+        try:
+            resp.raise_for_status()
+            #print('DOWNLOADED RESULT FILE', end="", flush=True)  # no newline
+        except requests.exceptions.HTTPError as e:
+            ok = False
+            msg = f' NOT OK: Could not download result: {e}.'
+            print(msg)
+            if do_raise_error: raise
 
     if ok:
         print(' OK.')

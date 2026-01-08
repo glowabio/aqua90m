@@ -384,6 +384,7 @@ if __name__ == '__main__':
     print(f'TESTING {process_id} at {PYSERVER}')
     from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
     from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
 
 
     ## Test 1

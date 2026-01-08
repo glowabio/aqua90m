@@ -260,7 +260,7 @@ if __name__ == '__main__':
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
-    sanity_checks_basic(resp)
+    sanity_checks_geojson(resp)
 
 
     print('TEST CASE 4: Input GeoJSON file (Feature: Polygon), output GeoJSON file (FeatureCollection)...', end="", flush=True)  # no newline
@@ -276,7 +276,7 @@ if __name__ == '__main__':
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
-    sanity_checks_basic(resp)
+    sanity_checks_geojson(resp)
 
 
     print('TEST CASE 5: Input GeoJSON file (Geometry: Polygon), output Plain JSON file...', end="", flush=True)  # no newline
