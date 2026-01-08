@@ -148,12 +148,13 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id)
             # A geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
             # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
 
+        # Note: Casting integers to int() to avoid error "Object of type int64 is not JSON serializable"
         feature = {
             "type": "Feature",
             "geometry": geometry,
             "properties": {
-                "subc_id": row[1],
-                "strahler_order": row[2]
+                "subc_id": int(row[1]),
+                "strahler_order": int(row[2])
             }
         }
         features_geojson.append(feature)
@@ -161,8 +162,8 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id)
     feature_coll = {
         "type": "FeatureCollection",
         "features": features_geojson,
-        "basin_id": basin_id,
-        "region_id": reg_id
+        "basin_id": int(basin_id),
+        "region_id": int(reg_id)
     }
 
     return feature_coll

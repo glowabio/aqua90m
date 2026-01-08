@@ -1,0 +1,97 @@
+{
+    "version": "0.0.1",
+    "id": "get-local-streamsegments-plural",
+    "use_case": "hydrography90m",
+    "title": {"en": "Get Stream Segments (as GeoJSON)"},
+    "description": {
+        "en": "Return the Stream Segments of the subcatchments (into which the given point falls) as a GeoJSON Feature (where the geometry is a LineString). Upstream not included."
+    },
+    "jobControlOptions": ["sync-execute", "async-execute"],
+    "keywords": ["subcatchment", "stream", "stream-segment", "geojson", "GeoFRESH", "hydrography90m"],
+    "links": [{
+        "type": "text/html",
+        "rel": "about",
+        "title": "GeoFRESH website",
+        "href": "https://geofresh.org/",
+        "hreflang": "en-US"
+    },
+    {
+        "type": "text/html",
+        "rel": "about",
+        "title": "On Stream segments (Hydrography90m)",
+        "href": "https://hydrography.org/hydrography90m/hydrography90m_layers",
+        "hreflang": "en-US"
+    }],
+    "inputs": {
+        "points_geojson": {
+            "title": "Points (as GeoJSON)",
+            "description": "Points (as GeoJSON)....",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "points_geojson_url": {
+            "title": "Points (as GeoJSON)",
+            "description": "Points (as GeoJSON)....",
+            "schema": {"type": "string"},
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "result_format": {
+            "title": "Result format",
+            "description": "what to return?",
+            "schema": {"type": "string"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "geometry_only": {
+            "title": "Get only GeoJSON GeometryCollection?",
+            "description": "Specify whether to return only a GeoJSON Geometry (in this case, a LineString), instead of a GeoJSON Feature containing additional properties. Please write \"true\" or \"false\".",
+            "schema": {"type": "boolean"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        },
+        "comment": {
+            "title": "Comment",
+            "description": "Arbitrary string that will not be processed but returned, for user\"s convenience.",
+            "schema": {"type": "string"},
+            "minOccurs": 0,
+            "maxOccurs": 1,
+            "metadata": null,
+            "keywords": []
+        }
+    },
+    "outputs": {
+        "stream_segments": {
+            "title": "Stream Segments",
+            "description": "Stream Segments, includes Strahler Order.",
+            "schema": {
+                "type": "object",
+                "contentMediaType": "application/json"
+            }
+        }
+    },
+    "example": {
+        "inputs": {
+            "points_geojson": {
+                "type": "MultiPoint",
+                "coordinates": [
+                    [9.937520027160646, 54.69422745526058],
+                    [9.9217, 54.6917],
+                    [9.9312, 54.6933]
+                ]
+            },
+            "result_format": "json",
+            "comment": "test",
+            "geometry_only": false
+        }
+    }
+}
