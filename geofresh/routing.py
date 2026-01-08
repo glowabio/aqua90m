@@ -439,7 +439,7 @@ def get_dijkstra_ids_one_to_many(conn, start_subc_ids, end_subc_id, reg_id, basi
     ## We are interested in all the edges (subc_ids of the stream segments) along the path,
     ##   and for identifying the path, we need the id of the start, so we select
     ##   start_vid and edge.
-    start_nodes = 'ARRAY[%s]' % ','.join(str(x) for x in start_subc_ids)
+    start_nodes = ','.join(map(str, start_subc_ids))
     query = f'''
     SELECT
         start_vid,
@@ -453,7 +453,7 @@ def get_dijkstra_ids_one_to_many(conn, start_subc_ids, end_subc_id, reg_id, basi
                 FROM hydro.stream_segments
                 WHERE reg_id = {reg_id}
                 AND basin_id = {basin_id}',
-        {start_nodes},
+        ARRAY[{start_nodes}],
         {end_subc_id},
         directed := false
     );

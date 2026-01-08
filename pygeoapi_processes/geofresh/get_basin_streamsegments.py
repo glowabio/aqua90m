@@ -30,7 +30,10 @@ curl -X POST https://$PYSERVER/processes/get-basin-streamsegments/execution \
     "comment": "close to bremerhaven",
     "strahler_min": 4,
     "add_segment_ids": true
-    }
+    },
+  "outputs": {
+    "transmissionMode": "reference"
+  }
 }'
 
 # Request a simple GeometryCollection, based on a basin_id

@@ -558,7 +558,7 @@ if __name__ == '__main__':
     sanity_checks_basic(resp)
 
 
-    print('TEST CASE 8: Will fail: Filter occurrences by site_id...', end="", flush=True)  # no newline
+    print('TEST CASE 8: Will fail: Missing input params...', end="", flush=True)  # no newline
     payload = {
         "inputs": {
             "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",

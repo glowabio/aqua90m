@@ -188,7 +188,7 @@ def filter_subcid_by_strahler(conn, subc_ids, reg_id, basin_id, only_up_to_strah
     ## Get strahler attribute from database:
     columns=['subc_id', 'basin_id', 'reg_id', 'strahler']
     temp_df = basic_queries.get_basinid_regid_from_subcid_plural(
-        conn, LOGGER, subc_ids, columns=columns)
+        conn, subc_ids, columns=columns)
     LOGGER.debug(f'BEFORE: {temp_df}')
 
     ## Filter dataframe:

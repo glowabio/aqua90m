@@ -128,6 +128,7 @@ def check_type_parameter(paramname, paramval, paramtype, none_allowed=False, add
         )
         raise ProcessorExecuteError(err_msg)
 
+
 def return_hyperlink(output_name, requested_outputs):
 
     if requested_outputs is None:
@@ -143,6 +144,7 @@ def return_hyperlink(output_name, requested_outputs):
                 return True
 
     return False
+
 
 def store_to_json_file(output_name, json_object, job_metadata, job_id, download_dir, download_url):
 
@@ -189,13 +191,16 @@ def store_to_csv_file(output_name, pandas_df, job_metadata, job_id, download_dir
 
     return outputs_dict
 
+
 def download_json(json_url):
     LOGGER.debug(f'Downloading input JSON from: {json_url}')
     return _download_json(json_url)
 
+
 def download_geojson(geojson_url):
     LOGGER.debug(f'Downloading input GeoJSON from: {geojson_url}')
     return _download_json(geojson_url)
+
 
 def _download_json(json_url):
 
