@@ -269,18 +269,18 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
         # Start point/start subcatchment:
         if lon_start is not None and lat_start is not None:
             subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
-                conn, LOGGER, lon_start, lat_start)
+                conn, lon_start, lat_start)
         elif subc_id_start is not None:
             subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
-                conn, LOGGER, subc_id = subc_id_start)
+                conn, subc_id = subc_id_start)
 
         # End point/end subcatchment:
         if lon_end is not None and lat_end is not None:
             subc_id2, basin_id2, reg_id2 = basic_queries.get_subcid_basinid_regid(
-                conn, LOGGER, lon_end, lat_end)
+                conn, lon_end, lat_end)
         elif subc_id_end is not None:
             subc_id2, basin_id2, reg_id2 = basic_queries.get_subcid_basinid_regid(
-                conn, LOGGER, subc_id = subc_id_end)
+                conn, subc_id = subc_id_end)
 
         # Check if same region and basin?
         # TODO: FUTURE MUSTIC: If start and end not in same basin, can we route via the sea?
@@ -353,7 +353,7 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
         elif subc_ids is not None:
             LOGGER.debug('START: Getting dijkstra shortest path between a number of subcatchments (start and end points are the same)...')
             all_subc_ids = set(subc_ids)
-            temp_df = basic_queries.get_basinid_regid_from_subcid_plural(conn, LOGGER, subc_ids)
+            temp_df = basic_queries.get_basinid_regid_from_subcid_plural(conn, subc_ids)
             # TODO does this return NAs?
 
         # Retrieve subc_ids from the dataframe, and check if basins and regions match:
@@ -375,8 +375,8 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of subcatchments (start and end points are different)...')
             all_subc_ids_start = set(subc_ids_start)
             all_subc_ids_end = set(subc_ids_end)
-            temp_df_start = basic_queries.get_basinid_regid_from_subcid_plural(conn, LOGGER, all_subc_ids_start)
-            temp_df_end = basic_queries.get_basinid_regid_from_subcid_plural(conn, LOGGER, all_subc_ids_end)
+            temp_df_start = basic_queries.get_basinid_regid_from_subcid_plural(conn, all_subc_ids_start)
+            temp_df_end = basic_queries.get_basinid_regid_from_subcid_plural(conn, all_subc_ids_end)
             # TODO does this return NAs?
 
         # Retrieve subc_ids from the dataframe, and check if basins and regions match:

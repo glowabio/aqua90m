@@ -202,7 +202,7 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
                 # This case is maybe not needed. Instead, users should send their stuff through get_ids in the beginning,
                 # during/after snapping.
                 subc_ids = input_df['subc_id'].astype(int).tolist()
-                temp_df = basic_queries.get_basinid_regid_from_subcid_plural(conn, LOGGER, subc_ids)
+                temp_df = basic_queries.get_basinid_regid_from_subcid_plural(conn, subc_ids)
                 # Join back to input dataframe to add the site_ids:
                 temp_df = pd.merge(input_df, temp_df, on="subc_id")
             else:

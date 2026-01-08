@@ -306,7 +306,7 @@ def get_subcid_basinid_regid_for_geojson(conn, tablename_prefix, input_geojson, 
     return output_df
 
 
-def get_basinid_regid_from_subcid_plural(conn, LOGGER, subc_ids, columns=['subc_id', 'basin_id', 'reg_id']):
+def get_basinid_regid_from_subcid_plural(conn, subc_ids, columns=['subc_id', 'basin_id', 'reg_id']):
     # INPUT:  List of subc_ids (integers)
     # OUTPUT: Dataframe with subc_id, basin_id, reg_id
     # Note: This query not include reg_id for faster finding of the row. it is

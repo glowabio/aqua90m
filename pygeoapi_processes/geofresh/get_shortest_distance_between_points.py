@@ -345,7 +345,7 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         elif subc_ids is not None:
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of subcatchments (start and end points are the same)...')
             all_subc_ids = set(subc_ids)
-            temp_df = basic_queries.get_basinid_regid_from_subcid_plural(conn, LOGGER, subc_ids)
+            temp_df = basic_queries.get_basinid_regid_from_subcid_plural(conn, subc_ids)
             # TODO does this return NAs?
 
         # Retrieve subc_ids from the dataframe, and check if basins and regions match:
@@ -367,8 +367,8 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of subcatchments (start and end points are different)...')
             all_subc_ids_start = set(subc_ids_start)
             all_subc_ids_end = set(subc_ids_end)
-            temp_df_start = basic_queries.get_basinid_regid_from_subcid_plural(conn, LOGGER, all_subc_ids_start)
-            temp_df_end = basic_queries.get_basinid_regid_from_subcid_plural(conn, LOGGER, all_subc_ids_end)
+            temp_df_start = basic_queries.get_basinid_regid_from_subcid_plural(conn, all_subc_ids_start)
+            temp_df_end   = basic_queries.get_basinid_regid_from_subcid_plural(conn, all_subc_ids_end)
             # TODO does this return NAs?
 
         # Retrieve subc_ids from the dataframe, and check if basins and regions match:
