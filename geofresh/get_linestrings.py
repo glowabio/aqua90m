@@ -110,8 +110,8 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id)
 
     upstream_subcids.too_many_upstream_catchments(len(subc_ids), 'individual stream segments')
 
+    relevant_ids = ','.join(map(str, subc_ids))
 
-    relevant_ids = ", ".join([str(elem) for elem in subc_ids])
     # e.g. 506250459, 506251015, 506251126, 506251712
     query = f'''
     SELECT 
@@ -143,7 +143,7 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id)
         else:
             # Geometry errors that happen when two segments flow into one outlet (Vanessa, 17 June 2024)
             # For example, subc_id 506469602, when routing from 507056424 to outlet -1294020
-            LOGGER.error('Subcatchment %s has no linestring!' % row[1]) # for example: 506469602
+            LOGGER.error(f'Subcatchment {row[1]} has no linestring!') # for example: 506469602
             # Features with empty geometries:
             # A geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
             # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2

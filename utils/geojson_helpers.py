@@ -48,8 +48,20 @@ def check_feature_collection_property(feature_coll, mandatory_colname):
             err_msg = f"Please provide '{mandatory_colname}' for each Feature in the FeatureCollection. Missing in: {feature}"
             LOGGER.error(err_msg)
             raise exc.UserInputException(err_msg)
-
     return True
+
+def get_all_properties_per_id(feature_coll, colname_id):
+    properties_by_id = {}
+    for feature in feature_coll['features']:
+        LOGGER.debug(f'This feature: {feature}')
+        LOGGER.debug(f"Properties of this feature: {feature['properties']}")
+        if not colname_id in feature['properties']:
+            err_msg = f"Please provide '{colname_id}' for each Feature in the FeatureCollection. Missing in: {feature}"
+            LOGGER.error(err_msg)
+            raise exc.UserInputException(err_msg)
+        feature_id = feature['properties'][colname_id]
+        properties_by_id[feature_id] = feature['properties']
+    return properties_by_id
 
 
 def check_is_feature_collection_points(points_geojson):
