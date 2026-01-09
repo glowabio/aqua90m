@@ -520,111 +520,6 @@ def get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson, colname
 
 
 # TODO Deprecated, contains loop
-# still used in: routing.py
-def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id):
-    # Input:  Pandas Dataframe (with site_id, lon, lat)
-    # Output: Pandas Dataframe (with site_id, reg_id, basin_id, subc_id)
-
-    # Create list to be filled and converted to Pandas dataframe:
-    everything = []
-    site_id = None # in case none is provided.
-    basin_ids = []
-    reg_ids = []
-    subc_ids = []
-
-    # Iterate over points and call "get_subcid_basinid_regid" for each point:
-    # TODO: This is not super efficient, but the quickest to implement :)
-    # TODO: Read this for alternatives to iteration: https://stackoverflow.com/questions/16476924/how-can-i-iterate-over-rows-in-a-pandas-dataframe
-    num = input_df.shape[0]
-    LOGGER.debug(f'Getting subcatchment for {num} lon, lat pairs...')
-
-    # Retrieve using column index, not colname - this is faster:
-    colidx_lon = input_df.columns.get_loc(colname_lon)
-    colidx_lat = input_df.columns.get_loc(colname_lat)
-    colidx_site_id = input_df.columns.get_loc(colname_site_id)
-
-    # Iterate over rows:
-    for row in input_df.itertuples(index=False):
-
-        # Get coordinates from input:
-        lon = row[colidx_lon]
-        lat = row[colidx_lat]
-        site_id = row[colidx_site_id]
-
-        # Query database:
-        try:
-            LOGGER.log(logging.TRACE, f'Getting subcatchment for lon, lat: {lon},{lat}')
-            subc_id, basin_id, reg_id = get_subcid_basinid_regid_from_lonlat(
-                conn, LOGGER, lon, lat)
-        except exc.GeoFreshNoResultException as e:
-            # For example, if the point is in the ocean.
-            # In Pandas dataframe, NaN is returned.
-            reg_id = basin_id = subc_id = None
-
-        # Collect results in list:
-        everything.append([site_id, reg_id, basin_id, subc_id])
-
-        # First is string, the others are integers.
-        #LOGGER.debug(
-        #    f"Which type are these?"
-        #    f" site_id {site_id} ({type(site_id)})"
-        #    f" reg_id {reg_id} ({type(reg_id)})"
-        #    f" basin_id {basin_id} ({type(basin_id)})"
-        #    f" subc_id {subc_id} ({type(subc_id)})"
-        #)
-
-        # This is not really needed, just for logging:
-        reg_ids.append(str(reg_id))
-        basin_ids.append(str(basin_id))
-        subc_ids.append(str(subc_id))
-
-    # Finished collecting the results, now make pandas dataframe:
-    output_df = pd.DataFrame(
-        everything,
-        columns=['site_id', 'reg_id', 'basin_id', 'subc_id']
-    ).astype({
-        'site_id': 'string',   # nullable string
-        'reg_id': 'Int64',     # nullable integer
-        'basin_id': 'Int64',
-        'subc_id': 'Int64'
-    })
-
-    # Change them to integers:
-    # TODO: Pandas format, better use .astype() during pd.DataFrame (above)
-    output_df[['reg_id', 'basin_id', 'subc_id']] = output_df[['reg_id', 'basin_id', 'subc_id']].apply(pd.to_numeric)
-
-    # Extensive logging of stats:
-    LOGGER.log(logging.TRACE, f'Of {num} points, ...')
-
-    if len(set(reg_ids)) == 1:
-        LOGGER.log(logging.TRACE, f'... all {num}  points fall into regional unit with reg_id {reg_ids[0]}')
-    else:
-        reg_id_counts = {reg_id: reg_ids.count(reg_id) for reg_id in reg_ids}
-        for reg_id in set(reg_ids):
-            this_num = reg_id_counts[reg_id]
-            LOGGER.log(logging.TRACE, f'... {this_num} points fall into regional unit with reg_id {reg_id}')
-
-    if len(set(basin_ids)) == 1:
-        LOGGER.log(logging.TRACE, f'... all {num} points fall into drainage basin with basin_id {basin_ids[0]}')
-    else:
-        basin_id_counts = {basin_id: basin_ids.count(basin_id) for basin_id in basin_ids}
-        for basin_id in set(basin_ids):
-            this_num = basin_id_counts[basin_id]
-            LOGGER.log(logging.TRACE, f'... {this_num} points fall into drainage basin with basin_id {basin_id}')
-
-    if len(set(subc_ids)) == 1:
-        LOGGER.log(logging.TRACE, f'... all {num} points fall into subcatchment with subc_id {subc_ids[0]}')
-    else:
-        subc_id_counts = {subc_id: subc_ids.count(subc_id) for subc_id in subc_ids}
-        for subc_id in set(subc_ids):
-            this_num = subc_id_counts[subc_id]
-            LOGGER.log(logging.TRACE, f'... {this_num} points fall into subcatchment with subc_id {subc_id}')
-
-    # Return result
-    return output_df
-
-
-# TODO Deprecated, contains loop
 # still used in: get_local_ids_plural.py
 def get_basinid_regid_for_all_from_subcid_1csv(conn, LOGGER, input_df, colname_subc_id, colname_site_id):
     # Input: Pandas Dataframe
@@ -899,27 +794,6 @@ if __name__ == "__main__" and False:
 ###########################
 
 if __name__ == "__main__" and True:
-
-    ## Input: dataframe, output dataframe, with site_id!
-    example_dataframe = pd.DataFrame(
-        [
-            ['aa', 10.041155219078064, 53.07006147583069],
-            ['bb', 10.042726993560791, 53.06911450500803],
-            ['cc', 10.039894580841064, 53.06869677412868],
-            ['a',  10.698832912677716, 53.51710727672125],
-            ['b',  12.80898022975407,  52.42187129944509],
-            ['c',  11.915323076217902, 52.730867141970464],
-            ['d',  16.651903948708565, 48.27779486850176],
-            ['e',  19.201146608148463, 47.12192880511424],
-            ['f',  24.432498016999062, 61.215505889934434],
-            ['sea',  8.090485, 54.119322]
-        ], columns=['site_id', 'lon', 'lat']
-    )
-
-    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_1csv (input: dataframe, output: dataframe)')
-    res = get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, example_dataframe, 'lon', 'lat', 'site_id')
-    print(f'RESULT:\n{res}')
-
 
     ## Input: dataframe, output dataframe, with site_id!
     example_dataframe2 = pd.DataFrame(

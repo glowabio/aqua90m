@@ -745,16 +745,12 @@ if __name__ == "__main__" and True:
 
     print('\nPREPARE RUNNING FUNCTION: get_dijkstra_ids_to_outlet_plural')
     ## Now, for each row, get the ids!
-    temp_df = basic_queries.get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, "lon", "lat", "site_id")
+    temp_df = basic_queries.get_subcid_basinid_regid_for_dataframe(conn, input_df, "lon", "lat", "site_id")
     print(f'\n{temp_df}')
     print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_to_outlet_plural')
     res = get_dijkstra_ids_to_outlet_plural(conn, temp_df, "site_id", return_csv=True)
     print(f'RESULT: SEGMENTS IN DATAFRAME: {res}')
 
-    print('\nPREPARE RUNNING FUNCTION: get_dijkstra_ids_to_outlet_plural')
-    ## Now, for each row, get the ids!
-    temp_df = basic_queries.get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, "lon", "lat", "site_id")
-    print(f'\n{temp_df}')
     print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_to_outlet_plural')
     res = get_dijkstra_ids_to_outlet_plural(conn, temp_df, "site_id", return_json=True)
     print(f'RESULT: SEGMENTS IN JSON: {res}')
