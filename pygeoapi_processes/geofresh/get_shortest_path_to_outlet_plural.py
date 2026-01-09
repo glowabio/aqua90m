@@ -234,7 +234,6 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
                 # outputs a FeatureCollection, that is easier to understand, but slower.)
                 temp_df = basic_queries.get_subcid_basinid_regid_for_geojson(
                     conn,
-                    'shortestpath',
                     points_geojson,
                     colname_site_id=colname_site_id
                 )
@@ -271,7 +270,7 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
             else:
                 LOGGER.debug('Querying required columns (subc_id, basin_id, reg_id) for each point...')
                 temp_df = basic_queries.get_subcid_basinid_regid_for_dataframe(
-                    conn, 'shortestpath', input_df, colname_lon, colname_lat, colname_site_id)
+                    conn, input_df, colname_lon, colname_lat, colname_site_id)
 
             # Actual routing: For each row, get the downstream ids!
             output_df_or_json = routing.get_dijkstra_ids_to_outlet_plural(

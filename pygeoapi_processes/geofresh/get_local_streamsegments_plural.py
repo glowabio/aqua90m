@@ -116,13 +116,8 @@ class LocalStreamSegmentsGetterPlural(GeoFreshBaseProcessor):
 
         ## Download GeoJSON if user provided URL:
         if points_geojson_url is not None:
-<<<<<<< HEAD
-            points = utils.download_geojson(points_geojson_url)
-            LOGGER.debug(f'Downloaded GeoJSON: {points}')
-=======
             points_geojson = utils.download_geojson(points_geojson_url)
             LOGGER.debug(f'Downloaded GeoJSON: {points_geojson}')
->>>>>>> e87dec0 (New process: get_local_streamsegments_plural.)
 
         # Download CSV:
         input_df = None
@@ -146,15 +141,12 @@ class LocalStreamSegmentsGetterPlural(GeoFreshBaseProcessor):
                 LOGGER.error(err_msg)
                 raise ProcessorExecuteError(err_msg)
 
-<<<<<<< HEAD
-=======
         # Validate GeoJSON:
         if points_geojson is not None:
             LOGGER.debug('POINTS GEOJSON: %s' % points_geojson)
             LOGGER.debug(f'POINTS GEOJSON: {type(points_geojson)}')
             geojson_helpers.check_is_geojson(points_geojson)
 
->>>>>>> e87dec0 (New process: get_local_streamsegments_plural.)
         ##################
         ### Actual ... ###
         ##################
@@ -162,14 +154,10 @@ class LocalStreamSegmentsGetterPlural(GeoFreshBaseProcessor):
         ## Potential outputs:
         output_json = None
         output_df = None
-<<<<<<< HEAD
-        properties_by_id = {}
-=======
 
         # Needed during the process
         properties_by_id = {}
         all_subc_ids = reg_id = basin_id = None
->>>>>>> e87dec0 (New process: get_local_streamsegments_plural.)
 
         ## Handle GeoJSON case:
         if points_geojson is not None:
@@ -180,12 +168,9 @@ class LocalStreamSegmentsGetterPlural(GeoFreshBaseProcessor):
             if points_geojson['type'] == 'FeatureCollection':
                 properties_by_siteid = geojson_helpers.get_all_properties_per_id(points_geojson, colname_site_id)
 
-<<<<<<< HEAD
-=======
             LOGGER.debug('Querying subc_id etc. for each point in input GeoJSON...')
->>>>>>> e87dec0 (New process: get_local_streamsegments_plural.)
             #points_geojson = get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson_with_siteid, colname_site_id)
-            temp_df = basic_queries.get_subcid_basinid_regid_for_geojson(conn, 'localsegments', points_geojson, colname_site_id=colname_site_id)
+            temp_df = basic_queries.get_subcid_basinid_regid_for_geojson(conn, points_geojson, colname_site_id=colname_site_id)
             all_subc_ids, reg_id, basin_id = self._get_ids_and_check(temp_df)
 
         ## Handle CSV case:
@@ -200,12 +185,8 @@ class LocalStreamSegmentsGetterPlural(GeoFreshBaseProcessor):
                 'reg_id' in input_df.columns):
                 LOGGER.debug('Input dataframe already contains subc_id for each point, using that...')
             else:
-<<<<<<< HEAD
-                LOGGER.debug('Querying subc_id etc. for each point...')
-=======
                 LOGGER.debug('Querying subc_id etc. for each point in input dataframe...')
->>>>>>> e87dec0 (New process: get_local_streamsegments_plural.)
-                temp_df = basic_queries.get_subcid_basinid_regid_for_dataframe(conn, 'localsegments', input_df, colname_lon, colname_lat, colname_site_id)
+                temp_df = basic_queries.get_subcid_basinid_regid_for_dataframe(conn, input_df, colname_lon, colname_lat, colname_site_id)
             all_subc_ids, reg_id, basin_id = self._get_ids_and_check(temp_df)
 
         ## Next, for all subc_ids, get the stream segments!
@@ -231,23 +212,6 @@ class LocalStreamSegmentsGetterPlural(GeoFreshBaseProcessor):
                     all_subc_ids,
                     basin_id,
                     reg_id)
-<<<<<<< HEAD
-                LOGGER.debug(f'Add property {colname_site_id} to Features for {len(all_subc_ids)} subc_ids.')
-                for feature in output_json['features']:
-                    subc_id = feature['properties']['subc_id']
-                    # Look up site id in temp_df, which connects "site_id" and "subc_id":
-                    #site_id = temp_df.loc[df['subc_id'] == subc_id, 'site_id'].iloc[0]
-                    site_ids = temp_df.loc[temp_df['subc_id'] == subc_id, 'site_id'].tolist()
-                    # Add to current feature's properties:
-                    feature['properties'][colname_site_id] = site_ids
-                    # Add more props from original FeatureCollection:
-                    # Note: This would only work if we returned one Feature per site_id,
-                    # not one Feature per subc_id!
-                    #try:
-                    #    feature['properties'].update(properties_by_siteid[site_id])
-                    #except KeyError as e:
-                    #    pass
-=======
 
                 # Adding properties to features, if applicable...
                 if colname_site_id is not None:
@@ -266,7 +230,6 @@ class LocalStreamSegmentsGetterPlural(GeoFreshBaseProcessor):
                         #    feature['properties'].update(properties_by_siteid[site_id])
                         #except KeyError as e:
                         #    pass
->>>>>>> e87dec0 (New process: get_local_streamsegments_plural.)
                 LOGGER.debug(f'This is the finished FeatureCollection: {output_json}')
 
             return self.return_results('stream_segments', requested_outputs, output_json=output_json, comment=comment)
@@ -318,11 +281,7 @@ if __name__ == '__main__':
     print('TEST CASE 1: Input GeoJSON directly (Multipoint), output plain JSON directly...', end="", flush=True)  # no newline
     payload = {
         "inputs": {
-<<<<<<< HEAD
-            "points": {
-=======
             "points_geojson": {
->>>>>>> e87dec0 (New process: get_local_streamsegments_plural.)
                 "type": "MultiPoint",
                 "coordinates": [
                     [9.937520027160646, 54.69422745526058],
@@ -330,17 +289,11 @@ if __name__ == '__main__':
                     [9.9312, 54.6933]
                 ]
             },
-<<<<<<< HEAD
-=======
             "result_format": "json",
->>>>>>> e87dec0 (New process: get_local_streamsegments_plural.)
             "comment": "test1"
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
-<<<<<<< HEAD
-    sanity_checks_basic(resp)
-=======
     sanity_checks_geojson(resp)
 
 
@@ -386,4 +339,3 @@ if __name__ == '__main__':
         raise ValueError("Expected error that did not happen...")
     except requests.exceptions.HTTPError as e:
         print(f'TEST CASE 3: EXPECTED: {e.response.json()["description"]}')
->>>>>>> e87dec0 (New process: get_local_streamsegments_plural.)

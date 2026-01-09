@@ -272,12 +272,12 @@ def get_regid_from_basinid(conn, LOGGER, basin_id):
 #################################
 
 
-def get_subcid_basinid_regid_for_dataframe(conn, tablename_prefix, input_df, colname_lon, colname_lat, colname_site_id):
+def get_subcid_basinid_regid_for_dataframe(conn, input_df, colname_lon, colname_lat, colname_site_id):
     # INPUT:  Dataframe with site_id, lon, lat
     # OUTPUT: Dataframe with site_id, subc_id, basin_id, reg_id
     list_of_insert_rows = temp_tables.make_insertion_rows_from_dataframe(input_df, colname_lon, colname_lat, colname_site_id)
     cursor = conn.cursor()
-    tablename, reg_ids = temp_tables.create_and_populate_temp_table(cursor, tablename_prefix, list_of_insert_rows)
+    tablename, reg_ids = temp_tables.create_and_populate_temp_table(cursor, list_of_insert_rows)
     query = f'''
     SELECT site_id, subc_id, basin_id, reg_id
     FROM {tablename}
@@ -287,14 +287,14 @@ def get_subcid_basinid_regid_for_dataframe(conn, tablename_prefix, input_df, col
     return output_df
 
 
-def get_subcid_basinid_regid_for_geojson(conn, tablename_prefix, input_geojson, colname_site_id=None):
+def get_subcid_basinid_regid_for_geojson(conn, input_geojson, colname_site_id=None):
     # INPUT:  GeoJSON (MultiPoint or GeometryCollection or FeatureCollection)
     # OUTPUT: Dataframe with site_id, subc_id, basin_id, reg_id
     # Note: If no colname_site_id is given, we can return the dataframe, but it
     # cannot be matched to the input points.
     list_of_insert_rows = temp_tables.make_insertion_rows_from_geojson(input_geojson, colname_site_id=colname_site_id)
     cursor = conn.cursor()
-    tablename, reg_ids = temp_tables.create_and_populate_temp_table(cursor, tablename_prefix, list_of_insert_rows)
+    tablename, reg_ids = temp_tables.create_and_populate_temp_table(cursor, list_of_insert_rows)
     query = f'''
     SELECT site_id, subc_id, basin_id, reg_id
     FROM {tablename}
@@ -302,7 +302,6 @@ def get_subcid_basinid_regid_for_geojson(conn, tablename_prefix, input_geojson, 
     output_df = pd.read_sql_query(query, conn)
     temp_tables.drop_temp_table(cursor, tablename)
     return output_df
-
 
 def get_basinid_regid_from_subcid_plural(conn, subc_ids, columns=['subc_id', 'basin_id', 'reg_id']):
     # INPUT:  List of subc_ids (integers)

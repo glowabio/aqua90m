@@ -384,9 +384,8 @@ def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, c
 
     # A temporary table is created and populated with the lines above.
     cursor = conn.cursor()
-    tablename_prefix = "snapping_basic"
     tablename, reg_ids = temp_table_for_queries.create_and_populate_temp_table(
-        cursor, tablename_prefix, list_of_insert_rows)
+        cursor, list_of_insert_rows)
 
     # Then the points are snapped to those neighbouring stream segments:
     result_to_be_returned =  _run_snapping_query(cursor, tablename, reg_ids, result_format, colname_lon, colname_lat, colname_site_id)

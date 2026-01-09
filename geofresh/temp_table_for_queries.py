@@ -110,12 +110,12 @@ def make_insertion_rows_from_dataframe(input_df, colname_lon, colname_lat, colna
     return list_of_insert_rows
 
 
-def create_and_populate_temp_table(cursor, tablename_prefix, list_of_insert_rows):
+def create_and_populate_temp_table(cursor, list_of_insert_rows):
     '''
     Creating a temp table containing the columns:
     site_id, lon, lat, subc_id, basin_id, reg_id, geom_user
     '''
-    tablename =_tablename(tablename_prefix)
+    tablename =_tablename('pygeo')
     LOGGER.debug(f'Creating and populating temp table "{tablename}"...')
 
     # Create a temporary table with the basic information about the points:
