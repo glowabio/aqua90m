@@ -579,6 +579,7 @@ if __name__ == "__main__":
         import aqua90m.utils.extent_helpers as extent_helpers
         import aqua90m.utils.geojson_helpers as geojson_helpers
         import aqua90m.utils.exceptions as exc
+        import aqua90m.geofresh.temp_table_for_queries as temp_tables
     except ModuleNotFoundError:
         # If we are calling this script from the aqua90m parent directory via
         # "python aqua90m/geofresh/basic_queries.py", we have to make it available on PATH:
@@ -587,6 +588,7 @@ if __name__ == "__main__":
         import aqua90m.utils.extent_helpers as extent_helpers
         import aqua90m.utils.geojson_helpers as geojson_helpers
         import aqua90m.utils.exceptions as exc
+        import aqua90m.geofresh.temp_table_for_queries as temp_tables
 
 
     # Logging
@@ -658,6 +660,208 @@ if __name__ == "__main__" and True:
     res = get_regid_from_basinid(conn, LOGGER, 1288419)
     print(f'RESULT: {res}')
 
+
+###########################
+### Run function plural ###
+### Input Dataframe     ###
+###########################
+
+if __name__ == "__main__" and True:
+
+    example_df = pd.DataFrame(
+        [
+            ['aa', 10.041155219078064, 53.07006147583069],
+            ['bb', 10.042726993560791, 53.06911450500803],
+            ['cc', 10.039894580841064, 53.06869677412868],
+            ['a',  10.698832912677716, 53.51710727672125],
+            ['b',  12.80898022975407,  52.42187129944509],
+            ['c',  11.915323076217902, 52.730867141970464],
+            ['d',  16.651903948708565, 48.27779486850176],
+            ['e',  19.201146608148463, 47.12192880511424],
+            ['f',  24.432498016999062, 61.215505889934434],
+            ['sea',  8.090485, 54.119322]
+        ], columns=['my_site', 'lon', 'lat']
+    )
+
+    print('\nSTART RUNNING FUNCTION: get_regid__dataframe_to_dataframe')
+    res = get_regid__dataframe_to_dataframe(conn, example_df, "lon", "lat", "my_site")
+    print(f'RESULT: {res}')
+
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid__dataframe_to_dataframe')
+    res = get_subcid_basinid_regid__dataframe_to_dataframe(conn, example_df, "lon", "lat", "my_site")
+    print(f'RESULT: {res}')
+
+    ### Special case: Using subc_ids as input:
+    subc_ids = [506853766,506853766,506853766,506601172,507307015,507081236,90929627,91875954,553374842]
+
+    print('\nSTART RUNNING FUNCTION: get_basinid_regid_from_subcid_plural')
+    res = get_basinid_regid_from_subcid_plural(conn, subc_ids, columns=['subc_id', 'basin_id', 'reg_id'])
+    print(f'RESULT: {res}')
+
+    print('\nSTART RUNNING FUNCTION: get_basinid_regid_from_subcid_plural')
+    res = get_basinid_regid_from_subcid_plural(conn, subc_ids, columns=['reg_id'])
+    print(f'RESULT: {res}')
+
+    print('\nSTART RUNNING FUNCTION: get_basinid_regid_from_subcid_plural')
+    res = get_basinid_regid_from_subcid_plural(conn, subc_ids, columns=['reg_id', 'basin_id'])
+    print(f'RESULT: {res}')
+
+
+###########################
+### Run function plural ###
+### Input GeoJSON       ###
+###########################
+
+if __name__ == "__main__" and True:
+
+    example_fcoll = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {"my_site": 'aa'},
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [10.041155219078064, 53.07006147583069]
+                }
+            },
+            {
+                "type": "Feature",
+                "properties": {"my_site": 'bb'},
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [10.042726993560791, 53.06911450500803]
+                }
+            },
+            {
+                "type": "Feature",
+                "properties": {"my_site": 'cc'},
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [10.039894580841064, 53.06869677412868]
+                }
+            },
+            {
+                "type": "Feature",
+                "properties": {"my_site": 'a'},
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [10.698832912677716, 53.51710727672125]
+                }
+            },
+            {
+                "type": "Feature",
+                "properties": {"my_site": 'b'},
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [12.80898022975407,  52.42187129944509]
+                }
+            },
+            {
+                "type": "Feature",
+                "properties": {"my_site": 'c'},
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [11.915323076217902, 52.730867141970464]
+                }
+            },
+            {
+                "type": "Feature",
+                "properties": {"my_site": 'd'},
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [16.651903948708565, 48.27779486850176]
+                }
+            },
+            {
+                "type": "Feature",
+                "properties": {"my_site": 'e'},
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [19.201146608148463, 47.12192880511424]
+                }
+            },
+            {
+                "type": "Feature",
+                "properties": {"my_site": 'f'},
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [24.432498016999062, 61.215505889934434]
+                }
+            },
+            {
+                "type": "Feature",
+                "properties": {"my_site": 'sea'},
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [8.090485, 54.119322]
+                }
+            }
+        ]
+    }
+
+    example_gcoll = {
+        "type": "GeometryCollection",
+        "geometries": [
+            {
+                "type": "Point",
+                "coordinates": [10.041155219078064, 53.07006147583069]
+            },
+            {
+                "type": "Point",
+                "coordinates": [10.042726993560791, 53.06911450500803]
+            },
+            {
+                "type": "Point",
+                "coordinates": [10.039894580841064, 53.06869677412868]
+            },
+            {
+                "type": "Point",
+                "coordinates": [10.698832912677716, 53.51710727672125]
+            },
+            {
+                "type": "Point",
+                "coordinates": [12.80898022975407,  52.42187129944509]
+            },
+            {
+                "type": "Point",
+                "coordinates": [11.915323076217902, 52.730867141970464]
+            },
+            {
+                "type": "Point",
+                "coordinates": [16.651903948708565, 48.27779486850176]
+            },
+            {
+                "type": "Point",
+                "coordinates": [19.201146608148463, 47.12192880511424]
+            },
+            {
+                "type": "Point",
+                "coordinates": [24.432498016999062, 61.215505889934434]
+            },
+            {
+                "type": "Point",
+                "coordinates": [8.090485, 54.119322]
+            }
+        ]
+    }
+
+
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid__geojson_to_dataframe')
+    res = get_subcid_basinid_regid__geojson_to_dataframe(conn, example_fcoll)
+    print(f'RESULT: {res}')
+
+    print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid__geojson_to_dataframe')
+    res = get_subcid_basinid_regid__geojson_to_dataframe(conn, example_gcoll)
+    print(f'RESULT: {res}')
+
+    print('\nSTART RUNNING FUNCTION: get_regid__geojson_to_dataframe')
+    res = get_regid__geojson_to_dataframe(conn, example_fcoll)
+    print(f'RESULT: {res}')
+
+    print('\nSTART RUNNING FUNCTION: get_regid__geojson_to_dataframe')
+    res = get_regid__geojson_to_dataframe(conn, example_gcoll)
+    print(f'RESULT: {res}')
 
 
 ###########################
