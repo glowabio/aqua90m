@@ -257,12 +257,38 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
         colname_subc_id = data.get('colname_subc_id', None) # special case, optional
         # Which ids are requested:
         which_ids = data.get('which_ids', ['subc_id', 'basin_id', 'reg_id'])
+        result_format = data.get('result_format', None)
         # Optional comment:
         comment = data.get('comment') # optional
 
-        ##########################
-        ### Check user inputs: ###
-        ##########################
+        ##############################
+        ### Download if applicable ###
+        ### Validate GeoJSON       ###
+        ##############################
+
+        if points_geojson_url is not None:
+            points_geojson = utils.download_geojson(points_geojson_url)
+
+        input_df = None
+        if csv_url is not None:
+            input_df = utils.access_csv_as_dataframe(csv_url)
+
+        if points_geojson is not None:
+            # If a FeatureCollections is passed, check whether the property "site_id" (or similar)
+            # is present in every feature:
+            if points_geojson['type'] == 'FeatureCollection':
+                geojson_helpers.check_feature_collection_property(points_geojson, colname_site_id)
+
+        # Set result_format to input format:
+        if result_format is None and points_geojson is not None:
+            result_format = 'geojson'
+        elif result_format is None and csv_url is not None:
+            result_format = 'csv'
+
+
+        #######################
+        ### Validate inputs ###
+        #######################
 
         # Check/adapt data type of which_ids param:
         if not isinstance(which_ids, list) and isinstance(which_ids, str):
@@ -276,8 +302,8 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
             csv_url=csv_url
         ))
 
-        # CSV case, check mandatory columns
-        if csv_url is not None:
+        # In CSV case, check mandatory columns
+        if input_df is not None:
             if colname_subc_id is not None:
                 utils.mandatory_parameters(dict(
                     colname_site_id=colname_site_id,
@@ -289,13 +315,6 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
                     colname_lon=colname_lon,
                     colname_lat=colname_lat),
                     additional_message=" (As you provided a CSV file.)")
-            # Note: colname_site_id is also needed if the user provided GeoJSON of
-            # type FeatureCollection (instead of type GeometryCollection).
-
-        # GeoJSON case:
-        else:
-            pass
-            # To check the GeoJSON, you first have to download it...
 
         LOGGER.debug(f'User requested ids: {which_ids}')
         possible_ids = ['subc_id', 'basin_id', 'reg_id']
@@ -308,14 +327,9 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
             raise exc.UserInputException(err_msg)
 
 
-        ## Download GeoJSON if user provided URL:
-        if points_geojson_url is not None:
-            points_geojson = utils.download_geojson(points_geojson_url)
-
-
-        ##################
-        ### Actual ... ###
-        ##################
+        ##########################
+        ### Actual computation ###
+        ##########################
 
         ## Potential outputs:
         output_json = None
@@ -324,18 +338,13 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
         ## Handle GeoJSON case:
         if points_geojson is not None:
 
-            # If a FeatureCollections is passed, check whether the property "site_id" (or similar)
-            # is present in every feature:
-            if points_geojson['type'] == 'FeatureCollection':
-                geojson_helpers.check_feature_collection_property(points_geojson, colname_site_id)
+            if result_format == 'csv':
+                raise NotImplementedError('No CSV output for GeoJSON input currently.')
 
             # Query database:
-            if 'subc_id' in which_ids:
+            if 'subc_id' or 'basin_id' in which_ids:
                 output_json = basic_queries.get_subcid_basinid_regid_for_all_2json(
                     conn, LOGGER, points_geojson, colname_site_id)
-            elif 'basin_id' in which_ids:
-                err_msg = "Currently, for GeoJSON input, only all ids can be returned. Please set which_ids to [subc_id,basin_id,reg_id], or input a CSV file."
-                raise NotImplementedError(err_msg) # TODO
             elif 'reg_id' in which_ids:
                 err_msg = "Currently, for GeoJSON input, only all ids can be returned. Please set which_ids to [subc_id,basin_id,reg_id], or input a CSV file."
                 raise NotImplementedError(err_msg) # TODO
@@ -345,9 +354,12 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
             # Probably not needed ever, so why implement that. It would just be for completeness.
             # Implement when needed.
 
+
         ## Handle CSV case:
-        elif csv_url is not None:
-            input_df = utils.access_csv_as_dataframe(csv_url)
+        elif input_df is not None:
+
+            if result_format == 'geojson':
+                raise NotImplementedError('No GeoJSON output for CSV input currently.')
 
             # Query database:
             if colname_subc_id is not None:
