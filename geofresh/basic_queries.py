@@ -392,6 +392,8 @@ def get_basinid_regid_from_subcid_plural(conn, subc_ids, columns=['subc_id', 'ba
 #################################
 
 # TODO Deprecated, contains loop
+# still used in: get_local_streamsegments_plural.py
+# still used in: get_local_ids_plural.py
 def get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson, colname_site_id = None):
     # Input: GeoJSON
     # Output: JSON
@@ -478,7 +480,6 @@ def get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson, colname
 
     # Finished collecting the results, now make output JSON object:
     # Note: This is not GeoJSON (on purpose), as we did not look for geometry yet.
-    # Currently used in: get_local_ids_plural.py, get_local_streamsegments_plural.py
     output = {
         "subc_ids": subc_ids,
         "region_ids": reg_ids,
@@ -519,6 +520,7 @@ def get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson, colname
 
 
 # TODO Deprecated, contains loop
+# still used in: routing.py
 def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id):
     # Input:  Pandas Dataframe (with site_id, lon, lat)
     # Output: Pandas Dataframe (with site_id, reg_id, basin_id, subc_id)
@@ -623,100 +625,7 @@ def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, colname_lon, c
 
 
 # TODO Deprecated, contains loop
-def get_basinid_regid_for_all_1csv(conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id):
-    # Input: Pandas Dataframe
-    # Output: Pandas Dataframe
-
-    # Create list to be filled and converted to Pandas dataframe:
-    everything = []
-    site_id = None # in case none is provided.
-    basin_ids = []
-    reg_ids = []
-
-    # Iterate over points and call "get_basinid_regid" for each point:
-    # TODO: This is not super efficient, but the quickest to implement :)
-    # TODO: Read this for alternatives to iteration: https://stackoverflow.com/questions/16476924/how-can-i-iterate-over-rows-in-a-pandas-dataframe
-    num = input_df.shape[0]
-    LOGGER.debug(f'Getting basin_id, reg_id for {num} lon, lat pairs...')
-
-    # Retrieve using column index, not colname - this is faster:
-    colidx_lon = input_df.columns.get_loc(colname_lon)
-    colidx_lat = input_df.columns.get_loc(colname_lat)
-    colidx_site_id = input_df.columns.get_loc(colname_site_id)
-
-    # Iterate over rows:
-    for row in input_df.itertuples(index=False):
-
-        # Get coordinates from input:
-        lon = row[colidx_lon]
-        lat = row[colidx_lat]
-        site_id = row[colidx_site_id]
-
-        # Query database:
-        try:
-            LOGGER.log(logging.TRACE, f'Getting basin_id, reg_id for lon, lat: {lon}, {lat}')
-            basin_id, reg_id = get_basinid_regid_from_lonlat(
-                conn, LOGGER, lon, lat)
-        except exc.GeoFreshNoResultException as e:
-            # For example, if the point is in the ocean.
-            # In Pandas dataframe, NaN is returned.
-            reg_id = basin_id = None
-
-        # Collect results in list:
-        everything.append([site_id, reg_id, basin_id])
-
-    # Finished collecting the results, now make pandas dataframe:
-    output_df = pd.DataFrame(everything, columns=['site_id', 'reg_id', 'basin_id'])
-    return output_df
-
-
-# TODO Deprecated, contains loop
-def get_regid_for_all_1csv(conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id):
-    # Input: Pandas Dataframe
-    # Output: Pandas Dataframe
-
-    # Create list to be filled and converted to Pandas dataframe:
-    everything = []
-    site_id = None # in case none is provided.
-    reg_ids = []
-
-    # Iterate over points and call "get_regid" for each point:
-    # TODO: This is not super efficient, but the quickest to implement :)
-    # TODO: Read this for alternatives to iteration: https://stackoverflow.com/questions/16476924/how-can-i-iterate-over-rows-in-a-pandas-dataframe
-    num = input_df.shape[0]
-    LOGGER.debug(f'Getting reg_id for {num} lon, lat pairs...')
-
-    # Retrieve using column index, not colname - this is faster:
-    colidx_lon = input_df.columns.get_loc(colname_lon)
-    colidx_lat = input_df.columns.get_loc(colname_lat)
-    colidx_site_id = input_df.columns.get_loc(colname_site_id)
-
-    # Iterate over rows:
-    for row in input_df.itertuples(index=False):
-
-        # Get coordinates from input:
-        lon = row[colidx_lon]
-        lat = row[colidx_lat]
-        site_id = row[colidx_site_id]
-
-        # Query database:
-        try:
-            LOGGER.log(logging.TRACE, f'Getting reg_id for lon, lat: {lon}, {lat}')
-            reg_id = get_regid_from_lonlat(conn, LOGGER, lon, lat)
-        except exc.GeoFreshNoResultException as e:
-            # For example, if the point is in the ocean.
-            # In Pandas dataframe, NaN is returned.
-            reg_id = None
-
-        # Collect results in list:
-        everything.append([site_id, reg_id])
-
-    # Finished collecting the results, now make pandas dataframe:
-    output_df = pd.DataFrame(everything, columns=['site_id', 'reg_id'])
-    return output_df
-
-
-# TODO Deprecated, contains loop
+# still used in: get_local_ids_plural.py
 def get_basinid_regid_for_all_from_subcid_1csv(conn, LOGGER, input_df, colname_subc_id, colname_site_id):
     # Input: Pandas Dataframe
     # Output: Pandas Dataframe
@@ -1011,14 +920,6 @@ if __name__ == "__main__" and True:
     res = get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, example_dataframe, 'lon', 'lat', 'site_id')
     print(f'RESULT:\n{res}')
 
-
-    print('\nSTART RUNNING FUNCTION: get_basinid_regid_for_all_1csv (input: dataframe, output: dataframe)')
-    res = get_basinid_regid_for_all_1csv(conn, LOGGER, example_dataframe, 'lon', 'lat', 'site_id')
-    print(f'RESULT:\n{res}')
-
-    print('\nSTART RUNNING FUNCTION: get_regid_for_all_1csv (input: dataframe, output: dataframe)')
-    res = get_regid_for_all_1csv(conn, LOGGER, example_dataframe, 'lon', 'lat', 'site_id')
-    print(f'RESULT:\n{res}')
 
     ## Input: dataframe, output dataframe, with site_id!
     example_dataframe2 = pd.DataFrame(
