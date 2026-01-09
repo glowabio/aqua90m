@@ -112,7 +112,7 @@ def get_dijkstra_ids_to_outlet_plural(conn, input_df_or_fcoll, colname_site_id, 
     elif result_format == 'json':
         return _iterate_outlets_to_json(conn, departing_points)
     else:
-        err_msg = f"'result_format' has to be either 'dataframe' or 'json', not {result_format}."
+        err_msg = f"Unknown result format: '{result_format}'. Expected 'json' or 'dataframe'."
         LOGGER.error(err_msg)
         raise ValueError(err_msg)
 
@@ -429,12 +429,17 @@ def get_dijkstra_ids_one_to_many(conn, start_subc_ids, end_subc_id, reg_id, basi
 
 # Called by plural process:
 #    get_shortest_path_between_points_plural.py
-def get_dijkstra_ids_many_to_many(conn, subc_ids_start, subc_ids_end, reg_id, basin_id, result_format='json'):
-    # INPUT:  Sets of subc_ids
+def get_dijkstra_ids_many_to_many(conn, subc_ids_start, subc_ids_end, reg_id, basin_id, result_format):
+    # INPUT:  Sets of subc_ids (have to be inside one basin!)
     # OUTPUT: Route matrix (as JSON)
+    #
+    # Note: All subc_ids have to be in one basin, because basins are disconnected,
+    # there are no routes between basins. We would have to return one matrix per
+    # basin, so users can send separate queries for separate basins right away.
 
     LOGGER.debug(f'Compute path matrix between {len(subc_ids_start | subc_ids_end)} subc_ids (in basin {basin_id}, region {reg_id})')
-    # TODO What if not in one basin?
+    # TODO What happens if they are not in one basin? Anyway, it has to
+    # be checked before calling this method.
 
     ## Construct SQL query:
     ## Inner SELECT: Returns what the pgr_dijkstra needs: (id, source, target, cost).
@@ -483,11 +488,13 @@ def get_dijkstra_ids_many_to_many(conn, subc_ids_start, subc_ids_end, reg_id, ba
     ## Make a dataframe from this, if requested:
     if result_format == 'json':
         return json_matrix
-    elif result_format == 'dataframe':
+    elif result_format == 'dataframe' or result_format == 'csv':
         output_df = _matrix_to_dataframe(json_matrix, subc_ids_start, subc_ids_end)
         return output_df
     else:
-        raise ValueError(f'Unknown result format: {result_format}. Expected json or dataframe.')
+        err_msg = f"Unknown result format: '{result_format}'. Expected 'json' or 'dataframe'."
+        LOGGER.error(err_msg)
+        raise ValueError(err_msg)
 
 
 def _result_to_matrix(cursor, subc_ids_start, subc_ids_end):

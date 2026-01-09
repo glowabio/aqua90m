@@ -337,17 +337,22 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
         elif plural_asymmetric:
             all_subc_ids_start, all_subc_ids_end, reg_id, basin_id = self.plural_asymmetric(conn, points_start, points_end, subc_ids_start, subc_ids_end)
 
-        # Get shortest path:
-        if result_format == "csv":
-            output_df = routing.get_dijkstra_ids_many_to_many(
-                conn, all_subc_ids_start, all_subc_ids_end, reg_id, basin_id, 'dataframe')
-            return self.return_results('paths_matrix', requested_outputs, output_df=output_df, comment=comment)
-        else:
-            # As a JSON-ified matrix:
-            json_result = routing.get_dijkstra_ids_many_to_many(
-                conn, all_subc_ids_start, all_subc_ids_end, reg_id, basin_id, 'json')
-            LOGGER.debug(f'THIS IS THE MATRIX: {json_result}')
-            return self.return_results('paths_matrix', requested_outputs, output_json=json_result, comment=comment)
+        # Get shortest paths:
+        output_df_or_json = routing.get_dijkstra_ids_many_to_many(
+            conn, all_subc_ids_start, all_subc_ids_end, reg_id, basin_id, result_format)
+
+        #####################
+        ### Return result ###
+        #####################
+
+        output_df = output_json = None
+        if isinstance(output_df_or_json, pd.DataFrame):
+            output_df = output_df_or_json
+        elif isinstance(output_df_or_json, dict):
+            output_json = output_df_or_json
+
+        return self.return_results('paths_matrix', requested_outputs, output_df=output_df, output_json=output_json, comment=comment)
+
 
 
     def plural_symmetric(self, conn, points, subc_ids):
