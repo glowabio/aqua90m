@@ -115,6 +115,7 @@ class LocalIdGetter(GeoFreshBaseProcessor):
     def _execute(self, data, requested_outputs, conn):
 
         # User inputs
+        point = data.get('point', None)
         lon = data.get('lon', None)
         lat = data.get('lat', None)
         subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
@@ -130,8 +131,8 @@ class LocalIdGetter(GeoFreshBaseProcessor):
         # Check type:
         utils.check_type_parameter('which_ids', which_ids, list)
 
-        # Check if either subc_id or both lon and lat are provided:
-        utils.params_lonlat_or_subcid(lon, lat, subc_id)
+        # Check if either point or subc_id or both lon and lat are provided:
+        utils.params_point_or_lonlat_or_subcid(point, lon, lat, subc_id)
 
         # Check ids:
         possible_ids = ['subc_id', 'basin_id', 'reg_id']
@@ -144,6 +145,9 @@ class LocalIdGetter(GeoFreshBaseProcessor):
         subc_id = subc_id or None
         basin_id = None
         reg_id = None
+
+        if point is not None:
+            lon, lat = point.get('coordinates') or point['geometry']['coordinates']
 
         try:
             # Special case: User did not provide lon, lat but subc_id ...
@@ -316,4 +320,54 @@ if __name__ == '__main__':
         print(f'TEST CASE 7: EXPECTED: {e.response.json()["description"]}')
 
 
+    print('TEST CASE 8: Input point...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "point": {
+                "type": "Point",
+                "coordinates": [9.931555, 54.695070]
+            },
+            "which_ids": ["subc_id", "basin_id", "reg_id"],
+            "comment": "test8"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
 
+    print('TEST CASE 9: Input feature...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "point": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [9.931555, 54.695070]
+                }
+            },
+            "which_ids": ["subc_id", "basin_id", "reg_id"],
+            "comment": "test9"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 10: Will Fail: Input not point...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "point": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": []
+                }
+            },
+            "which_ids": ["subc_id", "basin_id", "reg_id"],
+            "comment": "test10"
+        }
+    }
+    try:
+        resp = make_sync_request(PYSERVER, process_id, payload)
+        raise ValueError("Expected error that did not happen...")
+    except requests.exceptions.HTTPError as e:
+        print(f'TEST CASE 10: EXPECTED: {e.response.json()["description"]}')

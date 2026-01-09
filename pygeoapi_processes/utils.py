@@ -50,6 +50,65 @@ def params_lonlat_or_subcid(lon, lat, subc_id, additional_message=""):
         raise ProcessorExecuteError(err_msg)
 
 
+def params_point_or_lonlat_or_subcid(point, lon, lat, subc_id, additional_message=""):
+
+    # subc_id takes precedence:
+    if subc_id is not None:
+        if not isinstance(subc_id, int):
+            err_msg = (
+                f"Malformed parameter: 'subc_id' has to be integer,"
+                f" not {type(subc_id).__name__}!{additional_message}"
+            )
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
+
+    # point is second:
+    elif point is not None:
+        check_is_geojson(point)
+        if point['type'] == 'Point':
+            pass
+        elif point['type'] == 'Feature' and point['geometry']['type'] == 'Point':
+            pass
+        else:
+            geojson_type = point['type']
+            if geojson_type == 'Feature':
+                geojson_type = point['geometry']['type']
+            err_msg = (
+                f"Malformed parameter: 'point' has to be a GeoJSON point,"
+                f" not {geojson_type}!{additional_message}"
+            )
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
+
+    # lon, lat comes after:
+    elif lon is not None and lat is not None:
+        if not (isinstance(lon, float) and isinstance(lon, float)):
+            err_msg = (
+                f"Malformed parameter: Both 'lon' and 'lat' have to be decimal numbers,"
+                f" not '{type(lon).__name__}' and '{type(lat).__name__}'."
+                f"{additional_message}"
+            )
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
+
+    # errors:
+    elif (lon is None) and (lat is None):
+        err_msg = (
+            f"Missing parameter: Please provide either 'point' or 'subc_id' or both 'lon' and 'lat'!"
+            f"{additional_message}"
+        )
+        LOGGER.error(err_msg)
+        raise ProcessorExecuteError(err_msg)
+
+    else:
+        err_msg = (
+            f"Missing parameter: Please provide both lon and lat!"
+            f"{additional_message}"
+        )
+        LOGGER.error(err_msg)
+        raise ProcessorExecuteError(err_msg)
+
+
 def mandatory_parameters(params_dict, additional_message=""):
     LOGGER.debug(f'Mandatory params: {params_dict.keys()}')
     missing = []
