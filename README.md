@@ -4,7 +4,46 @@ Remote interaction with freshwater and related data, mainly via OGC processes
 deployed on pygeoapi instances.
 
 
+The module `aqua90m` contains various functions that ...
+
+How to test the modules in python:
+
+```
+# activate virtual env:
+
+# go to directory
+cd .path/to/aqua90m/
+# go up one directory, to be able to import the module "aqua90m":
+cd ..
+
+# run tests for one specific module:
+python aqua90m/geofresh/basic_queries.py
+
+```
+
+The module `pygeoapi_processes` contains the processes that can be deployed
+on pygeoapi.
+
+How to test the processes using `requests.post()`:
+
+```
+# log in to server via ssh
+ssh ...
+
+# activate virtual env:
+
+# go to directory
+cd .../pygeoapi/pygeoapi/process/aqua90m/pygeoapi_processes/geofresh
+
+# run all tests:
+for f in ./*.py; do python "$f"; done
+
+```
+
+
 ## List of processes
+
+**Not up to date!**
 
 local subcatchment
 
@@ -223,7 +262,8 @@ and runnable by the Linux user running pygeoapi.
 
 ## Process-specific details
 
-### extract-point-stats
+
+### extract-point-stats (old)
 
 For this process, R and the R package `hydrographr` are needed.
 
@@ -251,3 +291,65 @@ Example:
 
 
 ```
+
+
+## Implementation details/questions
+
+### Easy next steps (2026-01-09)
+
+* TODO Add main tests to all processes
+* TODO Allow GeoJSON points instead of lon,lat tuples for all singular processes
+* TODO Go over all process descriptions
+* TODO Put singular and plural into one process (already done: get_shortest_distance_between_points.py)
+
+Less easy:
+
+* TODO: get_shortest_distance_between_points.py: Have to accept CSV inputs!
+
+### Design Questions (2026-01-09)
+
+* What to do if points are in different basins? Currently, we throw errors (except for outlet-routing)
+* How should output look, when there is one result per subc, or per site? Should we return one result per subcatchment? Or per site_id?
+
+* Processes that can return list of ids, or geometries: Separate processes, or joint?
+  * Separate: get_upstream_subcids, get_upstream_streamsegments, get_upstream_subcatchments
+  * Joint: get_path_between_points (distinguish by “result_format” or “add_geometries” or “add_distances”, something like that): get_subcids_between_points, get_linestrings_between_points, get_distances_between_points (this is already separate)
+  * Joint: get_path_to_outlet: get_subcids_to_outlet, get_linestrings_to_outlet, get_distance_to_outlet (this is already separate)
+  * Joint: get_outlets_for_polygon: get_outlet_subcids, get_outlet_points
+
+
+
+### routing module (2026-01-09)
+
+Contains these functions that are called by processes:
+
+`get_dijkstra_ids_one_to_one()`
+
+* Input: two individual points (represented by subc_ids)
+* Can be used for routing between two points
+* Can be used for routing between from a point to an outlet
+
+Called by singular processes:
+
+* get_shortest_path_between_points.py
+* get_shortest_path_to_outlet.py
+
+
+`get_dijkstra_ids_to_outlet_plural()`
+
+* Input: Lots of points! As GeoJSON or as dataframe
+* They don't need to be inside on region or basin. The function splits the points into batches, per basin. As there is one outlet per basin, it makes sense to run one _one_to_many_ SQL query per basin.
+
+Called by plural process:
+
+* get_shortest_path_to_outlet_plural.py
+
+
+`get_dijkstra_ids_many_to_many()`
+
+* Input: Lots of points! As GeoJSON or as dataframe
+* The points have to be inside one region and basin. We cannot perform routing across basins, and already in one basin, the output is a complex matrix. Now if we accepted various basins, we'd have to return the results separately per basin anyway, so the user can as well make several queries.
+
+Called by plural process:
+* get_shortest_path_between_points_plural.py
+
