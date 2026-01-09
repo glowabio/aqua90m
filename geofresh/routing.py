@@ -40,7 +40,7 @@ def get_dijkstra_ids_one_to_one(conn, start_subc_id, end_subc_id, reg_id, basin_
     # OUTPUT: subc_ids (the entire path, incl. start and end, as a list)
 
     if not silent:
-        LOGGER.debug('Compute route between subc_id {start_subc_id} and {end_subc_id} (in basin {basin_id}, region {reg_id})')
+        LOGGER.debug(f'Compute route between subc_id {start_subc_id} and {end_subc_id} (in basin {basin_id}, region {reg_id})')
 
     ## Construct SQL query:
     ## Inner SELECT: Returns what the pgr_dijkstra needs: (id, source, target, cost).
@@ -639,6 +639,8 @@ if __name__ == "__main__":
 
 if __name__ == "__main__" and True:
 
+    print('\n_____________________________ one to one _____________________________')
+
     ## One example, returns 200 subc_ids:
     subc_id_start  = 507294699
     subc_id_end = 507282720
@@ -689,6 +691,8 @@ if __name__ == "__main__" and True:
 
 if __name__ == "__main__" and True:
 
+    print('\n_____________________________ many to many _____________________________')
+
     other1 = 507199553
     other2 = 507332148
     other3 = 507290955
@@ -696,13 +700,13 @@ if __name__ == "__main__" and True:
     ## With few points:
     start_ids = [subc_id_start, subc_id_end, other1]
     print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_many_to_many')
-    res = get_dijkstra_ids_many_to_many(conn, start_ids, reg_id, basin_id)
+    res = get_dijkstra_ids_many_to_many(conn, start_ids, start_ids, reg_id, basin_id, 'json')
     print(f'RESULT: ROUTE MATRIX: {res}')
 
     ## With more points:
     start_ids = [subc_id_start, subc_id_end, other1, other2, other3]
     print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_many_to_many')
-    res = get_dijkstra_ids_many_to_many(conn, start_ids, reg_id, basin_id)
+    res = get_dijkstra_ids_many_to_many(conn, start_ids, start_ids, reg_id, basin_id, 'json')
     print(f'RESULT: ROUTE MATRIX: {res}')
 
 
@@ -711,6 +715,9 @@ if __name__ == "__main__" and True:
 ##########################
 
 if __name__ == "__main__" and True:
+
+    print('\n_____________________________ to outlet _____________________________')
+
     import basic_queries
 
     # Input: dataframe, output dataframe, with site_id!
@@ -748,11 +755,11 @@ if __name__ == "__main__" and True:
     temp_df = basic_queries.get_subcid_basinid_regid_for_dataframe(conn, input_df, "lon", "lat", "site_id")
     print(f'\n{temp_df}')
     print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_to_outlet_plural')
-    res = get_dijkstra_ids_to_outlet_plural(conn, temp_df, "site_id", return_csv=True)
+    res = get_dijkstra_ids_to_outlet_plural(conn, temp_df, "site_id", "csv")
     print(f'RESULT: SEGMENTS IN DATAFRAME: {res}')
 
     print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_to_outlet_plural')
-    res = get_dijkstra_ids_to_outlet_plural(conn, temp_df, "site_id", return_json=True)
+    res = get_dijkstra_ids_to_outlet_plural(conn, temp_df, "site_id", "json")
     print(f'RESULT: SEGMENTS IN JSON: {res}')
 
 

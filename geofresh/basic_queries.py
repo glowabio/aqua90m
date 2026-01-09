@@ -289,6 +289,7 @@ def get_subcid_basinid_regid_for_dataframe(conn, input_df, colname_lon, colname_
         FROM {tablename}
         '''
     output_df = pd.read_sql_query(query, conn)
+    # UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
     temp_tables.drop_temp_table(cursor, tablename)
     return output_df
 
