@@ -96,6 +96,9 @@ def get_dijkstra_ids_to_outlet_plural(conn, input_df_or_fcoll, colname_site_id, 
     # INPUT:  Dataframe or GeoJSON FeatureCollection
     # OUTPUT: JSON or CSV (but ugly CSV... as we have to store entire paths in one column.)
 
+    if not result_format in ['json', 'dataframe', 'csv']:
+        raise ValueError(f'Unknown result format: {result_format}')
+
     # Get departing points from inputs (can be both dataframe or GeoJSON feature collection)
     if isinstance(input_df_or_fcoll, pd.DataFrame):
         departing_points = _collect_departing_points_by_region_and_basin_from_dataframe(input_df_or_fcoll, colname_site_id)
@@ -436,6 +439,12 @@ def get_dijkstra_ids_many_to_many(conn, subc_ids_start, subc_ids_end, reg_id, ba
     # Note: All subc_ids have to be in one basin, because basins are disconnected,
     # there are no routes between basins. We would have to return one matrix per
     # basin, so users can send separate queries for separate basins right away.
+
+    if not result_format in ['json', 'dataframe', 'csv']:
+        raise ValueError(f'Unknown result format: {result_format}')
+
+    subc_ids_start = set(subc_ids_start)
+    subc_ids_end = set(subc_ids_end)
 
     LOGGER.debug(f'Compute path matrix between {len(subc_ids_start | subc_ids_end)} subc_ids (in basin {basin_id}, region {reg_id})')
     # TODO What happens if they are not in one basin? Anyway, it has to
