@@ -28,9 +28,10 @@ except ModuleNotFoundError as e1:
         LOGGER.debug(msg)
 
 
-####################################
-### Functions for singular points ##
-####################################
+#####################################
+### Functions for singular points ###
+### (all are covered by tests)    ###
+#####################################
 
 def get_regid(conn, LOGGER, lon=None, lat=None, subc_id=None):
 
@@ -629,7 +630,7 @@ if __name__ == "__main__":
 ### Run function singular ###
 #############################
 
-if __name__ == "__main__" and False:
+if __name__ == "__main__" and True:
 
     print('\nSTART RUNNING FUNCTION: get_regid')
     res = get_regid(conn, LOGGER, 9.931555, 54.695070)
@@ -653,13 +654,19 @@ if __name__ == "__main__" and False:
     res = get_subcid_basinid_from_lonlat_regid(conn, LOGGER, 9.931555, 54.695070, 58)
     print(f'RESULT: {res[0]} {res[1]}')
 
+    print('\nSTART RUNNING FUNCTION: get_regid_from_basinid')
+    res = get_regid_from_basinid(conn, LOGGER, 1288419)
+    print(f'RESULT: {res}')
+
+
 
 ###########################
 ### Run function plural ###
 ### Input GeoJSON       ###
+### DEPRECATED          ###
 ###########################
 
-if __name__ == "__main__" and False:
+if __name__ == "__main__" and True:
 
     points_geojson = {
         "type": "GeometryCollection",
@@ -791,7 +798,8 @@ if __name__ == "__main__" and False:
 
 ###########################
 ### Run function plural ###
-### Input CSV           ###
+### Input Dataframe     ###
+### DEPRECATED          ###
 ###########################
 
 if __name__ == "__main__" and True:
@@ -816,4 +824,9 @@ if __name__ == "__main__" and True:
     print(f'RESULT:\n{res}')
 
 
+###################
+### Finally ... ###
+###################
 
+if __name__ == "__main__":
+    conn.close()
