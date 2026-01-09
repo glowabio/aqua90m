@@ -295,10 +295,16 @@ def get_subcid_basinid_regid_for_geojson(conn, input_geojson, colname_site_id=No
     list_of_insert_rows = temp_tables.make_insertion_rows_from_geojson(input_geojson, colname_site_id=colname_site_id)
     cursor = conn.cursor()
     tablename, reg_ids = temp_tables.create_and_populate_temp_table(cursor, list_of_insert_rows)
-    query = f'''
-    SELECT site_id, subc_id, basin_id, reg_id
-    FROM {tablename}
-    '''
+    if colname_site_id is None:
+        query = f'''
+        SELECT subc_id, basin_id, reg_id
+        FROM {tablename}
+        '''
+    else:
+        query = f'''
+        SELECT site_id, subc_id, basin_id, reg_id
+        FROM {tablename}
+        '''
     output_df = pd.read_sql_query(query, conn)
     temp_tables.drop_temp_table(cursor, tablename)
     return output_df
