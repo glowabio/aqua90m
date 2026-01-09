@@ -499,12 +499,10 @@ def _package_result_in_geojson(cursor, colname_site_id):
         # Construct Feature, incl. ids, strahler and original lonlat:
         # TODO: If all are in same reg_id and basin, we could remove those
         # attributes from here...
-        # TODO: If the input was a Geometry or GeometryCollection, we have no site_id!
-        features.append({
+        feature = {
             "type": "Feature",
             "geometry": snappedpoint_simplegeom,
             "properties": {
-                colname_site_id: site_id,
                 "subc_id": subc_id,
                 "strahler": strahler,
                 "basin_id": basin_id,
@@ -512,7 +510,12 @@ def _package_result_in_geojson(cursor, colname_site_id):
                 "lon_original": lon,
                 "lat_original": lat,
             }
-        })
+        }
+        # Add site_id, if it was specified:
+        if colname_site_id is not None:
+            feature["properties"][colname_site_id] = site_id
+        features.append(feature)
+
 
     LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON... DONE.')
 
@@ -573,6 +576,8 @@ def _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_
 
     # Construct pandas dataframe from collected rows:
     output_dataframe = pd.DataFrame(everything, columns=colnames)
+    # Dropping NA column: If colname_site_id is None, it led to a column named NA containing only NA.
+    output_dataframe = output_dataframe.loc[:, output_dataframe.columns.notna()]
     return output_dataframe
 
 

@@ -522,13 +522,15 @@ def _package_result_in_geojson(cursor, colname_site_id):
             "type": "Feature",
             "geometry": snappedpoint_simplegeom,
             "properties": {
-                colname_site_id: site_id,
                 "lon_original": lon,
                 "lat_original": lat,
                 "strahler": strahler,
                 "subc_id": subc_id
             }
         }
+        # Add site_id, if it was specified:
+        if colname_site_id is not None:
+            feature["properties"][colname_site_id] = site_id
 
         # Add distance, if it was computed:
         if distance_metres is not None:
@@ -614,6 +616,8 @@ def _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_
 
     # Construct pandas dataframe from collected rows:
     output_dataframe = pd.DataFrame(everything, columns=colnames)
+    # Dropping NA column: If colname_site_id is None, it led to a column named NA containing only NA.
+    output_dataframe = output_dataframe.loc[:, output_dataframe.columns.notna()]
     return output_dataframe
 
 

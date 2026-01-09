@@ -270,7 +270,7 @@ class SnappedPointsStrahlerGetterPlural(GeoFreshBaseProcessor):
         csv_url = data.get('csv_url', None)
         colname_lon = data.get('colname_lon', 'lon')
         colname_lat = data.get('colname_lat', 'lat')
-        colname_site_id = data.get('colname_site_id', 'site_id')
+        colname_site_id = data.get('colname_site_id', None)
         # Ask for result format
         result_format = data.get('result_format', None)
         # Optional comment:
@@ -429,13 +429,13 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')
 
 
     print('TEST CASE 4: Input GeoJSON file (GeometryCollection), output GeoJSON file...', end="", flush=True)  # no newline
     payload = {
         "inputs": {
             "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometrycollection_points.json",
-            "colname_site_id": "my_site",
             "result_format": "geojson",
             "min_strahler": 5,
             "add_distance": True,
@@ -453,7 +453,6 @@ if __name__ == '__main__':
     payload = {
         "inputs": {
             "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_geometrycollection_points.json",
-            "colname_site_id": "my_site",
             "result_format": "geojson",
             "min_strahler": 5,
             "add_distance": False,
@@ -582,6 +581,24 @@ if __name__ == '__main__':
                 ]
             },
             "comment": "test9"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 10: Input CSV file without site id...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus_without_siteid.csv",
+            "colname_lon": "longitude",
+            "colname_lat": "latitude",
+            "min_strahler": 5,
+            "add_distance": True,
+            "comment": "test10"
         },
         "outputs": {
             "transmissionMode": "reference"

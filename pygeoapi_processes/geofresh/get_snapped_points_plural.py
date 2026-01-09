@@ -192,7 +192,7 @@ class SnappedPointsGetterPlural(GeoFreshBaseProcessor):
         csv_url = data.get('csv_url', None)
         colname_lon = data.get('colname_lon', 'lon')
         colname_lat = data.get('colname_lat', 'lat')
-        colname_site_id = data.get('colname_site_id', 'site_id')
+        colname_site_id = data.get('colname_site_id', None)
         # Ask for result format
         result_format = data.get('result_format', None)
         # Optional comment:
@@ -414,6 +414,23 @@ if __name__ == '__main__':
                 ]
             },
             "comment": "test6"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 10: Input CSV file without site_id...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus_without_siteid.csv",
+            "colname_lon": "longitude",
+            "colname_lat": "latitude",
+            "add_distance": True,
+            "comment": "test10"
         },
         "outputs": {
             "transmissionMode": "reference"

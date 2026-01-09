@@ -45,28 +45,26 @@ def make_insertion_rows_from_geojson(geojson, colname_site_id=None):
 
     if geojson['type'] == 'MultiPoint':
         LOGGER.debug('Found MultiPoint...')
-        site_id = 'none'
         for lon, lat in geojson["coordinates"]:
-            row = f"('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
+            row = f"(NULL, {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
             list_of_insert_rows.append(row)
 
     elif geojson['type'] == 'GeometryCollection':
         LOGGER.debug('Found GeometryCollection...')
-        site_id = 'none'
         for point in geojson['geometries']:
             lon, lat = point['coordinates']
-            row = f"('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
+            row = f"(NULL, {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
             list_of_insert_rows.append(row)
 
     elif geojson['type'] == 'FeatureCollection':
         LOGGER.debug('Found FeatureCollection...')
-        if colname_site_id is None:
-            site_id = 'none'
         for point in geojson['features']:
             lon, lat = point['geometry']['coordinates']
-            if colname_site_id is not None:
+            if colname_site_id is None:
+                row = f"(NULL, {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
+            else:
                 site_id = point['properties'][colname_site_id]
-            row = f"('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
+                row = f"('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
             list_of_insert_rows.append(row)
 
     else:
@@ -79,7 +77,7 @@ def make_insertion_rows_from_geojson(geojson, colname_site_id=None):
     return list_of_insert_rows
 
 
-def make_insertion_rows_from_dataframe(input_df, colname_lon, colname_lat, colname_site_id):
+def make_insertion_rows_from_dataframe(input_df, colname_lon, colname_lat, colname_site_id=None):
     '''
     From an input dataframe, make SQL rows that can be used as INSERT statements,
     to populate a temporary table with site_id, lon, lat and a geom.
@@ -87,16 +85,25 @@ def make_insertion_rows_from_dataframe(input_df, colname_lon, colname_lat, colna
     list_of_insert_rows = []
 
     # Retrieve using column index, not colname - this is faster:
-    colidx_lon = input_df.columns.get_loc(colname_lon)
-    colidx_lat = input_df.columns.get_loc(colname_lat)
-    colidx_site_id = input_df.columns.get_loc(colname_site_id)
 
-    for row in input_df.itertuples(index=False):
-        lon = row[colidx_lon]
-        lat = row[colidx_lat]
-        site_id = row[colidx_site_id]
-        row = f"('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
-        list_of_insert_rows.append(row)
+    if colname_site_id is None:
+        colidx_lon = input_df.columns.get_loc(colname_lon)
+        colidx_lat = input_df.columns.get_loc(colname_lat)
+        for row in input_df.itertuples(index=False):
+            lon = row[colidx_lon]
+            lat = row[colidx_lat]
+            row = f"(NULL, {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
+            list_of_insert_rows.append(row)
+    else:
+        colidx_lon = input_df.columns.get_loc(colname_lon)
+        colidx_lat = input_df.columns.get_loc(colname_lat)
+        colidx_site_id = input_df.columns.get_loc(colname_site_id)
+        for row in input_df.itertuples(index=False):
+            lon = row[colidx_lon]
+            lat = row[colidx_lat]
+            site_id = row[colidx_site_id]
+            row = f"('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
+            list_of_insert_rows.append(row)
 
     LOGGER.debug(f'Created list of {len(list_of_insert_rows)} insert rows...')
     LOGGER.debug(f'First insert row: {list_of_insert_rows[0]}')
