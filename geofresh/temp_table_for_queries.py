@@ -109,8 +109,8 @@ def make_insertion_rows_from_dataframe(input_df, colname_lon, colname_lat, colna
     LOGGER.debug(f'First insert row: {list_of_insert_rows[0]}')
     return list_of_insert_rows
 
-
-def create_and_populate_temp_table(cursor, list_of_insert_rows):
+# add_subcids: If we enable omitting that, we could query for only reg_ids...
+def create_and_populate_temp_table(cursor, list_of_insert_rows, add_subcids=True):
     '''
     Creating a temp table containing the columns:
     site_id, lon, lat, subc_id, basin_id, reg_id, geom_user
@@ -131,9 +131,12 @@ def create_and_populate_temp_table(cursor, list_of_insert_rows):
     reg_ids = _update_temp_table_regid(cursor, tablename)
 
     # For each point, find out and store the basin_id and subc_id:
-    _add_subcids(cursor, tablename, reg_ids)
+    if add_subcids:
+        _add_subcids(cursor, tablename, reg_ids)
+        LOGGER.debug(f'Populating temp table "{tablename}" (incl. subc_id, basin_id, reg_id)... done.')
+    else:
+        LOGGER.debug(f'Populating temp table "{tablename}" (incl. only reg_id)... done.')
 
-    LOGGER.debug(f'Populating temp table "{tablename}"... done.')
     return tablename, reg_ids
 
 
