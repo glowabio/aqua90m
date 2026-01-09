@@ -428,9 +428,9 @@ def get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson, colname
     # Finished collecting the results, now make output JSON object:
     # Note: This is not GeoJSON (on purpose), as we did not look for geometry yet.
     output = {
-        "subc_ids":   ', '.join(str(i) for i in set(subc_ids)),
-        "region_ids": ', '.join(str(i) for i in set(reg_ids)),
-        "basin_ids":  ', '.join(str(i) for i in set(basin_ids)),
+        "subc_ids": subc_ids,
+        "region_ids": reg_ids,
+        "basin_ids": basin_ids,
         "everything": everything
     }
 
