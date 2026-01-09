@@ -186,7 +186,7 @@ class LocalStreamSegmentsGetterPlural(GeoFreshBaseProcessor):
                 LOGGER.debug('Input dataframe already contains subc_id for each point, using that...')
             else:
                 LOGGER.debug('Querying subc_id etc. for each point in input dataframe...')
-                temp_df = basic_queries.get_subcid_basinid_regid_for_dataframe(conn, input_df, colname_lon, colname_lat, colname_site_id)
+                temp_df = basic_queries.get_subcid_basinid_regid__dataframe_to_dataframe(conn, input_df, colname_lon, colname_lat, colname_site_id)
             all_subc_ids, reg_id, basin_id = self._get_ids_and_check(temp_df)
 
         ## Next, for all subc_ids, get the stream segments!

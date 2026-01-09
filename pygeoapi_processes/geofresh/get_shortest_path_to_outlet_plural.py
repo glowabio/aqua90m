@@ -269,7 +269,7 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
                 temp_df = pd.merge(input_df, temp_df, on="subc_id")
             else:
                 LOGGER.debug('Querying required columns (subc_id, basin_id, reg_id) for each point...')
-                temp_df = basic_queries.get_subcid_basinid_regid_for_dataframe(
+                temp_df = basic_queries.get_subcid_basinid_regid__dataframe_to_dataframe(
                     conn, input_df, colname_lon, colname_lat, colname_site_id)
 
             # Actual routing: For each row, get the downstream ids!

@@ -761,7 +761,7 @@ if __name__ == "__main__" and True:
 
     print('\nPREPARE RUNNING FUNCTION: get_dijkstra_ids_to_outlet_plural')
     ## Now, for each row, get the ids!
-    temp_df = basic_queries.get_subcid_basinid_regid_for_dataframe(conn, input_df, "lon", "lat", "site_id")
+    temp_df = basic_queries.get_subcid_basinid_regid__dataframe_to_dataframe(conn, input_df, "lon", "lat", "site_id")
     print(f'\n{temp_df}')
     print('\nSTART RUNNING FUNCTION: get_dijkstra_ids_to_outlet_plural')
     res = get_dijkstra_ids_to_outlet_plural(conn, temp_df, "site_id", "csv")

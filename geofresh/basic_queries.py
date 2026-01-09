@@ -272,7 +272,7 @@ def get_regid_from_basinid(conn, LOGGER, basin_id):
 #################################
 
 
-def get_subcid_basinid_regid_for_dataframe(conn, input_df, colname_lon, colname_lat, colname_site_id=None):
+def get_subcid_basinid_regid__dataframe_to_dataframe(conn, input_df, colname_lon, colname_lat, colname_site_id=None):
     # INPUT:  Dataframe with site_id, lon, lat
     # OUTPUT: Dataframe with site_id, subc_id, basin_id, reg_id
     list_of_insert_rows = temp_tables.make_insertion_rows_from_dataframe(input_df, colname_lon, colname_lat, colname_site_id)

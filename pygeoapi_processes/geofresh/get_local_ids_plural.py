@@ -388,7 +388,7 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
             elif 'subc_id' in which_ids or 'basin_id' in which_ids:
                 # Returns a dataframe with lon, lat, subc_id, basin_id, reg_id, possibly site_id
                 # without loop:
-                output_df = basic_queries.get_subcid_basinid_regid_for_dataframe(
+                output_df = basic_queries.get_subcid_basinid_regid__dataframe_to_dataframe(
                     conn, input_df, colname_lon, colname_lat, colname_site_id=colname_site_id)
 
             elif 'reg_id' in which_ids:
