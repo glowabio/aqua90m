@@ -16,6 +16,7 @@ from pygeoapi.process.aqua90m.pygeoapi_processes.geofresh.GeoFreshBaseProcessor 
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
 import pygeoapi.process.aqua90m.utils.exceptions as exc
+import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
 import pygeoapi.process.aqua90m.geofresh.routing as routing
 import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
 import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
@@ -35,7 +36,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet-plural/ex
         "colname_lat": "latitude",
         "colname_site_id": "site_id",
         "downstream_ids_only": true,
-        "return_csv": true
+        "result_format": "csv"
     },
     "outputs": {
         "transmissionMode": "reference"
@@ -55,7 +56,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet-plural/ex
         "colname_lat": "latitude",
         "colname_site_id": "site_id",
         "downstream_ids_only": true,
-        "return_csv": true
+        "result_format": "csv"
     },
     "outputs": {
         "transmissionMode": "reference"
@@ -74,7 +75,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-to-outlet-plural/ex
         "colname_lat": "latitude",
         "colname_site_id": "site_id",
         "downstream_ids_only": true,
-        "return_json": true
+        "result_format": "json"
     },
     "outputs": {
         "transmissionMode": "reference"
@@ -97,34 +98,73 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
 
     def _execute(self, data, requested_outputs, conn):
 
-        # Option 1:
-        # Input:  CSV with lon, lat (or with subc_id)
+        # Input options:
+        # Input: CSV with lon, lat (or with subc_id)
+        # Input: GeoJSON FeatureCollection with points
+
+        # Output options:
         # Output: CSV with added columns containing a list of the downstream ids... (TODO: Not ideal as format!)
+        # Output: UGLY JSON???
+        # Output: TODO: GeoJSON with points, and for each point, a list of the downstream ids
 
-        # Option 2 (to be implemented, TODO)
-        # Input:  GeoJSON with points
-        # Output: GeoJSON with points, and for each point, a list of the downstream ids
-
-        # User inputs
-        return_csv  = data.get('return_csv', None)
-        return_json = data.get('return_json', None)
+        # Plural case:
+        # GeoJSON (e.g. Multipoint, GeometryCollection of Points,
+        # FeatureCollection of Points), posted directly:
+        points_geojson = data.get('points_geojson', None)
+        points_geojson_url = data.get('points_geojson_url', None)
         # CSV, to be downloaded via URL
         csv_url = data.get('csv_url', None)
         colname_lon = data.get('colname_lon', 'lon')
         colname_lat = data.get('colname_lat', 'lat')
         colname_site_id = data.get('colname_site_id', None)
-        comment = data.get('comment', None)
         geometry_only = data.get('geometry_only', False)
         downstream_ids_only = data.get('downstream_ids_only', False)
         add_downstream_ids = data.get('add_downstream_ids', False)
-        # GeoJSON:
-        points_geojson = None # TODO
+        result_format = data.get('result_format', None)
+        comment = data.get('comment', None)
 
-        ########################
-        ### Check parameters ###
-        ########################
+        ##############################
+        ### Download if applicable ###
+        ### and validate GeoJSON   ###
+        ##############################
 
-        utils.exactly_one_param(dict(return_csv=return_csv, return_json=return_json))
+        utils.mandatory_parameters(dict(colname_site_id=colname_site_id))
+
+        if points_geojson_url is not None:
+            points_geojson = utils.download_geojson(points_geojson_url)
+
+        if points_geojson is not None:
+
+            # Check if FeatureCollection:
+            if not points_geojson['type'] == 'FeatureCollection':
+                err_msg = f"Input GeoJSON has to be a FeatureCollection, not '{points_geojson['type']}'."
+                raise ProcessorExecuteError(err_msg)
+
+            # Check if every feature has id:
+            geojson_helpers.check_feature_collection_property(points_geojson, colname_site_id)
+
+        input_df = None
+        if csv_url is not None:
+            input_df = utils.access_csv_as_dataframe(csv_url)
+            LOGGER.debug('Input CSV: Found {ncols} columns (names: {colnames})'.format(
+                ncols=input_df.shape[1], colnames=input_df.columns))
+
+            # Check if every row has id:
+            if not (colname_site_id in input_df.columns):
+                err_msg = "Please add a column 'site_id' to your input dataframe."
+                LOGGER.error(err_msg)
+                raise ProcessorExecuteError(err_msg)
+
+
+        #################################
+        ### Validate input parameters ###
+        #################################
+
+        # Check result format
+        if not (result_format is None or result_format == 'json' or result_format == 'csv'):
+            err_msg = "Malformed parameter: result_format can only be 'csv' or 'json', not {result_format}"
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
 
         # Check if boolean:
         utils.is_bool_parameters(dict(
@@ -149,16 +189,16 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
             LOGGER.error(err_msg)
             raise NotImplementedError(err_msg)
 
-        if csv_url is not None and colname_site_id is None:
-            err_msg = "If you provide a CSV file, you must provide colname_site_id!"
-            LOGGER.error(err_msg)
-            raise ProcessorExecuteError(err_msg)
+        # If user specified no output format, will use the input format...
+        if result_format is None and csv_url is not None:
+            result_format = "csv"
+        elif result_format is None and points is not None:
+            result_format = "json"
 
 
-
-        ##################
-        ### Actual ... ###
-        ##################
+        ##########################
+        ### Actual computation ###
+        ##########################
         # Overall goal: Get the dijkstra shortest path (as linestrings)!
 
         ## Potential outputs:
@@ -168,30 +208,70 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
         ## Handle GeoJSON case:
         if points_geojson is not None:
 
-            err_msg = "Cannot return downstream paths for GeoJSON input yet! (Let us know if you would like this functionality)."
-            LOGGER.error(err_msg)
-            raise NotImplementedError(err_msg)
+            # Check if the required properties "subc_id",
+            # "basin_id", "reg_id" are already present.
+            try:
+                geojson_helpers.check_feature_collection_property(points_geojson, "subc_id")
+                geojson_helpers.check_feature_collection_property(points_geojson, "basin_id")
+                geojson_helpers.check_feature_collection_property(points_geojson, "reg_id")
+                LOGGER.info(
+                    'Input FeatureCollection already contains required properties'
+                    ' (subc_id, basin_id, reg_id) for each Feature, using that...'
+                )
+                # Actual routing: For each feature, get the downstream ids!
+                # In this case, we call the routing method with GeoJSON input:
+                if result_format == 'csv':
+                    output_df = routing.get_dijkstra_ids_to_outlet_plural(
+                        conn,
+                        points_geojson,
+                        colname_site_id,
+                        return_csv=True
+                    )
+                elif result_format == 'json':
+                    output_json = routing.get_dijkstra_ids_to_outlet_plural(
+                        conn,
+                        points_geojson,
+                        colname_site_id,
+                        return_json=True
+                    )
 
-            # If a FeatureCollections is passed, check whether the property "site_id" (or similar)
-            # is present in every feature:
-            if points_geojson['type'] == 'FeatureCollection':
-                geojson_helpers.check_feature_collection_property(points_geojson, colname_site_id)
+            # This is the normal case: "subc_id", "basin_id" and
+            # "reg_id" have to be retrieved.
+            except exc.UserInputException as e:
+                # For each feature, retrieve the required ids "subc_id", "basin_id", "reg_id":
+                # (Note: Instead, we could use "add_subcid_basinid_regid_to_featurecoll" which
+                # outputs a FeatureCollection, that is easier to understand, but slower.)
+                temp_df = basic_queries.get_subcid_basinid_regid_for_geojson(
+                    conn,
+                    'shortestpath',
+                    points_geojson,
+                    colname_site_id=colname_site_id
+                )
+                # Now that a dataframe was created from Database output,
+                # the column name for the site_ids has changed:
+                colname_site_id = 'site_id'
+
+                # Actual routing: For each item, get the downstream ids!
+                if result_format == 'csv':
+                    output_df = routing.get_dijkstra_ids_to_outlet_plural(
+                        conn,
+                        temp_df,
+                        colname_site_id,
+                        return_csv=True
+                    )
+                elif result_format == 'json':
+                    output_json = routing.get_dijkstra_ids_to_outlet_plural(
+                        conn,
+                        temp_df,
+                        colname_site_id,
+                        return_json=True
+                    )
 
         ## Handle CSV case:
-        elif csv_url is not None:
+        elif input_df is not None:
 
-            # Download CSV:
-            LOGGER.debug(f'Accessing input CSV from: {csv_url}')
-            input_df = utils.access_csv_as_dataframe(csv_url)
-            LOGGER.debug('Accessing input CSV... DONE. Found {ncols} columns (names: {colnames})'.format(
-                ncols=input_df.shape[1], colnames=input_df.columns))
-
-            ## Now, for each row, get the ids (unless already present)!
-            if not (colname_site_id in input_df.columns):
-                err_msg = "Please add a column 'site_id' to your input dataframe."
-                LOGGER.error(err_msg)
-                raise ProcessorExecuteError(err_msg)
-            elif (('subc_id' in input_df.columns) and
+            ## For each row, get the ids (unless already present)!
+            if (('subc_id' in input_df.columns) and
                   ('basin_id' in input_df.columns) and
                   ('reg_id' in input_df.columns) and
                   (colname_site_id  in input_df.columns)):
@@ -211,9 +291,9 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
                     conn, 'shortestpath', input_df, colname_lon, colname_lat, colname_site_id)
 
             ## Next, for each row, get the downstream ids!
-            if return_csv:
+            if result_format == 'csv':
                 output_df = routing.get_dijkstra_ids_to_outlet_plural(conn, temp_df, colname_site_id, return_csv=True)
-            elif return_json:
+            elif result_format == 'json':
                 output_json = routing.get_dijkstra_ids_to_outlet_plural(conn, temp_df, colname_site_id, return_json=True)
 
 
@@ -246,7 +326,7 @@ if __name__ == '__main__':
             "colname_lat": "latitude",
             "colname_site_id": "site_id",
             "downstream_ids_only": True,
-            "return_csv": True,
+            "result_format": "csv",
             "comment": "test1"
         },
         "outputs": {
@@ -266,7 +346,7 @@ if __name__ == '__main__':
             "colname_lat": "latitude",
             "colname_site_id": "site_id",
             "downstream_ids_only": True,
-            "return_csv": True,
+            "result_format": "csv",
             "comment": "test2"
         },
         "outputs": {
@@ -285,8 +365,42 @@ if __name__ == '__main__':
             "colname_lat": "latitude",
             "colname_site_id": "site_id",
             "downstream_ids_only": True,
-            "return_json": True,
+            "result_format": "json",
             "comment": "test3"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 4: Input GeoJSON file, output CSV file...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points.json",
+            "colname_site_id": "my_site",
+            "downstream_ids_only": True,
+            "result_format": "csv",
+            "comment": "test4"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 5: Input GeoJSON file, output JSON file...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points.json",
+            "colname_site_id": "my_site",
+            "downstream_ids_only": True,
+            "result_format": "json",
+            "comment": "test5"
         },
         "outputs": {
             "transmissionMode": "reference"
