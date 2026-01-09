@@ -354,6 +354,81 @@ def _iterate_outlets_to_json(conn, departing_points):
     return everything
 
 
+def get_dijkstra_ids_one_to_many(conn, start_subc_ids, end_subc_id, reg_id, basin_id):
+    # INPUT:  Set of subc_ids (in one basin)
+    # OUTPUT: JSON dict: One path (list of subc_ids) per start_subc_id.
+
+    LOGGER.debug(f'Compute paths from {len(start_subc_ids)} subc_ids to outlet (in basin {basin_id}, region {reg_id})')
+
+    ## Construct SQL query:
+    ## Inner SELECT: Returns what the pgr_dijkstra needs: (id, source, target, cost).
+    ## We run pgr_routing as one-to-many here:
+    ##   We compute the paths from each start point to one end point (the outlet),
+    ##   resulting in a list of paths (path from s1 to o, from s1 to o, from s1 to o, ...).
+    ##   Each path consists of many edges/stream segments!
+    ## pgr_routing returns: (seq, path_seq, start_vid, node, edge, cost, agg_cost)
+    ##   where start_vid tells us which path, and then node/edge are the stream segments.
+    ## We are interested in all the edges (subc_ids of the stream segments) along the path,
+    ##   and for identifying the path, we need the id of the start, so we select
+    ##   start_vid and edge.
+    start_nodes = ','.join(map(str, start_subc_ids))
+    query = f'''
+    SELECT
+        start_vid,
+        edge
+    FROM pgr_dijkstra(
+        'SELECT
+            subc_id AS id,
+            subc_id AS source,
+            target,
+            length AS cost
+                FROM hydro.stream_segments
+                WHERE reg_id = {reg_id}
+                AND basin_id = {basin_id}',
+        ARRAY[{start_nodes}],
+        {end_subc_id},
+        directed := false
+    );
+    '''.replace("\n", " ").replace("    ", "").strip()
+    LOGGER.log(logging.TRACE, f"SQL query: {query}")
+
+    ### Query database:
+    cursor = conn.cursor()
+    LOGGER.log(logging.TRACE, 'Querying database...')
+    cursor.execute(query)
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
+
+    ## Construct result JSON dict (using integer key):
+    segments_by_start_id = {}
+    for start_id in start_subc_ids:
+        segments_by_start_id[start_id] = []
+
+    ## Iterating over the result rows:
+    LOGGER.log(logging.TRACE, f"Result dict to be filled: {segments_by_start_id}")
+    LOGGER.log(logging.TRACE, "Iterating over results...")
+    while True:
+        row = cursor.fetchone()
+        if row is None: break
+
+        # Collect all the ids along the paths:
+        # Each path is defined by its start, and consists of many edges/stream segments.
+        start_id  = row[0] # departure point subc_id(integer)
+        this_id   = row[1] # current edge/stream segment (integer)
+        if this_id == -1:
+            pass
+        else:
+            # Add this subc_id (integer) to the matrix
+            # (to the list of stream segments for this start-end-combination).
+            segments_by_start_id[start_id].append(this_id)
+            LOGGER.log(logging.TRACE, 'Start {start_id} to end {end_id}, add this id {this_id}')
+
+    LOGGER.log(logging.TRACE, "Iterating over results... DONE.")
+
+    return segments_by_start_id
+
+
+# Called by plural process:
+#    get_shortest_path_between_points_plural.py
 def get_dijkstra_ids_many_to_many(conn, subc_ids_start, subc_ids_end, reg_id, basin_id, result_format='json'):
     # INPUT:  Sets of subc_ids
     # OUTPUT: Route matrix (as JSON)
@@ -499,78 +574,6 @@ def _matrix_to_dataframe(result_matrix, subc_ids_start, subc_ids_end):
     output_df = pd.DataFrame(all_rows, columns=colnames)
     return output_df
 
-
-def get_dijkstra_ids_one_to_many(conn, start_subc_ids, end_subc_id, reg_id, basin_id):
-    # INPUT:  Set of subc_ids (in one basin)
-    # OUTPUT: JSON dict: One path (list of subc_ids) per start_subc_id.
-
-    LOGGER.debug(f'Compute paths from {len(start_subc_ids)} subc_ids to outlet (in basin {basin_id}, region {reg_id})')
-
-    ## Construct SQL query:
-    ## Inner SELECT: Returns what the pgr_dijkstra needs: (id, source, target, cost).
-    ## We run pgr_routing as one-to-many here:
-    ##   We compute the paths from each start point to one end point (the outlet),
-    ##   resulting in a list of paths (path from s1 to o, from s1 to o, from s1 to o, ...).
-    ##   Each path consists of many edges/stream segments!
-    ## pgr_routing returns: (seq, path_seq, start_vid, node, edge, cost, agg_cost)
-    ##   where start_vid tells us which path, and then node/edge are the stream segments.
-    ## We are interested in all the edges (subc_ids of the stream segments) along the path,
-    ##   and for identifying the path, we need the id of the start, so we select
-    ##   start_vid and edge.
-    start_nodes = ','.join(map(str, start_subc_ids))
-    query = f'''
-    SELECT
-        start_vid,
-        edge
-    FROM pgr_dijkstra(
-        'SELECT
-            subc_id AS id,
-            subc_id AS source,
-            target,
-            length AS cost
-                FROM hydro.stream_segments
-                WHERE reg_id = {reg_id}
-                AND basin_id = {basin_id}',
-        ARRAY[{start_nodes}],
-        {end_subc_id},
-        directed := false
-    );
-    '''.replace("\n", " ").replace("    ", "").strip()
-    LOGGER.log(logging.TRACE, f"SQL query: {query}")
-
-    ### Query database:
-    cursor = conn.cursor()
-    LOGGER.log(logging.TRACE, 'Querying database...')
-    cursor.execute(query)
-    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
-
-    ## Construct result JSON dict (using integer key):
-    segments_by_start_id = {}
-    for start_id in start_subc_ids:
-        segments_by_start_id[start_id] = []
-
-    ## Iterating over the result rows:
-    LOGGER.log(logging.TRACE, f"Result dict to be filled: {segments_by_start_id}")
-    LOGGER.log(logging.TRACE, "Iterating over results...")
-    while True:
-        row = cursor.fetchone()
-        if row is None: break
-
-        # Collect all the ids along the paths:
-        # Each path is defined by its start, and consists of many edges/stream segments.
-        start_id  = row[0] # departure point subc_id(integer)
-        this_id   = row[1] # current edge/stream segment (integer)
-        if this_id == -1:
-            pass
-        else:
-            # Add this subc_id (integer) to the matrix
-            # (to the list of stream segments for this start-end-combination).
-            segments_by_start_id[start_id].append(this_id)
-            LOGGER.log(logging.TRACE, 'Start {start_id} to end {end_id}, add this id {this_id}')
-
-    LOGGER.log(logging.TRACE, "Iterating over results... DONE.")
-
-    return segments_by_start_id
 
 ###############
 ### Testing ###

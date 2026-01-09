@@ -82,8 +82,8 @@ def check_feature_collection_property(feature_coll, mandatory_colname):
         raise exc.UserInputException(err_msg)
     LOGGER.debug(f'Checking if "{mandatory_colname}" in FeatureCollection...')
     for feature in feature_coll['features']:
-        LOGGER.debug(f'This feature: {feature}')
-        LOGGER.debug(f"Properties of this feature: {feature['properties']}")
+        #LOGGER.debug(f'This feature: {feature}')
+        #LOGGER.debug(f"Properties of this feature: {feature['properties']}")
         if not mandatory_colname in feature['properties']:
             err_msg = f"Please provide '{mandatory_colname}' for each Feature in the FeatureCollection. Missing in: {feature}"
             LOGGER.error(err_msg)
