@@ -129,7 +129,7 @@ def get_basinid_regid_from_lonlat(conn, LOGGER, lon, lat):
     ### Get results and construct GeoJSON:
     row = cursor.fetchone()
     if row is None: # Ocean case:
-        err_msg = 'No basin_id found for lon %s, lat %s! Is this in the ocean?' % (lon, lat)
+        err_msg = f'No basin_id found for lon {lon}, lat {lat}! Is this in the ocean?'
         LOGGER.error(err_msg)
         raise exc.GeoFreshNoResultException(err_msg)
 
@@ -158,7 +158,7 @@ def get_basinid_regid_from_subcid(conn, LOGGER, subc_id):
     ### Get results and construct GeoJSON:
     row = cursor.fetchone()
     if row is None:
-        err_msg = 'No basin_id and reg_id found for subc_id %s!' % subc_id
+        err_msg = f'No basin_id and reg_id found for subc_id {subc_id}!'
         LOGGER.error(err_msg)
         raise exc.GeoFreshUnexpectedResultException(error_message)
     else:
@@ -180,18 +180,18 @@ def get_subcid_basinid_regid(conn, LOGGER, lon=None, lat=None, subc_id=None):
 
 def get_subcid_basinid_regid_from_subcid(conn, LOGGER, subc_id):
 
-    LOGGER.log(logging.TRACE, 'Getting subcatchment, region and basin id for subc_id: %s' % subc_id)
+    LOGGER.log(logging.TRACE, f'Getting subcatchment, region and basin id for subc_id: {subc_id}')
     basin_id, reg_id = get_basinid_regid_from_subcid(conn, LOGGER, subc_id)
     return subc_id, basin_id, reg_id
 
 def get_subcid_basinid_regid_from_lonlat(conn, LOGGER, lon, lat):
 
-    LOGGER.log(logging.TRACE, 'Getting subcatchment, region and basin id for lon, lat: %s, %s' % (lon, lat))
+    LOGGER.log(logging.TRACE, f'Getting subcatchment, region and basin id for lon, lat: {lon}, {lat}')
     lon = float(lon)
     lat = float(lat)
     reg_id = get_regid_from_lonlat(conn, LOGGER, lon, lat)
     subc_id, basin_id = get_subcid_basinid_from_lonlat_regid(conn, LOGGER, lon, lat, reg_id)
-    LOGGER.log(logging.TRACE, 'Subcatchment has subc_id %s, basin_id %s, reg_id %s.' % (subc_id, basin_id, reg_id))
+    LOGGER.log(logging.TRACE, f'Subcatchment has subc_id {subc_id}, basin_id {basin_id}, reg_id {reg_id}.')
     return subc_id, basin_id, reg_id
 
 
@@ -229,7 +229,7 @@ def get_subcid_basinid_from_lonlat_regid(conn, LOGGER, lon, lat, reg_id):
     ### Get results:
     row = cursor.fetchone()
     if row is None: # Ocean case:
-        err_msg = 'No subc_id and basin_id found for lon %s, lat %s! Is this in the ocean?' % (lon, lat)
+        err_msg = f'No subc_id and basin_id found for lon {lon}, lat {lat}! Is this in the ocean?'
         LOGGER.error(err_msg)
         raise exc.GeoFreshNoResultException(err_msg)
     else:
@@ -257,7 +257,7 @@ def get_regid_from_basinid(conn, LOGGER, basin_id):
     ### Get results and construct GeoJSON:
     row = cursor.fetchone()
     if row is None:
-        err_msg = 'No reg_id found for basin_id %s!' % basin_id
+        err_msg = f'No reg_id found for basin_id {basin_id}!'
         LOGGER.error(err_msg)
         raise exc.GeoFreshUnexpectedResultException(error_message)
     else:
@@ -283,10 +283,6 @@ def get_subcid_basinid_regid_for_dataframe(conn, tablename_prefix, input_df, col
     FROM {tablename}
     '''
     output_df = pd.read_sql_query(query, conn)
-    #LOGGER.debug('Reading pd.read_sql_table...')
-    #output_df = pd.read_sql_table(
-    #    tablename, conn, index_col="subc_id", coerce_float=True, parse_dates=None, columns=None, chunksize=None)
-    #LOGGER.debug('Reading pd.read_sql_table... Done.')
     temp_tables.drop_temp_table(cursor, tablename)
     return output_df
 
@@ -294,6 +290,8 @@ def get_subcid_basinid_regid_for_dataframe(conn, tablename_prefix, input_df, col
 def get_subcid_basinid_regid_for_geojson(conn, tablename_prefix, input_geojson, colname_site_id=None):
     # INPUT:  GeoJSON (MultiPoint or GeometryCollection or FeatureCollection)
     # OUTPUT: Dataframe with site_id, subc_id, basin_id, reg_id
+    # Note: If no colname_site_id is given, we can return the dataframe, but it
+    # cannot be matched to the input points.
     list_of_insert_rows = temp_tables.make_insertion_rows_from_geojson(input_geojson, colname_site_id=colname_site_id)
     cursor = conn.cursor()
     tablename, reg_ids = temp_tables.create_and_populate_temp_table(cursor, tablename_prefix, list_of_insert_rows)
@@ -385,12 +383,13 @@ def get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson, colname
         elif 'coordinates' in point:
             lon, lat = point['coordinates']
         else:
-            err_msg = "Input is not valid GeoJSON Point or Point-Feature: %s" % point
+            err_msg = f"Input is not valid GeoJSON Point or Point-Feature: {point}"
+            LOGGER.debug(err_msg)
             raise UserInputException(err_msg)
 
         # Query database:
         try:
-            LOGGER.log(logging.TRACE, 'Getting subcatchment for lon, lat: %s, %s' % (lon, lat))
+            LOGGER.log(logging.TRACE, f'Getting subcatchment for lon, lat: {lon}, {lat}')
             subc_id, basin_id, reg_id = get_subcid_basinid_regid_from_lonlat(
                 conn, LOGGER, lon, lat)
         except exc.GeoFreshNoResultException as e:
@@ -431,29 +430,32 @@ def get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson, colname
     }
 
     # Extensive logging of stats:
-    LOGGER.log(logging.TRACE, 'Of %s points, ...' % num)
+    LOGGER.log(logging.TRACE, f'Of {num} points, ...')
 
     # Stats reg_id...
     if len(set(reg_ids)) == 1:
-        LOGGER.log(logging.TRACE, '... all %s points fall into regional unit with reg_id %s' % (num, reg_ids[0]))
+        LOGGER.log(logging.TRACE, f'... all {num} points fall into regional unit with reg_id {reg_ids[0]}')
     else:
         reg_id_counts = {reg_id: reg_ids.count(reg_id) for reg_id in reg_ids}
         for reg_id in set(reg_ids):
-            LOGGER.log(logging.TRACE, '... %s points fall into regional unit with reg_id %s' % (reg_id_counts[reg_id], reg_id))
+            this_num = reg_id_counts[reg_id]
+            LOGGER.log(logging.TRACE, f'... {this_num} points fall into regional unit with reg_id {reg_id}')
 
     if len(set(basin_ids)) == 1:
-        LOGGER.log(logging.TRACE, '... all %s points fall into drainage basin with basin_id %s' % (num, basin_ids[0]))
+        LOGGER.log(logging.TRACE, f'... all {num} points fall into drainage basin with basin_id {basin_ids[0]}')
     else:
         basin_id_counts = {basin_id: basin_ids.count(basin_id) for basin_id in basin_ids}
         for basin_id in set(basin_ids):
-            LOGGER.log(logging.TRACE, '... %s points fall into drainage basin with basin_id %s' % (basin_id_counts[basin_id], basin_id))
+            this_num = basin_id_counts[basin_id]
+            LOGGER.log(logging.TRACE, f'... {this_num} points fall into drainage basin with basin_id {basin_id}')
 
     if len(set(subc_ids)) == 1:
-        LOGGER.log(logging.TRACE, '... all %s points fall into subcatchment with subc_id %s' % (num, subc_ids[0]))
+        LOGGER.log(logging.TRACE, f'... all {num} points fall into subcatchment with subc_id {subc_ids[0]}')
     else:
         subc_id_counts = {subc_id: subc_ids.count(subc_id) for subc_id in subc_ids}
         for subc_id in set(subc_ids):
-            LOGGER.log(logging.TRACE, '... %s points fall into subcatchment with subc_id %s' % (subc_id_counts[subc_id], subc_id))
+            this_num = subc_id_counts[subc_id]
+            LOGGER.log(logging.TRACE, f'... {this_num} points fall into subcatchment with subc_id {subc_id}')
 
     # Return result
     return output
@@ -503,8 +505,13 @@ def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, colname_lon, c
         everything.append([site_id, reg_id, basin_id, subc_id])
 
         # First is string, the others are integers.
-        #LOGGER.debug("Which type are these? site_id %s (%s) reg_id %s (%s) basin_id %s (%s) subc_id %s (%s)" % (
-        #    site_id, type(site_id), reg_id, type(reg_id), basin_id, type(basin_id), subc_id, type(subc_id)))
+        #LOGGER.debug(
+        #    f"Which type are these?"
+        #    f" site_id {site_id} ({type(site_id)})"
+        #    f" reg_id {reg_id} ({type(reg_id)})"
+        #    f" basin_id {basin_id} ({type(basin_id)})"
+        #    f" subc_id {subc_id} ({type(subc_id)})"
+        #)
 
         # This is not really needed, just for logging:
         reg_ids.append(str(reg_id))
@@ -527,28 +534,31 @@ def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, colname_lon, c
     output_df[['reg_id', 'basin_id', 'subc_id']] = output_df[['reg_id', 'basin_id', 'subc_id']].apply(pd.to_numeric)
 
     # Extensive logging of stats:
-    LOGGER.log(logging.TRACE, 'Of %s points, ...' % num)
+    LOGGER.log(logging.TRACE, f'Of {num} points, ...')
 
     if len(set(reg_ids)) == 1:
-        LOGGER.log(logging.TRACE, '... all %s points fall into regional unit with reg_id %s' % (num, reg_ids[0]))
+        LOGGER.log(logging.TRACE, f'... all {num}  points fall into regional unit with reg_id {reg_ids[0]}')
     else:
         reg_id_counts = {reg_id: reg_ids.count(reg_id) for reg_id in reg_ids}
         for reg_id in set(reg_ids):
-            LOGGER.log(logging.TRACE, '... %s points fall into regional unit with reg_id %s' % (reg_id_counts[reg_id], reg_id))
+            this_num = reg_id_counts[reg_id]
+            LOGGER.log(logging.TRACE, f'... {this_num} points fall into regional unit with reg_id {reg_id}')
 
     if len(set(basin_ids)) == 1:
-        LOGGER.log(logging.TRACE, '... all %s points fall into drainage basin with basin_id %s' % (num, basin_ids[0]))
+        LOGGER.log(logging.TRACE, f'... all {num} points fall into drainage basin with basin_id {basin_ids[0]}')
     else:
         basin_id_counts = {basin_id: basin_ids.count(basin_id) for basin_id in basin_ids}
         for basin_id in set(basin_ids):
-            LOGGER.log(logging.TRACE, '... %s points fall into drainage basin with basin_id %s' % (basin_id_counts[basin_id], basin_id))
+            this_num = basin_id_counts[basin_id]
+            LOGGER.log(logging.TRACE, f'... {this_num} points fall into drainage basin with basin_id {basin_id}')
 
     if len(set(subc_ids)) == 1:
-        LOGGER.log(logging.TRACE, '... all %s points fall into subcatchment with subc_id %s' % (num, subc_ids[0]))
+        LOGGER.log(logging.TRACE, f'... all {num} points fall into subcatchment with subc_id {subc_ids[0]}')
     else:
         subc_id_counts = {subc_id: subc_ids.count(subc_id) for subc_id in subc_ids}
         for subc_id in set(subc_ids):
-            LOGGER.log(logging.TRACE, '... %s points fall into subcatchment with subc_id %s' % (subc_id_counts[subc_id], subc_id))
+            this_num = subc_id_counts[subc_id]
+            LOGGER.log(logging.TRACE, f'... {this_num} points fall into subcatchment with subc_id {subc_id}')
 
     # Return result
     return output_df
@@ -757,25 +767,25 @@ if __name__ == "__main__" and False:
 
     print('\nSTART RUNNING FUNCTION: get_regid')
     res = get_regid(conn, LOGGER, 9.931555, 54.695070)
-    print('RESULT: %s' % res)
+    print(f'RESULT: {res}')
     res = get_regid(conn, LOGGER, subc_id=506250459)
-    print('RESULT: %s' % res)
+    print(f'RESULT: {res}')
 
     print('\nSTART RUNNING FUNCTION: get_basinid_regid')
     basin_id, reg_id = get_basinid_regid(conn, LOGGER, 9.931555, 54.695070)
-    print('RESULT: %s %s' % (basin_id, reg_id))
+    print(f'RESULT: {basin_id} {reg_id}')
     basin_id, reg_id = get_basinid_regid(conn, LOGGER, subc_id=506250459)
-    print('RESULT: %s %s' % (basin_id, reg_id))
+    print(f'RESULT: {basin_id} {reg_id}')
 
     print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid')
     res = get_subcid_basinid_regid(conn, LOGGER, 9.931555, 54.695070)
-    print('RESULT: %s %s %s' % (res[0], res[1], res[2]))
+    print(f'RESULT: {res[0]} {res[1]} {res[2]}')
     res = get_subcid_basinid_regid(conn, LOGGER, subc_id=506250459)
-    print('RESULT: %s %s %s' % (res[0], res[1], res[2]))
+    print(f'RESULT: {res[0]} {res[1]} {res[2]}')
 
     print('\nSTART RUNNING HELPER FUNCTION: get_subcid_basinid')
     res = get_subcid_basinid_from_lonlat_regid(conn, LOGGER, 9.931555, 54.695070, 58)
-    print('RESULT: %s %s' % (res[0], res[1]))
+    print(f'RESULT: {res[0]} {res[1]}')
 
 
 ###########################
@@ -891,11 +901,11 @@ if __name__ == "__main__" and False:
     # Input: GeoJSON, output JSON
     print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_2json (using Multipoint)')
     res = get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson)
-    print('RESULT:\n%s' % res)
+    print(f'RESULT:\n{res}')
 
     print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_2json (with site_id)')
     res = get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson_with_siteid, "site_id")
-    print('RESULT:\n%s' % res)
+    print(f'RESULT:\n{res}')
 
 
     print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_2json (with site_id, but omit it...)')
@@ -905,12 +915,12 @@ if __name__ == "__main__" and False:
         import sys
         sys.exit(1)
     except Exception as e:
-        print('RESULT:\nException was raised as desired: %s' % e)
+        print(f'RESULT:\nException was raised as desired: {e}')
 
 
     print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_2json (all in same region)')
     res = get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson_all_same)
-    print('RESULT:\n%s' % res)
+    print(f'RESULT:\n{res}')
 
 
 ###########################
@@ -938,16 +948,16 @@ if __name__ == "__main__" and True:
 
     print('\nSTART RUNNING FUNCTION: get_subcid_basinid_regid_for_all_1csv (input: dataframe, output: dataframe)')
     res = get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, example_dataframe, 'lon', 'lat', 'site_id')
-    print('RESULT:\n%s' % res)
+    print(f'RESULT:\n{res}')
 
 
     print('\nSTART RUNNING FUNCTION: get_basinid_regid_for_all_1csv (input: dataframe, output: dataframe)')
     res = get_basinid_regid_for_all_1csv(conn, LOGGER, example_dataframe, 'lon', 'lat', 'site_id')
-    print('RESULT:\n%s' % res)
+    print(f'RESULT:\n{res}')
 
     print('\nSTART RUNNING FUNCTION: get_regid_for_all_1csv (input: dataframe, output: dataframe)')
     res = get_regid_for_all_1csv(conn, LOGGER, example_dataframe, 'lon', 'lat', 'site_id')
-    print('RESULT:\n%s' % res)
+    print(f'RESULT:\n{res}')
 
     ## Input: dataframe, output dataframe, with site_id!
     example_dataframe2 = pd.DataFrame(
@@ -966,7 +976,7 @@ if __name__ == "__main__" and True:
 
     print('\nSTART RUNNING FUNCTION: get_basinid_regid_for_all_from_subcid_1csv (input: dataframe, output: dataframe)')
     res = get_basinid_regid_for_all_from_subcid_1csv(conn, LOGGER, example_dataframe2, 'subc_id', 'site_id')
-    print('RESULT:\n%s' % res)
+    print(f'RESULT:\n{res}')
 
 
 

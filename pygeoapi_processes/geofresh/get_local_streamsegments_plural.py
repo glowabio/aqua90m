@@ -79,8 +79,6 @@ class LocalStreamSegmentsGetterPlural(GeoFreshBaseProcessor):
         # Output: CSV ... HOW??? TODO ask Afroditi
 
         # User inputs
-        #return_csv  = data.get('return_csv',  False)
-        #return_json = data.get('return_json', False)
         # Output format (can be csv or json):
         result_format = data.get('result_format', 'json')
 
