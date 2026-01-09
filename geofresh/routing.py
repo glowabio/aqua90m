@@ -32,7 +32,9 @@ RETURNS SET OF (seq, path_seq, node, edge, cost, agg_cost)
 
 '''
 
-
+# Called by singular processes:
+#    get_shortest_path_between_points.py
+#    get_shortest_path_to_outlet.py
 def get_dijkstra_ids_one_to_one(conn, start_subc_id, end_subc_id, reg_id, basin_id, silent=False):
     # INPUT:  subc_ids (start and end)
     # OUTPUT: subc_ids (the entire path, incl. start and end, as a list)
@@ -87,6 +89,8 @@ def get_dijkstra_ids_one_to_one(conn, start_subc_id, end_subc_id, reg_id, basin_
     return all_ids
 
 
+# Called by plural process:
+#    get_shortest_path_to_outlet_plural.py
 def get_dijkstra_ids_to_outlet_plural(conn, input_df_or_fcoll, colname_site_id, return_csv=False, return_json=False):
     # We don't want a matrix, we want one path per pair of points - but for many!
     # INPUT:  Dataframe or GeoJSON FeatureCollection
@@ -97,7 +101,7 @@ def get_dijkstra_ids_to_outlet_plural(conn, input_df_or_fcoll, colname_site_id, 
 
     # Get departing points from inputs (can be both dataframe or GeoJSON feature collection)
     if isinstance(input_df_or_fcoll, pd.DataFrame):
-        departing_points = _collect_departing_points_by_region_and_basin(input_df_or_fcoll, colname_site_id)
+        departing_points = _collect_departing_points_by_region_and_basin_from_dataframe(input_df_or_fcoll, colname_site_id)
     elif isinstance(input_df_or_fcoll, dict):
         departing_points = _collect_departing_points_by_region_and_basin_from_fcoll(input_df_or_fcoll, colname_site_id)
     else:
@@ -107,12 +111,12 @@ def get_dijkstra_ids_to_outlet_plural(conn, input_df_or_fcoll, colname_site_id, 
 
     # Return result (can be both dataframe or ugly JSON matrix)
     if return_csv:
-        return _iterate_outlets_dataframe(conn, departing_points)
+        return _iterate_outlets_to_dataframe(conn, departing_points)
     elif return_json:
-        return _iterate_outlets_json(conn, departing_points)
+        return _iterate_outlets_to_json(conn, departing_points)
 
 
-def _collect_departing_points_by_region_and_basin(input_df, colname_site_id):
+def _collect_departing_points_by_region_and_basin_from_dataframe(input_df, colname_site_id):
 
     # First, collect all departing points by iterating over an input dataframe.
     # Store them by region_id and by basin_id, as we need those two values for
@@ -137,9 +141,10 @@ def _collect_departing_points_by_region_and_basin(input_df, colname_site_id):
 
         # Stop if no site_id!
         # Does this work with strings?
+        # TODO: Are site_ids mandatory for plural routing?
         if pd.isna(site_id):
             err_msg = f"Missing site_id in row {i} (subc_id={subc_id}, basin_id={basin_id}, reg_id={reg_id})"
-            LOGGER.error(f'({i}) {err_msg}')
+            LOGGER.error(err_msg)
             raise ValueError(err_msg)
             continue
 
@@ -233,7 +238,9 @@ def _collect_departing_points_by_region_and_basin_from_fcoll(input_fcoll, colnam
     return departing_points
 
 
-def _iterate_outlets_dataframe(conn, departing_points):
+def _iterate_outlets_to_dataframe(conn, departing_points):
+    # Note: This only iterates over regions/basins, as we cannot perform any routing
+    # across basins. Inside a basin, there is no iteration.
 
     # Will construct a dataframe from this:
     everything = []
@@ -285,7 +292,9 @@ def _iterate_outlets_dataframe(conn, departing_points):
     return output_df
 
 
-def _iterate_outlets_json(conn, departing_points):
+def _iterate_outlets_to_json(conn, departing_points):
+    # Note: This only iterates over regions/basins, as we cannot perform any routing
+    # across basins. Inside a basin, there is no iteration.
 
     # Either return as a JSON dictionary, by subc_id:
     everything = {}
@@ -403,7 +412,6 @@ def get_dijkstra_ids_many_to_many(conn, subc_ids_start, subc_ids_end, reg_id, ba
         return output_df
     else:
         raise ValueError(f'Unknown result format: {result_format}. Expected json or dataframe.')
-
 
 
 def _result_to_matrix(cursor, subc_ids_start, subc_ids_end):
