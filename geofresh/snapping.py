@@ -428,7 +428,7 @@ def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, c
 
 def _run_snapping_query(cursor, tablename, reg_id_set, result_format, colname_lon, colname_lat, colname_site_id):
     ## This does not write anything into the database:
-    reg_ids_string = ", ".join([str(elem) for elem in reg_id_set])
+    reg_ids_string = ','.join(map(str, reg_id_set))
     query = f'''
     SELECT
         poi.lon,
@@ -497,7 +497,7 @@ def _package_result_in_geojson(cursor, colname_site_id):
         snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
 
         # Construct Feature, incl. ids, strahler and original lonlat:
-        # TODO: If all are in same reg_id and basin, we could remove those
+        # TODO: SMALL: If all are in same reg_id and basin, we could remove those
         # attributes from here...
         feature = {
             "type": "Feature",

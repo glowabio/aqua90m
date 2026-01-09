@@ -117,7 +117,7 @@ class LocalIdGetter(GeoFreshBaseProcessor):
         # User inputs
         lon = data.get('lon', None)
         lat = data.get('lat', None)
-        input_subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
+        subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
         comment = data.get('comment') # optional
         site_id = data.get('site_id') # optional
         which_ids = data.get('which_ids', ['subc_id', 'basin_id', 'reg_id'])
@@ -131,7 +131,7 @@ class LocalIdGetter(GeoFreshBaseProcessor):
         utils.check_type_parameter('which_ids', which_ids, list)
 
         # Check if either subc_id or both lon and lat are provided:
-        utils.params_lonlat_or_subcid(lon, lat, input_subc_id)
+        utils.params_lonlat_or_subcid(lon, lat, subc_id)
 
         # Check ids:
         possible_ids = ['subc_id', 'basin_id', 'reg_id']
@@ -141,25 +141,25 @@ class LocalIdGetter(GeoFreshBaseProcessor):
             raise exc.UserInputException(err_msg)
 
         # Possible results:
-        subc_id = None
+        subc_id = subc_id or None
         basin_id = None
         reg_id = None
 
         try:
             # Special case: User did not provide lon, lat but subc_id ...
-            if input_subc_id is not None:
+            if subc_id is not None:
                 LOGGER.debug('Special case: User provided a subc_id...')
                 basin_id, reg_id = basic_queries.get_basinid_regid(
-                    conn, LOGGER, subc_id = input_subc_id)
+                    conn, LOGGER, subc_id = subc_id)
                 LOGGER.debug(f'Special case: Returning reg_id ({reg_id}), basin_id ({basin_id}).')
-                subc_id = input_subc_id
+                subc_id = subc_id
 
             # Normal case: User provided lon, lat:
             elif 'subc_id' in which_ids:
                 LOGGER.log(logging.TRACE, f'Getting subc_id for lon, lat: {lon}, {lat}')
                 subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
                     conn, LOGGER, lon, lat)
-                LOGGER.debug('FOUND: %s %s %s' % (subc_id, basin_id, reg_id))
+                LOGGER.debug(f'FOUND: {subc_id}, {basin_id}, {reg_id}')
 
             elif 'basin_id' in which_ids:
                 LOGGER.log(logging.TRACE, f'Getting basin_id for lon, lat: {lon}, {lat}')
@@ -176,7 +176,7 @@ class LocalIdGetter(GeoFreshBaseProcessor):
             # quite a normal case...
             LOGGER.debug(f'Caught this: {e}, adding site_id: %{site_id}')
             if site_id is not None:
-                err_msg = '%s (%s)' % (str(e), site_id)
+                err_msg = f'{e} ({site_id})'
                 raise exc.GeoFreshNoResultException(err_msg)
             else:
                 raise exc.GeoFreshNoResultException(e)

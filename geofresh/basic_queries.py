@@ -337,6 +337,7 @@ def get_basinid_regid_from_subcid_plural(conn, subc_ids, columns=['subc_id', 'ba
 ### for many points at a time ###
 #################################
 
+# TODO Deprecated, contains loop
 def get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson, colname_site_id = None):
     # Input: GeoJSON
     # Output: JSON
@@ -375,7 +376,7 @@ def get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson, colname
 
     # Iterate over points and call "get_subcid_basinid_regid" for each point:
     # TODO: loop!! This is not super efficient, but the quickest to implement :)
-    LOGGER.debug('Getting subcatchment for %s lon, lat pairs...' % num)
+    LOGGER.debug(f'Getting subcatchment for {num} lon, lat pairs...')
     for point in iterate_over: # either point or feature...
 
         # Get coordinates from input:

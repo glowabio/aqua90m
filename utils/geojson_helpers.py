@@ -29,7 +29,7 @@ def check_is_geometry_collection_points(points_geojson):
 
     for point in points_geojson['geometries']:
         if not point['type'] == 'Point':
-            err_msg = 'Geometries in GeometryCollection have to be points, not: %s' % point['type']
+            err_msg = 'Geometries in GeometryCollection have to be points, not: point['type']'
             LOGGER.error(err_msg)
             raise exc.UserInputException(err_msg)
 

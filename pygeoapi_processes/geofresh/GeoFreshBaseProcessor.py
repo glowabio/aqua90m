@@ -62,7 +62,7 @@ class GeoFreshBaseProcessor(BaseProcessor):
 
         except Exception as e:
             conn.close()
-            LOGGER.error(f'During process execution, this happened: {e}')
+            LOGGER.error(f'During process execution, this happened: {repr(e)}')
             print(traceback.format_exc())
             raise ProcessorExecuteError(e) # TODO: Can we feed e into ProcessExecuteError?
             #TODO OR: raise ProcessorExecuteError(e, user_msg=e.message)

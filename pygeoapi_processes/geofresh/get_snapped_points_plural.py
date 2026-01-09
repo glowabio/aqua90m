@@ -295,6 +295,7 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
+    #print(f'RESP: {resp.json()}\n')
 
 
     print('TEST CASE 2: Cross: Input CSV file, output GeoJSON file (FeatureCollection)...', end="", flush=True)  # no newline
@@ -313,6 +314,7 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')
 
 
     print('TEST CASE 3: Cross: Input GeoJSON file (FeatureCollection), output GeoJSON file (FeatureCollection)...', end="", flush=True)  # no newline
@@ -329,6 +331,7 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')
 
 
     print('TEST CASE 4: Input GeoJSON directly (MultiPoint), output GeoJSON directly (FeatureCollection)...', end="", flush=True)  # no newline
@@ -347,6 +350,7 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')
 
 
     print('TEST CASE 5: Input GeoJSON directly (FeatureCollection), output GeoJSON directly (FeatureCollection)...', end="", flush=True)  # no newline
@@ -381,6 +385,7 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')
 
 
     print('TEST CASE 6: Cross: Input GeoJSON directly (FeatureCollection), output CSV file...', end="", flush=True)  # no newline
@@ -421,6 +426,7 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
+    #print(f'RESP: {resp.json()}\n')
 
 
     print('TEST CASE 10: Input CSV file without site_id...', end="", flush=True)  # no newline
@@ -438,3 +444,4 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
+    #print(f'RESP: {resp.json()}\n')

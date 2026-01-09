@@ -82,7 +82,7 @@ class LocalStreamSegmentsGetter(GeoFreshBaseProcessor):
             LOGGER.info('Retrieving stream segment for lon, lat: %s, %s' % (lon, lat))
             subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
                 conn, LOGGER, lon, lat)
-        
+
         # Get only geometry:
         if geometry_only:
 
@@ -131,7 +131,7 @@ if __name__ == '__main__':
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
-    LOGGER.debug('RESP: %s' % resp.json)
+    #print(f'RESP: {resp.json()}\n')
     sanity_checks_geojson(resp)
 
 
@@ -145,6 +145,7 @@ if __name__ == '__main__':
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
+    #print(f'RESP: {resp.json()}\n')
     sanity_checks_geojson(resp)
 
 
@@ -157,6 +158,7 @@ if __name__ == '__main__':
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
+    #print(f'RESP: {resp.json()}\n')
     sanity_checks_geojson(resp)
 
 

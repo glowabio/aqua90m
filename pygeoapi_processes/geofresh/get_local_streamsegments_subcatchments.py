@@ -158,8 +158,8 @@ if __name__ == '__main__':
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
-    LOGGER.debug('RESP: %s' % resp.json)
     sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')
 
 
     print('TEST CASE 2: Request full result...', end="", flush=True)  # no newline
@@ -173,6 +173,7 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')
 
 
     print('TEST CASE 3: Will fail: Wrong format...', end="", flush=True)  # no newline

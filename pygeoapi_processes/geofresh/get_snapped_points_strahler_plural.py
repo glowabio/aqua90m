@@ -391,6 +391,7 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
+    #print(f'RESP: {resp.json()}\n')
 
 
     print('TEST CASE 2: Cross: Input CSV file, output GeoJSON file...', end="", flush=True)  # no newline
@@ -411,6 +412,7 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')
 
 
     print('TEST CASE 3: Input GeoJSON file (FeatureCollection), output GeoJSON file...', end="", flush=True)  # no newline
@@ -447,6 +449,7 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')
 
 
     print('TEST CASE 5: Like test case 4 but no distance', end="", flush=True)  # no newline
@@ -464,6 +467,7 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')
 
 
     print('TEST CASE 6: Input GeoJSON directly (GeometryCollection), output GeoJSON directly...', end="", flush=True)  # no newline
@@ -490,6 +494,7 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')
 
 
     print('TEST CASE 7: Input GeoJSON directly (MultiPoint), output GeoJSON directly...', end="", flush=True)  # no newline
@@ -510,6 +515,7 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')
 
 
     print('TEST CASE 8: Input GeoJSON directly (FeatureCollection), output GeoJSON directly (FeatureCollection)...', end="", flush=True)  # no newline
@@ -546,6 +552,7 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')
 
 
     print('TEST CASE 9: Cross: Input GeoJSON directly (FeatureCollection), output CSV file...', end="", flush=True)  # no newline
@@ -588,6 +595,7 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
+    #print(f'RESP: {resp.json()}\n')
 
 
     print('TEST CASE 10: Input CSV file without site id...', end="", flush=True)  # no newline
@@ -606,3 +614,4 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
+    #print(f'RESP: {resp.json()}\n')
