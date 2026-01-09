@@ -290,7 +290,7 @@ def get_subcid_basinid_regid__dataframe_to_dataframe(conn, input_df, colname_lon
         FROM {tablename}
         '''
     output_df = pd.read_sql_query(query, conn)
-    # UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+    # TODO: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
     temp_tables.drop_temp_table(cursor, tablename)
     # Apparently, pd.read_sql_query() casts to numeric to be safe.
     # Casting back to int:
@@ -321,6 +321,7 @@ def get_subcid_basinid_regid__geojson_to_dataframe(conn, input_geojson, colname_
         FROM {tablename}
         '''
     output_df = pd.read_sql_query(query, conn)
+    # TODO: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
     temp_tables.drop_temp_table(cursor, tablename)
     # Apparently, pd.read_sql_query() casts to numeric to be safe.
     # Casting back to int:
@@ -349,6 +350,7 @@ def get_regid__dataframe_to_dataframe(conn, input_df, colname_lon, colname_lat, 
         FROM {tablename}
         '''
     output_df = pd.read_sql_query(query, conn)
+    # TODO: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
     temp_tables.drop_temp_table(cursor, tablename)
     # Apparently, pd.read_sql_query() casts to numeric to be safe.
     # Casting back to int:
@@ -377,6 +379,7 @@ def get_regid__geojson_to_dataframe(conn, input_geojson, colname_site_id=None):
         FROM {tablename}
         '''
     output_df = pd.read_sql_query(query, conn)
+    # TODO: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
     temp_tables.drop_temp_table(cursor, tablename)
     # Apparently, pd.read_sql_query() casts to numeric to be safe.
     # Casting back to int:
