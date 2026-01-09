@@ -91,13 +91,10 @@ def get_dijkstra_ids_one_to_one(conn, start_subc_id, end_subc_id, reg_id, basin_
 
 # Called by plural process:
 #    get_shortest_path_to_outlet_plural.py
-def get_dijkstra_ids_to_outlet_plural(conn, input_df_or_fcoll, colname_site_id, return_csv=False, return_json=False):
+def get_dijkstra_ids_to_outlet_plural(conn, input_df_or_fcoll, colname_site_id, result_format):
     # We don't want a matrix, we want one path per pair of points - but for many!
     # INPUT:  Dataframe or GeoJSON FeatureCollection
     # OUTPUT: JSON or CSV (but ugly CSV... as we have to store entire paths in one column.)
-
-    # By default return csv
-    if not (return_csv or return_json): return_csv = True
 
     # Get departing points from inputs (can be both dataframe or GeoJSON feature collection)
     if isinstance(input_df_or_fcoll, pd.DataFrame):
@@ -110,10 +107,14 @@ def get_dijkstra_ids_to_outlet_plural(conn, input_df_or_fcoll, colname_site_id, 
         raise ValueError(err_msg)
 
     # Return result (can be both dataframe or ugly JSON matrix)
-    if return_csv:
+    if result_format == 'dataframe' or result_format == 'csv':
         return _iterate_outlets_to_dataframe(conn, departing_points)
-    elif return_json:
+    elif result_format == 'json':
         return _iterate_outlets_to_json(conn, departing_points)
+    else:
+        err_msg = f"'result_format' has to be either 'dataframe' or 'json', not {result_format}."
+        LOGGER.error(err_msg)
+        raise ValueError(err_msg)
 
 
 def _collect_departing_points_by_region_and_basin_from_dataframe(input_df, colname_site_id):

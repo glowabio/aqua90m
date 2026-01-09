@@ -202,8 +202,7 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
         # Overall goal: Get the dijkstra shortest path (as linestrings)!
 
         ## Potential outputs:
-        output_json = None
-        output_df = None
+        output_df_or_json = None
 
         ## Handle GeoJSON case:
         if points_geojson is not None:
@@ -220,20 +219,12 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
                 )
                 # Actual routing: For each feature, get the downstream ids!
                 # In this case, we call the routing method with GeoJSON input:
-                if result_format == 'csv':
-                    output_df = routing.get_dijkstra_ids_to_outlet_plural(
-                        conn,
-                        points_geojson,
-                        colname_site_id,
-                        return_csv=True
-                    )
-                elif result_format == 'json':
-                    output_json = routing.get_dijkstra_ids_to_outlet_plural(
-                        conn,
-                        points_geojson,
-                        colname_site_id,
-                        return_json=True
-                    )
+                output_df_or_json = routing.get_dijkstra_ids_to_outlet_plural(
+                    conn,
+                    points_geojson,
+                    colname_site_id,
+                    result_format
+                )
 
             # This is the normal case: "subc_id", "basin_id" and
             # "reg_id" have to be retrieved.
@@ -252,20 +243,12 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
                 colname_site_id = 'site_id'
 
                 # Actual routing: For each item, get the downstream ids!
-                if result_format == 'csv':
-                    output_df = routing.get_dijkstra_ids_to_outlet_plural(
-                        conn,
-                        temp_df,
-                        colname_site_id,
-                        return_csv=True
-                    )
-                elif result_format == 'json':
-                    output_json = routing.get_dijkstra_ids_to_outlet_plural(
-                        conn,
-                        temp_df,
-                        colname_site_id,
-                        return_json=True
-                    )
+                output_df_or_json = routing.get_dijkstra_ids_to_outlet_plural(
+                    conn,
+                    temp_df,
+                    colname_site_id,
+                    result_format
+                )
 
         ## Handle CSV case:
         elif input_df is not None:
@@ -290,16 +273,23 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
                 temp_df = basic_queries.get_subcid_basinid_regid_for_dataframe(
                     conn, 'shortestpath', input_df, colname_lon, colname_lat, colname_site_id)
 
-            ## Next, for each row, get the downstream ids!
-            if result_format == 'csv':
-                output_df = routing.get_dijkstra_ids_to_outlet_plural(conn, temp_df, colname_site_id, return_csv=True)
-            elif result_format == 'json':
-                output_json = routing.get_dijkstra_ids_to_outlet_plural(conn, temp_df, colname_site_id, return_json=True)
-
+            # Actual routing: For each row, get the downstream ids!
+            output_df_or_json = routing.get_dijkstra_ids_to_outlet_plural(
+                conn,
+                temp_df,
+                colname_site_id,
+                result_format
+            )
 
         #####################
         ### Return result ###
         #####################
+
+        output_df = output_json = None
+        if isinstance(output_df_or_json, pd.DataFrame):
+            output_df = output_df_or_json
+        elif isinstance(output_df_or_json, dict):
+            output_json = output_df_or_json
 
         return self.return_results('downstream_path', requested_outputs, output_df=output_df, output_json=output_json, comment=comment)
 
