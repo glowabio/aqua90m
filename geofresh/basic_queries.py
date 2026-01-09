@@ -292,6 +292,13 @@ def get_subcid_basinid_regid__dataframe_to_dataframe(conn, input_df, colname_lon
     output_df = pd.read_sql_query(query, conn)
     # UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
     temp_tables.drop_temp_table(cursor, tablename)
+    # Apparently, pd.read_sql_query() casts to numeric to be safe.
+    # Casting back to int:
+    output_df = output_df.astype({
+        "subc_id": "Int64",
+        "basin_id": "Int64",
+        "reg_id": "Int64"
+    })
     return output_df
 
 
@@ -315,6 +322,13 @@ def get_subcid_basinid_regid__geojson_to_dataframe(conn, input_geojson, colname_
         '''
     output_df = pd.read_sql_query(query, conn)
     temp_tables.drop_temp_table(cursor, tablename)
+    # Apparently, pd.read_sql_query() casts to numeric to be safe.
+    # Casting back to int:
+    output_df = output_df.astype({
+        "subc_id": "Int64",
+        "basin_id": "Int64",
+        "reg_id": "Int64"
+    })
     return output_df
 
 
@@ -336,6 +350,11 @@ def get_regid__dataframe_to_dataframe(conn, input_df, colname_lon, colname_lat, 
         '''
     output_df = pd.read_sql_query(query, conn)
     temp_tables.drop_temp_table(cursor, tablename)
+    # Apparently, pd.read_sql_query() casts to numeric to be safe.
+    # Casting back to int:
+    output_df = output_df.astype({
+        "reg_id": "Int64"
+    })
     return output_df
 
 
@@ -359,6 +378,11 @@ def get_regid__geojson_to_dataframe(conn, input_geojson, colname_site_id=None):
         '''
     output_df = pd.read_sql_query(query, conn)
     temp_tables.drop_temp_table(cursor, tablename)
+    # Apparently, pd.read_sql_query() casts to numeric to be safe.
+    # Casting back to int:
+    output_df = output_df.astype({
+        "reg_id": "Int64"
+    })
     return output_df
 
 
