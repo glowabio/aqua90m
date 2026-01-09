@@ -280,10 +280,11 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
                 geojson_helpers.check_feature_collection_property(points_geojson, colname_site_id)
 
         # Set result_format to input format:
-        if result_format is None and points_geojson is not None:
-            result_format = 'geojson'
-        elif result_format is None and csv_url is not None:
-            result_format = 'csv'
+        if result_format is None:
+            if points_geojson is not None:
+                result_format = 'geojson'
+            elif csv_url is not None:
+                result_format = 'csv'
 
 
         #######################
@@ -338,44 +339,64 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
         ## Handle GeoJSON case:
         if points_geojson is not None:
 
-            if result_format == 'csv':
-                raise NotImplementedError('No CSV output for GeoJSON input currently.')
+            # Note: basin_id and subc_id are queried in the same step,
+            # so we don't save anything by treating those separately.
+            if 'subc_id' in which_ids or 'basin_id' in which_ids:
 
-            # Query database:
-            if 'subc_id' or 'basin_id' in which_ids:
-                output_json = basic_queries.get_subcid_basinid_regid_for_all_2json(
-                    conn, LOGGER, points_geojson, colname_site_id)
+                if result_format == 'csv':
+                    output_df = basic_queries.get_subcid_basinid_regid_for_geojson(
+                        conn, points_geojson, colname_site_id=None)
+
+                elif result_format == 'json':
+                    # This returns just plain JSON, not GeoJSON!
+                    # TODO Deprecated, contains loop
+                    output_json = basic_queries.get_subcid_basinid_regid_for_all_2json(
+                        conn, LOGGER, points_geojson, colname_site_id)
+
+                elif result_format == 'geojson':
+                    err_msg = "Currently not allowed: geojson output." # TODO
+                    LOGGER.debug(err_msg)
+                    raise NotImplementedError(err_msg)
+
             elif 'reg_id' in which_ids:
-                err_msg = "Currently, for GeoJSON input, only all ids can be returned. Please set which_ids to [subc_id,basin_id,reg_id], or input a CSV file."
-                raise NotImplementedError(err_msg) # TODO
-            # Note: The case where users input subc_ids and want basin_id and reg_id cannot be
-            # handled in GeoJSON, as GeoJSON must by definition contain coordinates!
-            # In this case, instead of GeoJSON, we'd have to let them input just some dictionary.
-            # Probably not needed ever, so why implement that. It would just be for completeness.
-            # Implement when needed.
+
+                if result_format == 'csv':
+                    output_df = basic_queries.get_regid_for_geojson(conn, points_geojson, colname_site_id=None)
+
+                else:
+                    err_msg = "Currently not allowed: (geo)json output, when getting reg_id only." # TODO
+                    LOGGER.debug(err_msg)
+                    raise NotImplementedError(err_msg)
 
 
         ## Handle CSV case:
         elif input_df is not None:
 
-            if result_format == 'geojson':
-                raise NotImplementedError('No GeoJSON output for CSV input currently.')
+            if result_format == 'json' or result_format == 'geojson':
+                err_msg = "Currently not allowed: (geo)json output for CSV input." # TODO
+                LOGGER.debug(err_msg)
+                raise NotImplementedError(err_msg)
 
-            # Query database:
+            # Special case: User provided CSV containing subc_ids, wants basin_ids and reg_ids
             if colname_subc_id is not None:
-                # Special case! User provided CSV with a column containing subc_ids...
+                # TODO Deprecated, contains loop
                 output_df = basic_queries.get_basinid_regid_for_all_from_subcid_1csv(
                     conn, LOGGER, input_df, colname_subc_id, colname_site_id)
 
-            elif 'subc_id' in which_ids:
-                output_df = basic_queries.get_subcid_basinid_regid_for_all_1csv( # TODO: make int!
-                    conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
-            elif 'basin_id' in which_ids:
-                output_df = basic_queries.get_basinid_regid_for_all_1csv(# TODO: make int!
-                    conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
+            # Note: basin_id and subc_id are queried in the same step,
+            # so we don't gain anything by treating those separately.
+            elif 'subc_id' in which_ids or 'basin_id' in which_ids:
+                # Returns a dataframe with lon, lat, subc_id, basin_id, reg_id, possibly site_id
+                # without loop:
+                output_df = basic_queries.get_subcid_basinid_regid_for_dataframe(
+                    conn, input_df, colname_lon, colname_lat, colname_site_id=colname_site_id)
+
             elif 'reg_id' in which_ids:
-                output_df = basic_queries.get_regid_for_all_1csv(# TODO: make int!
-                    conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id)
+                # Returns a dataframe with lon, lat, reg_id, possibly site_id
+                # without loop:
+                output_df = basic_queries.get_regid_for_dataframe(
+                    conn, input_df, colname_lon, colname_lat, colname_site_id=colname_site_id)
+
 
 
         #####################
@@ -398,9 +419,11 @@ if __name__ == '__main__':
     from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
     from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
 
+    ########################
+    ### input+output CSV ###
+    ########################
 
-    ## Test 1
-    print('TEST CASE 1: CSV input and output...', end="", flush=True)  # no newline
+    print('TEST CASE 1: input: CSV, output: CSV, reg_id only...', end="", flush=True)  # no newline
     payload = {
         "inputs": {
             "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
@@ -408,7 +431,7 @@ if __name__ == '__main__':
             "colname_lon": "longitude",
             "colname_site_id": "site_id",
             "which_ids": "reg_id",
-            "comment": "schlei-near-rabenholz"
+            "comment": "test1"
         },
         "outputs": {
             "transmissionMode": "reference"
@@ -417,8 +440,108 @@ if __name__ == '__main__':
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
 
-    ## Test 2
-    print('TEST CASE 2: GeoJSON input (GeometryCollection) and output...', end="", flush=True)  # no newline
+    print('TEST CASE 2: input: CSV, output: CSV, all ids...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "colname_lat": "latitude",
+            "colname_lon": "longitude",
+            "colname_site_id": "site_id",
+            "which_ids": ["subc_id", "basin_id", "reg_id"],
+            "comment": "test2"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+    print('TEST CASE 3: input CSV (with subc_ids), and output: CSV, all ids...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus_with_subcid.csv",
+            "colname_lat": "latitude",
+            "colname_lon": "longitude",
+            "colname_site_id": "site_id",
+            "which_ids": ["subc_id", "basin_id", "reg_id"],
+            "comment": "test3"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+    ############################
+    ### input+output GeoJSON ###
+    ############################
+
+    #print('TEST CASE 4: input: GeoJSON (GeometryCollection), output: GeoJSON directly, reg_id only...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson": {
+                "type": "GeometryCollection",
+                "geometries": [
+                    {
+                        "type": "Point",
+                        "coordinates": [20.087421, 39.364848]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [27.846357, 36.548812]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [25.73764, 35.24806]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [24.17569, 35.50542]
+                    }
+                ]
+            },
+            "which_ids": ["reg_id"],
+            "comment": "test4"
+        }
+    }
+    #resp = make_sync_request(PYSERVER, process_id, payload)
+    #sanity_checks_geojson(resp)
+
+    #print('TEST CASE 5: input: GeoJSON (GeometryCollection), output: GeoJSON directly, reg_id only...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson": {
+                "type": "GeometryCollection",
+                "geometries": [
+                    {
+                        "type": "Point",
+                        "coordinates": [20.087421, 39.364848]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [27.846357, 36.548812]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [25.73764, 35.24806]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [24.17569, 35.50542]
+                    }
+                ]
+            },
+            "result_format": "csv",
+            "which_ids": ["subc_id", "basin_id", "reg_id"],
+            "comment": "test5"
+        }
+    }
+    #resp = make_sync_request(PYSERVER, process_id, payload)
+    #sanity_checks_geojson(resp)
+
+    #print('TEST CASE 5b: input: GeoJSON (GeometryCollection), output: GeoJSON file, all ids...', end="", flush=True)  # no newline
     payload = {
         "inputs": {
             "points_geojson": {
@@ -443,7 +566,46 @@ if __name__ == '__main__':
                 ]
             },
             "which_ids": ["subc_id", "basin_id", "reg_id"],
-            "comment": "schlei-near-rabenholz"
+            "comment": "test5b"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    #resp = make_sync_request(PYSERVER, process_id, payload)
+    #sanity_checks_geojson(resp)
+
+    #################################
+    ### input GeoJSON, output CSV ###
+    #################################
+
+    print('TEST CASE 6: input: GeoJSON (GeometryCollection), output: CSV, reg_id only...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson": {
+                "type": "GeometryCollection",
+                "geometries": [
+                    {
+                        "type": "Point",
+                        "coordinates": [20.087421, 39.364848]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [27.846357, 36.548812]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [25.73764, 35.24806]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [24.17569, 35.50542]
+                    }
+                ]
+            },
+            "which_ids": ["reg_id"],
+            "result_format": "csv",
+            "comment": "test6"
         },
         "outputs": {
             "transmissionMode": "reference"
@@ -452,5 +614,160 @@ if __name__ == '__main__':
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
 
+    print('TEST CASE 7: input: GeoJSON (GeometryCollection), output: CSV, all ids...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson": {
+                "type": "GeometryCollection",
+                "geometries": [
+                    {
+                        "type": "Point",
+                        "coordinates": [20.087421, 39.364848]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [27.846357, 36.548812]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [25.73764, 35.24806]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [24.17569, 35.50542]
+                    }
+                ]
+            },
+            "which_ids": ["subc_id", "basin_id", "reg_id"],
+            "result_format": "csv",
+            "comment": "test7"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
 
+    ##############################
+    ### input CSV, output JSON ###
+    ##############################
 
+    #print('TEST CASE 8: input: CSV, output: Plain JSON directly, reg_id only...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "which_ids": "reg_id",
+            "result_format": "json",
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "colname_lat": "latitude",
+            "colname_lon": "longitude",
+            "colname_site_id": "site_id",
+            "comment": "test8"
+        }
+    }
+    #resp = make_sync_request(PYSERVER, process_id, payload)
+    #sanity_checks_basic(resp)
+
+    #print('TEST CASE 9: input: CSV, output: Plain JSON directly, all ids...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "which_ids": ["subc_id", "basin_id", "reg_id"],
+            "result_format": "json",
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "colname_lat": "latitude",
+            "colname_lon": "longitude",
+            "colname_site_id": "site_id",
+            "comment": "test9"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    #resp = make_sync_request(PYSERVER, process_id, payload)
+    #sanity_checks_basic(resp)
+
+    #print('TEST CASE 10: input: CSV (with subc_ids), output: Plain JSON directly, all ids...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "which_ids": ["subc_id", "basin_id", "reg_id"],
+            "result_format": "json",
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus_with_subcid.csv",
+            "colname_lat": "latitude",
+            "colname_lon": "longitude",
+            "colname_site_id": "site_id",
+            "comment": "test10"
+        },
+        "outputs": {
+            "transmissionMode": "reference"
+        }
+    }
+    #resp = make_sync_request(PYSERVER, process_id, payload)
+    #sanity_checks_basic(resp)
+
+    ##################################
+    ### input GeoJSON, output JSON ###
+    ##################################
+
+    #print('TEST CASE 11: input: GeoJSON (GeometryCollection), output: Plain JSON, reg_id only...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "result_format": "json",
+            "which_ids": "reg_id",
+            "comment": "test11",
+            "points_geojson": {
+                "type": "GeometryCollection",
+                "geometries": [
+                    {
+                        "type": "Point",
+                        "coordinates": [20.087421, 39.364848]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [27.846357, 36.548812]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [25.73764, 35.24806]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [24.17569, 35.50542]
+                    }
+                ]
+            }
+        }
+    }
+    #resp = make_sync_request(PYSERVER, process_id, payload)
+    #sanity_checks_basic(resp)
+
+    print('TEST CASE 12: (LOOPING) input: GeoJSON (GeometryCollection), output: Plain JSON, all ids...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "result_format": "json",
+            "which_ids": ["subc_id", "basin_id", "reg_id"],
+            "comment": "test12",
+            "points_geojson": {
+                "type": "GeometryCollection",
+                "geometries": [
+                    {
+                        "type": "Point",
+                        "coordinates": [20.087421, 39.364848]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [27.846357, 36.548812]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [25.73764, 35.24806]
+                    },
+                    {
+                        "type": "Point",
+                        "coordinates": [24.17569, 35.50542]
+                    }
+                ]
+            }
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)

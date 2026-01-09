@@ -297,17 +297,62 @@ def get_subcid_basinid_regid_for_geojson(conn, input_geojson, colname_site_id=No
     tablename, reg_ids = temp_tables.create_and_populate_temp_table(cursor, list_of_insert_rows)
     if colname_site_id is None:
         query = f'''
-        SELECT subc_id, basin_id, reg_id
+        SELECT lon, lat, subc_id, basin_id, reg_id
         FROM {tablename}
         '''
     else:
         query = f'''
-        SELECT site_id, subc_id, basin_id, reg_id
+        SELECT site_id, lon, lat, subc_id, basin_id, reg_id
         FROM {tablename}
         '''
     output_df = pd.read_sql_query(query, conn)
     temp_tables.drop_temp_table(cursor, tablename)
     return output_df
+
+
+def get_regid_for_dataframe(conn, input_df, colname_lon, colname_lat, colname_site_id=None):
+    # INPUT:  Dataframe with lon, lat, possibly site_id
+    # OUTPUT: Dataframe with lon, lat, reg_id, possibly site_id
+    list_of_insert_rows = temp_tables.make_insertion_rows_from_dataframe(input_df, colname_lon, colname_lat, colname_site_id)
+    cursor = conn.cursor()
+    tablename, reg_ids = temp_tables.create_and_populate_temp_table(cursor, list_of_insert_rows, add_subcids=False)
+    if colname_site_id is None:
+        query = f'''
+        SELECT lon, lat, reg_id
+        FROM {tablename}
+        '''
+    else:
+        query = f'''
+        SELECT site_id, lon, lat, reg_id
+        FROM {tablename}
+        '''
+    output_df = pd.read_sql_query(query, conn)
+    temp_tables.drop_temp_table(cursor, tablename)
+    return output_df
+
+
+def get_regid_for_geojson(conn, input_geojson, colname_site_id=None):
+    # INPUT:  GeoJSON (MultiPoint or GeometryCollection or FeatureCollection)
+    # OUTPUT: Dataframe with site_id, reg_id
+    # Note: If no colname_site_id is given, we can return the dataframe, but it
+    # cannot be matched to the input points.
+    list_of_insert_rows = temp_tables.make_insertion_rows_from_geojson(input_geojson, colname_site_id=colname_site_id)
+    cursor = conn.cursor()
+    tablename, reg_ids = temp_tables.create_and_populate_temp_table(cursor, list_of_insert_rows, add_subcids=False)
+    if colname_site_id is None:
+        query = f'''
+        SELECT lon, lat, reg_id
+        FROM {tablename}
+        '''
+    else:
+        query = f'''
+        SELECT site_id, lon, lat, reg_id
+        FROM {tablename}
+        '''
+    output_df = pd.read_sql_query(query, conn)
+    temp_tables.drop_temp_table(cursor, tablename)
+    return output_df
+
 
 def get_basinid_regid_from_subcid_plural(conn, subc_ids, columns=['subc_id', 'basin_id', 'reg_id']):
     # INPUT:  List of subc_ids (integers)
@@ -427,6 +472,7 @@ def get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson, colname
 
     # Finished collecting the results, now make output JSON object:
     # Note: This is not GeoJSON (on purpose), as we did not look for geometry yet.
+    # Currently used in: get_local_ids_plural.py, get_local_streamsegments_plural.py
     output = {
         "subc_ids": subc_ids,
         "region_ids": reg_ids,
@@ -466,6 +512,7 @@ def get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson, colname
     return output
 
 
+# TODO Deprecated, contains loop
 def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id):
     # Input:  Pandas Dataframe (with site_id, lon, lat)
     # Output: Pandas Dataframe (with site_id, reg_id, basin_id, subc_id)
@@ -569,6 +616,7 @@ def get_subcid_basinid_regid_for_all_1csv(conn, LOGGER, input_df, colname_lon, c
     return output_df
 
 
+# TODO Deprecated, contains loop
 def get_basinid_regid_for_all_1csv(conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id):
     # Input: Pandas Dataframe
     # Output: Pandas Dataframe
@@ -616,6 +664,7 @@ def get_basinid_regid_for_all_1csv(conn, LOGGER, input_df, colname_lon, colname_
     return output_df
 
 
+# TODO Deprecated, contains loop
 def get_regid_for_all_1csv(conn, LOGGER, input_df, colname_lon, colname_lat, colname_site_id):
     # Input: Pandas Dataframe
     # Output: Pandas Dataframe
@@ -661,6 +710,7 @@ def get_regid_for_all_1csv(conn, LOGGER, input_df, colname_lon, colname_lat, col
     return output_df
 
 
+# TODO Deprecated, contains loop
 def get_basinid_regid_for_all_from_subcid_1csv(conn, LOGGER, input_df, colname_subc_id, colname_site_id):
     # Input: Pandas Dataframe
     # Output: Pandas Dataframe
