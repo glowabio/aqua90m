@@ -160,7 +160,7 @@ class ShortestPathToOutletGetter(GeoFreshBaseProcessor):
                 conn, segment_ids, basin_id1, reg_id1)
 
             # Add some info to the FeatureCollection:
-            # TODO: Should we include the requested lon and lat? Maybe as a point?
+            # TODO: OUTPUT FORMAT: Should we include the requested lon and lat? Maybe as a point?
             json_result["description"] = f"Downstream path from subcatchment {subc_id1} to the outlet of its basin."
             json_result["subc_id"] = subc_id1 # TODO how to name the point from where we route to outlet?
             json_result["outlet_id"] = subc_id2

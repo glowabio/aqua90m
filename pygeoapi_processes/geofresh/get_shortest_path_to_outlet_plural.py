@@ -103,9 +103,10 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
         # Input: GeoJSON FeatureCollection with points
 
         # Output options:
-        # Output: CSV with added columns containing a list of the downstream ids... (TODO: Not ideal as format!)
+        # Output: CSV with added columns containing a list of the downstream ids... (Not ideal!)
+        # TODO: OUTPUT FORMAT: Not ideal: CSV containing lists of downstream ids.
         # Output: UGLY JSON???
-        # Output: TODO: GeoJSON with points, and for each point, a list of the downstream ids
+        # TODO: OUTPUT FORMAT: GeoJSON with points, and for each point, a list of the downstream ids
 
         # Plural case:
         # GeoJSON (e.g. Multipoint, GeometryCollection of Points,
@@ -177,7 +178,7 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
             err_msg = "Cannot return geometries for CSV input yet! (And probably never will, because returning geometry inside a CSV does not make sense...)"
             LOGGER.error(err_msg)
             raise NotImplementedError(err_msg)
-            # TODO: Any idea how to return linestrings in a csv? Is that required, or even desired at all?
+            # TODO: OUTPUT FORMAT: Any idea how to return linestrings in a csv? Is that required, or even desired at all?
 
         if geometry_only:
             err_msg = "geometry_only: Returning geometry is not supported yet."
@@ -190,10 +191,11 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
             raise NotImplementedError(err_msg)
 
         # If user specified no output format, will use the input format...
-        if result_format is None and csv_url is not None:
-            result_format = "csv"
-        elif result_format is None and points is not None:
-            result_format = "json"
+        if result_format is None:
+            if csv_url is not None:
+                result_format = "csv"
+            elif points is not None:
+                result_format = "json"
 
 
         ##########################

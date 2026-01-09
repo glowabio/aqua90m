@@ -107,7 +107,7 @@ class ShortestPathBetweenPointsGetter(GeoFreshBaseProcessor):
                 conn, LOGGER, lon_end, lat_end)
 
         # Check if same region and basin?
-        # TODO: Can we route via the sea then??
+        # TODO: FUTURE: If points are not in same basin, can we route via the sea?
         if not reg_id1 == reg_id2:
             err_msg = f'Start and end are in different regions ({reg_id1} and {reg_id2}) - this cannot work.'
             LOGGER.warning(err_msg)
@@ -140,7 +140,7 @@ class ShortestPathBetweenPointsGetter(GeoFreshBaseProcessor):
                 conn, segment_ids, basin_id1, reg_id1)
 
             # Add some info to the FeatureCollection:
-            # TODO: Should we include the requested lon and lat? Maybe as a point?
+            # TODO: OUTPUT FORMAT: Should we include the requested lon and lat? Maybe as a point?
             feature_coll["description"] = f"Connecting path between {subc_id1} and {subc_id2}"
             feature_coll["start_subc_id"] = subc_id1 # TODO how to name the start point of routing?
             feature_coll["target_subc_id"] = subc_id2 # TODO how to name the end point of routing?

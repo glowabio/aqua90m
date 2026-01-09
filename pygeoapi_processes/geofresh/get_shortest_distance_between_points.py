@@ -236,7 +236,7 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
             err_msg = 'You must specify start and end point(s) as point(s) or subc_id(s).'
             raise ProcessorExecuteError(err_msg)
 
-        # TODO: Like this, the output is quite different between singular and plural!!
+        # TODO: OUTPUT FORMAT: The output is quite different between singular and plural!!
         if singular:
             return self.singular_case(conn, lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end, requested_outputs, comment, result_format)
         else:

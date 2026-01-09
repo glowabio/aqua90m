@@ -76,7 +76,8 @@ class LocalStreamSegmentsGetterPlural(GeoFreshBaseProcessor):
 
         # Outputs:
         # Output: GeoJSON with linestrings
-        # Output: CSV ... HOW??? TODO ask Afroditi
+        # Output: CSV ... HOW???
+        # TODO: OUTPUT FORMAT: Do we want to return csv here, and how? It's LineStrings!
 
         # User inputs
         # Output format (can be csv or json):
@@ -195,7 +196,8 @@ class LocalStreamSegmentsGetterPlural(GeoFreshBaseProcessor):
         elif result_format == 'json':
             LOGGER.debug(f'Retrieve LineStrings for {len(all_subc_ids)} subc_ids.')
             # Make Collections with 1 LineString per subc_id, not 1 LineString per site_id, 
-            # so there may be less LineStrings than original input points! TODO: Ok?
+            # so there may be less LineStrings than original input points! Ok?
+            # TODO: OUTPUT FORMAT: One geom per site_id, or per subd_id?
             if geometry_only:
                 output_json = get_linestrings.get_streamsegment_linestrings_geometry_coll(
                     conn,

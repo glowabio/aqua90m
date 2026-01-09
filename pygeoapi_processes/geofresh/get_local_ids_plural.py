@@ -349,7 +349,7 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
 
                 elif result_format == 'json':
                     # This returns just plain JSON, not GeoJSON!
-                    # TODO Deprecated, contains loop
+                    # TODO: DEPRECATED, contains loop
                     output_json = basic_queries.get_subcid_basinid_regid_for_all_2json(
                         conn, LOGGER, points_geojson, colname_site_id)
 
@@ -379,7 +379,7 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
 
             # Special case: User provided CSV containing subc_ids, wants basin_ids and reg_ids
             if colname_subc_id is not None:
-                # TODO Deprecated, contains loop
+                # TODO: DEPRECATED, contains loop
                 output_df = basic_queries.get_basinid_regid_for_all_from_subcid_1csv(
                     conn, LOGGER, input_df, colname_subc_id, colname_site_id)
 

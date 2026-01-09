@@ -25,7 +25,7 @@
     "inputs": {
         "polygon": {
             "title": "Polygon (GeoJSON)",
-            "description": "TODO",
+            "description": "Polygon in which to look for outlets. Should obviously cover a coast.",
             "schema": {
                 "type": "string"
             },
@@ -36,7 +36,7 @@
         },
         "min_strahler": {
             "title": "Strahler",
-            "description": "TODO",
+            "description": "Minimum strahler order of the outlets to be returned, to be able to filter out small streams.",
             "schema": {
                 "type": "string"
             },
@@ -47,7 +47,7 @@
         },
         "add_geometry": {
             "title": "Add geometry?",
-            "description": "TODO",
+            "description": "If True, the outlets will be returned as LineStrings. If False, only the subc_ids will be returned.",
             "schema": {
                 "type": "string"
             },
@@ -68,7 +68,7 @@
     },
     "outputs": {
         "outlets": {
-            "title": "Outlets inside that polygone",
+            "title": "Outlets inside that polygon",
             "description": "",
             "schema": {
                 "type": "object",

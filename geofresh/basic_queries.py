@@ -481,7 +481,7 @@ def get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson, colname
                 conn, LOGGER, lon, lat)
         except exc.GeoFreshNoResultException as e:
             # For example, if the point is in the ocean.
-            # We return None. TODO: Test how this looks in JSON!
+            # We return None. TODO: Test how this looks in JSON! (Note: Deprecated anyway)
             reg_id = basin_id = subc_id = None
 
         # Collect results in dict:

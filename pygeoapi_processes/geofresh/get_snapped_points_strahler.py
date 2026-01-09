@@ -78,7 +78,7 @@ class SnappedPointsStrahlerGetter(GeoFreshBaseProcessor):
         # Get reg_id, basin_id, subc_id
         LOGGER.info(f'START: Getting snapped point for lon, lat: {lon}, {lat}')
         subc_id_before_snap, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
-            conn, LOGGER, lon, lat) # TODO WIP We only need basin and region!
+            conn, LOGGER, lon, lat)
 
         # Return geometry only:
         if geometry_only:
