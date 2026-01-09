@@ -87,14 +87,25 @@ def get_dijkstra_ids_one_to_one(conn, start_subc_id, end_subc_id, reg_id, basin_
     return all_ids
 
 
-def get_dijkstra_ids_to_outlet_plural(conn, input_df, colname_site_id, return_csv=False, return_json=False):
-    # TODO: Add input GeoJSON!
+def get_dijkstra_ids_to_outlet_plural(conn, input_df_or_fcoll, colname_site_id, return_csv=False, return_json=False):
     # We don't want a matrix, we want one path per pair of points - but for many!
-    # INPUT:  CSV
+    # INPUT:  Dataframe or GeoJSON FeatureCollection
     # OUTPUT: JSON or CSV (but ugly CSV... as we have to store entire paths in one column.)
+
+    # By default return csv
     if not (return_csv or return_json): return_csv = True
 
-    departing_points = _collect_departing_points_by_region_and_basin(input_df, colname_site_id)
+    # Get departing points from inputs (can be both dataframe or GeoJSON feature collection)
+    if isinstance(input_df_or_fcoll, pd.DataFrame):
+        departing_points = _collect_departing_points_by_region_and_basin(input_df_or_fcoll, colname_site_id)
+    elif isinstance(input_df_or_fcoll, dict):
+        departing_points = _collect_departing_points_by_region_and_basin_from_fcoll(input_df_or_fcoll, colname_site_id)
+    else:
+        err_msg = "Need a dataframe or a FeatureCollection as input."
+        LOGGER.error(err_msg)
+        raise ValueError(err_msg)
+
+    # Return result (can be both dataframe or ugly JSON matrix)
     if return_csv:
         return _iterate_outlets_dataframe(conn, departing_points)
     elif return_json:
@@ -146,7 +157,65 @@ def _collect_departing_points_by_region_and_basin(input_df, colname_site_id):
         elif pd.isna(basin_id) or pd.isna(reg_id):
             LOGGER.error('TODO CAN THIS HAPPEN AT ALL? Can we have invalid reg_id/basin_id if we have no valid subc_id?')
             err_msg = f"UNEXPECTED: Cannot compute downstream ids due to missing value(s) at site {site_id} (subc_id={subc_id}, basin_id={basin_id}, reg_id={reg_id})"
-            LOGGER.error(f'({i}) {err_msg}')
+            LOGGER.error(err_msg)
+            raise ValueError(err_msg)
+
+        # Store departing point in dictionary
+        # using integers as keys
+        LOGGER.log(logging.TRACE, f'({i}) Storing departure point for site {site_id} / for subc_id {subc_id}')
+        if not reg_id in departing_points.keys():
+            departing_points[reg_id] = {}
+        if not basin_id in departing_points[reg_id].keys():
+            departing_points[reg_id][basin_id] = {}
+        if not subc_id in departing_points[reg_id][basin_id].keys():
+            departing_points[reg_id][basin_id][subc_id] = set()
+        departing_points[reg_id][basin_id][subc_id].add(site_id)
+
+    LOGGER.info(f'Departing points (sorted by reg_id, basin_id, subc_id): {departing_points}')
+    return departing_points
+
+
+def _collect_departing_points_by_region_and_basin_from_fcoll(input_fcoll, colname_site_id):
+
+    # First, collect all departing points by iterating over an input FeatureCollection.
+    # Store them by region_id and by basin_id, as we need those two values for
+    # the query.
+    departing_points = {}
+
+    i = 0
+    for feature in input_fcoll['features']:
+        i += 1
+
+        # Extract values from Feature:
+        # TODO: If not there, would it be None or KeyError?
+        site_id  = feature['properties'][colname_site_id]  # string
+        subc_id  = feature['properties']['subc_id']
+        basin_id = feature['properties']['basin_id']
+        reg_id   = feature['properties']['reg_id']
+
+        # Stop if no site_id!
+        # TODO: Are site_ids mandatory for plural routing?
+        if site_id is None:
+            err_msg = f"Missing site_id in feature {i} (subc_id={subc_id}, basin_id={basin_id}, reg_id={reg_id})"
+            LOGGER.error(err_msg)
+            raise ValueError(err_msg)
+            continue
+
+        # No subc_id, e.g. ocean case (point falls into the ocean):
+        # As we do not return the site_ids, but only subc_ids with downstream path, there is no point in returning
+        # an empty list for subc_id "NaN"... If we ever switch back to returning downstream ids for each site_id,
+        # returning an empty list here make sense...
+        if subc_id is None:
+            msg = f"Cannot compute downstream ids due to missing subc_id at site '{site_id}'."
+            LOGGER.info(msg)
+            reg_id = basin_id = subc_id = None
+            # We catch this "None" later and add it to the result, so that at least the user is informed.
+
+        # Unexpected case...
+        elif basin_id is None or reg_id is None:
+            LOGGER.error('TODO CAN THIS HAPPEN AT ALL? Can we have invalid reg_id/basin_id if we have no valid subc_id?')
+            err_msg = f"UNEXPECTED: Cannot compute downstream ids due to missing value(s) at site {site_id} (subc_id={subc_id}, basin_id={basin_id}, reg_id={reg_id})"
+            LOGGER.error(err_msg)
             raise ValueError(err_msg)
 
         # Store departing point in dictionary
