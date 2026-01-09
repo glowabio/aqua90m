@@ -4,9 +4,9 @@ import requests
 import urllib
 import tempfile
 import pandas as pd
-import geojson
 from pygeoapi.process.base import ProcessorExecuteError
 import pygeoapi.process.aqua90m.utils.exceptions as exc
+import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
 LOGGER = logging.getLogger(__name__)
 
 def params_lonlat_or_subcid(lon, lat, subc_id, additional_message=""):
@@ -64,7 +64,7 @@ def params_point_or_lonlat_or_subcid(point, lon, lat, subc_id, additional_messag
 
     # point is second:
     elif point is not None:
-        check_is_geojson(point)
+        geojson_helpers.check_is_geojson(point)
         if point['type'] == 'Point':
             pass
         elif point['type'] == 'Feature' and point['geometry']['type'] == 'Point':
@@ -333,28 +333,3 @@ def access_csv_as_dataframe(csv_url_or_path):
 
 
 
-
-
-def check_is_geojson(input_data):
-
-    if not isinstance(input_data, dict):
-        LOGGER.error('Input data cannot be GeoJSON: It is not a dict.')
-        err_msg = "Input data is not GeoJSON."
-        raise ProcessorExecuteError(err_msg)
-
-    if not "type" in input_data:
-        LOGGER.error('Input data cannot be GeoJSON: It does not have a type.')
-        err_msg = "Input data is not GeoJSON (no 'type')."
-        raise ProcessorExecuteError(err_msg)
-
-    try:
-        # this expects a string:
-        #geojson_obj = geojson.loads(input_data)  # can also use geojson.dumps(data)
-        # so we could do this:
-        #geojson_obj = geojson.loads(json.dumps(input_data))
-        # or this:
-        geojson.GeoJSON.to_instance(input_data)
-    except (ValueError, TypeError) as e:
-        LOGGER.error(f'Input data cannot be GeoJSON: Cannot be loaded by library: {e}.')
-        err_msg = f"Input data is not GeoJSON: {e}."
-        raise ProcessorExecuteError(err_msg)

@@ -1,3 +1,4 @@
+import geojson
 import logging
 LOGGER = logging.getLogger(__name__)
 
@@ -19,21 +20,60 @@ except ModuleNotFoundError as e1:
         LOGGER.debug(msg)
 
 
+def check_is_geojson(input_data):
+
+    if not isinstance(input_data, dict):
+        LOGGER.error('Input data cannot be GeoJSON: It is not a dict.')
+        err_msg = "Input data is not GeoJSON."
+        raise exc.UserInputException(err_msg)
+
+    if not "type" in input_data:
+        LOGGER.error('Input data cannot be GeoJSON: It does not have a type.')
+        err_msg = "Input data is not GeoJSON (no 'type')."
+        raise exc.UserInputException(err_msg)
+
+    try:
+        geojson.GeoJSON.to_instance(input_data)
+        # this expects a string:
+        #geojson_obj = geojson.loads(input_data)  # can also use geojson.dumps(data)
+        # so we could do this:
+        #geojson_obj = geojson.loads(json.dumps(input_data))
+        # or this:
+    except (ValueError, TypeError) as e:
+        LOGGER.error(f'Input data cannot be GeoJSON: Cannot be loaded by library: {e}.')
+        err_msg = f"Input data is not GeoJSON: {e}."
+        raise exc.UserInputException(err_msg)
+
 
 def check_is_geometry_collection_points(points_geojson):
 
-    if not 'geometries' in points_geojson:
-        err_msg = 'GeometryCollection has to contain "geometries".'
+    if not points_geojson['type'] == 'GeometryCollection':
+        err_msg = 'GeoJSON is not a GeometryCollection.'
         LOGGER.error(err_msg)
         raise exc.UserInputException(err_msg)
 
+    check_is_geojson(points_geojson)
+
     for point in points_geojson['geometries']:
         if not point['type'] == 'Point':
-            err_msg = 'Geometries in GeometryCollection have to be points, not: point['type']'
+            err_msg = f'Geometries in GeometryCollection have to be points, not: {point["type"]}'
             LOGGER.error(err_msg)
             raise exc.UserInputException(err_msg)
 
     return True
+
+
+def check_is_multipoints(points_geojson):
+
+    if not points_geojson['type'] == 'MultiPoint':
+        err_msg = 'GeoJSON is not a MultiPoint.'
+        LOGGER.error(err_msg)
+        raise exc.UserInputException(err_msg)
+
+    check_is_geojson(points_geojson)
+
+    return True
+
 
 def check_feature_collection_property(feature_coll, mandatory_colname):
     if mandatory_colname is None:
@@ -49,6 +89,7 @@ def check_feature_collection_property(feature_coll, mandatory_colname):
             LOGGER.error(err_msg)
             raise exc.UserInputException(err_msg)
     return True
+
 
 def get_all_properties_per_id(feature_coll, colname_id):
     properties_by_id = {}
@@ -66,14 +107,16 @@ def get_all_properties_per_id(feature_coll, colname_id):
 
 def check_is_feature_collection_points(points_geojson):
 
-    if not 'features' in points_geojson:
-        err_msg = 'FeatureCollection has to contain "features".'
+    if not points_geojson['type'] == 'FeatureCollection':
+        err_msg = 'GeoJSON is not a FeatureCollection.'
         LOGGER.error(err_msg)
         raise exc.UserInputException(err_msg)
 
+    check_is_geojson(points_geojson)
+
     for feature in points_geojson['features']:
         if not feature['geometry']['type'] == 'Point':
-            err_msg = 'Features in FeatureCollection have to be points, not: %s' % feature['type']
+            err_msg = f'Features in FeatureCollection have to be points, not: {feature["type"]}'
             LOGGER.error(err_msg)
             raise exc.UserInputException(err_msg)
 

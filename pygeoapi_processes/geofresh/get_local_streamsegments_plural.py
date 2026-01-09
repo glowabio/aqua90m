@@ -13,6 +13,7 @@ from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
 import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
 import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
+import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
 from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection_object_config
 
 
@@ -153,7 +154,7 @@ class LocalStreamSegmentsGetterPlural(GeoFreshBaseProcessor):
         if points_geojson is not None:
             LOGGER.debug('POINTS GEOJSON: %s' % points_geojson)
             LOGGER.debug(f'POINTS GEOJSON: {type(points_geojson)}')
-            utils.check_is_geojson(points_geojson)
+            geojson_helpers.check_is_geojson(points_geojson)
 
 >>>>>>> e87dec0 (New process: get_local_streamsegments_plural.)
         ##################

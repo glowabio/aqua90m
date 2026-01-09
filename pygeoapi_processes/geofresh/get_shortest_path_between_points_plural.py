@@ -15,6 +15,7 @@ import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
 import pygeoapi.process.aqua90m.geofresh.routing as routing
 import pygeoapi.process.aqua90m.geofresh.get_linestrings as get_linestrings
 import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
+import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
 from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection_object_config
 
 
@@ -208,11 +209,11 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
             raise ProcessorExecuteError(err_msg)
 
         if points is not None:
-            utils.check_is_geojson(points)
+            geojson_helpers.check_is_geojson(points)
         if points_start is not None:
-            utils.check_is_geojson(points_start)
+            geojson_helpers.check_is_geojson(points_start)
         if points_end is not None:
-            utils.check_is_geojson(points_end)
+            geojson_helpers.check_is_geojson(points_end)
 
         ###########################
         ### Plural or singular? ###
