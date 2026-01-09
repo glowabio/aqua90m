@@ -199,10 +199,9 @@ class SnappedPointsGetterPlural(GeoFreshBaseProcessor):
         comment = data.get('comment') # optional
 
 
-        ## Potential outputs:
-        output_json = None
-        output_df = None
-
+        #######################
+        ### Validate inputs ###
+        #######################
 
         ## Check which format
         if result_format is None:
@@ -220,17 +219,47 @@ class SnappedPointsGetterPlural(GeoFreshBaseProcessor):
             raise ProcessorExecuteError(err_msg)
 
 
+        ##############################
+        ### Download if applicable ###
+        ### and validate GeoJSON   ###
+        ##############################
+
         ## Download GeoJSON if user provided URL:
         if points_geojson_url is not None:
             points_geojson = utils.download_geojson(points_geojson_url)
 
-        ## Handle GeoJSON case:
+        ## Validate GeoJSON:
         if points_geojson is not None:
 
-            # If a FeatureCollections is passed, check whether the property "site_id" (or similar)
-            # is present in every feature:
-            if points_geojson['type'] == 'FeatureCollection':
-                geojson_helpers.check_feature_collection_property(points_geojson, colname_site_id)
+            if points_geojson['type'] == 'GeometryCollection':
+                geojson_helpers.check_is_geometry_collection_points(points_geojson)
+            elif points_geojson['type'] == 'FeatureCollection':
+                geojson_helpers.check_is_feature_collection_points(points_geojson)
+            elif points_geojson['type'] == 'MultiPoint':
+                geojson_helpers.check_is_multipoint(points_geojson)
+            else:
+                err_msg = 'Malformed parameter: Not accepting other input than GeometryCollection, FeatureCollection or MultiPoint.'
+                LOGGER.error(err_msg)
+                raise ProcessorExecuteError(err_msg)
+
+            # If a FeatureCollection and an id property is passed, check whether the id
+            # is present in every feature's properties:
+            # TODO: Do we want to make site_id mandatory in FeatureCollection?
+            # Note: This is not necessary for the computation, just an arbitrary requirement...
+            #if points_geojson['type'] == 'FeatureCollection' and colname_site_id is not None:
+            #    geojson_helpers.check_feature_collection_property(points_geojson, colname_site_id)
+
+
+        ##########################
+        ### Actual computation ###
+        ##########################
+
+        ## Potential outputs:
+        output_json = None
+        output_df = None
+
+        ## Handle GeoJSON case:
+        if points_geojson is not None:
 
             # Query database:
             if result_format == 'geojson':

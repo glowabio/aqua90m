@@ -214,21 +214,6 @@ def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_fea
 def get_snapped_points_json2json(conn, points_geojson, min_strahler, colname_site_id=None, add_distance=None):
     # INPUT: GeoJSON (Multipoint)
     # OUTPUT: FeatureCollection (Point)
-
-    # Check GeoJSON validity, and define what to iterate over:
-    if points_geojson['type'] == 'GeometryCollection':
-        geojson_helpers.check_is_geometry_collection_points(points_geojson)
-        iterate_over = points_geojson['geometries']
-        num = len(iterate_over)
-    elif points_geojson['type'] == 'FeatureCollection':
-        geojson_helpers.check_is_feature_collection_points(points_geojson)
-        if colname_site_id is None:
-            err_msg = "Please provide the property name where the site id is provided."
-            LOGGER.error(err_msg)
-            raise exc.UserInputException(err_msg)
-        iterate_over = points_geojson['features']
-        num = len(iterate_over)
-
     return get_snapped_points_xy(conn, geojson = points_geojson, min_strahler = min_strahler, colname_site_id = colname_site_id, result_format="geojson", add_distance=add_distance)
 
 
@@ -264,21 +249,6 @@ def get_snapped_points_csv2json(conn, input_df, min_strahler, colname_lon, colna
 def get_snapped_points_json2csv(conn, points_geojson, min_strahler, colname_lon, colname_lat, colname_site_id, add_distance=None):
     # INPUT: GeoJSON (Multipoint)
     # OUTPUT: Pandas dataframe
-
-    # Check GeoJSON validity, and define what to iterate over:
-    if points_geojson['type'] == 'GeometryCollection':
-        geojson_helpers.check_is_geometry_collection_points(points_geojson)
-        iterate_over = points_geojson['geometries']
-        num = len(iterate_over)
-    elif points_geojson['type'] == 'FeatureCollection':
-        geojson_helpers.check_is_feature_collection_points(points_geojson)
-        if colname_site_id is None:
-            err_msg = "Please provide the property name where the site id is provided."
-            LOGGER.error(err_msg)
-            raise exc.UserInputException(err_msg)
-        iterate_over = points_geojson['features']
-        num = len(iterate_over)
-
     return get_snapped_points_xy(conn,
         geojson = points_geojson,
         colname_site_id = colname_site_id,

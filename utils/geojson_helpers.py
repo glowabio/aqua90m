@@ -63,7 +63,7 @@ def check_is_geometry_collection_points(points_geojson):
     return True
 
 
-def check_is_multipoints(points_geojson):
+def check_is_multipoint(points_geojson):
 
     if not points_geojson['type'] == 'MultiPoint':
         err_msg = 'GeoJSON is not a MultiPoint.'
