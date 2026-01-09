@@ -148,6 +148,11 @@ class LocalStreamSegmentsGetterPlural(GeoFreshBaseProcessor):
             LOGGER.debug(f'POINTS GEOJSON: {type(points_geojson)}')
             geojson_helpers.check_is_geojson(points_geojson)
 
+            # If a FeatureCollections is passed, check whether the property
+            # "site_id" (or similar) is present in every feature:
+            if points_geojson['type'] == 'FeatureCollection':
+                properties_by_siteid = geojson_helpers.get_all_properties_per_id(points_geojson, colname_site_id)
+
         ##################
         ### Actual ... ###
         ##################
@@ -163,11 +168,6 @@ class LocalStreamSegmentsGetterPlural(GeoFreshBaseProcessor):
         ## Handle GeoJSON case:
         if points_geojson is not None:
             # TODO Should we check if we have subc_ids already?
-
-            # If a FeatureCollections is passed, check whether the property
-            # "site_id" (or similar) is present in every feature:
-            if points_geojson['type'] == 'FeatureCollection':
-                properties_by_siteid = geojson_helpers.get_all_properties_per_id(points_geojson, colname_site_id)
 
             LOGGER.debug('Querying subc_id etc. for each point in input GeoJSON...')
             #points_geojson = get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson_with_siteid, colname_site_id)
