@@ -294,7 +294,7 @@ def get_subcid_basinid_regid__dataframe_to_dataframe(conn, input_df, colname_lon
     return output_df
 
 
-def get_subcid_basinid_regid_for_geojson(conn, input_geojson, colname_site_id=None):
+def get_subcid_basinid_regid__geojson_to_dataframe(conn, input_geojson, colname_site_id=None):
     # INPUT:  GeoJSON (MultiPoint or GeometryCollection or FeatureCollection)
     # OUTPUT: Dataframe with site_id, subc_id, basin_id, reg_id
     # Note: If no colname_site_id is given, we can return the dataframe, but it

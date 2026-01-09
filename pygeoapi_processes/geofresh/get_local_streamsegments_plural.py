@@ -170,7 +170,7 @@ class LocalStreamSegmentsGetterPlural(GeoFreshBaseProcessor):
 
             LOGGER.debug('Querying subc_id etc. for each point in input GeoJSON...')
             #points_geojson = get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson_with_siteid, colname_site_id)
-            temp_df = basic_queries.get_subcid_basinid_regid_for_geojson(conn, points_geojson, colname_site_id=colname_site_id)
+            temp_df = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(conn, points_geojson, colname_site_id=colname_site_id)
             all_subc_ids, reg_id, basin_id = self._get_ids_and_check(temp_df)
 
         ## Handle CSV case:

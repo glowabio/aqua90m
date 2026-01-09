@@ -344,7 +344,7 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
             if 'subc_id' in which_ids or 'basin_id' in which_ids:
 
                 if result_format == 'csv':
-                    output_df = basic_queries.get_subcid_basinid_regid_for_geojson(
+                    output_df = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(
                         conn, points_geojson, colname_site_id=None)
 
                 elif result_format == 'json':

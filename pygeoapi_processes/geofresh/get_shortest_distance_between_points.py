@@ -340,7 +340,7 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         # Collect reg_id, basin_id, subc_id
         if points is not None:
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are the same)...')
-            temp_df = basic_queries.get_subcid_basinid_regid_for_geojson(conn, points, colname_site_id=None)
+            temp_df = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(conn, points, colname_site_id=None)
             # TODO does this return NAs?
         elif subc_ids is not None:
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of subcatchments (start and end points are the same)...')
@@ -360,8 +360,8 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         # Collect reg_id, basin_id, subc_id
         if points_start is not None and points_end is not None:
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are different)...')
-            temp_df_start = basic_queries.get_subcid_basinid_regid_for_geojson(conn, points_start, colname_site_id=None)
-            temp_df_end   = basic_queries.get_subcid_basinid_regid_for_geojson(conn, points_end, colname_site_id=None)
+            temp_df_start = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(conn, points_start, colname_site_id=None)
+            temp_df_end   = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(conn, points_end, colname_site_id=None)
             # TODO does this return NAs?
         elif subc_ids_start is not None and subc_ids_end is not None:
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of subcatchments (start and end points are different)...')

@@ -232,7 +232,7 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
                 # For each feature, retrieve the required ids "subc_id", "basin_id", "reg_id":
                 # (Note: Instead, we could use "add_subcid_basinid_regid_to_featurecoll" which
                 # outputs a FeatureCollection, that is easier to understand, but slower.)
-                temp_df = basic_queries.get_subcid_basinid_regid_for_geojson(
+                temp_df = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(
                     conn,
                     points_geojson,
                     colname_site_id=colname_site_id
