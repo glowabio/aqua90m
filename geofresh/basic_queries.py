@@ -317,7 +317,7 @@ def get_subcid_basinid_regid__geojson_to_dataframe(conn, input_geojson, colname_
     return output_df
 
 
-def get_regid_for_dataframe(conn, input_df, colname_lon, colname_lat, colname_site_id=None):
+def get_regid__dataframe_to_dataframe(conn, input_df, colname_lon, colname_lat, colname_site_id=None):
     # INPUT:  Dataframe with lon, lat, possibly site_id
     # OUTPUT: Dataframe with lon, lat, reg_id, possibly site_id
     list_of_insert_rows = temp_tables.make_insertion_rows_from_dataframe(input_df, colname_lon, colname_lat, colname_site_id)
@@ -338,7 +338,7 @@ def get_regid_for_dataframe(conn, input_df, colname_lon, colname_lat, colname_si
     return output_df
 
 
-def get_regid_for_geojson(conn, input_geojson, colname_site_id=None):
+def get_regid__geojson_to_dataframe(conn, input_geojson, colname_site_id=None):
     # INPUT:  GeoJSON (MultiPoint or GeometryCollection or FeatureCollection)
     # OUTPUT: Dataframe with site_id, reg_id
     # Note: If no colname_site_id is given, we can return the dataframe, but it

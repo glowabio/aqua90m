@@ -361,7 +361,7 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
             elif 'reg_id' in which_ids:
 
                 if result_format == 'csv':
-                    output_df = basic_queries.get_regid_for_geojson(conn, points_geojson, colname_site_id=None)
+                    output_df = basic_queries.get_regid__geojson_to_dataframe(conn, points_geojson, colname_site_id=None)
 
                 else:
                     err_msg = "Currently not allowed: (geo)json output, when getting reg_id only." # TODO
@@ -394,7 +394,7 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
             elif 'reg_id' in which_ids:
                 # Returns a dataframe with lon, lat, reg_id, possibly site_id
                 # without loop:
-                output_df = basic_queries.get_regid_for_dataframe(
+                output_df = basic_queries.get_regid__dataframe_to_dataframe(
                     conn, input_df, colname_lon, colname_lat, colname_site_id=colname_site_id)
 
 
