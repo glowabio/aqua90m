@@ -126,7 +126,7 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-path-between-points-plur
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
-        "subc_ids_start": [506251712, 506252055],
+        "subc_ids": [506251712, 506252055],
         "subc_ids_end": [506251712, 506251713],
         "comment": "not sure where"
   }
@@ -170,14 +170,11 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
         points_geojson = data.get('points_geojson', None)
         points_geojson_url = data.get('points_geojson_url', None)
         # Two separate sets of points:
-        points_geojson_start = data.get('points_geojson_start', None)
         points_geojson_end = data.get('points_geojson_end', None)
-        points_geojson_start_url = data.get('points_geojson_start_url', None)
         points_geojson_end_url = data.get('points_geojson_end_url', None)
         # Set of subcatchments:
         subc_ids = data.get('subc_ids', None)
         # Two separate sets of subcatchments:
-        subc_ids_start = data.get('subc_ids_start', None)
         subc_ids_end = data.get('subc_ids_end', None)
         # CSV, to be downloaded via URL
         csv_url = data.get('csv_url', None)
@@ -197,10 +194,6 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
         if points_geojson_url is not None:
             points_geojson = utils.download_geojson(points_geojson_url)
             LOGGER.debug(f'Downloaded GeoJSON: {points_geojson}')
-
-        if points_geojson_start_url is not None:
-            points_geojson_start = utils.download_geojson(points_geojson_start_url)
-            LOGGER.debug(f'Downloaded GeoJSON: {points_geojson_start}')
 
         if points_geojson_end_url is not None:
             points_geojson_end = utils.download_geojson(points_geojson_end_url)
@@ -237,8 +230,6 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
         # Check GeoJSON validity
         if points_geojson is not None:
             geojson_helpers.check_is_geojson(points_geojson)
-        if points_geojson_start is not None:
-            geojson_helpers.check_is_geojson(points_geojson_start)
         if points_geojson_end is not None:
             geojson_helpers.check_is_geojson(points_geojson_end)
 
@@ -262,10 +253,8 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
             LOGGER.debug('Singular case...')
             singular = True
         elif not(points_geojson is None
-             and points_geojson_start is None
              and points_geojson_end is None
              and subc_ids is None
-             and subc_ids_start is None
              and subc_ids_end is None
              and input_df is None
             ):
@@ -277,7 +266,7 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
         if singular:
             return self.singular_case(conn, lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end, requested_outputs, comment, result_format)
         else:
-            return self.plural_case(conn, points_geojson, points_geojson_start, points_geojson_end, subc_ids, subc_ids_start, subc_ids_end, input_df, colname_lon, colname_lat, requested_outputs, comment, result_format)
+            return self.plural_case(conn, points_geojson, points_geojson_end, subc_ids, subc_ids_end, input_df, colname_lon, colname_lat, requested_outputs, comment, result_format)
 
 
     def singular_case(self, conn, lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end, requested_outputs, comment, result_format):
@@ -343,29 +332,28 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
         '''
 
 
-    def plural_case(self, conn, points_geojson, points_geojson_start, points_geojson_end, subc_ids, subc_ids_start, subc_ids_end, input_df, colname_lon, colname_lat, requested_outputs, comment, result_format):
+    def plural_case(self, conn, points_geojson, points_geojson_end, subc_ids, subc_ids_end, input_df, colname_lon, colname_lat, requested_outputs, comment, result_format):
 
         # Symmetric or asymmetric matrix? I.e. are the start and end points
         # the same, or different sets?
         plural_symmetric = plural_asymmetric = False
-        if not(points_geojson is None
+        if not (
+            subc_ids_end is None and
+            points_geojson_end is None
+        ):
+            LOGGER.debug('Plural case, asymmetric matrix...')
+            plural_asymmetric = True
+        elif not(points_geojson is None
             and subc_ids is None
             and input_df is None):
             LOGGER.debug('Plural case, symmetric matrix...')
             plural_symmetric = True
-        elif not (subc_ids_start is None
-              and subc_ids_end is None
-              and points_geojson_start is None
-              and points_geojson_end is None
-            ):
-            LOGGER.debug('Plural case, asymmetric matrix...')
-            plural_asymmetric = True
 
         # Get sets of input points
         if plural_symmetric:
             all_subc_ids_start, all_subc_ids_end, reg_id, basin_id = self.plural_symmetric(conn, points_geojson, subc_ids, input_df, colname_lon, colname_lat)
         elif plural_asymmetric:
-            all_subc_ids_start, all_subc_ids_end, reg_id, basin_id = self.plural_asymmetric(conn, points_geojson_start, points_geojson_end, subc_ids_start, subc_ids_end)
+            all_subc_ids_start, all_subc_ids_end, reg_id, basin_id = self.plural_asymmetric(conn, points_geojson, points_geojson_end, subc_ids, subc_ids_end)
 
         # Get shortest paths:
         output_df_or_json = routing.get_dijkstra_ids_many_to_many(
@@ -633,7 +621,7 @@ if __name__ == '__main__':
     print('TEST CASE 9: Matrix: Request paths between two sets of points, based on subc_ids...', end="", flush=True)  # no newline
     payload = {
         "inputs": {
-            "subc_ids_start": [506251712, 506252055],
+            "subc_ids": [506251712, 506252055],
             "subc_ids_end": [506251712, 506251713],
             "comment": "test9"
         }
@@ -645,7 +633,7 @@ if __name__ == '__main__':
     print('TEST CASE 10: Matrix: Request paths between two sets of points, based on GeoJSON...', end="", flush=True)  # no newline
     payload = {
         "inputs": {
-            "points_geojson_start": {
+            "points_geojson": {
                 "type": "MultiPoint",
                 "coordinates": [
                     [9.9217, 54.6917],
