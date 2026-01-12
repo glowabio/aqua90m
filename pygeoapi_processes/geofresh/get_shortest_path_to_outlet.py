@@ -93,7 +93,7 @@ class ShortestPathToOutletGetter(GeoFreshBaseProcessor):
         point = data.get('point', None)
         lon_start = data.get('lon', None)
         lat_start = data.get('lat', None)
-        subc_id1 = data.get('subc_id', None) # optional, need either lonlat OR subc_id
+        subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
         comment = data.get('comment') # optional
         geometry_only = data.get('geometry_only', False)
         downstream_ids_only = data.get('downstream_ids_only', False)
@@ -101,7 +101,7 @@ class ShortestPathToOutletGetter(GeoFreshBaseProcessor):
         only_up_to_strahler = data.get('only_up_to_strahler', None)
 
         # Check if either point or subc_id or both lon and lat are provided:
-        utils.params_point_or_lonlat_or_subcid(point, lon_start, lat_start, subc_id1)
+        utils.params_point_or_lonlat_or_subcid(point, lon_start, lat_start, subc_id)
 
         # Check types:
         utils.check_type_parameter('only_up_to_strahler', only_up_to_strahler, int, none_allowed=True)
@@ -118,18 +118,18 @@ class ShortestPathToOutletGetter(GeoFreshBaseProcessor):
         # Overall goal: Get the dijkstra shortest path (as linestrings)!
 
         # Get reg_id, basin_id, subc_id
-        if subc_id1 is not None:
+        if subc_id is not None:
             # (special case: user provided subc_id instead of lonlat!)
-            LOGGER.info(f'START: Getting dijkstra shortest path for subc_id {subc_id1} to sea')
-            subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
-                conn, LOGGER, subc_id = subc_id1)
+            LOGGER.info(f'START: Getting dijkstra shortest path for subc_id {subc_id} to sea')
+            subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
+                conn, LOGGER, subc_id = subc_id)
         else:
             LOGGER.info(f'START: Getting dijkstra shortest path for lon {lon_start}, lat {lat_start} to sea')
-            subc_id1, basin_id1, reg_id1 = basic_queries.get_subcid_basinid_regid(
+            subc_id, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
                 conn, LOGGER, lon_start, lat_start)
 
         # Outlet has minus basin_id as subc_id!
-        subc_id2 = -basin_id1
+        outlet_subc_id = -basin_id
 
         ##################
         ### Actual ... ###
@@ -139,15 +139,15 @@ class ShortestPathToOutletGetter(GeoFreshBaseProcessor):
         json_result = {}
 
         # Get subc_ids of the whole connection...
-        LOGGER.debug(f'Getting network connection for subc_id: start = {subc_id1}, end = {subc_id2}')
-        segment_ids = routing.get_dijkstra_ids_one_to_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
+        LOGGER.debug(f'Getting network connection for subc_id: start = {subc_id}, end = {outlet_subc_id}')
+        segment_ids = routing.get_dijkstra_ids_one_to_one(conn, subc_id, outlet_subc_id, reg_id, basin_id)
 
         # Filter by strahler, e.g. only strahler orders 1-3, by specifying only_up_to_strahler = 3
         if only_up_to_strahler is not None:
             LOGGER.debug(f'User requested to exclude {only_up_to_strahler} and higher...')
             LOGGER.debug(f'Before filtering by strahler: {len(segment_ids)}')
             segment_ids = filter_subcid_by_strahler(
-                conn, segment_ids, reg_id1, basin_id1, only_up_to_strahler)
+                conn, segment_ids, reg_id, basin_id, only_up_to_strahler)
             LOGGER.debug(f'After filtering by strahler: {len(segment_ids)}')
 
         # Only return the ids, no geometry at all:
@@ -157,19 +157,19 @@ class ShortestPathToOutletGetter(GeoFreshBaseProcessor):
         # Get GeometryCollection only:
         elif geometry_only:
             json_result = get_linestrings.get_streamsegment_linestrings_geometry_coll(
-                conn, segment_ids, basin_id1, reg_id1)
+                conn, segment_ids, basin_id, reg_id)
 
         # Get FeatureCollection
         if not geometry_only and not downstream_ids_only:
             json_result = get_linestrings.get_streamsegment_linestrings_feature_coll(
-                conn, segment_ids, basin_id1, reg_id1)
+                conn, segment_ids, basin_id, reg_id)
 
             # Add some info to the FeatureCollection:
             # TODO: OUTPUT FORMAT: Should we include the requested lon and lat? Maybe as a point?
-            json_result["description"] = f"Downstream path from subcatchment {subc_id1} to the outlet of its basin."
-            json_result["subc_id"] = subc_id1 # TODO how to name the point from where we route to outlet?
-            json_result["outlet_id"] = subc_id2
-            json_result["downstream_path_of"] = subc_id1
+            json_result["description"] = f"Downstream path from subcatchment {subc_id} to the outlet of its basin."
+            json_result["subc_id"] = subc_id # TODO how to name the point from where we route to outlet?
+            json_result["outlet_id"] = outlet_subc_id
+            json_result["downstream_path_of"] = subc_id
             if add_downstream_ids:
                 json_result["downstream_ids"] = segment_ids
 
