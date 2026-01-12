@@ -23,7 +23,7 @@
         "hreflang": "en-US"
     }],
     "inputs": {
-         "points": {
+         "points_geojson": {
             "title": "Points (GeoJSON)",
             "description": "GeoJSON: GeometryCollection of MultiPoint items (WGS84)-",
             "schema": {"type": "string"},

@@ -85,14 +85,14 @@ curl -X POST https://${PYSERVER}/processes/get-shortest-distance-between-points/
 --header "Content-Type: application/json" \
 --data '{
   "inputs": {
-    "points_start": {
+    "points_geojson_start": {
       "type": "MultiPoint",
       "coordinates": [
         [9.9217, 54.6917],
         [9.9312, 54.6933]
       ]
     },
-    "points_end": {
+    "points_geojson_end": {
       "type": "MultiPoint",
       "coordinates": [
         [9.937520027160646, 54.69422745526058],
@@ -163,11 +163,11 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         # Plural case:
         # GeoJSON (e.g. Multipoint, GeometryCollection of Points,
         # FeatureCollection of Points), posted directly:
-        points = data.get('points', None)
+        points_geojson = data.get('points_geojson', None)
         points_geojson_url = data.get('points_geojson_url', None)
         # Two separate sets of points:
-        points_start = data.get('points_start', None)
-        points_end = data.get('points_end', None)
+        points_geojson_start = data.get('points_geojson_start', None)
+        points_geojson_end = data.get('points_geojson_end', None)
         points_geojson_start_url = data.get('points_geojson_start_url', None)
         points_geojson_end_url = data.get('points_geojson_end_url', None)
         # Set of subcatchments:
@@ -187,16 +187,16 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
 
         ## Download GeoJSON if user provided URL:
         if points_geojson_url is not None:
-            points = utils.download_geojson(points_geojson_url)
-            LOGGER.debug(f'Downloaded GeoJSON: {points}')
+            points_geojson = utils.download_geojson(points_geojson_url)
+            LOGGER.debug(f'Downloaded GeoJSON: {points_geojson}')
 
         if points_geojson_start_url is not None:
-            points_start = utils.download_geojson(points_geojson_start_url)
-            LOGGER.debug(f'Downloaded GeoJSON: {points_start}')
+            points_geojson_start = utils.download_geojson(points_geojson_start_url)
+            LOGGER.debug(f'Downloaded GeoJSON: {points_geojson_start}')
 
         if points_geojson_end_url is not None:
-            points_end = utils.download_geojson(points_geojson_end_url)
-            LOGGER.debug(f'Downloaded GeoJSON: {points_end}')
+            points_geojson_end = utils.download_geojson(points_geojson_end_url)
+            LOGGER.debug(f'Downloaded GeoJSON: {points_geojson_end}')
 
         #################################
         ### Validate input parameters ###
@@ -233,9 +233,9 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
             ):
             LOGGER.debug('Singular case...')
             singular = True
-        elif not(points is None
-             and points_start is None
-             and points_end is None
+        elif not(points_geojson is None
+             and points_geojson_start is None
+             and points_geojson_end is None
              and subc_ids is None
              and subc_ids_start is None
              and subc_ids_end is None
@@ -249,7 +249,7 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         if singular:
             return self.singular_case(conn, lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end, requested_outputs, comment, result_format)
         else:
-            return self.plural_case(conn, points, points_start, points_end, subc_ids, subc_ids_start, subc_ids_end, requested_outputs, comment, result_format)
+            return self.plural_case(conn, points_geojson, points_geojson_start, points_geojson_end, subc_ids, subc_ids_start, subc_ids_end, requested_outputs, comment, result_format)
 
 
     def singular_case(self, conn, lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end, requested_outputs, comment, result_format):
@@ -310,27 +310,27 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         return self.return_results('distances_matrix', requested_outputs, output_df=None, output_json=json_result, comment=comment)
 
 
-    def plural_case(self, conn, points, points_start, points_end, subc_ids, subc_ids_start, subc_ids_end, requested_outputs, comment, result_format):
+    def plural_case(self, conn, points_geojson, points_geojson_start, points_geojson_end, subc_ids, subc_ids_start, subc_ids_end, requested_outputs, comment, result_format):
 
         # Symmetric or asymmetric matrix? I.e. are the start and end points
         # the same, or different sets?
         plural_symmetric = plural_asymmetric = False
-        if not(points is None and subc_ids is None):
+        if not(points_geojson is None and subc_ids is None):
             LOGGER.debug('Plural case, symmetric matrix...')
             plural_symmetric = True
         elif not (subc_ids_start is None
               and subc_ids_end is None
-              and points_start is None
-              and points_end is None
+              and points_geojson_start is None
+              and points_geojson_end is None
             ):
             LOGGER.debug('Plural case, asymmetric matrix...')
             plural_asymmetric = True
 
         # Get sets of input points
         if plural_symmetric:
-            all_subc_ids_start, all_subc_ids_end, reg_id, basin_id = self.plural_symmetric(conn, points, subc_ids)
+            all_subc_ids_start, all_subc_ids_end, reg_id, basin_id = self.plural_symmetric(conn, points_geojson, subc_ids)
         elif plural_asymmetric:
-            all_subc_ids_start, all_subc_ids_end, reg_id, basin_id = self.plural_asymmetric(conn, points_start, points_end, subc_ids_start, subc_ids_end)
+            all_subc_ids_start, all_subc_ids_end, reg_id, basin_id = self.plural_asymmetric(conn, points_geojson_start, points_geojson_end, subc_ids_start, subc_ids_end)
 
         # Get distance:
         if result_format == "csv":
@@ -344,12 +344,12 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
             return self.return_results('distances_matrix', requested_outputs, output_json=json_result, comment=comment)
 
 
-    def plural_symmetric(self, conn, points, subc_ids):
+    def plural_symmetric(self, conn, points_geojson, subc_ids):
 
         # Collect reg_id, basin_id, subc_id
-        if points is not None:
+        if points_geojson is not None:
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are the same)...')
-            temp_df = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(conn, points, colname_site_id=None)
+            temp_df = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(conn, points_geojson, colname_site_id=None)
             # TODO does this return NAs?
         elif subc_ids is not None:
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of subcatchments (start and end points are the same)...')
@@ -364,13 +364,13 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         return all_subc_ids, all_subc_ids, reg_id, basin_id
 
 
-    def plural_asymmetric(self, conn, points_start, points_end, subc_ids_start, subc_ids_end):
+    def plural_asymmetric(self, conn, points_geojson_start, points_geojson_end, subc_ids_start, subc_ids_end):
 
         # Collect reg_id, basin_id, subc_id
-        if points_start is not None and points_end is not None:
+        if points_geojson_start is not None and points_geojson_end is not None:
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are different)...')
-            temp_df_start = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(conn, points_start, colname_site_id=None)
-            temp_df_end   = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(conn, points_end, colname_site_id=None)
+            temp_df_start = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(conn, points_geojson_start, colname_site_id=None)
+            temp_df_end   = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(conn, points_geojson_end, colname_site_id=None)
             # TODO does this return NAs?
         elif subc_ids_start is not None and subc_ids_end is not None:
             LOGGER.debug('START: Getting dijkstra shortest distance between a number of subcatchments (start and end points are different)...')
@@ -527,7 +527,7 @@ if __name__ == '__main__':
     print('TEST CASE 4: Matrix: Request distances between many points. Input GeoJSON directly (Geometry: MultiPoint)...', end="", flush=True)  # no newline
     payload = {
         "inputs": {
-            "points": {
+            "points_geojson": {
                 "type": "MultiPoint",
                 "coordinates": [
                     [9.937520027160646, 54.69422745526058],
@@ -545,14 +545,14 @@ if __name__ == '__main__':
     print('TEST CASE 5: Matrix: Request distances between two sets of points. Input GeoJSON directly (Geometry: MultiPoint)...', end="", flush=True)  # no newline
     payload = {
         "inputs": {
-            "points_start": {
+            "points_geojson_start": {
                 "type": "MultiPoint",
                 "coordinates": [
                     [9.9217, 54.6917],
                     [9.9312, 54.6933]
                 ]
             },
-            "points_end": {
+            "points_geojson_end": {
                 "type": "MultiPoint",
                 "coordinates": [
                     [9.937520027160646, 54.69422745526058],
