@@ -383,19 +383,33 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
 
     def plural_asymmetric(self, conn, points_geojson_start, points_geojson_end, subc_ids_start, subc_ids_end):
 
-        # Collect reg_id, basin_id, subc_id
-        if points_geojson_start is not None and points_geojson_end is not None:
-            LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are different)...')
+        LOGGER.debug('START: Getting dijkstra shortest distance between a number of subcatchments (start and end points are different)...')
+
+        # Collect reg_id, basin_id, subc_id of set of start subcatchments:
+        if points_geojson_start is not None:
             temp_df_start = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(conn, points_geojson_start, colname_site_id=None)
+            # TODO does this return NAs?
+        elif subc_ids_start is not None:
+            all_subc_ids_start = set(subc_ids_start)
+            temp_df_start = basic_queries.get_basinid_regid_from_subcid_plural(conn, all_subc_ids_start)
+            # TODO does this return NAs?
+        else:
+            err_msg = 'Missing: Set of start subcatchments/points!'
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
+
+        # Collect reg_id, basin_id, subc_id of set of end subcatchments:
+        if points_geojson_end is not None:
             temp_df_end   = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(conn, points_geojson_end, colname_site_id=None)
             # TODO does this return NAs?
-        elif subc_ids_start is not None and subc_ids_end is not None:
-            LOGGER.debug('START: Getting dijkstra shortest distance between a number of subcatchments (start and end points are different)...')
-            all_subc_ids_start = set(subc_ids_start)
+        elif subc_ids_end is not None:
             all_subc_ids_end = set(subc_ids_end)
-            temp_df_start = basic_queries.get_basinid_regid_from_subcid_plural(conn, all_subc_ids_start)
             temp_df_end   = basic_queries.get_basinid_regid_from_subcid_plural(conn, all_subc_ids_end)
             # TODO does this return NAs?
+        else:
+            err_msg = 'Missing: Set of end subcatchments/points!'
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
 
         # Retrieve subc_ids from the dataframe, and check if basins and regions match:
         all_subc_ids_start, reg_id1, basin_id1 = self._get_ids_and_check(temp_df_start)
@@ -654,18 +668,18 @@ if __name__ == '__main__':
         print(f'TEST CASE 9: EXPECTED: {e.response.json()["description"]}')
 
 
-    #print('TEST CASE 10: Will fail: Missing input...', end="", flush=True)  # no newline
-    #payload = {
-    #    "inputs": {
-    #        "subc_ids_end": [506251712, 506252055],
-    #        "comment": "test10"
-    #    }
-    #}
-    #try:
-    #    resp = make_sync_request(PYSERVER, process_id, payload)
-    #    raise ValueError("Expected error that did not happen...")
-    #except requests.exceptions.HTTPError as e:
-    #    print(f'TEST CASE 10: EXPECTED: {e.response.json()["description"]}')
+    print('TEST CASE 10: Will fail: Missing input...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "subc_ids_end": [506251712, 506252055],
+            "comment": "test10"
+        }
+    }
+    try:
+        resp = make_sync_request(PYSERVER, process_id, payload)
+        raise ValueError("Expected error that did not happen...")
+    except requests.exceptions.HTTPError as e:
+        print(f'TEST CASE 10: EXPECTED: {e.response.json()["description"]}')
 
 
     print('TEST CASE 11: Will fail: Mismatching input...', end="", flush=True)  # no newline

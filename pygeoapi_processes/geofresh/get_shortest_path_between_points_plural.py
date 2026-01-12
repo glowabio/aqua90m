@@ -401,18 +401,23 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
 
 
     def plural_asymmetric(self, conn, points_geojson_start, points_geojson_end, subc_ids_start, subc_ids_end):
+        LOGGER.debug('START: Getting dijkstra shortest distance between a number of subcatchments (start and end points are different)...')
 
-        # Collect reg_id, basin_id, subc_id
-        if points_geojson_start is not None and points_geojson_end is not None:
-            LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are different)...')
+        # Collect reg_id, basin_id, subc_id of set of start subcatchments:
+        if points_geojson_start is not None:
             temp_df_start = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(conn, points_geojson_start, colname_site_id=None)
+            # TODO does this return NAs?
+        elif subc_ids_start is not None and subc_ids_end is not None:
+            all_subc_ids_start = set(subc_ids_start)
+            temp_df_start = basic_queries.get_basinid_regid_from_subcid_plural(conn, all_subc_ids_start)
+            # TODO does this return NAs?
+
+        # Collect reg_id, basin_id, subc_id of set of end subcatchments:
+        if points_geojson_end is not None:
             temp_df_end   = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(conn, points_geojson_end, colname_site_id=None)
             # TODO does this return NAs?
         elif subc_ids_start is not None and subc_ids_end is not None:
-            LOGGER.debug('START: Getting dijkstra shortest distance between a number of subcatchments (start and end points are different)...')
-            all_subc_ids_start = set(subc_ids_start)
             all_subc_ids_end = set(subc_ids_end)
-            temp_df_start = basic_queries.get_basinid_regid_from_subcid_plural(conn, all_subc_ids_start)
             temp_df_end = basic_queries.get_basinid_regid_from_subcid_plural(conn, all_subc_ids_end)
             # TODO does this return NAs?
 
