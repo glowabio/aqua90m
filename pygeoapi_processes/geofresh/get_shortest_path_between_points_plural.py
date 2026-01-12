@@ -217,7 +217,7 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
 
         # Check result format
         if not result_format == 'json' and not result_format == 'csv':
-            err_msg = f"Malformed parameter 'result_format': Format {result_format} not supported. Please specify 'csv' or 'json'."
+            err_msg = f"Malformed parameter 'result_format': Format '{result_format}' not supported. Please specify 'csv' or 'json'."
             LOGGER.error(err_msg)
             raise ProcessorExecuteError(err_msg)
 
@@ -343,9 +343,11 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
         ):
             LOGGER.debug('Plural case, asymmetric matrix...')
             plural_asymmetric = True
-        elif not(points_geojson is None
-            and subc_ids is None
-            and input_df is None):
+        elif not(
+            points_geojson is None and
+            subc_ids is None and
+            input_df is None
+        ):
             LOGGER.debug('Plural case, symmetric matrix...')
             plural_symmetric = True
 
