@@ -189,6 +189,108 @@ def get_basin_polygon(conn, basin_id, reg_id, make_feature=False):
         return gcoll
 
 
+def get_subcatchment_polygons_geometry_coll_by_basin(conn, basin_id, reg_id):
+
+    query = f'''
+    SELECT
+        ST_AsText(geom), subc_id
+    FROM hydro.sub_catchments
+    WHERE basin_id = {basin_id}
+        AND reg_id = {reg_id}
+    '''
+
+    ### Query database:
+    cursor = conn.cursor()
+    LOGGER.log(logging.TRACE, 'Querying database...')
+    cursor.execute(query)
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
+
+    ### Get results and construct GeoJSON:
+    LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
+    subcatchments_geojson = []
+    while (True):
+        row = cursor.fetchone()
+        if row is None:
+            break
+
+        # Create GeoJSON geometry from each linestring:
+        geometry = None
+        if row[0] is not None:
+            geometry = geomet.wkt.loads(row[0])
+        else:
+            # Geometry errors that happen when two segments flow into one outlet (Vanessa, 17 June 2024)
+            # For example, subc_id 506469602, when routing from 507056424 to outlet -1294020
+            LOGGER.error(f'Subcatchment {row[1]} has no geometry!') # for example: 506469602
+            # Features with empty geometries:
+            # A geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
+            # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
+
+        subcatchments_geojson.append(geometry)
+
+    geometry_coll = {
+        "type": "GeometryCollection",
+        "geometries": subcatchments_geojson
+    }
+
+    return geometry_coll
+
+
+def get_subcatchment_polygons_feature_coll_by_basin(conn, basin_id, reg_id):
+
+    query = f'''
+    SELECT
+        ST_AsText(geom), subc_id, area_sqm
+    FROM hydro.sub_catchments
+    WHERE basin_id = {basin_id}
+        AND reg_id = {reg_id}
+    '''
+
+    ### Query database:
+    cursor = conn.cursor()
+    LOGGER.log(logging.TRACE, 'Querying database...')
+    cursor.execute(query)
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
+
+    ### Get results and construct GeoJSON:
+    LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
+    features_geojson = []
+    while (True):
+        row = cursor.fetchone()
+        if row is None:
+            break
+
+        # Create GeoJSON feature from each linestring:
+        geometry = None
+        if row[0] is not None:
+            geometry = geomet.wkt.loads(row[0])
+        else:
+            # Geometry errors that happen when two segments flow into one outlet (Vanessa, 17 June 2024)
+            # For example, subc_id 506469602, when routing from 507056424 to outlet -1294020
+            LOGGER.error(f'Subcatchment {row[1]} has no polygon!') # for example: 506469602
+            # Features with empty geometries:
+            # A geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
+            # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
+
+        feature = {
+            "type": "Feature",
+            "geometry": geometry,
+            "properties": {
+                "subc_id": row[1],
+                "area_sqm": row[2]
+            }
+        }
+        features_geojson.append(feature)
+
+    feature_coll = {
+        "type": "FeatureCollection",
+        "features": features_geojson,
+        "basin_id": basin_id,
+        "region_id": reg_id,
+        "number_stream_segments": len(features_geojson)
+    }
+
+    return feature_coll
+
 
 if __name__ == "__main__":
     # Logging
@@ -266,3 +368,12 @@ if __name__ == "__main__":
     res = get_subcatchment_polygons_feature_coll(conn, subc_ids, basin_id, reg_id)
     print('RESULT:\n%s' % res)
 
+    # GeometryCollection (for one basin):
+    print('\nSTART RUNNING FUNCTION: get_subcatchment_polygons_geometry_coll_by_basin')
+    res = get_subcatchment_polygons_geometry_coll_by_basin(conn, basin_id, reg_id)
+    print('RESULT:\n%s' % res)
+
+    # FeatureCollection (for one basin):
+    print('\nSTART RUNNING FUNCTION: get_subcatchment_polygons_geometry_coll_by_basin')
+    res = get_subcatchment_polygons_feature_coll_by_basin(conn, basin_id, reg_id)
+    print('RESULT:\n%s' % res)
