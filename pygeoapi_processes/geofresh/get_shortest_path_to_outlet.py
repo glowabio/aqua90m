@@ -90,6 +90,7 @@ class ShortestPathToOutletGetter(GeoFreshBaseProcessor):
     def _execute(self, data, requested_outputs, conn):
 
         # User inputs
+        point = data.get('point', None)
         lon_start = data.get('lon', None)
         lat_start = data.get('lat', None)
         subc_id1 = data.get('subc_id', None) # optional, need either lonlat OR subc_id
@@ -99,8 +100,8 @@ class ShortestPathToOutletGetter(GeoFreshBaseProcessor):
         add_downstream_ids = data.get('add_downstream_ids', True)
         only_up_to_strahler = data.get('only_up_to_strahler', None)
 
-        # Check if either subc_id or both lon and lat are provided:
-        utils.params_lonlat_or_subcid(lon_start, lat_start, subc_id1)
+        # Check if either point or subc_id or both lon and lat are provided:
+        utils.params_point_or_lonlat_or_subcid(point, lon_start, lat_start, subc_id1)
 
         # Check types:
         utils.check_type_parameter('only_up_to_strahler', only_up_to_strahler, int, none_allowed=True)
@@ -109,6 +110,10 @@ class ShortestPathToOutletGetter(GeoFreshBaseProcessor):
             downstream_ids_only=downstream_ids_only,
             add_downstream_ids=add_downstream_ids,
         ))
+
+        # If GeoJSON point is given, get coordinates:
+        if point is not None:
+            lon_start, lat_start = point.get('coordinates') or point['geometry']['coordinates']
 
         # Overall goal: Get the dijkstra shortest path (as linestrings)!
 
@@ -262,6 +267,25 @@ if __name__ == '__main__':
             "add_downstream_ids": True,
             "only_up_to_strahler": 4,
             "comment": "test4"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+    print('TEST CASE 5: Input point instead of lonlat...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "point": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [9.937520027160646, 54.69422745526058]
+                }
+            },
+            "geometry_only": False,
+            "add_downstream_ids": True,
+            "only_up_to_strahler": 4,
+            "comment": "test5"
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)

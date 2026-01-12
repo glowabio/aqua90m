@@ -150,11 +150,13 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
 
         # Singular case:
         # Two points:
+        point_start = data.get('point_start', None)
+        point_end = data.get('point_end', None)
         lon_start = data.get('lon_start', None)
         lat_start = data.get('lat_start', None)
         lon_end = data.get('lon_end', None)
         lat_end = data.get('lat_end', None)
-        # Two subcatchments:
+        # Or two subcatchments:
         subc_id_start = data.get('subc_id_start', None) # optional, need either lonlat OR subc_id
         subc_id_end = data.get('subc_id_end', None)     # optional, need either lonlat OR subc_id
 
@@ -205,6 +207,13 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
             LOGGER.error(err_msg)
             raise ProcessorExecuteError(err_msg)
 
+        # If singular GeoJSON input, get coordinates from it:
+        if point_start is not None:
+            lon_start, lat_start = point_start.get('coordinates') or point_start['geometry']['coordinates']
+        if point_end is not None:
+            lon_end, lat_end = point_end.get('coordinates') or point_end['geometry']['coordinates']
+
+
         ###########################
         ### Plural or singular? ###
         ###########################
@@ -213,7 +222,7 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
         singular = False
         plural_symmetric = False
         plural_asymmetric = False
-        
+
         # Decide based on which inputs were provided:
         if not (lon_start is None
             and lat_start is None
@@ -644,3 +653,24 @@ if __name__ == '__main__':
         raise ValueError("Expected error that did not happen...")
     except requests.exceptions.HTTPError as e:
         print(f'TEST CASE 11: EXPECTED: {e.response.json()["description"]}')
+
+
+    print('TEST CASE 12: Input GeoJSON, not lonlat...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "point_start": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [9.937520027160646, 54.69422745526058]
+                }
+            },
+            "point_end": {
+                "type": "Point",
+                "coordinates": [9.9217, 54.6917],
+            },
+            "comment": "test12"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)

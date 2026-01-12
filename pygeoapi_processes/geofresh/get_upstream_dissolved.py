@@ -64,6 +64,7 @@ class UpstreamDissolvedGetter(GeoFreshBaseProcessor):
     def _execute(self, data, requested_outputs, conn):
 
         # User inputs
+        point = data.get('point', None)
         lon = data.get('lon', None)
         lat = data.get('lat', None)
         subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
@@ -77,8 +78,12 @@ class UpstreamDissolvedGetter(GeoFreshBaseProcessor):
             geometry_only=geometry_only
         ))
 
-        # Check if either subc_id or both lon and lat are provided:
-        utils.params_lonlat_or_subcid(lon, lat, subc_id)
+        # Check if either point or subc_id or both lon and lat are provided:
+        utils.params_point_or_lonlat_or_subcid(point, lon, lat, subc_id)
+
+        # If GeoJSON point is given, get coordinates:
+        if point is not None:
+            lon, lat = point.get('coordinates') or point['geometry']['coordinates']
 
         # Overall goal: Get the upstream polygon (as one dissolved)!
         LOGGER.info(f'START: Getting upstream dissolved polygon for lon, lat: {lon}, {lat} (or subc_id {subc_id})')
@@ -163,4 +168,24 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 3: Input feature...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "point": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [9.931555, 54.695070]
+                }
+            },
+            "geometry_only": False,
+            "add_upstream_ids": True,
+            "comment": "test3"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
 

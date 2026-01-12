@@ -65,6 +65,8 @@ class ShortestPathBetweenPointsGetter(GeoFreshBaseProcessor):
     def _execute(self, data, requested_outputs, conn):
 
         # User inputs
+        point_start = data.get('point_start', None)
+        point_end = data.get('point_end', None)
         lon_start = data.get('lon_start', None)
         lat_start = data.get('lat_start', None)
         lon_end = data.get('lon_end', None)
@@ -75,14 +77,20 @@ class ShortestPathBetweenPointsGetter(GeoFreshBaseProcessor):
         add_segment_ids = data.get('add_segment_ids', True)
         geometry_only = data.get('geometry_only', False)
 
-        # Check if either subc_id or both lon and lat are provided:
-        utils.params_lonlat_or_subcid(lon_start, lat_start, subc_id_start)
-        utils.params_lonlat_or_subcid(lon_end, lat_end, subc_id_end)
+        # Check if either point or subc_id or both lon and lat are provided:
+        utils.params_point_or_lonlat_or_subcid(point_start, lon_start, lat_start, subc_id_start)
+        utils.params_point_or_lonlat_or_subcid(point_end, lon_end, lat_end, subc_id_end)
 
         # Check if boolean:
         utils.is_bool_parameters(dict(
             add_segment_ids=add_segment_ids,
             geometry_only=geometry_only))
+
+        # If GeoJSON input, get coordinates from it:
+        if point_start is not None:
+            lon_start, lat_start = point_start.get('coordinates') or point_start['geometry']['coordinates']
+        if point_end is not None:
+            lon_end, lat_end = point_end.get('coordinates') or point_end['geometry']['coordinates']
 
         # Overall goal: Get the dijkstra shortest path (as linestrings)!
         LOGGER.info(
@@ -190,6 +198,28 @@ if __name__ == '__main__':
             "geometry_only": False,
             "add_segment_ids": True,
             "comment": "test2"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+
+    print('TEST CASE 3: Input GeoJSON, not lonlat...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "point_start": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [9.937520027160646, 54.69422745526058]
+                }
+            },
+            "point_end": {
+                "type": "Point",
+                "coordinates": [9.9217, 54.6917],
+            },
+            "geometry_only": False,
+            "add_segment_ids": True,
+            "comment": "test3"
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)

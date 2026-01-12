@@ -94,10 +94,13 @@ class BasinStreamSegmentsGetter(GeoFreshBaseProcessor):
     def _execute(self, data, requested_outputs, conn):
 
         # User inputs
-        lon = data.get('lon', None)
-        lat = data.get('lat', None)
-        subc_id  = data.get('subc_id',  None) # optional, need either lonlat OR subc_id
-        basin_id = data.get('basin_id', None) # optional, need either lonlat OR subc_id
+        # Input can be a basin:
+        basin_id = data.get('basin_id', None) # optional, need either basin_id OR lonlat/point OR subc_id
+        # Or a point, from which we infer the basin:
+        point = data.get('point', None) # optional, ...
+        lon = data.get('lon', None)     # optional, ...
+        lat = data.get('lat', None)     # optional, ...
+        subc_id  = data.get('subc_id',  None) # optional, ...
         strahler_min = data.get('strahler_min', 0)
         geometry_only = data.get('geometry_only', False)
         add_segment_ids = data.get('add_segment_ids', False)
@@ -113,8 +116,13 @@ class BasinStreamSegmentsGetter(GeoFreshBaseProcessor):
         utils.at_least_one_param({
             "basin_id": basin_id,
             "subc_id": subc_id,
+            "point": point,
             "pair of coordinates (lon and lat)": (lon and lat)
         })
+
+        # If GeoJSON point is given, get coordinates:
+        if point is not None:
+            lon, lat = point.get('coordinates') or point['geometry']['coordinates']
 
         ## Get reg_id, basin_id, subc_id - whatever is missing:
         if subc_id is not None:
@@ -212,3 +220,43 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_geojson(resp)
+
+
+    print('TEST CASE 5: Input: point, output: GeometryCollection...', end="", flush=True)  # no newline
+    payload = {
+        "inputs":
+            {
+            "point": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [8.278198242187502, 53.54910661890981]
+                }
+            },
+            "geometry_only": True,
+            "comment": "test5"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')
+
+
+    print('TEST CASE 6: Input: point, output: FeatureCollection...', end="", flush=True)  # no newline
+    payload = {
+        "inputs":
+            {
+            "point": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [8.278198242187502, 53.54910661890981]
+                }
+            },
+            "geometry_only": False,
+            "comment": "test6"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')

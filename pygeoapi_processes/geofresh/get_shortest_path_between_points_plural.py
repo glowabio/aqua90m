@@ -153,6 +153,8 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
 
         # Singular case:
         # Two points:
+        point_start = data.get('point_start', None)
+        point_end = data.get('point_end', None)
         lon_start = data.get('lon_start', None)
         lat_start = data.get('lat_start', None)
         lon_end = data.get('lon_end', None)
@@ -203,11 +205,19 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
         ### Validate input parameters ###
         #################################
 
+        # Check result format
         if not result_format == 'json' and not result_format == 'csv':
             err_msg = f"Malformed parameter 'result_format': Format {result_format} not supported. Please specify 'csv' or 'json'."
             LOGGER.error(err_msg)
             raise ProcessorExecuteError(err_msg)
 
+        # If GeoJSON point is given, get coordinates:
+        if point_start is not None:
+            lon_start, lat_start = point_start.get('coordinates') or point_start['geometry']['coordinates']
+        if point_end is not None:
+            lon_end, lat_end = point_end.get('coordinates') or point_end['geometry']['coordinates']
+
+        # Check GeoJSON validity
         if points_geojson is not None:
             geojson_helpers.check_is_geojson(points_geojson)
         if points_geojson_start is not None:
@@ -352,7 +362,6 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
             output_json = output_df_or_json
 
         return self.return_results('paths_matrix', requested_outputs, output_df=output_df, output_json=output_json, comment=comment)
-
 
 
     def plural_symmetric(self, conn, points_geojson, subc_ids):

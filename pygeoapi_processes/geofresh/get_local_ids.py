@@ -146,6 +146,7 @@ class LocalIdGetter(GeoFreshBaseProcessor):
         basin_id = None
         reg_id = None
 
+        # If GeoJSON point is given, get coordinates:
         if point is not None:
             lon, lat = point.get('coordinates') or point['geometry']['coordinates']
 

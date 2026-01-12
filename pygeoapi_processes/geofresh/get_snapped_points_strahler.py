@@ -62,6 +62,7 @@ class SnappedPointsStrahlerGetter(GeoFreshBaseProcessor):
     def _execute(self, data, requested_outputs, conn):
 
         # User inputs
+        point = data.get('point', None)
         lon = data.get('lon')
         lat = data.get('lat')
         strahler = data.get('strahler')
@@ -72,8 +73,12 @@ class SnappedPointsStrahlerGetter(GeoFreshBaseProcessor):
         utils.is_bool_parameters(dict(geometry_only=geometry_only))
         utils.check_type_parameter('strahler', strahler, int)
 
-        # Check if both lon and lat are provided:
-        utils.params_lonlat_or_subcid(lon, lat, None)
+        # Check if either point or subc_id or both lon and lat are provided:
+        utils.params_point_or_lonlat_or_subcid(point, lon, lat, None)
+
+        # If GeoJSON point is given, get coordinates:
+        if point is not None:
+            lon, lat = point.get('coordinates') or point['geometry']['coordinates']
 
         # Get reg_id, basin_id, subc_id
         LOGGER.info(f'START: Getting snapped point for lon, lat: {lon}, {lat}')
@@ -131,6 +136,8 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')
+
 
     print('TEST CASE 2: Request FeatureCollection (Point)...', end="", flush=True)  # no newline
     payload = {
@@ -144,4 +151,25 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')
 
+
+    print('TEST CASE 3: Input Feature (Point)...', end="", flush=True)  # no newline
+    payload = {
+        "inputs":
+            {
+            "point": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [9.931555, 54.695070]
+                }
+            },
+            "strahler": 3,
+            "geometry_only": False,
+            "comment": "test3"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_geojson(resp)
+    #print(f'RESP: {resp.json()}\n')
