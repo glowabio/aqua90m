@@ -9,6 +9,7 @@ import sys
 import traceback
 import json
 import psycopg2
+import pandas as pd
 from pygeoapi.process.aqua90m.pygeoapi_processes.geofresh.GeoFreshBaseProcessor import GeoFreshBaseProcessor
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
@@ -436,7 +437,7 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
             reg_id = temp_df['reg_id'].iloc[0]
         else:
             all_reg_ids = temp_df['reg_id'].unique()
-            err_msg = f'The input points are in different regions ({all_reg_ids}) - this cannot work.'
+            err_msg = f'The input points are in different regions ({list(all_reg_ids)}) - this cannot work.'
             LOGGER.error(err_msg)
             raise ProcessorExecuteError(user_msg=err_msg)
 
@@ -446,7 +447,7 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
             basin_id = temp_df['basin_id'].iloc[0]
         else:
             all_basin_ids = temp_df['basin_id'].unique()
-            err_msg = f'The input points are in different basins ({all_basin_ids}) - this cannot work.'
+            err_msg = f'The input points are in different basins ({list(all_basin_ids)}) - this cannot work.'
             LOGGER.error(err_msg)
             raise ProcessorExecuteError(user_msg=err_msg)
 

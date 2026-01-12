@@ -298,13 +298,17 @@ Example:
 ### Easy next steps (2026-01-09)
 
 * TODO Add main tests to all processes
-* TODO Allow GeoJSON points instead of lon,lat tuples for all singular processes
 * TODO Go over all process descriptions
 * TODO Put singular and plural into one process (already done: get_shortest_distance_between_points.py)
 
 Less easy:
 
 * TODO: get_shortest_distance_between_points.py: Have to accept CSV inputs!
+* Missing processes:
+  * get_shortest_distance_to_outlet.py
+  * get_basin_subc_ids.py
+* get_local_ids should return GeoJSON!
+
 
 ### Design Questions (2026-01-09)
 

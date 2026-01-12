@@ -4,7 +4,7 @@
     "use_case": "hydrography90m",
     "title": {"en": "Get Basin's Stream Segments (as GeoJSON)"},
     "description": {
-        "en": "Return the Stream Segments of the Basin (into which the given point falls) as a GeoJSON Feature (where the geometry is a LineString)."
+        "en": "Return the Stream Segments of the Basin (into which the given point falls) as GeoJSON Features (where the geometry is a LineString)."
     },
     "jobControlOptions": ["sync-execute", "async-execute"],
     "keywords": ["subcatchment", "stream", "stream-segment", "geojson", "GeoFRESH", "hydrography90m"],
@@ -70,7 +70,7 @@
         },
         "comment": {
             "title": "Comment",
-            "description": "Arbitrary string that will not be processed but returned, for user\"s convenience.",
+            "description": "Arbitrary string that will not be processed but returned, for user's convenience.",
             "schema": {"type": "string"},
             "minOccurs": 0,
             "maxOccurs": 1,

@@ -245,7 +245,7 @@ def get_streamsegment_linestrings_geometry_coll_by_basin(conn, basin_id, reg_id,
 
     query = f'''
     SELECT 
-        ST_AsText(geom), subc_id, target, length, strahler
+        ST_AsText(geom), subc_id
     FROM hydro.stream_segments
     WHERE basin_id = {basin_id}
         AND reg_id = {reg_id}
