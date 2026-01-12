@@ -503,19 +503,6 @@ if __name__ == '__main__':
     ### Request distance between many points ###
     ############################################
 
-    print('xxx TEST CASE a: Input GeoJSON File (FeatureCollection), output plain JSON directly...', end="", flush=True)  # no newline
-    payload = {
-        "inputs": {
-            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
-            "colname_lon": "longitude",
-            "colname_lat": "latitude",
-            "result_format": "json",
-            "comment": "testa"
-        }
-    }
-    resp = make_sync_request(PYSERVER, process_id, payload)
-    sanity_checks_basic(resp)
-
     print('TEST CASE 1: Input GeoJSON directly (Multipoint), output plain JSON directly...', end="", flush=True)  # no newline
     payload = {
         "inputs": {
@@ -659,3 +646,31 @@ if __name__ == '__main__':
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
+
+    print('TEST CASE 11: Input GeoJSON File (FeatureCollection), output plain JSON directly...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "colname_lon": "longitude",
+            "colname_lat": "latitude",
+            "result_format": "json",
+            "comment": "test11"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+    print('TEST CASE 12: Input GeoJSON File (FeatureCollection), output plain JSON directly...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "csv_url_end": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "colname_lon": "longitude",
+            "colname_lat": "latitude",
+            "result_format": "json",
+            "comment": "test 12"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+

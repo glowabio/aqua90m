@@ -532,43 +532,6 @@ if __name__ == '__main__':
     ### Request distance between many points ###
     ############################################
 
-    print('TEST CASE a: Input GeoJSON File (FeatureCollection), output plain JSON directly...', end="", flush=True)  # no newline
-    payload = {
-        "inputs": {
-            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points_samebasin.json",
-            "comment": "testa"
-        }
-    }
-    resp = make_sync_request(PYSERVER, process_id, payload)
-    sanity_checks_basic(resp)
-
-
-    print('TEST CASE b: Input GeoJSON File (FeatureCollection), output plain JSON directly...', end="", flush=True)  # no newline
-    payload = {
-        "inputs": {
-            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points_samebasin.json",
-            "points_geojson_end_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points_samebasin.json",
-            "comment": "testb"
-        }
-    }
-    resp = make_sync_request(PYSERVER, process_id, payload)
-    sanity_checks_basic(resp)
-
-
-    print('xxx TEST CASE c: Input GeoJSON File (FeatureCollection), output plain JSON directly...', end="", flush=True)  # no newline
-    payload = {
-        "inputs": {
-            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
-            "colname_lon": "longitude",
-            "colname_lat": "latitude",
-            "result_format": "json",
-            "comment": "testc"
-        }
-    }
-    resp = make_sync_request(PYSERVER, process_id, payload)
-    sanity_checks_basic(resp)
-
-
     print('TEST CASE 4: Matrix: Request distances between many points. Input GeoJSON directly (Geometry: MultiPoint)...', end="", flush=True)  # no newline
     payload = {
         "inputs": {
@@ -715,6 +678,58 @@ if __name__ == '__main__':
                 "coordinates": [9.9217, 54.6917],
             },
             "comment": "test12"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 13: Input GeoJSON File (FeatureCollection), output plain JSON directly...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points_samebasin.json",
+            "comment": "test13"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 14: Input GeoJSON File (FeatureCollection), output plain JSON directly...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points_samebasin.json",
+            "points_geojson_end_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points_samebasin.json",
+            "comment": "test14"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 15: Input GeoJSON File (FeatureCollection), output plain JSON directly...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "colname_lon": "longitude",
+            "colname_lat": "latitude",
+            "result_format": "json",
+            "comment": "test15"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+
+
+    print('TEST CASE 16: Input GeoJSON File (FeatureCollection), output plain JSON directly...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "csv_url_end": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "colname_lon": "longitude",
+            "colname_lat": "latitude",
+            "result_format": "json",
+            "comment": "test16"
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
