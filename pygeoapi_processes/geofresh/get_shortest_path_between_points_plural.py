@@ -179,7 +179,11 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
         # Two separate sets of subcatchments:
         subc_ids_start = data.get('subc_ids_start', None)
         subc_ids_end = data.get('subc_ids_end', None)
-        # TODO: Allow passing CSV file!!!
+        # CSV, to be downloaded via URL
+        csv_url = data.get('csv_url', None)
+        colname_lon = data.get('colname_lon', 'lon')
+        colname_lat = data.get('colname_lat', 'lat')
+        #colname_site_id = data.get('colname_site_id', None)
         # Output format (can be csv or json):
         result_format = data.get('result_format', 'json')
         # Comment:
@@ -201,6 +205,18 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
         if points_geojson_end_url is not None:
             points_geojson_end = utils.download_geojson(points_geojson_end_url)
             LOGGER.debug(f'Downloaded GeoJSON: {points_geojson_end}')
+
+        input_df = None
+        if csv_url is not None:
+            input_df = utils.access_csv_as_dataframe(csv_url)
+            LOGGER.debug('Input CSV: Found {ncols} columns (names: {colnames})'.format(
+                ncols=input_df.shape[1], colnames=input_df.columns))
+
+            # Check if every row has id:
+            #if not (colname_site_id in input_df.columns):
+            #    err_msg = "Please add a column 'site_id' to your input dataframe."
+            #    LOGGER.error(err_msg)
+            #    raise ProcessorExecuteError(err_msg)
 
         #################################
         ### Validate input parameters ###
@@ -251,6 +267,7 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
              and subc_ids is None
              and subc_ids_start is None
              and subc_ids_end is None
+             and input_df is None
             ):
             LOGGER.debug('Plural case...')
         else:
@@ -260,7 +277,7 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
         if singular:
             return self.singular_case(conn, lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end, requested_outputs, comment, result_format)
         else:
-            return self.plural_case(conn, points_geojson, points_geojson_start, points_geojson_end, subc_ids, subc_ids_start, subc_ids_end, requested_outputs, comment, result_format)
+            return self.plural_case(conn, points_geojson, points_geojson_start, points_geojson_end, subc_ids, subc_ids_start, subc_ids_end, input_df, colname_lon, colname_lat, requested_outputs, comment, result_format)
 
 
     def singular_case(self, conn, lon_start, lat_start, subc_id_start, lon_end, lat_end, subc_id_end, requested_outputs, comment, result_format):
@@ -326,12 +343,14 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
         '''
 
 
-    def plural_case(self, conn, points_geojson, points_geojson_start, points_geojson_end, subc_ids, subc_ids_start, subc_ids_end, requested_outputs, comment, result_format):
+    def plural_case(self, conn, points_geojson, points_geojson_start, points_geojson_end, subc_ids, subc_ids_start, subc_ids_end, input_df, colname_lon, colname_lat, requested_outputs, comment, result_format):
 
         # Symmetric or asymmetric matrix? I.e. are the start and end points
         # the same, or different sets?
         plural_symmetric = plural_asymmetric = False
-        if not(points_geojson is None and subc_ids is None):
+        if not(points_geojson is None
+            and subc_ids is None
+            and input_df is None):
             LOGGER.debug('Plural case, symmetric matrix...')
             plural_symmetric = True
         elif not (subc_ids_start is None
@@ -344,7 +363,7 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
 
         # Get sets of input points
         if plural_symmetric:
-            all_subc_ids_start, all_subc_ids_end, reg_id, basin_id = self.plural_symmetric(conn, points_geojson, subc_ids)
+            all_subc_ids_start, all_subc_ids_end, reg_id, basin_id = self.plural_symmetric(conn, points_geojson, subc_ids, input_df, colname_lon, colname_lat)
         elif plural_asymmetric:
             all_subc_ids_start, all_subc_ids_end, reg_id, basin_id = self.plural_asymmetric(conn, points_geojson_start, points_geojson_end, subc_ids_start, subc_ids_end)
 
@@ -365,9 +384,11 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
         return self.return_results('paths_matrix', requested_outputs, output_df=output_df, output_json=output_json, comment=comment)
 
 
-    def plural_symmetric(self, conn, points_geojson, subc_ids):
+    def plural_symmetric(self, conn, points_geojson, subc_ids, input_df, colname_lon, colname_lat):
 
         # Collect reg_id, basin_id, subc_id
+        # Note: Without a site_id, the user cannot match them back to the input points!!!
+        # TODO: Must match site_id of CSV/GeoJSON to subc_id!!!
         if points_geojson is not None:
             LOGGER.debug('START: Getting dijkstra shortest path between a number of points (start and end points are the same)...')
             temp_df = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(conn, points_geojson, colname_site_id=None)
@@ -376,6 +397,10 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
             LOGGER.debug('START: Getting dijkstra shortest path between a number of subcatchments (start and end points are the same)...')
             all_subc_ids = set(subc_ids)
             temp_df = basic_queries.get_basinid_regid_from_subcid_plural(conn, subc_ids)
+            # TODO does this return NAs?
+        elif input_df is not None:
+            LOGGER.debug('START: Getting dijkstra shortest distance between a number of points (start and end points are the same)...')
+            temp_df = basic_queries.get_subcid_basinid_regid__dataframe_to_dataframe(conn, input_df, colname_lon, colname_lat, colname_site_id=None)
             # TODO does this return NAs?
 
         # Retrieve subc_ids from the dataframe, and check if basins and regions match:
@@ -482,6 +507,19 @@ if __name__ == '__main__':
     ### Matrix:                              ###
     ### Request distance between many points ###
     ############################################
+
+    print('xxx TEST CASE a: Input GeoJSON File (FeatureCollection), output plain JSON directly...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "colname_lon": "longitude",
+            "colname_lat": "latitude",
+            "result_format": "json",
+            "comment": "testa"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
 
     print('TEST CASE 1: Input GeoJSON directly (Multipoint), output plain JSON directly...', end="", flush=True)  # no newline
     payload = {
