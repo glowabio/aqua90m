@@ -260,12 +260,52 @@ def get_regid_from_basinid(conn, LOGGER, basin_id):
     if row is None:
         err_msg = f'No reg_id found for basin_id {basin_id}!'
         LOGGER.error(err_msg)
-        raise exc.GeoFreshUnexpectedResultException(error_message)
+        raise exc.GeoFreshUnexpectedResultException(err_msg)
     else:
         reg_id = row[0]
 
     return reg_id
 
+
+def get_all_subcids_from_basinid(conn, LOGGER, basin_id, reg_id, min_strahler=None):
+
+    # Define query:
+    if min_strahler is None:
+        query = f'''
+        SELECT subc_id, strahler
+        FROM hydro.stream_segments
+        WHERE basin_id = {basin_id}
+            AND reg_id = {reg_id}
+        '''
+    else:
+        query = f'''
+        SELECT subc_id, strahler
+        FROM hydro.stream_segments
+        WHERE basin_id = {basin_id}
+            AND reg_id = {reg_id}
+            AND strahler >= {min_strahler}
+        '''
+
+    # Query database:
+    cursor = conn.cursor()
+    LOGGER.log(logging.TRACE, 'Querying database...')
+    cursor.execute(query)
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
+
+    # Get results:
+    subc_ids = [row[0] for row in cursor.fetchall()]
+
+    # Complain if no subcatchments:
+    if len(subc_ids) == 0:
+        err_msg = f'No subcatchments found for basin_id {basin_id},'
+        if min_strahler is None:
+            err_msg += ' (any strahler order)!'
+        else:
+            err_msg += f' (strahler >= {min_strahler})!'
+        LOGGER.error(err_msg)
+        raise exc.GeoFreshUnexpectedResultException(err_msg)
+
+    return subc_ids
 
 #################################
 ### for many points at a time ###
@@ -685,6 +725,14 @@ if __name__ == "__main__" and True:
 
     print('\nSTART RUNNING FUNCTION: get_regid_from_basinid')
     res = get_regid_from_basinid(conn, LOGGER, 1288419)
+    print(f'RESULT: {res}')
+
+    print('\nSTART RUNNING FUNCTION: get_all_subcids_from_basinid')
+    res = get_all_subcids_from_basinid(conn, LOGGER, 1288419, 58, min_strahler=None)
+    print(f'RESULT: {res}')
+
+    print('\nSTART RUNNING FUNCTION: get_all_subcids_from_basinid (min_strahler=4)')
+    res = get_all_subcids_from_basinid(conn, LOGGER, 1288419, 58, min_strahler=4)
     print(f'RESULT: {res}')
 
 
