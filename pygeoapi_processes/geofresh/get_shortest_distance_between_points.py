@@ -347,12 +347,12 @@ class ShortestDistanceBetweenPointsGetter(GeoFreshBaseProcessor):
 
         # Get distance:
         if result_format == "csv":
-            output_df = distances.get_dijkstra_distance_many(
+            output_df = distances.get_dijkstra_distance_many_to_many(
                 conn, all_subc_ids_start, all_subc_ids_end, reg_id, basin_id, "dataframe")
             return self.return_results('distances_matrix', requested_outputs, output_df=output_df, comment=comment)
         else:
             # As a JSON-ified matrix:
-            json_result = distances.get_dijkstra_distance_many(
+            json_result = distances.get_dijkstra_distance_many_to_many(
                 conn, all_subc_ids_start, all_subc_ids_end, reg_id, basin_id, "json")
             return self.return_results('distances_matrix', requested_outputs, output_json=json_result, comment=comment)
 

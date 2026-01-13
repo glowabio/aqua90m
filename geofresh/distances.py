@@ -88,7 +88,7 @@ def get_dijkstra_distance_one(conn, start_subc_id, end_subc_id, reg_id, basin_id
     return dist
 
 
-def get_dijkstra_distance_many(conn, subc_ids_start, subc_ids_end, reg_id, basin_id, result_format='json'):
+def get_dijkstra_distance_many_to_many(conn, subc_ids_start, subc_ids_end, reg_id, basin_id, result_format='json'):
     # INPUT:  Sets of subc_ids
     # OUTPUT: Distance matrix (as JSON)
 
@@ -192,6 +192,7 @@ def _result_to_matrix(cursor, subc_ids_start, subc_ids_end):
             LOGGER.log(logging.TRACE, f'Start {start_id} to end {end_id}, accumulated length {agg_cost}')
 
     return result_matrix
+
 
 def _matrix_to_dataframe(result_matrix, subc_ids_start, subc_ids_end):
 
@@ -308,8 +309,8 @@ if __name__ == "__main__" and True:
     ## With few points:
     start_ids = set([subc_id_start, subc_id_end, other1])
     end_ids   = set([subc_id_start, subc_id_end, other1])
-    print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_many')
-    matrix = get_dijkstra_distance_many(conn,
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_many_to_many')
+    matrix = get_dijkstra_distance_many_to_many(conn,
         start_ids,
         end_ids,
         reg_id,
@@ -322,8 +323,8 @@ if __name__ == "__main__" and True:
     ## With few points, asking directly for dataframe:
     start_ids = set([subc_id_start, subc_id_end, other1])
     end_ids   = set([subc_id_start, subc_id_end, other1])
-    print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_many')
-    dataframe = get_dijkstra_distance_many(conn,
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_many_to_many')
+    dataframe = get_dijkstra_distance_many_to_many(conn,
         start_ids,
         end_ids,
         reg_id,
@@ -334,8 +335,8 @@ if __name__ == "__main__" and True:
     ## With more points:
     start_ids = set([subc_id_start, subc_id_end, other1, other2, other3])
     end_ids   = set([subc_id_start, subc_id_end, other1, other2, other3])
-    print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_many')
-    matrix = get_dijkstra_distance_many(conn,
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_many_to_many')
+    matrix = get_dijkstra_distance_many_to_many(conn,
         start_ids,
         end_ids,
         reg_id,
