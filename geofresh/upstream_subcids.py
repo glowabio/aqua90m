@@ -63,7 +63,7 @@ def too_many_upstream_catchments(num, func_name, config_file_path = None, fake =
         raise exc.GeoFreshTooManySubcatchments(err_msg)
 
 
-def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id):
+def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id, min_strahler = None):
 
     ### Define query:
     # Getting info from database:
@@ -84,22 +84,39 @@ def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id):
      506251252 | {506250459,506251015,506251126,506251252,506251712}
     (1 row)
     """
-    query = f'''
-    SELECT {subc_id}, array_agg(node)::bigint[] AS nodes 
-    FROM pgr_connectedComponents('
-        SELECT
-        basin_id,
-        subc_id AS id,
-        subc_id AS source,
-        target,
-        length AS cost
-        FROM hydro.stream_segments
-        WHERE reg_id = {reg_id}
-        AND basin_id = {basin_id}
-        AND subc_id != {subc_id}
-    ') WHERE component > 0 GROUP BY component;
-    '''
-
+    if min_strahler is None:
+        query = f'''
+        SELECT {subc_id}, array_agg(node)::bigint[] AS nodes
+        FROM pgr_connectedComponents('
+            SELECT
+                basin_id,
+                subc_id AS id,
+                subc_id AS source,
+                target,
+                length AS cost
+            FROM hydro.stream_segments
+            WHERE reg_id = {reg_id}
+                AND basin_id = {basin_id}
+                AND subc_id != {subc_id}
+        ') WHERE component > 0 GROUP BY component;
+        '''
+    else:
+        query = f'''
+        SELECT {subc_id}, array_agg(node)::bigint[] AS nodes
+        FROM pgr_connectedComponents('
+            SELECT
+                basin_id,
+                subc_id AS id,
+                subc_id AS source,
+                target,
+                length AS cost
+            FROM hydro.stream_segments
+            WHERE reg_id = {reg_id}
+                AND basin_id = {basin_id}
+                AND subc_id != {subc_id}
+                AND strahler >= {min_strahler}
+        ') WHERE component > 0 GROUP BY component;
+        '''
     ### Query database:
     cursor = conn.cursor()
     LOGGER.log(logging.TRACE, 'Querying database...')
@@ -213,6 +230,13 @@ if __name__ == "__main__":
     res = get_upstream_catchment_ids_incl_itself(conn, 506251015, basin_id, reg_id)
     print('RESULT:\n%s' % res)
     res = get_upstream_catchment_ids_incl_itself(conn, 506251712, basin_id, reg_id)
+    print('RESULT:\n%s' % res)
+
+    print('\nSTART RUNNING FUNCTION: get_upstream_catchment_ids_incl_itself (min_strahler...)')
+    print('RESULT:\n%s' % res)
+    res = get_upstream_catchment_ids_incl_itself(conn, 506905849, 1294020, 58, min_strahler=1)
+    print('RESULT:\n%s' % res)
+    res = get_upstream_catchment_ids_incl_itself(conn, 506905849, 1294020, 58, min_strahler=2)
     print('RESULT:\n%s' % res)
 
     print('\nSTART RUNNING FUNCTION: get_upstream_catchment_ids_incl_itself (returns three)')

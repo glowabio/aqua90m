@@ -63,8 +63,15 @@
     },
     "example": {
         "inputs": {
-            "lon": "9.931555",
-            "lat": "54.695070",
+            "min_strahler": 2,
+            "point": {
+                "type": "feature",
+                "geometry": {
+                    "type": "point",
+                    "coordinates": [9.931555, 54.695070]
+                },
+                "properties": {}
+            },
             "comment": "located in schlei area"
         }
     }

@@ -54,6 +54,7 @@ class UpstreamSubcidGetter(GeoFreshBaseProcessor):
         lon = data.get('lon', None)
         lat = data.get('lat', None)
         subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
+        min_strahler = data.get('min_strahler', None)
         comment = data.get('comment') # optional
 
         # Check if either point or subc_id or both lon and lat are provided:
@@ -76,7 +77,7 @@ class UpstreamSubcidGetter(GeoFreshBaseProcessor):
 
         # Get upstream ids:
         upstream_ids = upstream_subcids.get_upstream_catchment_ids_incl_itself(
-            conn, subc_id, basin_id, reg_id)
+            conn, subc_id, basin_id, reg_id, min_strahler=min_strahler)
         LOGGER.debug(f'END: Received {len(upstream_ids)} ids : {upstream_ids[:10]}...')
 
         ################
@@ -91,6 +92,8 @@ class UpstreamSubcidGetter(GeoFreshBaseProcessor):
             "num_upstream_ids": len(upstream_ids),
             "upstream_ids": upstream_ids
         }
+        if min_strahler is not None:
+            output_json['min_strahler'] = min_strahler
 
         # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
         return self.return_results('upstream_ids', requested_outputs, output_df=None, output_json=output_json, comment=comment)
@@ -126,9 +129,8 @@ if __name__ == '__main__':
 
     print('TEST CASE 3: Input Feature (Point)...', end="", flush=True)  # no newline
     payload = {
-        "inputs":
-            {
-                "point": {
+        "inputs": {
+            "point": {
                 "type": "Feature",
                 "geometry": {
                     "type": "Point",
@@ -142,3 +144,21 @@ if __name__ == '__main__':
     resp = make_sync_request(PYSERVER, process_id, payload)
     sanity_checks_basic(resp)
 
+
+    print('TEST CASE 4: Input Feature (Point), min_strahler=4...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "point": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [9.931555, 54.695070]
+                }
+            },
+            "geometry_only": False,
+            "min_strahler" : 4,
+            "comment": "test4"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
