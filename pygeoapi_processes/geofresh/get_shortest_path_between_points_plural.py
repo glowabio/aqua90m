@@ -319,7 +319,7 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
             raise ProcessorExecuteError(user_msg=err_msg)
 
         # Get distance - just a number:
-        dist = distances.get_dijkstra_distance_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
+        dist = distances.get_dijkstra_distance_one_to_one(conn, subc_id1, subc_id2, reg_id1, basin_id1)
         json_result = {
             "distance": dist,
             "from": subc_id1,

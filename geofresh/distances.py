@@ -30,7 +30,7 @@ one-to-one
 RETURNS SET OF (seq, path_seq, node, edge, cost, agg_cost)
 '''
 
-def get_dijkstra_distance_one(conn, start_subc_id, end_subc_id, reg_id, basin_id):
+def get_dijkstra_distance_one_to_one(conn, start_subc_id, end_subc_id, reg_id, basin_id):
     # This simply returns one number!
     # INPUT:  Start and end (subc_id)
     # OUTPUT: The distance (one number), which is the accumulated "length" attribute.
@@ -290,8 +290,8 @@ if __name__ == "__main__" and True:
     basin_id = 1294020
     reg_id = 58
 
-    print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_one')
-    res = get_dijkstra_distance_one(conn, subc_id_start, subc_id_end, reg_id, basin_id)
+    print('\nSTART RUNNING FUNCTION: get_dijkstra_distance_one_to_one')
+    res = get_dijkstra_distance_one_to_one(conn, subc_id_start, subc_id_end, reg_id, basin_id)
     print(f'RESULT: DISTANCE:\n{res}') # just a number!
 
 
