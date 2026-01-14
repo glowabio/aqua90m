@@ -122,6 +122,11 @@ class LocalIdGetter(GeoFreshBaseProcessor):
         comment = data.get('comment') # optional
         site_id = data.get('site_id') # optional
         which_ids = data.get('which_ids', ['subc_id', 'basin_id', 'reg_id'])
+        result_format = data.get('result_format', None)
+
+        #######################
+        ### Validate params ###
+        #######################
 
         # Possibly correct user inputs:
         if not isinstance(which_ids, list) and isinstance(which_ids, str):
@@ -134,12 +139,32 @@ class LocalIdGetter(GeoFreshBaseProcessor):
         # Check if either point or subc_id or both lon and lat are provided:
         utils.params_point_or_lonlat_or_subcid(point, lon, lat, subc_id)
 
+        # Infer result_format from inputs, if not specified:
+        if result_format is None:
+            result_format = 'geojson' if point is not None else 'json'
+
+        # Check result format:
+        if result_format != 'json' and result_format != 'geojson':
+            err_msg = f"Invalid result format: '{result_format}'. Expected 'json' or 'geojson'"
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
+
+        # Check result format:
+        if result_format == 'geojson' and point is None and lon is None and lat is None:
+            err_msg = f"Cannot return GeoJSON without any coordinates. Please request plain 'json' or provide coordinates."
+            LOGGER.error(err_msg)
+            raise ProcessorExecuteError(err_msg)
+
         # Check ids:
         possible_ids = ['subc_id', 'basin_id', 'reg_id']
         if not all([some_id in possible_ids for some_id in which_ids]):
             err_msg = f"The requested ids have to be one or several of: {possible_ids} (you provided {which_ids})"
             LOGGER.error(err_msg)
             raise exc.UserInputException(err_msg)
+
+        ########################
+        ### Retrieve results ###
+        ########################
 
         # Possible results:
         subc_id = subc_id or None
@@ -187,24 +212,52 @@ class LocalIdGetter(GeoFreshBaseProcessor):
                 raise exc.GeoFreshNoResultException(e)
 
 
-        ################
-        ### Results: ###
-        ################
+        ###################################
+        ### Package and return results: ###
+        ###################################
 
-        # Note: This is not GeoJSON (on purpose), as we did not look for geometry yet.
-        output_json = {'ids': {}}
-
+        # Assemble result dict:
+        res = {}
         if subc_id is not None:
-            output_json['ids']['subc_id'] = subc_id
-
+            res['subc_id'] = subc_id
         if basin_id is not None:
-            output_json['ids']['basin_id'] = basin_id
-
+            res['basin_id'] = basin_id
         if reg_id is not None:
-            output_json['ids']['reg_id'] = reg_id
+            res['reg_id'] = reg_id
+        if site_id is not None:
+            res['site_id'] = site_id # TODO: use colname_site_id ?
 
-        if comment is not None:
-            output_json['ids']['comment'] = comment
+        # Return as plain json:
+        if result_format == 'json':
+            output_json = {'ids': res}
+
+        # Return as GeoJSON:
+        elif result_format == 'geojson':
+
+            if point is not None:
+                if point['type'] == 'Feature':
+                    point['properties'].update(res)
+                    output_json = point
+                elif point['type'] == 'Point':
+                    output_json = {
+                        "type": "Feature",
+                        "properties": res,
+                        "geometry": point
+                    }
+                else:
+                    err_msg = f"Unknown GeoJSON type: '{point['type']}'."
+                    LOGGER.error(err_msg)
+                    raise ProcessorExecuteError(err_msg)
+
+            elif lon is not None and lat is not None:
+                output_json = {
+                    "type": "Feature",
+                    "properties": res,
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [lon, lat]
+                    }
+                }
 
         # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
         # In this case, storing a JSON file is totally overdone! But for consistency's sake...
@@ -224,6 +277,7 @@ if __name__ == '__main__':
     print(f'TESTING {process_id} at {PYSERVER}')
     from pygeoapi.process.aqua90m.mapclient.test_requests import make_sync_request
     from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_basic
+    from pygeoapi.process.aqua90m.mapclient.test_requests import sanity_checks_geojson
 
 
     print('TEST CASE 1: Request all three ids...', end="", flush=True)  # no newline
@@ -343,6 +397,9 @@ if __name__ == '__main__':
                 "geometry": {
                     "type": "Point",
                     "coordinates": [9.931555, 54.695070]
+                },
+                "properties": {
+                    "bla": "blaaaa"
                 }
             },
             "which_ids": ["subc_id", "basin_id", "reg_id"],
@@ -350,7 +407,7 @@ if __name__ == '__main__':
         }
     }
     resp = make_sync_request(PYSERVER, process_id, payload)
-    sanity_checks_basic(resp)
+    sanity_checks_geojson(resp)
 
 
     print('TEST CASE 10: Will Fail: Input not point...', end="", flush=True)  # no newline
@@ -372,3 +429,22 @@ if __name__ == '__main__':
         raise ValueError("Expected error that did not happen...")
     except requests.exceptions.HTTPError as e:
         print(f'TEST CASE 10: EXPECTED: {e.response.json()["description"]}')
+
+
+    print('TEST CASE 11: Input feature, output json...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "point": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [9.931555, 54.695070]
+                }
+            },
+            "which_ids": ["subc_id", "basin_id", "reg_id"],
+            "result_format": "json",
+            "comment": "test11"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
