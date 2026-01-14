@@ -39,6 +39,7 @@ def make_insertion_rows_from_geojson(geojson, colname_site_id=None):
     From an input GeoJSON object, make SQL rows that can be used as INSERT statements,
     to populate a temporary table with site_id, lon, lat and a geom.
     '''
+    LOGGER.debug(f'Preparing to insert data from GeoJSON into PostGIS database...')
     list_of_insert_rows = []
     # TODO: How to deal with missing site_ids? Maybe fill with NULL values, or
     # not create that column if it is not needed?
@@ -83,6 +84,7 @@ def make_insertion_rows_from_dataframe(input_df, colname_lon, colname_lat, colna
     to populate a temporary table with site_id, lon, lat and a geom.
     '''
     list_of_insert_rows = []
+    LOGGER.debug(f'Preparing to insert data from a dataframe into PostGIS database...')
 
     # Retrieve using column index, not colname - this is faster:
 

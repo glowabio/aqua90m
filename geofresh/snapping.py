@@ -372,9 +372,11 @@ def get_snapped_points_json2csv(conn, points_geojson, colname_lon, colname_lat, 
 def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, colname_lat=None, colname_site_id=None, result_format="geojson"):
 
     if dataframe is not None:
+        LOGGER.debug('Basic snapping plural, based on input dataframe...')
         list_of_insert_rows = temp_table_for_queries.make_insertion_rows_from_dataframe(
             dataframe, colname_lon, colname_lat, colname_site_id)
     elif geojson is not None:
+        LOGGER.debug('Basic snapping plural, based on input GeoJSON...')
         list_of_insert_rows = temp_table_for_queries.make_insertion_rows_from_geojson(
             geojson, colname_site_id)
     else:
@@ -397,6 +399,7 @@ def get_snapped_point_xy(conn, geojson=None, dataframe=None, colname_lon=None, c
 
 def _run_snapping_query(cursor, tablename, reg_id_set, result_format, colname_lon, colname_lat, colname_site_id):
     ## This does not write anything into the database:
+    LOGGER.debug('Performing the basic snapping on the temp table...')
     reg_ids_string = ','.join(map(str, reg_id_set))
     query = f'''
     SELECT
@@ -441,7 +444,7 @@ def _package_result(cursor, result_format, colname_lon, colname_lat, colname_sit
 
 
 def _package_result_in_geojson(cursor, colname_site_id):
-    LOGGER.debug("Generating GeoJSON to return...")
+    LOGGER.debug("Generating GeoJSON from database query result...")
     LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
 
     # Create list to be filled with the GeoJSON Features:
@@ -500,7 +503,7 @@ def _package_result_in_geojson(cursor, colname_site_id):
 
 
 def _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_id):
-    LOGGER.debug("Generating dataframe to return...")
+    LOGGER.debug("Generating dataframe from database query result...")
 
     # Create list to be filled and converted to Pandas dataframe:
     everything = []

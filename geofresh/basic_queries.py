@@ -6,6 +6,7 @@ import geomet.wkt
 import pandas as pd
 LOGGER = logging.getLogger(__name__)
 
+
 try:
     # If the package is installed in local python PATH:
     import aqua90m.utils.extent_helpers as extent_helpers

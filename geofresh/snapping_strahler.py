@@ -286,9 +286,11 @@ def get_snapped_points_xy(conn, geojson=None, dataframe=None, colname_lon=None, 
     # The input passed by the user is converted to SQL rows
     # that can be inserted into a temporary table:
     if dataframe is not None:
+        LOGGER.debug('Strahler-snapping plural, based on input dataframe...')
         list_of_insert_rows = temp_table_for_queries.make_insertion_rows_from_dataframe(
             dataframe, colname_lon, colname_lat, colname_site_id)
     elif geojson is not None:
+        LOGGER.debug('Strahler-snapping plural, based on input GeoJSON...')
         list_of_insert_rows = temp_table_for_queries.make_insertion_rows_from_geojson(
             geojson, colname_site_id)
     else:

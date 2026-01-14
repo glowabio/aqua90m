@@ -1,5 +1,4 @@
 import json
-import logging
 import requests
 import urllib
 import tempfile
@@ -7,7 +6,12 @@ import pandas as pd
 from pygeoapi.process.base import ProcessorExecuteError
 import pygeoapi.process.aqua90m.utils.exceptions as exc
 import pygeoapi.process.aqua90m.utils.geojson_helpers as geojson_helpers
+
+import logging
+logging.TRACE = 5
+logging.addLevelName(logging.TRACE, "TRACE")
 LOGGER = logging.getLogger(__name__)
+
 
 def params_lonlat_or_subcid(lon, lat, subc_id, additional_message=""):
 
@@ -121,6 +125,7 @@ def mandatory_parameters(params_dict, additional_message=""):
             f"Missing parameter(s): {', '.join(missing)}."
             f" Please provide all of them.{additional_message}"
         )
+        LOGGER.error(err_msg)
         raise ProcessorExecuteError(err_msg)
 
 
@@ -139,12 +144,14 @@ def exactly_one_param(params_dict, additional_message=""):
             f"Missing parameter(s): {', '.join(params_dict.keys())}."
             f" Please provide exactly one of them.{additional_message}"
         )
+        LOGGER.error(err_msg)
         raise ProcessorExecuteError(err_msg)
     elif len(present) > 1:
         err_msg = (
             f"Too many parameter(s): {', '.join(present)}."
             f" Please provide just one of them.{additional_message}"
         )
+        LOGGER.error(err_msg)
         raise ProcessorExecuteError(err_msg)
 
 
@@ -163,22 +170,24 @@ def at_least_one_param(params_dict, additional_message=""):
             f"Missing parameter(s): {', '.join(params_dict.keys())}."
             f" Please provide at least one of them.{additional_message}"
         )
+        LOGGER.error(err_msg)
         raise ProcessorExecuteError(err_msg)
 
 
 def is_bool_parameters(params_dict, additional_message=""):
-    LOGGER.debug(f'Checking parameters: All of these should be boolean: {params_dict.keys()}')
+    LOGGER.log(logging.TRACE, f'Checking parameters: All of these should be boolean: {params_dict.keys()}')
     for paramname, paramval in params_dict.items():
         if not type(paramval) == bool:
             err_msg = (
                 f"Malformed parameter: '{paramname}' should be a 'boolean' "
                 f"instead of '{type(paramval).__name__}'.{additional_message}"
             )
+            LOGGER.error(err_msg)
             raise ProcessorExecuteError(err_msg)
 
 
 def check_type_parameter(paramname, paramval, paramtype, none_allowed=False, additional_message=""):
-    LOGGER.debug(f'Checking parameter {paramname}...')
+    LOGGER.log(logging.TRACE, f'Checking parameter {paramname}...')
     if none_allowed and paramval is None:
         pass
     elif not type(paramval) == paramtype:
@@ -186,6 +195,7 @@ def check_type_parameter(paramname, paramval, paramtype, none_allowed=False, add
             f"Malformed parameter: '{paramname}' should be a '{paramtype.__name__}' "
             f"instead of '{type(paramval).__name__}'.{additional_message}"
         )
+        LOGGER.error(err_msg)
         raise ProcessorExecuteError(err_msg)
 
 
@@ -209,9 +219,10 @@ def return_hyperlink(output_name, requested_outputs):
 def store_to_json_file(output_name, json_object, job_metadata, job_id, download_dir, download_url):
 
     # Store to file
-    downloadfilename = 'outputs-%s-%s-%s.json' % (output_name, job_metadata['id'], job_id)
+    process_id = job_metadata['id']
+    downloadfilename = f'outputs-{output_name}-{process_id}-{job_id}.json'
     downloadfilepath = download_dir+downloadfilename
-    LOGGER.debug('Writing process result to json file: %s' % downloadfilepath)
+    LOGGER.debug(f'Writing process result to json file: {downloadfilepath}')
     with open(downloadfilepath, 'w', encoding='utf-8') as downloadfile:
         json.dump(json_object, downloadfile, ensure_ascii=False, indent=4)
 
@@ -232,11 +243,13 @@ def store_to_csv_file(output_name, pandas_df, job_metadata, job_id, download_dir
 
     # How NaN should be stored in the CSV (if you set nothing, it is a string of length 0)
     store_na='NA'
+    # TODO: How to store NaN and NA to csv? pandas...
 
     # Store to file
-    downloadfilename = 'outputs-%s-%s-%s.csv' % (output_name, job_metadata['id'], job_id)
+    process_id = job_metadata['id']
+    downloadfilename = f'outputs-{output_name}-{process_id}-{job_id}.csv'
     downloadfilepath = download_dir+downloadfilename
-    LOGGER.debug('Writing process result to csv file: %s' % downloadfilepath)
+    LOGGER.debug(f'Writing process result to csv file: {downloadfilepath}')
     pandas_df.to_csv(downloadfilepath, sep=sep, encoding='utf-8', index=False, header=True, na_rep=store_na)
 
     # Create download link:

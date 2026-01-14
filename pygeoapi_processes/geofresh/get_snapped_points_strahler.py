@@ -18,18 +18,25 @@ from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection
 '''
 
 # Request a simple GeometryCollection (Point):
-# Tested: 2026-01-02
+# Tested 2026-01-14
 curl -X POST https://${PYSERVER}/processes/get-snapped-points-strahler/execution \
 --header "Content-Type: application/json" \
 --data '{
-  "inputs": {
-    "lon": 9.931555,
-    "lat": 54.695070,
-    "strahler": 3,
-    "geometry_only": true,
-    "comment": "schlei-near-rabenholz"
+    "inputs": {
+        "point": {
+            "type": "Feature",
+            "properties": {},
+            "geometry": {
+                "type": "Point",
+                "coordinates": [9.931555,54.695070]
+            }
+        },
+        "strahler": 3,
+        "geometry_only": false,
+        "comment": "schlei-near-rabenholz"
     }
 }'
+
 
 # Request a FeatureCollection (Point):
 # Tested: 2026-01-02
