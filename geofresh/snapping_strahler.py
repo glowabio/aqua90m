@@ -645,9 +645,14 @@ if __name__ == "__main__":
     #database_username, database_password)
     LOGGER.log(logging.TRACE, 'Connecting to database... DONE.')
 
-    ####################################
-    ### Run function for many points ###
-    ####################################
+
+
+####################################
+### Run function for many points ###
+####################################
+
+if __name__ == "__main__" and True:
+
     min_strahler = 5
 
     input_points_geojson = {
@@ -750,12 +755,11 @@ if __name__ == "__main__":
     print(res)
 
 
-    sys.exit()
+######################################
+### Run function for single points ###
+######################################
 
-
-    ######################################
-    ### Run function for single points ###
-    ######################################
+if __name__ == "__main__" and True:
 
     lon = 9.931555
     lat = 54.695070
@@ -763,17 +767,23 @@ if __name__ == "__main__":
     #subc_id = 506251252
     basin_id = 1292547
     reg_id = 58
+    min_strahler = 5
+
 
     print('\nSTART RUNNING FUNCTION: get_snapped_point_simplegeom')
     start = time.time()
-    res = get_snapped_point_geometry_coll(conn, lon, lat, strahler, basin_id, reg_id)
+    res = get_snapped_point_geometry_coll(conn, lon, lat, min_strahler, basin_id, reg_id)
     end = time.time()
     print('TIME: %s' % (end - start))
     print('RESULT:\n%s' % res)
 
     print('\nSTART RUNNING FUNCTION: get_snapped_point_feature')
     start = time.time()
-    res = get_snapped_point_feature_coll(conn, lon, lat, strahler, basin_id, reg_id)
+    res = get_snapped_point_feature_coll(conn, lon, lat, min_strahler, basin_id, reg_id)
     end = time.time()
     print('TIME: %s' % (end - start))
     print('RESULT:\n%s' % res)
+
+
+if __name__ == "__main__":
+    conn.close()

@@ -378,7 +378,7 @@ class ShortestPathBetweenPointsGetterPlural(GeoFreshBaseProcessor):
 
         # Collect reg_id, basin_id, subc_id
         # Note: Without a site_id, the user cannot match them back to the input points!!!
-        # TODO: Must match site_id of CSV/GeoJSON to subc_id!!!
+        # TODO: Must match site_id of CSV/GeoJSON to subc_id!!! But how to return it... Where would the user see the match?
         if points_geojson is not None:
             LOGGER.debug('START: Getting dijkstra shortest path between a number of points (start and end points are the same)...')
             temp_df = basic_queries.get_subcid_basinid_regid__geojson_to_dataframe(conn, points_geojson, colname_site_id=None)

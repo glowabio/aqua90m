@@ -357,6 +357,7 @@ def _iterate_outlets_to_json(conn, departing_points):
     return everything
 
 
+# Only called inside this module, by: get_dijkstra_ids_to_outlet_plural
 def get_dijkstra_ids_one_to_many(conn, start_subc_ids, end_subc_id, reg_id, basin_id):
     # INPUT:  Set of subc_ids (in one basin)
     # OUTPUT: JSON dict: One path (list of subc_ids) per start_subc_id.
