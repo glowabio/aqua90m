@@ -82,6 +82,17 @@ def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_fea
     {"type":"Point","coordinates":[9.940416667,54.690416667]} | 506252174 |        3
 
     """
+
+    # Important Note: Until January 2026, we used "geometry" instead of
+    # "geography" type for the <-> operator:
+    # ... ORDER BY seg.geom <-> ST_SetSRID(ST_MakePoint(temp2.lon, temp2.lat), 4326)
+    # Unfortunately, that takes the WGS84 lon and lat coordinates as flat space
+    # and computes distances in cartesian euclidean space, so in higher latitudes
+    # we get big errors. So we moved this so "geography", but that makes the
+    # computation incredibly slow, 6 minutes per point.
+    # So the next plan is to make a column of "geography" type so that it is possible
+    # to use spatial indices on them. So this may change again.
+    # TODO: IMPORTANT: Use a geography column on the database, to speed this up
     query = f'''
     SELECT 
         ST_AsText(ST_LineInterpolatePoint(
@@ -96,13 +107,13 @@ def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_fea
             seg.subc_id,
             seg.strahler,
             seg.geom AS geom,
-            seg.geom <-> ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326)::geometry AS dist
+            seg.geom::geography <-> ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326)::geography AS dist
         FROM hydro.stream_segments seg
         WHERE seg.strahler >= {strahler}
         ORDER BY dist
         LIMIT 1
     ) AS closest;
-    '''.replace("\n", " ")
+    '''
 
     ### Query database:
     LOGGER.log(logging.TRACE, "SQL query: {query}")
@@ -327,6 +338,17 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
     # polygons of table "reg" - don't have one. By using "geom_user", they are
     # snapped anyway, and the user has to decide whether they are land or sea...
     # Old "WHERE": ... WHERE temp1.subc_id = temp2.subc_id;
+    #
+    # Important Note: Until January 2026, we used "geometry" instead of
+    # "geography" type for the <-> operator:
+    # ... ORDER BY seg.geom <-> ST_SetSRID(ST_MakePoint(temp2.lon, temp2.lat), 4326)
+    # Unfortunately, that takes the WGS84 lon and lat coordinates as flat space
+    # and computes distances in cartesian euclidean space, so in higher latitudes
+    # we get big errors. So we moved this so "geography", but that makes the
+    # computation incredibly slow, 6 minutes per point...
+    # So the next plan is to make a column of "geography" type so that it is possible
+    # to use spatial indices on them. So this may change again.
+    # TODO: IMPORTANT: Use a geography column on the database, to speed this up
     query = f'''
     UPDATE {tablename} AS temp1
     SET
@@ -338,11 +360,11 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
         SELECT seg.geom, seg.strahler, seg.subc_id
         FROM stream_segments seg
         WHERE seg.strahler >= {min_strahler}
-        ORDER BY seg.geom <-> ST_SetSRID(ST_MakePoint(temp2.lon, temp2.lat), 4326)
+        ORDER BY seg.geom::geography <-> ST_SetSRID(ST_MakePoint(temp2.lon, temp2.lat), 4326)::geography
         LIMIT 1
     ) AS closest
     WHERE temp1.geom_user = temp2.geom_user;
-    '''.replace("\n", " ")
+    '''
 
     ### Query database:
     LOGGER.log(logging.TRACE, "SQL query: {query}")
@@ -367,7 +389,7 @@ def _snapping_with_distances(cursor, tablename, result_format, colname_lon, coln
             temp.geom_closest,
             ST_LineLocatePoint(temp.geom_closest, temp.geom_user)
         );
-    '''.replace("\n", " ")
+    '''
 
     ### Query database:
     LOGGER.log(logging.TRACE, "SQL query: {query}")
