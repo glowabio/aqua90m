@@ -377,8 +377,8 @@ def _snapping_with_distances(cursor, tablename, result_format, colname_lon, coln
     LOGGER.debug(f'Adding snapped points to temporary table "{tablename}"... done.')
 
     # Compute the distance, retrieve the snapped points:
-    # Note: ST_Distance operates on WGS84 and returns degrees, so we use ST_Transform
-    # to transform to a "geography", see explanation here:
+    # Note: ST_Distance operates on WGS84 and returns degrees, so we
+    # cast to a "geography", see explanation here:
     # https://www.postgis.net/workshops/postgis-intro/geography.html
     LOGGER.debug(f'Retrieving snapped points from temporary table "{tablename}"...')
     query = f'''
@@ -390,8 +390,8 @@ def _snapping_with_distances(cursor, tablename, result_format, colname_lon, coln
         temp.strahler_closest,
         temp.subcid_closest,
         ST_Distance(
-            ST_Transform(temp.geom_user,4326)::geography,
-            ST_Transform(temp.geom_snapped,4326)::geography
+            temp.geom_user::geography,
+            temp.geom_snapped::geography
         )
     FROM {tablename} AS temp;
     '''.replace("\n", " ")
