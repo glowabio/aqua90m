@@ -345,4 +345,12 @@ def access_csv_as_dataframe(csv_url_or_path):
     return input_df
 
 
+def _split_df(input_df, num_rows_per_chunk):
+    # returns a generator
+    for i in range(0, len(input_df), num_rows_per_chunk):
+        yield input_df.iloc[i:i + num_rows_per_chunk]
 
+def access_csv_as_dataframe_iterator(csv_url_or_path, num_rows_per_chunk):
+    input_df = access_csv_as_dataframe(csv_url_or_path)
+    generator = _split_df(input_df, num_rows_per_chunk)
+    return generator

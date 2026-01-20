@@ -8,6 +8,7 @@ import sys
 import traceback
 import json
 import psycopg2
+import pandas as pd
 from pygeoapi.process.aqua90m.pygeoapi_processes.geofresh.GeoFreshBaseProcessor import GeoFreshBaseProcessor
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
@@ -31,6 +32,23 @@ curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution"
     "colname_lon": "longitude",
     "colname_lat": "latitude",
     "colname_site_id": "site_id"
+  },
+  "outputs": {
+    "transmissionMode": "reference"
+  }
+}'
+
+## INPUT:  CSV File (long, to be chunked)
+## OUTPUT: CSV File
+## Tested 2026-01-19
+curl -X POST "https://${PYSERVER}/processes/get-snapped-points-plural/execution" \
+--header "Content-Type: application/json" \
+--data '{
+  "inputs": {
+    "csv_url": "https://nimbus.igb-berlin.de/index.php/s/HMNXJgrCiaokGye/download/Data_GBIF_clean.csv",
+    "colname_lon": "decimalLongitude",
+    "colname_lat": "decimalLatitude",
+    "colname_site_id": "gbifID"
   },
   "outputs": {
     "transmissionMode": "reference"
@@ -271,15 +289,32 @@ class SnappedPointsGetterPlural(GeoFreshBaseProcessor):
 
         ## Handle CSV case:
         elif csv_url is not None:
-            input_df = utils.access_csv_as_dataframe(csv_url)
+            num_rows_per_chunk = 500
 
             # Query database:
             if result_format == 'geojson':
                 LOGGER.debug('Requesting geojson (get_snapped_points_csv2json)')
-                output_json = snapping.get_snapped_points_csv2json(conn, input_df, colname_lon, colname_lat, colname_site_id)
+                input_df_generator = utils.access_csv_as_dataframe_iterator(csv_url, num_rows_per_chunk)
+                output_json = {
+                    "type": "FeatureCollection",
+                    "features": []
+                }
+                for chunk_df in input_df_generator:
+                    output_json_chunk = snapping.get_snapped_points_csv2json(conn, chunk_df, colname_lon, colname_lat, colname_site_id)
+                    output_json["features"].append(output_json_chunk["features"])
+
+
             elif result_format == 'csv':
                 LOGGER.debug('Requesting csv (get_snapped_points_csv2csv)')
-                output_df = snapping.get_snapped_points_csv2csv(conn, input_df, colname_lon, colname_lat, colname_site_id)
+                input_df_generator = utils.access_csv_as_dataframe_iterator(csv_url, num_rows_per_chunk)
+                output_df_list = []
+                for chunk_df in input_df_generator:
+                    output_df_chunk = snapping.get_snapped_points_csv2csv(conn, chunk_df, colname_lon, colname_lat, colname_site_id)
+                    output_df_list.append(output_df_chunk)
+                    # WIP: TODO: If we want to append to a CSV:
+                    #for i, chunk in enumerate(split_df(df, 100_000)):
+                    #    chunk.to_csv("output.csv", mode="a", header=(i == 0), index=False)
+                output_df = pd.concat(output_df_list, ignore_index=True)
 
         else:
             err_msg = 'Please provide either GeoJSON (points_geojson, points_geojson_url) or CSV data (csv_url).'
