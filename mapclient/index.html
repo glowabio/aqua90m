@@ -214,6 +214,13 @@ integrity=
     crossorigin=""></script>
   <script>
 
+    // Get URL params, if any:
+    const params = new URLSearchParams(window.location.search);
+    const lat   = parseFloat(params.get('lat'));
+    const lon   = parseFloat(params.get('lon'));
+    const processId = params.get('processId');
+    console.log("[DEBUG] URL params: "+lon+", "+lat+" (lon, lat), process: "+processId);
+
     // Initialize the map
     const map = L.map('map')
 
@@ -229,8 +236,12 @@ integrity=
 
     // Set the view of the map
     // with the latitude, longitude and the zoom value
-    // map.setView([60.19123, 24.94612], 10); // Helsinki
-    map.setView([53.014, 12.008], 7); // Northern Germany
+    // either from URL params or default
+    //const initialViewLatLon = [lat ?? 53.014, lon ?? 12.008]; // Northern Germany (zoom 7)
+    let initialViewLatLon = [lat ?? 60.19123, lon ?? 24.94612]; // Helsinki (zoom 10)
+    //console.log('INITIAL VIEW: ', initialViewLatLon);
+    map.setView(initialViewLatLon, 7);
+
 
     // Other way. WORKS!
     //L.geoJSON(data, {
@@ -493,8 +504,29 @@ integrity=
     document.getElementById('customGeoJsonButton').addEventListener('click', eventCustomGeojsonDisplay);
 
     // Bind map click behaviour to the map click event:
-    console.log('Waiting for user to click to get a coordinate...');
     map.on('click', mapClickBehaviour);
+
+    // If URL params were passed, do not wait for user's click, but trigger the request already:
+    const requiredParams = ['lat', 'lon', 'processId'];
+    const missing = requiredParams.filter(p => !params.has(p));
+    if (missing.length == 3) {
+      console.log('No (useful) URL parameters passed.')
+      console.log('Waiting for user to click to get a coordinate...');
+    } else if (missing.length > 0) {
+      console.warn("Missing parameters:", missing.join(', '));
+      console.log('Waiting for user to click to get a coordinate...');
+    } else if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      console.warn("All required parameters present, but at least one coordinate is not a number: "+lon+", "+lat+" (lon, lat).");
+      console.log('Waiting for user to click to get a coordinate...');
+    } else {
+      console.log("All required parameters present: "+lon+", "+lat+" (lon, lat), triggering process: "+processId);
+      let logUserAction = "passed URL params";
+      let pairs = "one"; // currently, we can only pass one pair of coords
+      let processDesc = "process provided by user"
+      // TODO Allow passing two pairs!
+      // TODO Get the proper processDesc, e.g. Upstream catchment (individual polygons)
+      triggerProcessRequest(lon, lat, processId, processDesc, pairs, logUserAction);
+    }
 
 
   </script>
