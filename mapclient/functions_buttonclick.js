@@ -37,6 +37,16 @@
           ogcRequestOneCoordinatePair(clickMarker, lon1, lat1);
 
         } else {
+
+          // If snapping, using subc_id cannot work! Need coordinates to snap!
+          if (dropdown.value.includes("snapped")) {
+            var errmsg = "Cannot run process"+dropdown.value+" for a subcatchment id, need coordinates!";
+            console.warn("Oh no: "+errmsg);
+            clickMarker = putIconToClickLocation(null, null, map, "entered subc_id for snapping (which cannot work)", false);
+            clickMarker.bindPopup(errmsg);
+            throw new Error(errmsg); // So that no OGC request is attempted
+          }
+
           console.log("Clicked button for one subcid "+subcid1+".");
           // We have no click location... Putting it to a corner of the map, but it will stay at that map location...
           // TODO: Can we later move the clickmarker somewhere?
