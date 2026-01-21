@@ -408,7 +408,7 @@ integrity=
           clickMarker = putIconToClickLocation(clicklon, clicklat, map, "clicked on map", false);
 
           // Construct and send HTTP request to OGC service:
-          ogcRequestTwoCoordinatePairs(clickMarker, firstClickLon, firstClickLat, clicklon, clicklat);
+          ogcRequestTwoCoordinatePairs(clickMarker, processId, firstClickLon, firstClickLat, clicklon, clicklat, processDesc);
 
         } else {
           // First click of two!
@@ -431,7 +431,7 @@ integrity=
         clickMarker = putIconToClickLocation(clicklon, clicklat, map, "clicked on map", false);
 
         // Construct and send HTTP request to OGC service:
-        ogcRequestOneCoordinatePair(clickMarker, clicklon, clicklat);
+        ogcRequestOneCoordinatePair(clickMarker, processId, clicklon, clicklat, processDesc);
       }
     };
 
