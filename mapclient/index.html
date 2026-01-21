@@ -333,8 +333,12 @@ integrity=
       var iconwidth = 0.61*iconheight;
 
       if (lon1 === null) {
+        // Using map center to place the popup, but we don't use the map center as
+        // processing input coordinates!
         var latlon = map.getCenter();
-        var paramstring = "no coordinates chosen, using map centre..."+latlon;
+        console.log('Using map centre for placing popup: '+latlon)
+        // This string will be displayed until function _ogcRequest() updates the text:
+        var paramstring = "[no coordinates to display]";
         var iconUrl = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; // 1x1 transparent gif
         var iconSize = [1, 1]; // minimal size
       } else {
@@ -362,6 +366,8 @@ integrity=
       if (askToClickAgain) {
         clickMarker.bindPopup("You selected "+lookingfor+", so please click another time!").openPopup();
       } else {
+        // Not a good place for defining this text, because here we only know the stuff relevant for
+        // placing the popup (we don't know the subc_id etc.)...
         clickMarker.bindPopup("Waiting for "+lookingfor+" for "+paramstring).openPopup();
         // This popup will be redefined/overwritten in ogcRequestTwoCoordinatePairs(), so put the same text!
       }

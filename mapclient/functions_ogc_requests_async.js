@@ -280,7 +280,7 @@ async function _ogcRequest(clickMarker, payload_inputs_json, paramstring)  {
 
       // Poll for the status...
       console.log("Status: processing...");
-      clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring+"...").openPopup();
+      clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
       // This popup was already filled in index.html (putIconToClickLocation()), so put the same text!
 
       pollStatus(statusUrl, processId, clickMarker);
