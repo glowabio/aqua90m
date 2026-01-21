@@ -334,15 +334,14 @@ integrity=
 
       if (lon1 === null) {
         var latlon = map.getCenter();
-        var logstring = "no coord chosennn, using map centre..."+latlon;
-        console.log("LOGGISRING "+logstring);
+        var paramstring = "no coordinates chosen, using map centre..."+latlon;
         var iconUrl = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; // 1x1 transparent gif
         var iconSize = [1, 1]; // minimal size
       } else {
         var lon1 = parseFloat(lon1);
         var lat1 = parseFloat(lat1);
         var latlon = [lat1, lon1];
-        var logstring = lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat)...";
+        var paramstring = lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat)...";
         var iconSize = [iconwidth, iconheight];
         var iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png';
       }
@@ -363,7 +362,8 @@ integrity=
       if (askToClickAgain) {
         clickMarker.bindPopup("You selected "+lookingfor+", so please click another time!").openPopup();
       } else {
-        clickMarker.bindPopup("Waiting for "+lookingfor+" for "+logstring).openPopup();
+        clickMarker.bindPopup("Waiting for "+lookingfor+" for "+paramstring).openPopup();
+        // This popup will be redefined/overwritten in ogcRequestTwoCoordinatePairs(), so put the same text!
       }
       console.log("When clicked, this process was selected: "+dropdown.value+"...");
       return (clickMarker);

@@ -17,8 +17,8 @@ var ogcRequestTwoCoordinatePairs = function(clickMarker, lon1, lat1, lon2, lat2)
     var lat2 = parseFloat(lat2);
     var lon2 = parseFloat(lon2);
 
-    // Param string for logging
-    var paramstring = "lat="+lat1.toFixed(3)+", lon="+lon1.toFixed(3)+ "lat="+lat2.toFixed(3)+", lon="+lon2.toFixed(3);
+    // Param string for logging and popup clickmarker
+    var paramstring = lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat) to "+lon2.toFixed(3)+", "+lat2.toFixed(3)+" (lon, lat)...";
 
     // Define JSON payload and send:
     var payload_inputs_json = JSON.stringify({"inputs": {
@@ -49,8 +49,9 @@ var ogcRequestOneCoordinatePair = function(clickMarker, lon1, lat1) {
       preRequestDownstream(clickMarker, lon1, lat1);
     }
 
-    // Param string for logging
-    var paramstring = "lat="+lat1.toFixed(3)+", lon="+lon1.toFixed(3);
+    // Param string for logging and popup clickmarker
+    var paramstring = lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat)...";
+
 
     // Define JSON payload and send:
     var payload_inputs_json = JSON.stringify({"inputs":{"lon":lon1, "lat":lat1}})
@@ -268,6 +269,8 @@ async function _ogcRequest(clickMarker, payload_inputs_json, paramstring)  {
       // Poll for the status...
       console.log("Status: processing...");
       clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring+"...").openPopup();
+      // This popup was already filled in index.html (putIconToClickLocation()), so put the same text!
+
       pollStatus(statusUrl, processId, clickMarker);
 
     // What kind of errors could this be?
