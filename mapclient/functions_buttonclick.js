@@ -26,6 +26,8 @@
 
       // Which process? Does it need one or two input coordinate pairs?
       var dropdown = document.getElementById("processes");
+      let processId = dropdown.value;
+      let processDesc = processId; // TODO: Find proper process description!
       let pairs = dropdown.options[dropdown.selectedIndex].dataset.pairs;
       if (pairs == "one") {
 
@@ -39,11 +41,12 @@
         } else {
 
           // If snapping, using subc_id cannot work! Need coordinates to snap!
-          if (dropdown.value.includes("snapped")) {
-            var errmsg = "Cannot run process"+dropdown.value+" for a subcatchment id, need coordinates!";
+          if (processId.includes("snapped")) {
+            var errmsg = "Cannot run process "+processDesc+" for a subcatchment id, need coordinates!";
             console.warn("Oh no: "+errmsg);
             clickMarker = putIconToClickLocation(null, null, map, "entered subc_id for snapping (which cannot work)", false);
             clickMarker.bindPopup(errmsg);
+            alert(errmsg);
             throw new Error(errmsg); // So that no OGC request is attempted
           }
 

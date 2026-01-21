@@ -362,16 +362,17 @@ integrity=
 
       // Add Popup to user-click
       var dropdown = document.getElementById("processes");
-      var lookingfor = dropdown.options[dropdown.selectedIndex].text
+      let processId = dropdown.value;
+      var processDesc = dropdown.options[dropdown.selectedIndex].text
       if (askToClickAgain) {
-        clickMarker.bindPopup("You selected "+lookingfor+", so please click another time!").openPopup();
+        clickMarker.bindPopup("You selected "+processDesc+", so please click another time!").openPopup();
       } else {
         // Not a good place for defining this text, because here we only know the stuff relevant for
         // placing the popup (we don't know the subc_id etc.)...
-        clickMarker.bindPopup("Waiting for "+lookingfor+" for "+paramstring).openPopup();
+        clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
         // This popup will be redefined/overwritten in ogcRequestTwoCoordinatePairs(), so put the same text!
       }
-      console.log("When clicked, this process was selected: "+dropdown.value+"...");
+      console.log("When clicked, this process was selected: "+processId+"...");
       return (clickMarker);
     }
 
@@ -386,13 +387,17 @@ integrity=
       // Get coordinates from click location:
       clicklon = evt.latlng.lng;
       clicklat = evt.latlng.lat;
-      console.log('There was a click: '+clicklat+', '+clicklon+' (lon, lat, WGS84)');
+      console.log('There was a click: '+clicklon+', '+clicklat+' (lon, lat, WGS84)');
 
-      // Check if we need two points!
+      // Which process?
       var dropdown = document.getElementById("processes");
+      var processId = dropdown.value;
+      var processDesc = dropdown.options[dropdown.selectedIndex].text;
+      console.log('When clicked, this process was selected: '+processId+' ('+processDesc+').');
+      // Check if we need two points!
       let pairs = dropdown.options[dropdown.selectedIndex].dataset.pairs;
       if (pairs == "two") {
-        console.log('Any function requiring two pairs of coordinates...');
+        console.log('[DEBUG] Any function requiring two pairs of coordinates...');
 
         if (thisIsSecondClick) {
           // Second click of two!
@@ -420,7 +425,7 @@ integrity=
 
       // Normal process that works with one click!
       } else {
-        console.log('Any function requiring just one pair of coordinates...');
+        console.log('[DEBUG] Any function requiring just one pair of coordinates...');
 
         // Add icon and popup to click location:
         clickMarker = putIconToClickLocation(clicklon, clicklat, map, "clicked on map", false);

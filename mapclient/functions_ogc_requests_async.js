@@ -133,11 +133,11 @@ function preRequest(clickMarker, lon, lat, strahlerInformFunction) {
 
     // Define behaviour after response:
     xhrPygeo.onerror = function() {
-      console.error("Pre-Request: Failed.");
+      console.warn("Pre-Request: Failed.");
       if (xhrPygeo.status === 405) {
-        console.error("Pre-Request: Method Not Allowed (405) - likely OPTIONS request failed");
+        console.warn("Pre-Request: Method Not Allowed (405) - likely OPTIONS request failed");
       } else if (xhrPygeo.status === 0) {
-        console.error("Pre-Request: We got status 0: Request failed or blocked (likely preflight failure)");
+        console.warn("Pre-Request: We got status 0: Request failed or blocked (likely preflight failure)");
       }
     };
 
@@ -154,10 +154,10 @@ function preRequest(clickMarker, lon, lat, strahlerInformFunction) {
       if (xhrPygeo.status == 200) {
         console.log("Pre-Request: OGC server returned HTTP 200");
       } else if (xhrPygeo.status == 400) {
-        console.log("Pre-Request: Oh no: Internal server error (HTTP 400)");
+        console.warn("Pre-Request: Oh no: Internal server error (HTTP 400)");
         return
       } else {
-        console.log("Pre-Request: Oh no: OGC server returned bad HTTP status: "+xhrPygeo.status);
+        console.warn("Pre-Request: Oh no: OGC server returned bad HTTP status: "+xhrPygeo.status);
         return
       }
 
@@ -257,11 +257,11 @@ async function _ogcRequest(clickMarker, payload_inputs_json, paramstring)  {
             clickMarker.bindPopup(errmsg);
             document.getElementById("displayGeoJSON").innerHTML = errmsg
         } else if (response.status == 405) {
-            console.error("Method Not Allowed (405) - likely OPTIONS request failed");
+            console.warn("Method Not Allowed (405) - likely OPTIONS request failed");
             document.getElementById("displayGeoJSON").innerHTML = "nothing to display"
             clickMarker.bindPopup("HTTP request to service failed (HTTP 405). Sorry for that.");
         } else if (response.status === 0) {
-            console.error("We got status 0: Request failed or blocked (likely preflight failure)");
+            console.warn("We got status 0: Request failed or blocked (likely preflight failure)");
             document.getElementById("displayGeoJSON").innerHTML = "nothing to display"
             clickMarker.bindPopup("HTTP request to service failed or blocked, probably a network problem or CORS error. Sorry for that.");
         } else {
@@ -289,7 +289,7 @@ async function _ogcRequest(clickMarker, payload_inputs_json, paramstring)  {
     // Something that prevented even the proper HTTP request, I guess...
     } catch (error) {
       var errmsg = `Error: ${error.message}`;
-      console.log(errmsg);
+      console.warn(errmsg);
       document.getElementById("displayGeoJSON").innerHTML = errmsg
     }
 }
@@ -335,13 +335,13 @@ async function pollStatus(statusUrl, processId, clickMarker) {
           // If the result fetching failed:
           if (!resultRes.ok) {
             if (resultRes.status == 400) {
-                console.log("Oh no: Internal server error (HTTP 400)");
+                console.warn("Oh no: Internal server error (HTTP 400)");
                 const resultData = await resultRes.json();
                 var errmsg = resultData.description;
                 clickMarker.bindPopup(errmsg);
                 document.getElementById("displayGeoJSON").innerHTML = errmsg;
             } else {
-                console.log("Oh no: OGC server returned bad HTTP status: "+resultRes.status);
+                console.warn("Oh no: OGC server returned bad HTTP status: "+resultRes.status);
                 clickMarker.bindPopup("Failed for unspecified reason (possibly timeout), try another one!!");
                 document.getElementById("displayGeoJSON").innerHTML = "nothing to display";
             }
@@ -357,7 +357,7 @@ async function pollStatus(statusUrl, processId, clickMarker) {
           // TODO: Is this in the right location? Wouldn't the resultRes.json() have thrown an error anyway?
           // Stream segments CAN be shown if it is a headwater! Then they would be returned!
           if (resultData == null){
-            console.error('Result data is null... This should not happen.')
+            console.warn('Result data is null... This should not happen.')
             clickMarker.bindPopup("No "+lookingfor+", is this a headwater?").openPopup();
             // TODO Headwater, how to handle? Has not happened for a while, I think we now include the local
             // one itself to the upstream, so the response will not be null anywhere. Except for ocean I guess.
