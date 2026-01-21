@@ -383,12 +383,12 @@ integrity=
 
     // Define behaviour on map click (function)
     var mapClickBehaviour = function(evt) {
+      let logUserAction = "clicked on map";
 
       // Get coordinates from click location:
       clicklon = evt.latlng.lng;
       clicklat = evt.latlng.lat;
       console.log('There was a click: '+clicklon+', '+clicklat+' (lon, lat, WGS84)');
-
       // Which process?
       var dropdown = document.getElementById("processes");
       var processId = dropdown.value;
@@ -398,7 +398,10 @@ integrity=
       let pairs = dropdown.options[dropdown.selectedIndex].dataset.pairs;
 
       // Trigger the behaviour:
-      let logUserAction = "clicked on map";
+      triggerProcessRequest(clicklon, clicklat, processId, processDesc, pairs, logUserAction);
+    }
+
+    var triggerProcessRequest = function(clicklon, clicklat, processId, processDesc, pairs, logUserAction) {
       if (pairs == "two") {
         console.log('[DEBUG] Any function requiring two pairs of coordinates...');
 
