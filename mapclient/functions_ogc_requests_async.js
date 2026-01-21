@@ -289,6 +289,11 @@ async function pollStatus(statusUrl, processId, clickMarker) {
       await delay(2000);
 
       const res = await fetch(statusUrl);
+      if (!res.ok) {
+        console.error(`HTTP error: ${res.status} ${res.statusText}`);
+        continue;
+      }
+
       const job = await res.json();
 
       //document.getElementById('status').textContent = `Status: ${job.status}`;
@@ -372,7 +377,13 @@ async function pollStatus(statusUrl, processId, clickMarker) {
 
       // If the job has failed or was dismissed:
       } else if (['failed', 'dismissed'].includes(job.status)) {
-        var errmsg = `Job ${job.status}.`;
+        if (job.description) {
+          var errmsg = `Job ${job.status}: ${job.description}`;
+        } else if (job.message) {
+          var errmsg = `Job ${job.status}: ${job.message}`;
+        } else {
+          var errmsg = `Job ${job.status}.`;
+        }
         console.warn(errmsg);
         document.getElementById('displayGeoJSON').innerHTML = errmsg;
         clickMarker.bindPopup(errmsg);
