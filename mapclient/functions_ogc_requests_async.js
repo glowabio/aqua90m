@@ -22,8 +22,14 @@ var ogcRequestTwoCoordinatePairs = function(clickMarker, lon1, lat1, lon2, lat2)
 
     // Define JSON payload and send:
     var payload_inputs_json = JSON.stringify({"inputs": {
-      "lon_start":lon1, "lat_start":lat1,
-      "lon_end": lon2, "lat_end": lat2
+      "point_start": {
+        "type": "Point",
+        "coordinates": [lon1, lat1],
+      },
+      "point_end": {
+        "type": "Point",
+        "coordinates": [lon2, lat2],
+      }
     }})
     _ogcRequest(clickMarker, payload_inputs_json, paramstring) ;
 }
@@ -52,9 +58,13 @@ var ogcRequestOneCoordinatePair = function(clickMarker, lon1, lat1) {
     // Param string for logging and popup clickmarker
     var paramstring = lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat)...";
 
-
     // Define JSON payload and send:
-    var payload_inputs_json = JSON.stringify({"inputs":{"lon":lon1, "lat":lat1}})
+    var payload_inputs_json = JSON.stringify({"inputs":{
+      "point": {
+        "type": "Point",
+        "coordinates": [lon1, lat1]
+      }
+    }})
     _ogcRequest(clickMarker, payload_inputs_json, paramstring) ;
 }
 
@@ -115,7 +125,10 @@ function preRequest(clickMarker, lon, lat, strahlerInformFunction) {
     // TODO Note: This process expects geometry_only as string, not as bool, which is stupid.
     // Need to change that in pygeoapi, and then here too!
     var payload_inputs_json = JSON.stringify({"inputs":{
-      "lon":lon, "lat":lat, 
+      "point": {
+        "type": "Point",
+        "coordinates": [lon, lat]
+      },
       "geometry_only": "false"
     }})
 
