@@ -122,14 +122,13 @@ function preRequest(clickMarker, lon, lat, strahlerInformFunction) {
     xhrPygeo.open('POST', url, true)
     xhrPygeo.setRequestHeader('Content-Type', 'application/json');
     xhrPygeo.responseType = 'json';
-    // TODO Note: This process expects geometry_only as string, not as bool, which is stupid.
-    // Need to change that in pygeoapi, and then here too!
+    // geometry_only must be false, so we get the strahler order returned!
     var payload_inputs_json = JSON.stringify({"inputs":{
       "point": {
         "type": "Point",
         "coordinates": [lon, lat]
       },
-      "geometry_only": "false"
+      "geometry_only": false
     }})
 
     // Define behaviour after response:
