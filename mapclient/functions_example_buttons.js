@@ -130,7 +130,7 @@
       //buttonClickBehaviourOnePair(lon1, lat1);
       console.log("Clicked button for one coordinate pair: "+lon1+", "+lat1+" (lon, lat, WGS84)");
       // Add icon and popup to click location:
-      clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button", false);
+      clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button", false, processId, processDesc);
       document.getElementById("scrollToTop").scrollIntoView();
       // Which process?
       var dropdown = document.getElementById("processes");
@@ -155,8 +155,8 @@
       //buttonClickBehaviourTwoPairs(lon1, lat1, lon2, lat2);
       console.log("Clicked button for two coordinate pairs: "+lon1+", "+lat1+" and "+lon2+", "+lat2+" (lon, lat, WGS84)");
       // Add icon and popup to click location:
-      clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button (part 1)", false);
-      clickMarker = putIconToClickLocation(lon2, lat2, map, "clicked on button (part 2)", false);
+      clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button (part 1)", false, processId, processDesc);
+      clickMarker = putIconToClickLocation(lon2, lat2, map, "clicked on button (part 2)", false, processId, processDesc);
       document.getElementById("scrollToTop").scrollIntoView();
       // Which process?
       var dropdown = document.getElementById("processes");

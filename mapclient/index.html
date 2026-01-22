@@ -338,7 +338,7 @@ integrity=
     ///////////////////////////////
 
     // Function to add a grey marker, and a pop-up, to a location on the map
-    var putIconToClickLocation = function(lon1, lat1, map, actionDone, askToClickAgain) {
+    var putIconToClickLocation = function(lon1, lat1, map, actionDone, askToClickAgain, processId, processDesc) {
       console.log("User "+actionDone+" (coordinates: "+lon1+", "+lat1+" (lon, lat, WGS84)");
       var iconheight = 30;
       var iconwidth = 0.61*iconheight;
@@ -372,9 +372,6 @@ integrity=
       allMyIcons.push(clickMarker);
 
       // Add Popup to user-click
-      var dropdown = document.getElementById("processes");
-      let processId = dropdown.value;
-      var processDesc = dropdown.options[dropdown.selectedIndex].text
       if (askToClickAgain) {
         clickMarker.bindPopup("You selected "+processDesc+", so please click another time!").openPopup();
       } else {
@@ -383,7 +380,7 @@ integrity=
         clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
         // This popup will be redefined/overwritten in ogcRequestTwoCoordinatePairs(), so put the same text!
       }
-      console.log("When clicked, this process was selected: "+processId+"...");
+      console.log("When "+actionDone+", this process was selected: "+processId+"...");
       return (clickMarker);
     }
 
@@ -422,7 +419,7 @@ integrity=
           thisIsSecondClick = false;
 
           // Add icon and popup to click location:
-          clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, false);
+          clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, false, processId, processDesc);
 
           // Construct and send HTTP request to OGC service:
           ogcRequestTwoCoordinatePairs(clickMarker, processId, firstClickLon, firstClickLat, clicklon, clicklat, processDesc);
@@ -433,7 +430,7 @@ integrity=
           thisIsSecondClick = true;
 
           // Add icon and popup to click location, telling user to click again
-          clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, true);
+          clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, true, processId, processDesc);
 
           // Remember the coordinates of this first click, for the second:
           firstClickLat = clicklat;
@@ -445,7 +442,7 @@ integrity=
         console.log('[DEBUG] Any function requiring just one pair of coordinates...');
 
         // Add icon and popup to click location:
-        clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, false);
+        clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, false, processId, processDesc);
 
         // Construct and send HTTP request to OGC service:
         ogcRequestOneCoordinatePair(clickMarker, processId, clicklon, clicklat, processDesc);
