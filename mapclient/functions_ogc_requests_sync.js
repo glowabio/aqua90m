@@ -5,7 +5,7 @@
 ///////////////////////////////////////////////
 
 // Define making request to OGC service (function):
-var ogcRequestTwoCoordinatePairs = function(clickMarker, lon1, lat1, lon2, lat2) {
+var ogcRequestTwoCoordinatePairs = function(clickMarker, processId, lon1, lat1, lon2, lat2, processDesc) {
 
     // Reset result field:
     document.getElementById("responseField").innerHTML = "Response returned by server for <span class=\"code\">"+lon1+", "+lat1+"</span> to <span class=\"code\">"+lon2+", "+lat2+"</span> (lon, lat, WGS84)...";
@@ -31,11 +31,11 @@ var ogcRequestTwoCoordinatePairs = function(clickMarker, lon1, lat1, lon2, lat2)
         "coordinates": [lon2, lat2],
       }
     }})
-    _ogcRequest(clickMarker, payload_inputs_json, paramstring) ;
+    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json, paramstring) ;
 }
 
 // Define making request to OGC service (function):
-var ogcRequestOneCoordinatePair = function(clickMarker, lon1, lat1) {
+var ogcRequestOneCoordinatePair = function(clickMarker, processId, lon1, lat1, processDesc) {
 
     // Reset result field:
     document.getElementById("responseField").innerHTML = "Response returned by server for lon, lat <span class=\"code\">"+lon1+", "+lat1+"</span> (lon, lat, WGS84)...";
@@ -55,18 +55,13 @@ var ogcRequestOneCoordinatePair = function(clickMarker, lon1, lat1) {
         "coordinates": [lon1, lat1]
       }
     }})
-    _ogcRequest(clickMarker, payload_inputs_json, paramstring) ;
+    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json, paramstring) ;
 }
 
 // Define making request to OGC service (function):
-var _ogcRequest = function(clickMarker, payload_inputs_json, paramstring)  {
+var _ogcRequest = function(clickMarker, processId, processDesc, payload_inputs_json, paramstring)  {
     console.log('Preparing to make HTTP POST request...')
     document.getElementById("displayGeoJSON").innerHTML = "waiting..."
-
-    // Which process?
-    var dropdown = document.getElementById("processes");
-    var processId = dropdown.value;
-    var processDesc = dropdown.options[dropdown.selectedIndex].text;
 
     // Construct HTTP request to OGC service:
     let xhrPygeo = new XMLHttpRequest();

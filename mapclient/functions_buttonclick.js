@@ -36,7 +36,7 @@
           clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button", false);
           document.getElementById("scrollToTop").scrollIntoView();
           // Construct and send HTTP request to OGC service:
-          ogcRequestOneCoordinatePair(clickMarker, lon1, lat1);
+          ogcRequestOneCoordinatePair(clickMarker, processId, lon1, lat1, processDesc);
 
         } else {
 
@@ -68,7 +68,7 @@
           var logstring = "subcid="+subcid1;
           // Define JSON payload and send:
           var payload_inputs_json = JSON.stringify({"inputs":{"subc_id":subcid1}})
-          _ogcRequest(clickMarker, payload_inputs_json, logstring) ;
+          _ogcRequest(clickMarker, processId, payload_inputs_json, logstring, processDesc) ;
         }
 
       } else if (pairs == "two") {
@@ -97,7 +97,7 @@
           clickMarker = putIconToClickLocation(lon2, lat2, map, "clicked on button (part 2)", false);
           document.getElementById("scrollToTop").scrollIntoView();
           // Construct and send HTTP request to OGC service:
-          ogcRequestTwoCoordinatePairs(clickMarker, lon1, lat1, lon2, lat2);
+          ogcRequestTwoCoordinatePairs(clickMarker, processId, lon1, lat1, lon2, lat2, processDesc);
 
         // Two subcids:
         } else if (use_subcid1 && use_subcid2) {
@@ -117,7 +117,7 @@
           var logstring = "subcid1="+subcid1+",subcid2="+subcid2;
           // Define JSON payload and send:
           var payload_inputs_json = JSON.stringify({"inputs":{"subc_id_start":subcid1, "subc_id_end": subcid2}})
-          _ogcRequest(clickMarker, payload_inputs_json, logstring);
+          _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json, logstring);
 
         // Mixed 1
         } else if (use_subcid1 && !use_subcid2) { WIP
@@ -143,7 +143,7 @@
           // Construct and send HTTP request to OGC service:
           // Define JSON payload and send:
           var payload_inputs_json = JSON.stringify({"inputs":{"subc_id_start":subcid1, "lon_end": lon2, "lat_end": lat2}})
-          _ogcRequest(clickMarker, payload_inputs_json, logstring);
+          _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json, logstring);
 
         // Mixed 2:
         } else if (!use_subcid1 && use_subcid2) {
@@ -169,7 +169,7 @@
           // Construct and send HTTP request to OGC service:
           // Define JSON payload and send:
           var payload_inputs_json = JSON.stringify({"inputs":{"lon_start": lon1, "lat_start": lat1, "subc_id_end":subcid2}})
-          _ogcRequest(clickMarker, payload_inputs_json, logstring);
+          _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json, logstring);
         }
       }
     }

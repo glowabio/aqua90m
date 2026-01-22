@@ -132,8 +132,13 @@
       // Add icon and popup to click location:
       clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button", false);
       document.getElementById("scrollToTop").scrollIntoView();
+      // Which process?
+      var dropdown = document.getElementById("processes");
+      var processId = dropdown.value;
+      var processDesc = dropdown.options[dropdown.selectedIndex].text;
+      console.log('When button was clicked, this process was selected: '+processId+' ('+processDesc+').');
       // Construct and send HTTP request to OGC service:
-      ogcRequestOneCoordinatePair(clickMarker, lon1, lat1);
+      ogcRequestOneCoordinatePair(clickMarker, processId, lon1, lat1, processDesc);
     }
 
     // Define behaviour for example button (function):
@@ -153,8 +158,13 @@
       clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button (part 1)", false);
       clickMarker = putIconToClickLocation(lon2, lat2, map, "clicked on button (part 2)", false);
       document.getElementById("scrollToTop").scrollIntoView();
+      // Which process?
+      var dropdown = document.getElementById("processes");
+      var processId = dropdown.value;
+      var processDesc = dropdown.options[dropdown.selectedIndex].text;
+      console.log('When button was clicked, this process was selected: '+processId+' ('+processDesc+').');
       // Construct and send HTTP request to OGC service:
-      ogcRequestTwoCoordinatePairs(clickMarker, lon1, lat1, lon2, lat2)
+      ogcRequestTwoCoordinatePairs(clickMarker, processId, lon1, lat1, lon2, lat2, processDesc)
     }
 
     // Define programatically content/text of buttons:
