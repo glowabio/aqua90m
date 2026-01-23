@@ -140,17 +140,18 @@ var exampleButtonClickBehaviourOnePair = function() {
   var caller = event.target;
   var lon1 = caller.getAttribute("thislon");
   var lat1 = caller.getAttribute("thislat");
-  console.log("Example coordinate pair: "+lon1+", "+lat1+" (lon, lat, WGS84)")
-  //buttonClickBehaviourOnePair(lon1, lat1);
-  console.log("Clicked button for one coordinate pair: "+lon1+", "+lat1+" (lon, lat, WGS84)");
-  // Add icon and popup to click location:
-  clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button", false, processId, processDesc);
-  document.getElementById("scrollToTop").scrollIntoView();
+  console.log("Button click: One coordinate pair: "+lon1+", "+lat1+" (lon, lat, WGS84)");
+
   // Which process?
   var dropdown = document.getElementById("processes");
   var processId = dropdown.value;
   var processDesc = dropdown.options[dropdown.selectedIndex].text;
-  console.log('When button was clicked, this process was selected: '+processId+' ('+processDesc+').');
+  console.log('Button click: When clicked, this process was selected: '+processId+' ('+processDesc+').');
+
+  // Add icon and popup to click location, scroll map up:
+  clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button", false, processId, processDesc);
+  document.getElementById("scrollToTop").scrollIntoView();
+
   // Construct and send HTTP request to OGC service:
   ogcRequestOneCoordinatePair(clickMarker, processId, lon1, lat1, processDesc);
 }
@@ -165,18 +166,19 @@ var exampleButtonClickBehaviourTwoPairs = function() {
   var lat1 = caller.getAttribute("thislat");
   var lon2 = caller.getAttribute("thislon2");
   var lat2 = caller.getAttribute("thislat2");
-  console.log("Example coordinate pairs: "+lon1+", "+lat1+" and "+lon2+", "+lat2+" (lon, lat, WGS84)")
-  //buttonClickBehaviourTwoPairs(lon1, lat1, lon2, lat2);
-  console.log("Clicked button for two coordinate pairs: "+lon1+", "+lat1+" and "+lon2+", "+lat2+" (lon, lat, WGS84)");
-  // Add icon and popup to click location:
-  clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button (part 1)", false, processId, processDesc);
-  clickMarker = putIconToClickLocation(lon2, lat2, map, "clicked on button (part 2)", false, processId, processDesc);
-  document.getElementById("scrollToTop").scrollIntoView();
+  console.log("Button click: Two coordinate pairs: "+lon1+", "+lat1+" and "+lon2+", "+lat2+" (lon, lat, WGS84)")
+
   // Which process?
   var dropdown = document.getElementById("processes");
   var processId = dropdown.value;
   var processDesc = dropdown.options[dropdown.selectedIndex].text;
-  console.log('When button was clicked, this process was selected: '+processId+' ('+processDesc+').');
+  console.log('Button click: When clicked, this process was selected: '+processId+' ('+processDesc+').');
+
+  // Add icon and popup to click location, scroll map up:
+  clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button (part 1)", false, processId, processDesc);
+  clickMarker = putIconToClickLocation(lon2, lat2, map, "clicked on button (part 2)", false, processId, processDesc);
+  document.getElementById("scrollToTop").scrollIntoView();
+
   // Construct and send HTTP request to OGC service:
   ogcRequestTwoCoordinatePairs(clickMarker, processId, lon1, lat1, lon2, lat2, processDesc)
 }
