@@ -359,9 +359,39 @@ integrity=
       let pairs = dropdown.options[dropdown.selectedIndex].dataset.pairs;
       console.log('[mapclick] When clicked (on map), this process was selected: '+processId+' ('+processDesc+') ('+pairs+' pairs).');
 
-      // Trigger the behaviour:
-      triggerProcessRequest(clicklon, clicklat, processId, processDesc, pairs, logUserAction);
-    }
+      // Only click of one!
+      if (pairs === "one") {
+        triggerOnePair(map, clicklon, clicklat, processId, processDesc, logUserAction);
+
+      // If two clicks are expected, count the clicks and behave accordingly:
+      } else {
+
+        // First click of two!
+        if (!thisIsSecondClick) {
+          console.log('[mapclick] First click, expecting a second one.');
+          // Make sure the next click is counted the second:
+          thisIsSecondClick = true;
+
+          // Add icon and popup to click location, telling user to click again
+          clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, true, processId, processDesc);
+
+          // Remember the coordinates of this first click, for the second:
+          firstClickLat = clicklat;
+          firstClickLon = clicklon;
+
+          // Return to avoid triggering any request yet:
+          return;
+
+        // Second click of two:
+        } else {
+          console.log('[mapclick] Second click, the first one already occurred before.');
+          // Make sure the next click is counted the first:
+          thisIsSecondClick = false;
+
+          triggerTwoPairs(map, firstClickLon, firstClickLat, clicklon, clicklat, processId, processDesc, logUserAction);
+        }
+      }
+    };
 
     var urlParamBehaviour = function(lon, lat, processId, processDesc, pairs, logUserAction) {
       console.log('[urlparam] User passed URL parameters...');
@@ -379,50 +409,31 @@ integrity=
         let processDesc = "process provided by user"
         // TODO Allow passing two pairs!
         // TODO Get the proper processDesc, e.g. Upstream catchment (individual polygons)
-        triggerProcessRequest(lon, lat, processId, processDesc, pairs, logUserAction);
-      }
-    }
-
-    var triggerProcessRequest = function(clicklon, clicklat, processId, processDesc, pairs, logUserAction) {
-      if (pairs == "two") {
-
-        if (thisIsSecondClick) {
-          console.log('[DEBUG] Triggering suite of actions for two pairs of coordinates (second click)...');
-          // Second click of two!
-          // Make sure the next click is counted the first:
-          thisIsSecondClick = false;
-
-          // Add icon and popup to click location:
-          clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, false, processId, processDesc);
-
-          // Construct and send HTTP request to OGC service:
-          ogcRequestTwoCoordinatePairs(clickMarker, processId, firstClickLon, firstClickLat, clicklon, clicklat, processDesc);
-
-        } else {
-          console.log('[DEBUG] Triggering suite of actions for two pairs of coordinates (first click)...');
-          // First click of two!
-          // Make sure the next click is counted the second:
-          thisIsSecondClick = true;
-
-          // Add icon and popup to click location, telling user to click again
-          clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, true, processId, processDesc);
-
-          // Remember the coordinates of this first click, for the second:
-          firstClickLat = clicklat;
-          firstClickLon = clicklon;
-        }
-
-      // Normal process that works with one click!
-      } else {
-        console.log('[DEBUG] Triggering suite of actions for one pair of coordinates...');
-
-        // Add icon and popup to click location:
-        clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, false, processId, processDesc);
-
-        // Construct and send HTTP request to OGC service:
-        ogcRequestOneCoordinatePair(clickMarker, processId, clicklon, clicklat, processDesc);
+        triggerOnePair(map, lon, lat, processId, processDesc, logUserAction);
       }
     };
+
+    var triggerOnePair = function(map, clicklon, clicklat, processId, processDesc, logUserAction) {
+      // Normal process that works with one click!
+      console.log('[DEBUG] Triggering suite of actions for one pair of coordinates...');
+
+      // Add icon and popup to click location:
+      clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, false, processId, processDesc);
+
+      // Construct and send HTTP request to OGC service:
+      ogcRequestOneCoordinatePair(clickMarker, processId, clicklon, clicklat, processDesc);
+    };
+
+
+    var triggerTwoPairs = function(map, firstClickLon, firstClickLat, clicklon, clicklat, processId, processDesc, logUserAction) {
+
+      // Add icon and popup to click location:
+      clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, false, processId, processDesc);
+
+      // Construct and send HTTP request to OGC service:
+      ogcRequestTwoCoordinatePairs(clickMarker, processId, firstClickLon, firstClickLat, clicklon, clicklat, processDesc);
+    };
+
 
     // Define clearing the map
     var clearMap = function() {
