@@ -242,7 +242,7 @@ integrity=
     // either from URL params or default
     //const initialViewLatLon = [paramLat ?? 53.014, paramLon ?? 12.008]; // Northern Germany (zoom 7)
     let initialViewLatLon = [paramLat ?? 60.19123, paramLon ?? 24.94612]; // Helsinki (zoom 10)
-    //console.log('INITIAL VIEW: ', initialViewLatLon);
+    //console.log('[DEBUG] Initial view: ', initialViewLatLon);
     map.setView(initialViewLatLon, 7);
 
 
@@ -350,14 +350,14 @@ integrity=
       // Get coordinates from click location:
       clicklon = evt.latlng.lng;
       clicklat = evt.latlng.lat;
-      console.log('There was a click on the map: '+clicklon+', '+clicklat+' (lon, lat, WGS84)');
+      console.log('[mapclick] There was a click on the map: '+clicklon+', '+clicklat+' (lon, lat, WGS84)');
 
-      // Which process?
+      // Get process id from dropdown menu:
       var dropdown = document.getElementById("processes");
       var processId = dropdown.value;
       var processDesc = dropdown.options[dropdown.selectedIndex].text;
       let pairs = dropdown.options[dropdown.selectedIndex].dataset.pairs;
-      console.log('When clicked (on map), this process was selected: '+processId+' ('+processDesc+') ('+pairs+' pairs).');
+      console.log('[mapclick] When clicked (on map), this process was selected: '+processId+' ('+processDesc+') ('+pairs+' pairs).');
 
       // Trigger the behaviour:
       triggerProcessRequest(clicklon, clicklat, processId, processDesc, pairs, logUserAction);
@@ -385,9 +385,9 @@ integrity=
 
     var triggerProcessRequest = function(clicklon, clicklat, processId, processDesc, pairs, logUserAction) {
       if (pairs == "two") {
-        console.log('[DEBUG] Any function requiring two pairs of coordinates...');
 
         if (thisIsSecondClick) {
+          console.log('[DEBUG] Triggering suite of actions for two pairs of coordinates (second click)...');
           // Second click of two!
           // Make sure the next click is counted the first:
           thisIsSecondClick = false;
@@ -399,6 +399,7 @@ integrity=
           ogcRequestTwoCoordinatePairs(clickMarker, processId, firstClickLon, firstClickLat, clicklon, clicklat, processDesc);
 
         } else {
+          console.log('[DEBUG] Triggering suite of actions for two pairs of coordinates (first click)...');
           // First click of two!
           // Make sure the next click is counted the second:
           thisIsSecondClick = true;
@@ -413,7 +414,7 @@ integrity=
 
       // Normal process that works with one click!
       } else {
-        console.log('[DEBUG] Any function requiring just one pair of coordinates...');
+        console.log('[DEBUG] Triggering suite of actions for one pair of coordinates...');
 
         // Add icon and popup to click location:
         clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, false, processId, processDesc);

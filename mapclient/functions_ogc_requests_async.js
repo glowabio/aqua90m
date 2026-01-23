@@ -69,7 +69,7 @@ var ogcRequestOneCoordinatePair = function(clickMarker, processId, lon1, lat1, p
 
 
 var successPleaseShowGeojson = function(responseJson) {
-    console.log("[DEBUG]: Called successPleaseShowGeojson")
+    console.log("Displaying GeoJSON on the map...");
 
     // Make layer(s) from GeoJSON that the server returned:
     var pygeoResponseGeoJSONLayer = L.geoJSON(responseJson);
