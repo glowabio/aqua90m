@@ -134,10 +134,10 @@ var _defineExampleButtons = function(examples, twopairs) {
 
 // Define behaviour for example button (function):
 var exampleButtonClickBehaviourOnePair = function() {
-  console.log("User requested to use example values...")
+  console.log("Button click: User requested use of example values...")
+
+  // Which coordinates
   var caller = event.target;
-  console.log("Caller: "+caller)
-  console.log("Button who called this: "+caller.id)
   var lon1 = caller.getAttribute("thislon");
   var lat1 = caller.getAttribute("thislat");
   console.log("Example coordinate pair: "+lon1+", "+lat1+" (lon, lat, WGS84)")
@@ -157,10 +157,10 @@ var exampleButtonClickBehaviourOnePair = function() {
 
 // Define behaviour for example button (function):
 var exampleButtonClickBehaviourTwoPairs = function() {
-  console.log("User requested to use example values...")
+  console.log("Button click: User requested use of example values...")
+
+  // Which coordinates
   var caller = event.target;
-  console.log("Caller: "+caller)
-  console.log("Button who called this: "+caller.id)
   var lon1 = caller.getAttribute("thislon");
   var lat1 = caller.getAttribute("thislat");
   var lon2 = caller.getAttribute("thislon2");

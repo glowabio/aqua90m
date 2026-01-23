@@ -69,7 +69,7 @@ var ogcRequestOneCoordinatePair = function(clickMarker, processId, lon1, lat1, p
 
 
 var successPleaseShowGeojson = function(responseJson) {
-    console.log("FUNCTION: successPleaseShowGeojson")
+    console.log("[DEBUG]: Called successPleaseShowGeojson")
 
     // Make layer(s) from GeoJSON that the server returned:
     var pygeoResponseGeoJSONLayer = L.geoJSON(responseJson);
@@ -132,31 +132,31 @@ function preRequest(clickMarker, lon, lat, strahlerInformFunction) {
 
     // Define behaviour after response:
     xhrPygeo.onerror = function() {
-      console.warn("Pre-Request: Failed.");
+      console.warn("[pre] Pre-Request: Failed.");
       if (xhrPygeo.status === 405) {
-        console.warn("Pre-Request: Method Not Allowed (405) - likely OPTIONS request failed");
+        console.warn("[pre] Pre-Request: Method Not Allowed (405) - likely OPTIONS request failed");
       } else if (xhrPygeo.status === 0) {
-        console.warn("Pre-Request: We got status 0: Request failed or blocked (likely preflight failure)");
+        console.warn("[pre] Pre-Request: We got status 0: Request failed or blocked (likely preflight failure)");
       }
     };
 
     xhrPygeo.onreadystatechange = function () {
       if (xhrPygeo.readyState === XMLHttpRequest.DONE) {
-        console.log("Pre-Request: Done with status:", xhrPygeo.status);
+        console.log("[pre] Pre-Request: Done with status:", xhrPygeo.status);
       }
     };
 
     xhrPygeo.onload = function() {
 
       // Log response status:
-      console.log("Pre-Request: Returning from OGC process...");
+      console.log("[pre] Pre-Request: Returning from OGC process...");
       if (xhrPygeo.status == 200) {
-        console.log("Pre-Request: OGC server returned HTTP 200");
+        console.log("[pre] Pre-Request: OGC server returned HTTP 200");
       } else if (xhrPygeo.status == 400) {
-        console.warn("Pre-Request: Oh no: Internal server error (HTTP 400)");
+        console.warn("[pre] Pre-Request: Oh no: Internal server error (HTTP 400)");
         return
       } else {
-        console.warn("Pre-Request: Oh no: OGC server returned bad HTTP status: "+xhrPygeo.status);
+        console.warn("[pre] Pre-Request: Oh no: OGC server returned bad HTTP status: "+xhrPygeo.status);
         return
       }
 
@@ -166,7 +166,7 @@ function preRequest(clickMarker, lon, lat, strahlerInformFunction) {
     }
 
     // Send HTTP request:
-    console.log('Pre-Request: Sending HTTP POST request...')
+    console.log('[pre] Pre-Request: Sending HTTP POST request...')
     xhrPygeo.send(payload_inputs_json);
 }
 
@@ -174,49 +174,49 @@ function preRequest(clickMarker, lon, lat, strahlerInformFunction) {
 // Inform user based on strahler order
 function strahlerInformDownstream(strahler, clickMarker) {
     if (strahler == null) {
-      console.log('Strahler: No strahler order found...')
+      console.warn('[pre] Strahler: No strahler order found...')
     } else if (strahler == 1 | strahler == 2 | strahler == 3) {
-      console.log('Strahler '+strahler+': Uff, will take time...')
+      console.log('[pre] Strahler '+strahler+': Uff, will take time...')
       var msg = 'Strahler order '+strahler+', this will take a long time...';
       clickMarker.bindPopup(msg);
     } else if (strahler == 4 | strahler == 5 | strahler == 6) {
       var msg = 'Strahler order '+strahler+', this may take a while...'
       clickMarker.bindPopup(msg);
-      console.log('Strahler '+strahler+': May take a little...')
+      console.log('[pre] Strahler '+strahler+': May take a little...')
     } else if (strahler == 7 | strahler == 8 | strahler == 9) {
-      console.log('Strahler '+strahler+': Probably reasonably fast...')
+      console.log('[pre] Strahler '+strahler+': Probably reasonably fast...')
     } else if (strahler >= 10 ) {
-      console.log('Strahler '+strahler+': Probably superfast!')
+      console.log('[pre] Strahler '+strahler+': Probably superfast!')
     } else {
-      console.log('Strahler: Could not understand strahler order: '+strahler);
+      console.warn('[pre] Strahler: Could not understand strahler order: '+strahler);
     }
 }
 
 // Inform user based on strahler order
 function strahlerInformUpstream(strahler, clickMarker) {
     if (strahler == null) {
-      console.log('Strahler: No strahler order found...')
+      console.warn('[pre] Strahler: No strahler order found...')
     } else if (strahler == 1 | strahler == 2 | strahler == 3) {
-      console.log('Strahler '+strahler+': Probably superfast!')
+      console.log('[pre] Strahler '+strahler+': Probably superfast!')
     } else if (strahler == 4 | strahler == 5 | strahler == 6) {
-      console.log('Strahler '+strahler+': May take a little...')
+      console.log('[pre] Strahler '+strahler+': May take a little...')
     } else if (strahler == 7 | strahler == 8 | strahler == 9) {
-      console.log('Strahler '+strahler+': May take a while...')
+      console.log('[pre] Strahler '+strahler+': May take a while...')
       var msg = 'Strahler order '+strahler+', this may take a while...'
       clickMarker.bindPopup(msg);
     } else if (strahler >= 10 ) {
-      console.log('Strahler '+strahler+': Uff, will take ages...')
+      console.log('[pre] Strahler '+strahler+': Uff, will take ages...')
       var msg = 'Strahler order '+strahler+', this will take a long time or even fail...';
       clickMarker.bindPopup(msg);
     } else {
-      console.log('Strahler: Could not understand strahler order: '+strahler);
+      console.warn('[pre] Strahler: Could not understand strahler order: '+strahler);
     }
 }
 
 // Define making request to OGC service (function):
 //var _ogcRequest = function(clickMarker, payload_inputs_json, paramstring)  {
 async function _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json, paramstring)  {
-    console.log('Preparing to make HTTP POST request...')
+    console.log('[async] Preparing to make HTTP POST request...')
     document.getElementById("displayGeoJSON").innerHTML = "waiting..."
 
     // Which pygeoapi instance?
@@ -225,41 +225,41 @@ async function _ogcRequest(clickMarker, processId, processDesc, payload_inputs_j
     try {
 
       // Make the initial request for processing:
-      console.log('Sending HTTP POST request asynchronously...')
+      console.log('[async] Sending HTTP POST request asynchronously...')
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Prefer': 'respond-async' },
         body: payload_inputs_json
       });
-      console.log('HTTP Status Code:', response.status);
+      console.log('[async] HTTP Status Code:', response.status);
 
       // Retrieve the body:
       let responseBody;
       try {
         responseBody = await response.json();
       } catch (e) {
-        console.error('Failed to parse JSON:', e);
+        console.error('[async] Failed to parse JSON:', e);
         responseBody = null;
       }
 
       // If the initial request fails, inform the user and throw an error:
       if (!response.ok) {
-        console.error("Request failed.");
+        console.error("[async] Request failed.");
         if (response.status == 400) {
-            console.log("Oh no: Internal server error (HTTP 400)");
+            console.warn("[async] Oh no: Internal server error (HTTP 400)");
             var errmsg = responseBody.description;
             clickMarker.bindPopup(errmsg);
             document.getElementById("displayGeoJSON").innerHTML = errmsg
         } else if (response.status == 405) {
-            console.warn("Method Not Allowed (405) - likely OPTIONS request failed");
+            console.warn("[async] Method Not Allowed (405) - likely OPTIONS request failed");
             document.getElementById("displayGeoJSON").innerHTML = "nothing to display"
             clickMarker.bindPopup("HTTP request to service failed (HTTP 405). Sorry for that.");
         } else if (response.status === 0) {
-            console.warn("We got status 0: Request failed or blocked (likely preflight failure)");
+            console.warn("[async] We got status 0: Request failed or blocked (likely preflight failure)");
             document.getElementById("displayGeoJSON").innerHTML = "nothing to display"
             clickMarker.bindPopup("HTTP request to service failed or blocked, probably a network problem or CORS error. Sorry for that.");
         } else {
-            console.log("Oh no: OGC server returned bad HTTP status: "+response.status);
+            console.warn("[async] Oh no: OGC server returned bad HTTP status: "+response.status);
             clickMarker.bindPopup("Failed for unspecified reason (possibly timeout), try another one!!");
             document.getElementById("displayGeoJSON").innerHTML = "nothing to display"
         }
@@ -273,17 +273,16 @@ async function _ogcRequest(clickMarker, processId, processDesc, payload_inputs_j
       }
 
       // Poll for the status...
-      console.log("Status: processing...");
+      console.log("[async] Status: processing...");
       clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
       // This popup was already filled in index.html (putIconToClickLocation()), so put the same text!
-
       pollStatus(statusUrl, processId, clickMarker);
 
     // What kind of errors could this be?
     // Something that prevented even the proper HTTP request, I guess...
     } catch (error) {
       var errmsg = `Error: ${error.message}`;
-      console.warn(errmsg);
+      console.warn('[async] '+errmsg);
       document.getElementById("displayGeoJSON").innerHTML = errmsg
     }
 }
@@ -296,14 +295,14 @@ async function pollStatus(statusUrl, processId, clickMarker) {
 
       const res = await fetch(statusUrl);
       if (!res.ok) {
-        console.error(`HTTP error: ${res.status} ${res.statusText}`);
+        console.error(`[async] HTTP error: ${res.status} ${res.statusText}`);
         continue;
       }
 
       const job = await res.json();
 
       //document.getElementById('status').textContent = `Status: ${job.status}`;
-      console.log(`Status: ${job.status}`);
+      console.log(`[async] Status: ${job.status}`);
       document.getElementById("displayGeoJSON").innerHTML = `Status: ${job.status}`;
 
       // If successful, find the "application/json" result link
@@ -316,7 +315,7 @@ async function pollStatus(statusUrl, processId, clickMarker) {
 
         // If we cannot find a result link:
         if (!jsonResultLink) {
-          console.warn("Job succeeded, but no JSON result link was found.");
+          console.warn("[async] Job succeeded, but no JSON result link was found.");
           // TODO Maybe throw error here.
           break;
         }
@@ -324,18 +323,18 @@ async function pollStatus(statusUrl, processId, clickMarker) {
         // If we do find a result link, fetch the result:
         try {
           const resultRes = await fetch(jsonResultLink.href);
-          console.log("Returning from OGC process: "+processId+"...");
+          console.log("[async] Returning from OGC process: "+processId+"...");
 
           // If the result fetching failed:
           if (!resultRes.ok) {
             if (resultRes.status == 400) {
-                console.warn("Oh no: Internal server error (HTTP 400)");
+                console.warn("[async] Oh no: Internal server error (HTTP 400)");
                 const resultData = await resultRes.json();
                 var errmsg = resultData.description;
                 clickMarker.bindPopup(errmsg);
                 document.getElementById("displayGeoJSON").innerHTML = errmsg;
             } else {
-                console.warn("Oh no: OGC server returned bad HTTP status: "+resultRes.status);
+                console.warn("[async] Oh no: OGC server returned bad HTTP status: "+resultRes.status);
                 clickMarker.bindPopup("Failed for unspecified reason (possibly timeout), try another one!!");
                 document.getElementById("displayGeoJSON").innerHTML = "nothing to display";
             }
@@ -351,7 +350,7 @@ async function pollStatus(statusUrl, processId, clickMarker) {
           // TODO: Is this in the right location? Wouldn't the resultRes.json() have thrown an error anyway?
           // Stream segments CAN be shown if it is a headwater! Then they would be returned!
           if (resultData == null){
-            console.warn('Result data is null... This should not happen.')
+            console.warn('[async] Result data is null... This should not happen.')
             clickMarker.bindPopup("No "+lookingfor+", is this a headwater?").openPopup();
             // TODO Headwater, how to handle? Has not happened for a while, I think we now include the local
             // one itself to the upstream, so the response will not be null anywhere. Except for ocean I guess.
@@ -369,13 +368,13 @@ async function pollStatus(statusUrl, processId, clickMarker) {
             successPleaseShowGeojson(resultData);
 
           } else {
-            console.warn("Result JSON is not valid GeoJSON.");
+            console.warn("[async] Result JSON is not valid GeoJSON.");
           }
 
         // If the response is not valid GeoJSON:
         } catch (err) {
             var errmsg = "Job succeeded, but result fetch failed: " + err.message;
-            console.warn(errmsg);
+            console.warn('[async] '+errmsg);
             document.getElementById("displayGeoJSON").innerHTML = errmsg;
             clickMarker.bindPopup(errmsg);
         }
@@ -390,7 +389,7 @@ async function pollStatus(statusUrl, processId, clickMarker) {
         } else {
           var errmsg = `Job ${job.status}.`;
         }
-        console.warn(errmsg);
+        console.warn('[async] '+errmsg);
         document.getElementById('displayGeoJSON').innerHTML = errmsg;
         clickMarker.bindPopup(errmsg);
         break;

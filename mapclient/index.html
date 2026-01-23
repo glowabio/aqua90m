@@ -330,24 +330,24 @@ integrity=
     }
 
 
-
-
-
     ///////////////////////////////
     //// Other functions ////
     ///////////////////////////////
 
     // Function to add a grey marker, and a pop-up, to a location on the map
     var putIconToClickLocation = function(lon1, lat1, map, actionDone, askToClickAgain, processId, processDesc) {
-      console.log("User "+actionDone+" (coordinates: "+lon1+", "+lat1+" (lon, lat, WGS84)");
+      console.log("Icon: Creating icon at coordinates: "+lon1+", "+lat1+" (lon, lat, WGS84), because user "+actionDone+".");
+
+      // Define icon size
       var iconheight = 30;
       var iconwidth = 0.61*iconheight;
 
+      // Where to place the icon
       if (lon1 === null) {
         // Using map center to place the popup, but we don't use the map center as
         // processing input coordinates!
         var latlon = map.getCenter();
-        console.log('Using map centre for placing popup: '+latlon)
+        console.log('Icon: Using map centre for placing popup: '+latlon)
         // This string will be displayed until function _ogcRequest() updates the text:
         var paramstring = "[no coordinates to display]";
         var iconUrl = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; // 1x1 transparent gif
@@ -372,6 +372,7 @@ integrity=
       allMyIcons.push(clickMarker);
 
       // Add Popup to user-click
+      //console.log("Icon: When "+actionDone+", this process was selected: "+processId+"...");
       if (askToClickAgain) {
         clickMarker.bindPopup("You selected "+processDesc+", so please click another time!").openPopup();
       } else {
@@ -380,7 +381,6 @@ integrity=
         clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
         // This popup will be redefined/overwritten in ogcRequestTwoCoordinatePairs(), so put the same text!
       }
-      console.log("When "+actionDone+", this process was selected: "+processId+"...");
       return (clickMarker);
     }
 
@@ -389,6 +389,7 @@ integrity=
     var firstClickLon = null;
     var firstClickLat = null;
 
+
     // Define behaviour on map click (function)
     var mapClickBehaviour = function(evt) {
       let logUserAction = "clicked on map";
@@ -396,14 +397,14 @@ integrity=
       // Get coordinates from click location:
       clicklon = evt.latlng.lng;
       clicklat = evt.latlng.lat;
-      console.log('There was a click: '+clicklon+', '+clicklat+' (lon, lat, WGS84)');
+      console.log('There was a click on the map: '+clicklon+', '+clicklat+' (lon, lat, WGS84)');
+
       // Which process?
       var dropdown = document.getElementById("processes");
       var processId = dropdown.value;
       var processDesc = dropdown.options[dropdown.selectedIndex].text;
-      console.log('When clicked, this process was selected: '+processId+' ('+processDesc+').');
-      // Check if we need two points!
       let pairs = dropdown.options[dropdown.selectedIndex].dataset.pairs;
+      console.log('When clicked (on map), this process was selected: '+processId+' ('+processDesc+') ('+pairs+' pairs).');
 
       // Trigger the behaviour:
       triggerProcessRequest(clicklon, clicklat, processId, processDesc, pairs, logUserAction);

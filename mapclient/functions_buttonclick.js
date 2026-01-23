@@ -1,8 +1,11 @@
-
-
 ////////////////////////////////////
 ////// Define button behaviour /////
 ////////////////////////////////////
+
+// This file contains one function: What happens if a user clicks the button
+// that indicates that they entered custom values in the form and want those
+// to be used.
+
 
 // Define behaviour for custom lonlat button (function):
 // Button clicked by user after entering their own coordinates (one or two pairs)
