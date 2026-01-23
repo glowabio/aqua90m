@@ -15,6 +15,20 @@ var defineOneClickExampleButtons = function() {
   // Finland, 47 subcatchments: 24.941250085830692, 60.385753944192324
 }
 
+
+// Define programatically content/text of buttons:
+var defineTwoClickExampleButtons = function() {
+  var examples = {
+    ex1: {lon: 9.001922607421877,  lat: 52.91177308077004, lon2: 9.055137634277346,  lat2: 52.90224825087554,  text: "Near Schwarme", desc: "few segments"},
+    ex2: {lon: 12.577028274536135, lat: 51.38613070285945, lon2: 12.564454078674318, lat2: 51.36524123530659,  text: "Wachtelteich", desc: "few segments"},
+    ex3: {lon: 13.542366027832033, lat: 52.44028788912483, lon2: 13.283157348632814, lat2: 52.454516998017894, text: "Adlershof to Dahlem", desc: "not many segments ...via Krumme Lanke, Wannsee, Havel, Spree, Teltowkanal"},
+    ex4: {lon: 12.115173339843752, lat: 53.44051847367499, lon2: 12.113800048828127, lat2: 53.149131411867074, text: "Pritzwalk to Plau via Elbe", desc: "many segments"},
+    ex5: {lon: 13.051757812500002, lat: 50.85959488957681, lon2: 14.414062500000002, lat2: 51.08098143406474,  text: "Chemnitz to Wilthen via Elbe, Havel, Spree", desc: "very many segments"},
+  };
+  _defineExampleButtons(examples, true)
+}
+
+
 // Define programatically content/text of buttons:
 var _defineExampleButtons = function(examples, twopairs) {
 
@@ -165,18 +179,6 @@ var exampleButtonClickBehaviourTwoPairs = function() {
   console.log('When button was clicked, this process was selected: '+processId+' ('+processDesc+').');
   // Construct and send HTTP request to OGC service:
   ogcRequestTwoCoordinatePairs(clickMarker, processId, lon1, lat1, lon2, lat2, processDesc)
-}
-
-// Define programatically content/text of buttons:
-var defineTwoClickExampleButtons = function() {
-  var examples = {
-    ex1: {lon: 9.001922607421877,  lat: 52.91177308077004, lon2: 9.055137634277346,  lat2: 52.90224825087554,  text: "Near Schwarme", desc: "few segments"},
-    ex2: {lon: 12.577028274536135, lat: 51.38613070285945, lon2: 12.564454078674318, lat2: 51.36524123530659,  text: "Wachtelteich", desc: "few segments"},
-    ex3: {lon: 13.542366027832033, lat: 52.44028788912483, lon2: 13.283157348632814, lat2: 52.454516998017894, text: "Adlershof to Dahlem", desc: "not many segments ...via Krumme Lanke, Wannsee, Havel, Spree, Teltowkanal"},
-    ex4: {lon: 12.115173339843752, lat: 53.44051847367499, lon2: 12.113800048828127, lat2: 53.149131411867074, text: "Pritzwalk to Plau via Elbe", desc: "many segments"},
-    ex5: {lon: 13.051757812500002, lat: 50.85959488957681, lon2: 14.414062500000002, lat2: 51.08098143406474,  text: "Chemnitz to Wilthen via Elbe, Havel, Spree", desc: "very many segments"},
-  };
-  _defineExampleButtons(examples, true)
 }
 
 
