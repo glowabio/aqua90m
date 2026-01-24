@@ -373,7 +373,8 @@ integrity=
           thisIsSecondClick = true;
 
           // Add icon and popup to click location, telling user to click again
-          clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, true, processId, processDesc);
+          clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, processId, processDesc);
+          clickMarker.bindPopup("You selected "+processDesc+", so please click another time!").openPopup();
 
           // Remember the coordinates of this first click, for the second:
           firstClickLat = clicklat;
@@ -418,7 +419,7 @@ integrity=
       console.log('[DEBUG] Triggering suite of actions for one pair of coordinates...');
 
       // Add icon and popup to click location:
-      clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, false, processId, processDesc);
+      clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, processId, processDesc);
 
       // Construct and send HTTP request to OGC service:
       ogcRequestOneCoordinatePair(clickMarker, processId, clicklon, clicklat, processDesc);
@@ -428,7 +429,7 @@ integrity=
     var triggerTwoPairs = function(map, firstClickLon, firstClickLat, clicklon, clicklat, processId, processDesc, logUserAction) {
 
       // Add icon and popup to click location:
-      clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, false, processId, processDesc);
+      clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction, processId, processDesc);
 
       // Construct and send HTTP request to OGC service:
       ogcRequestTwoCoordinatePairs(clickMarker, processId, firstClickLon, firstClickLat, clicklon, clicklat, processDesc);
@@ -505,5 +506,6 @@ integrity=
 </body>
 
 </html>
+
 
 

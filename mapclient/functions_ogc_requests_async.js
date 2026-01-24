@@ -19,6 +19,7 @@ var ogcRequestTwoCoordinatePairs = function(clickMarker, processId, lon1, lat1, 
 
     // Param string for logging and popup clickmarker
     var paramstring = lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat) to "+lon2.toFixed(3)+", "+lat2.toFixed(3)+" (lon, lat)...";
+    clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
 
     // Define JSON payload and send:
     var payload_inputs_json = JSON.stringify({"inputs": {
@@ -44,6 +45,9 @@ var ogcRequestOneCoordinatePair = function(clickMarker, processId, lon1, lat1, p
     // Parse coordinates to Float
     var lon1 = parseFloat(lon1);
     var lat1 = parseFloat(lat1);
+    // Param string for logging and popup clickmarker
+    var paramstring = lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat)...";
+    clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
 
     // If upstream, make pre-request:
     if (processId.startsWith("get-upstream")) {
@@ -53,9 +57,6 @@ var ogcRequestOneCoordinatePair = function(clickMarker, processId, lon1, lat1, p
       console.log('Requesting downstream... This may take a while, so we do a pre-request!');
       preRequestDownstream(clickMarker, lon1, lat1);
     }
-
-    // Param string for logging and popup clickmarker
-    var paramstring = lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat)...";
 
     // Define JSON payload and send:
     var payload_inputs_json = JSON.stringify({"inputs":{
@@ -274,8 +275,6 @@ async function _ogcRequest(clickMarker, processId, processDesc, payload_inputs_j
 
       // Poll for the status...
       console.log("[async] Status: processing...");
-      clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
-      // This popup was already filled in index.html (putIconToClickLocation()), so put the same text!
       pollStatus(statusUrl, processId, clickMarker);
 
     // What kind of errors could this be?

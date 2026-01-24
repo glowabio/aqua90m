@@ -4,7 +4,7 @@
 
 
 // Function to add a grey marker, and a pop-up, to a location on the map
-var putIconToClickLocation = function(lon1, lat1, map, actionDone, askToClickAgain, processId, processDesc) {
+var putIconToClickLocation = function(lon1, lat1, map, actionDone, processId, processDesc) {
   console.log("[icon] Creating icon at coordinates: "+lon1+", "+lat1+" (lon, lat, WGS84), because user "+actionDone+".");
 
   // Define icon size
@@ -40,15 +40,6 @@ var putIconToClickLocation = function(lon1, lat1, map, actionDone, askToClickAga
   let clickMarker = L.marker(latlon, {icon: clickIcon}).addTo(map);
   allMyIcons.push(clickMarker);
 
-  // Add Popup to user-click
-  //console.log("Icon: When "+actionDone+", this process was selected: "+processId+"...");
-  if (askToClickAgain) {
-    clickMarker.bindPopup("You selected "+processDesc+", so please click another time!").openPopup();
-  } else {
-    // Not a good place for defining this text, because here we only know the stuff relevant for
-    // placing the popup (we don't know the subc_id etc.)...
-    clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
-    // This popup will be redefined/overwritten in ogcRequestTwoCoordinatePairs(), so put the same text!
-  }
   return (clickMarker);
 }
+
