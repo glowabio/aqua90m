@@ -36,7 +36,7 @@ var customButtonClickBehaviour = function() {
 
     if (!use_subcid1) {
       console.log("Clicked button for one coordinate pair: "+lon1+", "+lat1+" (lon, lat, WGS84)");
-      clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button", processId, processDesc);
+      clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button");
       document.getElementById("scrollToTop").scrollIntoView();
       // Construct and send HTTP request to OGC service:
       ogcRequestOneCoordinatePair(clickMarker, processId, lon1, lat1, processDesc);
@@ -48,23 +48,16 @@ var customButtonClickBehaviour = function() {
         var errmsg = "Cannot run process "+processDesc+" for a subcatchment id, need coordinates!";
         console.warn("Oh no: "+errmsg);
         let logUserAction = "entered subc_id for snapping (which cannot work)";
-        clickMarker = putIconToClickLocation(null, null, map, logUserAction, processId, processDesc);
+	clickMarker = putIconToSubcidLocation(map, logUserAction);
         clickMarker.bindPopup(errmsg);
         alert(errmsg);
         throw new Error(errmsg); // So that no OGC request is attempted
       }
 
       console.log("Clicked button for one subcid "+subcid1+".");
-      // We have no click location... Putting it to a corner of the map, but it will stay at that map location...
-      // TODO: Can we later move the clickmarker somewhere?
-      //let northEast = map.getBounds().getNorthEast();
-      //console.log("map getBounds: "+map.getBounds());
-      //let lat = northEast.lat;
-      //let lon = northEast.lng;
-      //console.log('Map Northeast: '+lon+', '+lat);
       let logUserAction = "entered a subc_id (location unknown)";
-      //clickMarker = putIconToClickLocation(lon, lat, map, logUserAction, processId, processDesc);
-      clickMarker = putIconToClickLocation(null, null, map, logUserAction, processId, processDesc);
+      // We have no click location...
+      clickMarker = putIconToSubcidLocation(map, logUserAction);
       clickMarker.bindPopup("Waiting for "+processDesc+" for two subcatchments...").openPopup();
       // Reset result field:
       document.getElementById("responseField").innerHTML = "Response returned by server for subc_id <span class=\"code\">"+subcid1+"</span>...";
@@ -99,8 +92,8 @@ var customButtonClickBehaviour = function() {
       //buttonClickBehaviourTwoPairs(lon1, lat1, lon2, lat2); WIPPP
       console.log("Clicked button for two coordinate pairs: "+lon1+", "+lat1+" and "+lon2+", "+lat2+" (lon, lat, WGS84)");
       // Add icon and popup to click location:
-      clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button (part 1)", processId, processDesc);
-      clickMarker = putIconToClickLocation(lon2, lat2, map, "clicked on button (part 2)", processId, processDesc);
+      clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button (part 1)");
+      clickMarker = putIconToClickLocation(lon2, lat2, map, "clicked on button (part 2)");
       document.getElementById("scrollToTop").scrollIntoView();
       // Construct and send HTTP request to OGC service:
       ogcRequestTwoCoordinatePairs(clickMarker, processId, lon1, lat1, lon2, lat2, processDesc);
@@ -114,7 +107,7 @@ var customButtonClickBehaviour = function() {
       let lat = northEast.lat;
       let lon = northEast.lng;
       console.log('Map Northeast: '+lon+', '+lat)
-      clickMarker = putIconToClickLocation(lon, lat, map, "entered two subc_ids (location unknown)", processId, processDesc);
+      clickMarker = putIconToClickLocation(lon, lat, map, "entered two subc_ids (location unknown)");
       clickMarker.bindPopup("Waiting for "+processDesc+" for two subcatchments").openPopup();
 
       // Reset result field:
@@ -133,16 +126,10 @@ var customButtonClickBehaviour = function() {
       var logstring = "subcid1="+subcid1+",lon2="+lon2+",lat2="+lat2;
       console.log("Clicked button for mixed: "+logstring+".");
 
-      // We have no click location... Putting it to a corner of the map, but it will stay at that map location...
-      // TODO: Can we later move the clickmarker somewhere?
+      // We have no click location...
       // WE NEED TWO CLICKMARKERS??? WIP
-      //let northEast = map.getBounds().getNorthEast();
-      //let lat = northEast.lat;
-      //let lon = northEast.lng;
-      //console.log('Map Northeast: '+lon+', '+lat)
-
       // Use known location for click marker (TODO IMPROVE)
-      clickMarker = putIconToClickLocation(lon2, lat2, map, "entered two subc_ids (location unknown)", processId, processDesc);
+      clickMarker = putIconToClickLocation(lon2, lat2, map, "entered two subc_ids (location unknown)");
       clickMarker.bindPopup("Waiting for "+processDesc+" for subcatchment and coordinate").openPopup();
 
       // Reset result field:
@@ -159,17 +146,9 @@ var customButtonClickBehaviour = function() {
       var logstring = "lon1="+lon1+",lat1="+lat1+",subcid2="+subcid2;
       console.log("Clicked button for mixed: "+logstring+".");
 
-      // We have no click location... Putting it to a corner of the map, but it will stay at that map location...
-      // TODO: Can we later move the clickmarker somewhere?
-      // WE NEED TWO CLICKMARKERS??? WIP
-      //let northEast = map.getBounds().getNorthEast();
-      //let lat = northEast.lat;
-      //let lon = northEast.lng;
-      //console.log('Map Northeast: '+lon+', '+lat)
-      // Param string for logging
-
+      // We have no click location...
       // Use known location for click marker (TODO IMPROVE)
-      clickMarker = putIconToClickLocation(lon1, lat1, map, "entered mixed "+logstring, processId, processDesc);
+      clickMarker = putIconToClickLocation(lon1, lat1, map, "entered mixed "+logstring);
       clickMarker.bindPopup("Waiting for "+processDesc+" for subcatchment and coordinate").openPopup();
       // Reset result field:
       document.getElementById("responseField").innerHTML = "Response returned by server for <span class=\"code\">"+lon1+", "+lat1+"</span> (lon, lat, WGS84) to subc_id <span class=\"code\">"+subcid2+"</span>...";

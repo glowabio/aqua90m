@@ -149,7 +149,7 @@ var exampleButtonClickBehaviourOnePair = function() {
   console.log('Button click: When clicked, this process was selected: '+processId+' ('+processDesc+').');
 
   // Add icon and popup to click location, scroll map up:
-  clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button", processId, processDesc);
+  clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button");
   document.getElementById("scrollToTop").scrollIntoView();
 
   // Construct and send HTTP request to OGC service:
@@ -175,8 +175,8 @@ var exampleButtonClickBehaviourTwoPairs = function() {
   console.log('Button click: When clicked, this process was selected: '+processId+' ('+processDesc+').');
 
   // Add icon and popup to click location, scroll map up:
-  clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button (part 1)", processId, processDesc);
-  clickMarker = putIconToClickLocation(lon2, lat2, map, "clicked on button (part 2)", processId, processDesc);
+  clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button (part 1)");
+  clickMarker = putIconToClickLocation(lon2, lat2, map, "clicked on button (part 2)");
   document.getElementById("scrollToTop").scrollIntoView();
 
   // Construct and send HTTP request to OGC service:
