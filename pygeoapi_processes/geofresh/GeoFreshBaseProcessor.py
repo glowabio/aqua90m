@@ -40,7 +40,7 @@ class GeoFreshBaseProcessor(BaseProcessor):
 
 
     def execute(self, data, outputs=None):
-        LOGGER.debug(f'Start execution: {self.process_id} (job {self.job_id})')
+        LOGGER.debug(f'Start execution: {self.process_id} (job {self.job_id}, os pid {os.getpid()})')
         LOGGER.debug(f'Inputs: {data}')
         LOGGER.log(logging.TRACE, 'Requested outputs: {outputs}')
         conn = None # Needed in case exceptino is raised during get_connection_object_config()

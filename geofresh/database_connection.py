@@ -67,10 +67,11 @@ def get_connection_object_config(config):
     ssh_username = config.get('ssh_username')
     ssh_password = config.get('ssh_password')
     localhost = config.get('localhost')
+    worker_name = config.get('worker_name', 'pygeoapi-gunicorn')
 
     try:
         conn = get_connection_object(geofresh_server, geofresh_port,
-            database_name, database_username, database_password,
+            database_name, database_username, database_password, worker_name,
             use_tunnel=use_tunnel, ssh_username=ssh_username, ssh_password=ssh_password)
     except sshtunnel.BaseSSHTunnelForwarderError as e1:
         LOGGER.error('SSH Tunnel Error: %s' % str(e1))
@@ -79,7 +80,7 @@ def get_connection_object_config(config):
     return conn
 
 
-def connect_to_db(geofresh_server, db_port, database_name, database_username, database_password):
+def connect_to_db(geofresh_server, db_port, database_name, database_username, database_password, worker_name):
     # This blocks! Cannot run KeyboardInterrupt
     LOGGER.log(logging.TRACE, "Connecting to db...")
     
@@ -88,18 +89,19 @@ def connect_to_db(geofresh_server, db_port, database_name, database_username, da
         raise RuntimeError("Compute service switched off for maintenance reasons. Sorry.")
     
     conn = psycopg2.connect(
-       database=database_name,
-       user=database_username,
-       password=database_password,
-       host=geofresh_server,
-       port= str(db_port)
+        database=database_name,
+        user=database_username,
+        password=database_password,
+        host=geofresh_server,
+        port= str(db_port),
+        application_name=f"{worker_name}-{os.getpid()}"
     )
     LOGGER.log(logging.TRACE, "Connecting to db... done.")
     return conn
 
 
 def get_connection_object(geofresh_server, geofresh_port,
-    database_name, database_username, database_password,
+    database_name, database_username, database_password, worker_name,
     verbose=False, use_tunnel=False, ssh_username=None, ssh_password=None):
     if use_tunnel:
         # See: https://practicaldatascience.co.uk/data-science/how-to-connect-to-mysql-via-an-ssh-tunnel-in-python
@@ -107,9 +109,9 @@ def get_connection_object(geofresh_server, geofresh_port,
         remote_host = "127.0.0.1"
         remote_port = geofresh_port
         tunnel = open_ssh_tunnel(ssh_host, ssh_username, ssh_password, remote_host, remote_port, verbose)
-        conn = connect_to_db(remote_host, tunnel.local_bind_port, database_name, database_username, database_password)
+        conn = connect_to_db(remote_host, tunnel.local_bind_port, database_name, database_username, database_password, worker_name)
     else:
-        conn = connect_to_db(geofresh_server, geofresh_port, database_name, database_username, database_password)
+        conn = connect_to_db(geofresh_server, geofresh_port, database_name, database_username, database_password, worker_name)
     return conn
 
 
