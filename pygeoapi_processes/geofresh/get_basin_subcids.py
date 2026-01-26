@@ -95,6 +95,7 @@ class BasinSubcidsGetter(GeoFreshBaseProcessor):
         basin_ids = data.get('basin_ids', None)
         # Or points, from which we infer the basin:
         points_geojson = data.get('points_geojson', None)
+        points_geojson_url = data.get('points_geojson_url', None)
         # Or subc_ids, from which we infer the basin:
         subc_ids  = data.get('subc_ids',  None)
         # Deprecated:
@@ -109,8 +110,17 @@ class BasinSubcidsGetter(GeoFreshBaseProcessor):
             "basin_ids": basin_ids,
             "subc_ids": subc_ids,
             "points_geojson": points_geojson,
+            "points_geojson_url": points_geojson_url,
             "pair of coordinates (lon and lat)": (lon and lat)
         })
+
+        ##############################
+        ### Download if applicable ###
+        ### and validate GeoJSON   ###
+        ##############################
+
+        if points_geojson_url is not None:
+            points_geojson = utils.download_geojson(points_geojson_url)
 
         #########################################
         ### Prepare final list (to be filled) ###
@@ -432,4 +442,16 @@ if __name__ == '__main__':
     except requests.exceptions.HTTPError as e:
         #print(f'RESP: {resp.json()}\n')
         print(f'TEST CASE 7: EXPECTED: {e.response.json()["description"]}')
+
+
+    print('TEST CASE 8: Input: GeoJSON as URL, output: json...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "points_geojson_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/test_featurecollection_points.json",
+            "comment": "test8"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+    #print(f'RESP: {resp.json()}\n')
 
