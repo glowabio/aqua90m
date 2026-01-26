@@ -12,6 +12,9 @@
 var customButtonClickBehaviour = function() {
   console.log("User requested to use their own values...")
 
+  // Scroll to top
+  document.getElementById("scrollToTop").scrollIntoView();
+
   // Get first (and only?) pair of coordinates:
   var lon1 = document.getElementById("customLon1").value;
   var lat1 = document.getElementById("customLat1").value;
@@ -32,6 +35,8 @@ var customButtonClickBehaviour = function() {
   let processId = dropdown.value;
   let processDesc = processId; // TODO: Find proper process description!
   let pairs = dropdown.options[dropdown.selectedIndex].dataset.pairs;
+
+  // If it needs just one:
   if (pairs == "one") {
 
     // User entered coordinate pair:
@@ -40,6 +45,7 @@ var customButtonClickBehaviour = function() {
       let logUserAction = "entered a coordinate pair";
       ogcRequestOneCoordinatePair(map, lon1, lat1, processId, processDesc, logUserAction);
 
+    // User entered subc_id:
     } else {
       console.log("Clicked button for one subcid "+subcid1+".");
 

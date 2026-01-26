@@ -6,6 +6,7 @@
 
 // Define making request to OGC service (function):
 var ogcRequestTwoCoordinatePairs = function(map, lon1, lat1, lon2, lat2, processId, processDesc, logUserAction) {
+    console.log('[DEBUG] Triggering suite of actions for two pairs of coordinates...');
 
     // Add icon and popup to click location:
     clickMarker = putIconToClickLocation(lon1, lat1, map, logUserAction+' (part 1)');
@@ -39,6 +40,7 @@ var ogcRequestTwoCoordinatePairs = function(map, lon1, lat1, lon2, lat2, process
 
 // Define making request to OGC service (function):
 var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDesc, logUserAction) {
+    console.log('[DEBUG] Triggering suite of actions for one pair of coordinates...');
 
     // Add icon and popup to click location:
     clickMarker = putIconToClickLocation(lon1, lat1, map, logUserAction, false, processId, processDesc);
@@ -75,6 +77,7 @@ var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDe
 
 // Define making request to OGC service (function):
 var ogcRequestOneSubcid = function(map, subcid, processId, processDesc, logUserAction) {
+    console.log('[DEBUG] Triggering suite of actions for one subc_id...');
 
     // Add icon and popup to click location:
     clickMarker = putIconToSubcidLocation(map, logUserAction);
@@ -104,6 +107,7 @@ var ogcRequestOneSubcid = function(map, subcid, processId, processDesc, logUserA
 
 // Define making request to OGC service (function):
 var ogcRequestTwoSubcids = function(map, subcid1, subcid2, processId, processDesc, logUserAction) {
+    console.log('[DEBUG] Triggering suite of actions for two subc_ids...');
 
     // Add icon and popup to some location:
     clickMarker = putIconToSubcidLocation(map, logUserAction);
@@ -126,6 +130,7 @@ var ogcRequestTwoSubcids = function(map, subcid1, subcid2, processId, processDes
 
 // Define making request to OGC service (function):
 var ogcRequestTwoMixed = function(map, lon, lat, subcid, processId, processDesc, logUserAction) {
+    console.log('[DEBUG] Triggering suite of actions for one pair of coordinates and one subc_id (mixed)...');
 
     // Add icon and popup to some location:
     clickMarker = putIconToClickLocation(lon, lat, map, logUserAction);
@@ -357,7 +362,6 @@ async function _ogcRequest(clickMarker, processId, processDesc, payload_inputs_j
       }
 
       // Poll for the status...
-      console.log("[async] Status: processing...");
       pollStatus(statusUrl, processId, clickMarker);
 
     // What kind of errors could this be?
