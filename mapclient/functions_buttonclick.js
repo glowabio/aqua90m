@@ -62,6 +62,7 @@ var customButtonClickBehaviour = function() {
 
       let logUserAction = "entered a subc_id (location unknown)";
       ogcRequestOneSubcid(map, subc_id, processId, processDesc, logUserAction);
+    }
 
   } else if (pairs == "two") {
 

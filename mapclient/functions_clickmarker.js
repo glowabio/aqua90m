@@ -15,7 +15,7 @@ var putIconToClickLocation = function(lon1, lat1, map, logUserAction) {
   var iconWidth = 0.61*iconHeight;
   var iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png';
 
-  var clickMarker = _putIconToLocation([lat1, lon1], map, iconUrl, iconHeight, iconWidth);
+  var clickMarker = _putIconToLocation([lat1, lon1], map, iconUrl, iconHeight, iconWidth, logUserAction);
   return (clickMarker);
 }
 

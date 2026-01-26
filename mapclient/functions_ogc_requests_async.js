@@ -8,6 +8,12 @@
 var ogcRequestTwoCoordinatePairs = function(map, lon1, lat1, lon2, lat2, processId, processDesc, logUserAction) {
     console.log('[DEBUG] Triggering suite of actions for two pairs of coordinates...');
 
+    // Parse coordinates to Float
+    var lat1 = parseFloat(lat1);
+    var lon1 = parseFloat(lon1);
+    var lat2 = parseFloat(lat2);
+    var lon2 = parseFloat(lon2);
+
     // Add icon and popup to click location:
     clickMarker = putIconToClickLocation(lon1, lat1, map, logUserAction+' (part 1)');
     clickMarker = putIconToClickLocation(lon1, lat1, map, logUserAction+' (part 2)');
@@ -17,12 +23,6 @@ var ogcRequestTwoCoordinatePairs = function(map, lon1, lat1, lon2, lat2, process
     // Reset result field:
     document.getElementById("responseField").innerHTML = "Response returned by server for <span class=\"code\">"+lon1+", "+lat1+"</span> to <span class=\"code\">"+lon2+", "+lat2+"</span> (lon, lat, WGS84)...";
     document.getElementById("displayGeoJSON").innerHTML = "waiting..."
-
-    // Parse coordinates to Float
-    var lat1 = parseFloat(lat1);
-    var lon1 = parseFloat(lon1);
-    var lat2 = parseFloat(lat2);
-    var lon2 = parseFloat(lon2);
 
     // Define JSON payload and send:
     var payload_inputs_json = JSON.stringify({"inputs": {
@@ -42,18 +42,18 @@ var ogcRequestTwoCoordinatePairs = function(map, lon1, lat1, lon2, lat2, process
 var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDesc, logUserAction) {
     console.log('[DEBUG] Triggering suite of actions for one pair of coordinates...');
 
+    // Parse coordinates to Float
+    var lon1 = parseFloat(lon1);
+    var lat1 = parseFloat(lat1);
+
     // Add icon and popup to click location:
-    clickMarker = putIconToClickLocation(lon1, lat1, map, logUserAction, false, processId, processDesc);
+    clickMarker = putIconToClickLocation(lon1, lat1, map, logUserAction);
     let paramstring = lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat)...";
     clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
 
     // Reset result field:
     document.getElementById("responseField").innerHTML = "Response returned by server for lon, lat <span class=\"code\">"+lon1+", "+lat1+"</span> (lon, lat, WGS84)...";
     document.getElementById("displayGeoJSON").innerHTML = "waiting..."
-
-    // Parse coordinates to Float
-    var lon1 = parseFloat(lon1);
-    var lat1 = parseFloat(lat1);
 
     // If upstream, make pre-request:
     if (processId.startsWith("get-upstream")) {
