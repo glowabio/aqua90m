@@ -361,7 +361,7 @@ integrity=
 
       // Only click of one!
       if (pairs === "one") {
-        triggerOnePair(map, clicklon, clicklat, processId, processDesc, logUserAction);
+        ogcRequestOneCoordinatePair(map, clicklon, clicklat, processId, processDesc, logUserAction);
 
       // If two clicks are expected, count the clicks and behave accordingly:
       } else {
@@ -388,8 +388,7 @@ integrity=
           console.log('[mapclick] Second click, the first one already occurred before.');
           // Make sure the next click is counted the first:
           thisIsSecondClick = false;
-
-          triggerTwoPairs(map, firstClickLon, firstClickLat, clicklon, clicklat, processId, processDesc, logUserAction);
+          ogcRequestTwoCoordinatePairs(map, firstClickLon, firstClickLat, clicklon, clicklat, processId, processDesc, logUserAction);
         }
       }
     };
@@ -410,9 +409,11 @@ integrity=
         let processDesc = "process provided by user"
         // TODO Allow passing two pairs!
         // TODO Get the proper processDesc, e.g. Upstream catchment (individual polygons)
-        triggerOnePair(map, lon, lat, processId, processDesc, logUserAction);
+        ogcRequestOneCoordinatePair(map, lon, lat, processId, processDesc, logUserAction);
+
       }
     };
+
 
     var triggerOnePair = function(map, clicklon, clicklat, processId, processDesc, logUserAction) {
       // Normal process that works with one click!

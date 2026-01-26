@@ -34,12 +34,11 @@ var customButtonClickBehaviour = function() {
   let pairs = dropdown.options[dropdown.selectedIndex].dataset.pairs;
   if (pairs == "one") {
 
+    // User entered coordinate pair:
     if (!use_subcid1) {
-      console.log("Clicked button for one coordinate pair: "+lon1+", "+lat1+" (lon, lat, WGS84)");
-      clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button");
-      document.getElementById("scrollToTop").scrollIntoView();
-      // Construct and send HTTP request to OGC service:
-      ogcRequestOneCoordinatePair(clickMarker, processId, lon1, lat1, processDesc);
+      console.log("Clicked button for one coordinate pair: "+lon1+", "+lat1+" (lon, lat, WGS84).");
+      let logUserAction = "entered a coordinate pair";
+      ogcRequestOneCoordinatePair(map, lon1, lat1, processId, processDesc, logUserAction);
 
     } else {
 
@@ -47,8 +46,8 @@ var customButtonClickBehaviour = function() {
       if (processId.includes("snapped")) {
         var errmsg = "Cannot run process "+processDesc+" for a subcatchment id, need coordinates!";
         console.warn("Oh no: "+errmsg);
-        let logUserAction = "entered subc_id for snapping (which cannot work)";
-	clickMarker = putIconToSubcidLocation(map, logUserAction);
+        let logUserAction = "entered a subc_id for snapping (which cannot work)";
+        clickMarker = putIconToSubcidLocation(map, logUserAction);
         clickMarker.bindPopup(errmsg);
         alert(errmsg);
         throw new Error(errmsg); // So that no OGC request is attempted
@@ -89,14 +88,9 @@ var customButtonClickBehaviour = function() {
 
     // Two coordinates:
     if (!use_subcid1 && !use_subcid2) {
-      //buttonClickBehaviourTwoPairs(lon1, lat1, lon2, lat2); WIPPP
       console.log("Clicked button for two coordinate pairs: "+lon1+", "+lat1+" and "+lon2+", "+lat2+" (lon, lat, WGS84)");
-      // Add icon and popup to click location:
-      clickMarker = putIconToClickLocation(lon1, lat1, map, "clicked on button (part 1)");
-      clickMarker = putIconToClickLocation(lon2, lat2, map, "clicked on button (part 2)");
-      document.getElementById("scrollToTop").scrollIntoView();
-      // Construct and send HTTP request to OGC service:
-      ogcRequestTwoCoordinatePairs(clickMarker, processId, lon1, lat1, lon2, lat2, processDesc);
+      let logUserAction = "entered two coordinate pairs";
+      ogcRequestTwoCoordinatePairs(map, lon1, lat1, lon2, lat2, processId, processDesc, logUserAction);
 
     // Two subcids:
     } else if (use_subcid1 && use_subcid2) {

@@ -5,7 +5,13 @@
 ///////////////////////////////////////////////
 
 // Define making request to OGC service (function):
-var ogcRequestTwoCoordinatePairs = function(clickMarker, processId, lon1, lat1, lon2, lat2, processDesc) {
+var ogcRequestTwoCoordinatePairs = function(map, lon1, lat1, lon2, lat2, processId, processDesc, logUserAction) {
+
+    // Add icon and popup to click location:
+    clickMarker = putIconToClickLocation(lon1, lat1, map, logUserAction+' (part 1)');
+    clickMarker = putIconToClickLocation(lon1, lat1, map, logUserAction+' (part 2)');
+    let paramstring = lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat) to "+lon2.toFixed(3)+", "+lat2.toFixed(3)+" (lon, lat)...";
+    clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
 
     // Reset result field:
     document.getElementById("responseField").innerHTML = "Response returned by server for <span class=\"code\">"+lon1+", "+lat1+"</span> to <span class=\"code\">"+lon2+", "+lat2+"</span> (lon, lat, WGS84)...";
@@ -16,10 +22,6 @@ var ogcRequestTwoCoordinatePairs = function(clickMarker, processId, lon1, lat1, 
     var lon1 = parseFloat(lon1);
     var lat2 = parseFloat(lat2);
     var lon2 = parseFloat(lon2);
-
-    // Param string for logging and popup clickmarker
-    var paramstring = lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat) to "+lon2.toFixed(3)+", "+lat2.toFixed(3)+" (lon, lat)...";
-    clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
 
     // Define JSON payload and send:
     var payload_inputs_json = JSON.stringify({"inputs": {
@@ -32,11 +34,16 @@ var ogcRequestTwoCoordinatePairs = function(clickMarker, processId, lon1, lat1, 
         "coordinates": [lon2, lat2],
       }
     }})
-    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json, paramstring) ;
+    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json);
 }
 
 // Define making request to OGC service (function):
-var ogcRequestOneCoordinatePair = function(clickMarker, processId, lon1, lat1, processDesc) {
+var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDesc, logUserAction) {
+
+    // Add icon and popup to click location:
+    clickMarker = putIconToClickLocation(lon1, lat1, map, logUserAction, false, processId, processDesc);
+    let paramstring = lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat)...";
+    clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
 
     // Reset result field:
     document.getElementById("responseField").innerHTML = "Response returned by server for lon, lat <span class=\"code\">"+lon1+", "+lat1+"</span> (lon, lat, WGS84)...";
@@ -45,9 +52,6 @@ var ogcRequestOneCoordinatePair = function(clickMarker, processId, lon1, lat1, p
     // Parse coordinates to Float
     var lon1 = parseFloat(lon1);
     var lat1 = parseFloat(lat1);
-    // Param string for logging and popup clickmarker
-    var paramstring = lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat)...";
-    clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
 
     // If upstream, make pre-request:
     if (processId.startsWith("get-upstream")) {
@@ -65,7 +69,7 @@ var ogcRequestOneCoordinatePair = function(clickMarker, processId, lon1, lat1, p
         "coordinates": [lon1, lat1]
       }
     }})
-    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json, paramstring) ;
+    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json);
 }
 
 
@@ -215,8 +219,7 @@ function strahlerInformUpstream(strahler, clickMarker) {
 }
 
 // Define making request to OGC service (function):
-//var _ogcRequest = function(clickMarker, payload_inputs_json, paramstring)  {
-async function _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json, paramstring)  {
+async function _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json) {
     console.log('[async] Preparing to make HTTP POST request...')
     document.getElementById("displayGeoJSON").innerHTML = "waiting..."
 
