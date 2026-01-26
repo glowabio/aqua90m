@@ -27,6 +27,7 @@ integrity=
   <script type="text/javascript" src="functions_events.js"></script>
   <script type="text/javascript" src="functions_buttonclick.js"></script>
   <script type="text/javascript" src="functions_clickmarker.js"></script>
+  <script type="text/javascript" src="functions_download.js"></script>
 </head>
 
 <body>
@@ -74,6 +75,7 @@ integrity=
   <div id="map"></div>
   <!-- Behaviour is defined programmatically further below -->
   <p><button id="clearMapButton">Clear the map!</button></p>
+  <p><button id="downloadGeojsonButton">Download result as GeoJSON!</button></p>
 
   <!-- Custom lonlat button -->
   <h3>Input your own coordinates...</h3>
@@ -436,6 +438,7 @@ integrity=
 
     // Bind custom-button behaviour to the custom-button click event:
     document.getElementById("clearMapButton").onclick = clearMap;
+    document.getElementById("downloadGeojsonButton").onclick = downloadGeoJson;
 
     // Bind custom-button behaviour to the custom-button click event:
     document.getElementById("customLonlatButton").onclick = customButtonClickBehaviour;
