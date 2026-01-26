@@ -98,6 +98,12 @@ class BasinSubcidsGetter(GeoFreshBaseProcessor):
         points_geojson_url = data.get('points_geojson_url', None)
         # Or subc_ids, from which we infer the basin:
         subc_ids  = data.get('subc_ids',  None)
+        # CSV, to be downloaded via URL
+        csv_url = data.get('csv_url', None)
+        colname_basin_id = data.get('colname_basin_id', None)
+        colname_subc_id = data.get('colname_subc_id', None)
+        colname_lon = data.get('colname_lon', None)
+        colname_lat = data.get('colname_lat', None)
         # Deprecated:
         lon = data.get('lon', None)
         lat = data.get('lat', None)
@@ -108,6 +114,7 @@ class BasinSubcidsGetter(GeoFreshBaseProcessor):
         # Check presence:
         utils.at_least_one_param({
             "basin_ids": basin_ids,
+            "csv_url": csv_url,
             "subc_ids": subc_ids,
             "points_geojson": points_geojson,
             "points_geojson_url": points_geojson_url,
@@ -121,6 +128,42 @@ class BasinSubcidsGetter(GeoFreshBaseProcessor):
 
         if points_geojson_url is not None:
             points_geojson = utils.download_geojson(points_geojson_url)
+
+        input_df = None
+        if csv_url is not None:
+            input_df = utils.access_csv_as_dataframe(csv_url)
+            LOGGER.debug('Input CSV: Found {ncols} columns (names: {colnames})'.format(
+                ncols=input_df.shape[1], colnames=input_df.columns))
+            # TODO: At the moment, we return only JSON, and we cannot trace back
+            # the JSON to the input rows.
+
+            # Check if every row has id:
+            #if not (colname_basin_id in input_df.columns):
+            #    err_msg = f"Please add a column '{colname_basin_id}' to your input dataframe."
+            #    LOGGER.error(err_msg)
+            #    raise ProcessorExecuteError(err_msg)
+
+            # If the user passed a colum "basin_id" or "subc_id" or lon and lat...
+            if colname_basin_id is not None:
+                basin_ids = list(set(input_df[colname_basin_id]))
+            elif colname_subc_id is not None:
+                subc_ids = list(set(input_df[colname_subc_id]))
+            elif colname_lon is not None and colname_lat is not None:
+                # Construct GeoJSON GeometryCollection from lon, lat columns:
+                points_geojson = {
+                    "type": "GeometryCollection",
+                    "geometries": [
+                        {
+                            "type": "Point",
+                            "coordinates": [lon, lat]
+                        }
+                        for lon, lat in zip(input_df[colname_lon], input_df[colname_lat])
+                    ]
+                }
+            else:
+                err_msg = "No column names to find relevant columns passed."
+                LOGGER.error(err_msg)
+                raise ProcessorExecuteError(err_msg)
 
         #########################################
         ### Prepare final list (to be filled) ###
@@ -455,3 +498,41 @@ if __name__ == '__main__':
     sanity_checks_basic(resp)
     #print(f'RESP: {resp.json()}\n')
 
+
+    print('TEST CASE 9: Input: CSV as URL, with lon+lat, output: json...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus.csv",
+            "colname_lon": "longitude",
+            "colname_lat": "latitude",
+            "comment": "test9"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+    #print(f'RESP: {resp.json()}\n')
+
+    print('TEST CASE 10: Input: CSV as URL, with lon+lat, output: json...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus_with_subcid.csv",
+            "colname_subc_id": "subc_id",
+            "comment": "test10"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+    #print(f'RESP: {resp.json()}\n')
+
+
+    print('TEST CASE 11: Input: CSV as URL, with lon+lat, output: json...', end="", flush=True)  # no newline
+    payload = {
+        "inputs": {
+            "csv_url": "https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus_with_basinid.csv",
+            "colname_basin_id": "mybasin",
+            "comment": "test11"
+        }
+    }
+    resp = make_sync_request(PYSERVER, process_id, payload)
+    sanity_checks_basic(resp)
+    #print(f'RESP: {resp.json()}\n')
