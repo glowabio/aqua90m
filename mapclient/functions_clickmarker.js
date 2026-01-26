@@ -4,24 +4,25 @@
 
 // Function to add a grey marker to a location on the map
 var putIconToClickLocation = function(lon1, lat1, map, logUserAction) {
-  console.log("[icon] Creating icon at coordinates: "+lon1+", "+lat1+" (lon, lat, WGS84), because user "+actionDone+".");
+  console.log("[icon] Creating icon at coordinates: "+lon1+", "+lat1+" (lon, lat, WGS84), because user "+logUserAction+".");
 
   // Where to place the icon
   var lon1 = parseFloat(lon1);
   var lat1 = parseFloat(lat1);
 
   // Define icon
-  var iconSize = [iconwidth, iconheight];
+  var iconHeight = 30;
+  var iconWidth = 0.61*iconHeight;
   var iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png';
 
-  var clickMarker = _putIconToLocation = function([lat1, lon1], map, iconUrl, iconSize);
+  var clickMarker = _putIconToLocation([lat1, lon1], map, iconUrl, iconHeight, iconWidth);
   return (clickMarker);
 }
 
 
 // Function to add a transparent marker to a location on the map
 var putIconToSubcidLocation = function(map, logUserAction) {
-  console.log("[icon] Creating icon, location to be determined, because user "+actionDone+".");
+  console.log("[icon] Creating icon, location to be determined, because user "+logUserAction+".");
 
   // Where to place the icon?
 
@@ -38,27 +39,27 @@ var putIconToSubcidLocation = function(map, logUserAction) {
   var latlon = map.getCenter();
   console.log('[icon] Using map centre for placing popup: '+latlon)
 
-  // Define icon size
-  var iconSize = [1, 1]; // minimal size
+  // Define icon size // minimal size
+  let iconWidth = 1
+  let iconHeight = 1
   var iconUrl = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; // 1x1 transparent gif
 
-  var clickMarker = _putIconToLocation = function([lat1, lon1], map, iconUrl, iconSize, logUserAction);
+  var clickMarker = _putIconToLocation([lat1, lon1], map, iconUrl, iconWidth, iconHeight, logUserAction);
   return (clickMarker);
 }
 
 
 // Function to add a marker to a location on the map
-var _putIconToLocation = function(latlon, map, iconUrl, iconSize, logUserAction) {
+var _putIconToLocation = function(latlon, map, iconUrl, iconHeight, iconWidth, logUserAction) {
   console.log("[icon] Creating icon at place: "+latlon+", because user "+logUserAction+".");
 
   // Define icon
-  var iconheight = 30;
-  var iconwidth = 0.61*iconheight;
+  let iconSize = [iconWidth, iconHeight];
   var clickIcon = L.icon({
     iconUrl: iconUrl,
     iconSize: iconSize,
-    iconAnchor: [iconwidth*0.5, iconheight], // from top left corner: go half-width to right, full-height to bottom 
-    popupAnchor: [0, -iconheight-5] // where iconAnchor is, go full-height to top plus 5 pixels
+    iconAnchor: [iconWidth*0.5, iconHeight], // from top left corner: go half-width to right, full-height to bottom
+    popupAnchor: [0, -iconHeight-5] // where iconAnchor is, go full-height to top plus 5 pixels
   });
 
   // Add icon to map
