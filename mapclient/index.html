@@ -415,28 +415,6 @@ integrity=
     };
 
 
-    var triggerOnePair = function(map, clicklon, clicklat, processId, processDesc, logUserAction) {
-      // Normal process that works with one click!
-      console.log('[DEBUG] Triggering suite of actions for one pair of coordinates...');
-
-      // Add icon and popup to click location:
-      clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction);
-
-      // Construct and send HTTP request to OGC service:
-      ogcRequestOneCoordinatePair(clickMarker, processId, clicklon, clicklat, processDesc);
-    };
-
-
-    var triggerTwoPairs = function(map, firstClickLon, firstClickLat, clicklon, clicklat, processId, processDesc, logUserAction) {
-
-      // Add icon and popup to click location:
-      clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction);
-
-      // Construct and send HTTP request to OGC service:
-      ogcRequestTwoCoordinatePairs(clickMarker, processId, firstClickLon, firstClickLat, clicklon, clicklat, processDesc);
-    };
-
-
     // Define clearing the map
     var clearMap = function() {
       for (var i = 0; i < allMyLayers.length; i++) {
