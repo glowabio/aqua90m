@@ -69,6 +69,82 @@ var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDe
 
 
 // Define making request to OGC service (function):
+var ogcRequestOneSubcid = function(map, subcid, processId, processDesc, logUserAction) {
+    console.log('[DEBUG] Triggering suite of actions for one subc_id...');
+
+    // Add icon and popup to click location:
+    clickMarker = putIconToSubcidLocation(map, logUserAction);
+    let paramstring = "subcatchment "+subcid+"...";
+    clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
+
+    // Reset result field:
+    document.getElementById("responseField").innerHTML = "Response returned by server for subc_id <span class=\"code\">"+subcid1+"</span>...";
+    document.getElementById("displayGeoJSON").innerHTML = "waiting..."
+
+    // Define JSON payload:
+    var payload_inputs_json = JSON.stringify({"inputs":{"subc_id":subcid}})
+
+    // Note: Async function has pre-request here (TODO: Add here too maybe?)
+
+    // Send HTTP request to OGC service:
+    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json);
+}
+
+
+// Define making request to OGC service (function):
+var ogcRequestTwoSubcids = function(map, subcid1, subcid2, processId, processDesc, logUserAction) {
+    console.log('[DEBUG] Triggering suite of actions for two subc_ids...');
+
+    // Add icon and popup to some location:
+    clickMarker = putIconToSubcidLocation(map, logUserAction);
+    let paramstring = "subcatchments "+subcid1+" and "+subcid2+"...";
+    clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
+
+    // Reset result field:
+    document.getElementById("responseField").innerHTML = "Response returned by server for subc_id <span class=\"code\">"+subcid1+"</span> to <span class=\"code\">"+subcid2+"...";
+    document.getElementById("displayGeoJSON").innerHTML = "waiting..."
+
+    // Define JSON payload:
+    var payload_inputs_json = JSON.stringify({"inputs":{
+      "subc_id_start":subcid1,
+      "subc_id_end": subcid2
+    }})
+
+    // Send HTTP request to OGC service:
+    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json);
+}
+
+
+// Define making request to OGC service (function):
+var ogcRequestTwoMixed = function(map, lon, lat, subcid, processId, processDesc, logUserAction) {
+    console.log('[DEBUG] Triggering suite of actions for one pair of coordinates and one subc_id (mixed)...');
+
+    // Add icon and popup to some location:
+    clickMarker = putIconToClickLocation(lon, lat, map, logUserAction);
+    let paramstring = lon.toFixed(3)+", "+lat.toFixed(3)+" (lon, lat) to subcatchment "+subcid+"...";
+    clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
+
+    // Reset result field:
+    document.getElementById("responseField").innerHTML = "Response returned by server for <span class=\"code\">"+lon+", "+lat+"</span> to <span class=\"code\">"+subcid+"...";
+    document.getElementById("displayGeoJSON").innerHTML = "waiting..."
+
+    // Define JSON payload:
+    // Note: The coordinate pair is always treated as the "start", and subc_id always
+    // as the "end"; the exact same request is sent in both "mixed" cases. Should the
+    // order matter at some point, add another "ogcRequestTwoMixed()" function.
+    var payload_inputs_json = JSON.stringify({
+      "inputs": {
+        "lon_start": lon,
+        "lat_start": lat,
+        "subc_id_end":subcid
+      }
+    })
+
+    // Send HTTP request to OGC service:
+    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json);
+}
+
+// Define making request to OGC service (function):
 var _ogcRequest = function(clickMarker, processId, processDesc, payload_inputs_json) {
     console.log('[sync] Preparing to make HTTP POST request...')
     document.getElementById("displayGeoJSON").innerHTML = "waiting..."
