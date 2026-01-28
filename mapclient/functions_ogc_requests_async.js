@@ -4,6 +4,7 @@
 ////// Functions for making OGC requests //////
 ///////////////////////////////////////////////
 
+
 // Define making request to OGC service (function):
 var ogcRequestTwoCoordinatePairs = function(map, lon1, lat1, lon2, lat2, processId, processDesc, logUserAction) {
     console.log('[DEBUG] Triggering suite of actions for two pairs of coordinates...');
@@ -58,10 +59,10 @@ var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDe
     // If upstream, make pre-request:
     if (processId.startsWith("get-upstream")) {
       console.log('Requesting upstream... This may take a while, so we do a pre-request!');
-      preRequestUpstream(clickMarker, lon1, lat1);
+      _preRequestUpstream(clickMarker, lon1, lat1);
     } else if (processId == 'get-shortest-path-to-outlet') {
       console.log('Requesting downstream... This may take a while, so we do a pre-request!');
-      preRequestDownstream(clickMarker, lon1, lat1);
+      _preRequestDownstream(clickMarker, lon1, lat1);
     }
 
     // Define JSON payload and send:
@@ -81,7 +82,8 @@ var ogcRequestOneSubcid = function(map, subcid, processId, processDesc, logUserA
 
     // Add icon and popup to click location:
     clickMarker = putIconToSubcidLocation(map, logUserAction);
-    clickMarker.bindPopup("Waiting for "+processDesc+" for subcatchment "+subcid).openPopup();
+    let paramstring = "subcatchment "+subcid+"...";
+    clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
 
     // Reset result field:
     document.getElementById("responseField").innerHTML = "Response returned by server for subc_id <span class=\"code\">"+subcid1+"</span>...";
@@ -94,10 +96,10 @@ var ogcRequestOneSubcid = function(map, subcid, processId, processDesc, logUserA
     // TODO: Enable pre-request for subc_ids! Just not implemented yet...
     //if (processId.startsWith("get-upstream")) {
     //  console.log('Requesting upstream... This may take a while, so we do a pre-request!');
-    //  preRequestUpstream(clickMarker, payload_inputs_json);
+    //  _preRequestUpstream(clickMarker, payload_inputs_json);
     //} else if (processId == 'get-shortest-path-to-outlet') {
     //  console.log('Requesting downstream... This may take a while, so we do a pre-request!');
-    //  preRequestDownstream(clickMarker, payload_inputs_json);
+    //  _preRequestDownstream(clickMarker, payload_inputs_json);
     //}
 
     // Send HTTP request to OGC service:
@@ -111,7 +113,8 @@ var ogcRequestTwoSubcids = function(map, subcid1, subcid2, processId, processDes
 
     // Add icon and popup to some location:
     clickMarker = putIconToSubcidLocation(map, logUserAction);
-    clickMarker.bindPopup("Waiting for "+processDesc+" for subcatchments "+subcid1+" and "+subcid2).openPopup();
+    let paramstring = "subcatchments "+subcid1+" and "+subcid2+"...";
+    clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
 
     // Reset result field:
     document.getElementById("responseField").innerHTML = "Response returned by server for subc_id <span class=\"code\">"+subcid1+"</span> to <span class=\"code\">"+subcid2+"...";
@@ -158,7 +161,7 @@ var ogcRequestTwoMixed = function(map, lon, lat, subcid, processId, processDesc,
 }
 
 
-var successPleaseShowGeojson = function(responseJson) {
+var _successPleaseShowGeojson = function(responseJson) {
     console.log("Displaying GeoJSON on the map...");
 
     // Make layer(s) from GeoJSON that the server returned:
@@ -192,18 +195,18 @@ var successPleaseShowGeojson = function(responseJson) {
 // a pre-request that checks how much time the actual request may
 // probably take, based on the strahler order.
 //
-function preRequestUpstream(clickMarker, lon, lat) {
-  preRequest(clickMarker, lon, lat, strahlerInformUpstream)
+function _preRequestUpstream(clickMarker, lon, lat) {
+  _preRequest(clickMarker, lon, lat, _strahlerInformUpstream)
 }
 
-function preRequestDownstream(clickMarker, lon, lat) {
-  preRequest(clickMarker, lon, lat, strahlerInformDownstream)
+function _preRequestDownstream(clickMarker, lon, lat) {
+  _preRequest(clickMarker, lon, lat, _strahlerInformDownstream)
   // Downstream might be better to use something else, because headwaters
   // exist close to the coast and far from the coast, so strahler is not
   // a good predictor for computation duration...
 }
 
-function preRequest(clickMarker, lon, lat, strahlerInformFunction) {
+function _preRequest(clickMarker, lon, lat, strahlerInformFunction) {
 
     // Construct HTTP request to OGC service:
     let xhrPygeo = new XMLHttpRequest();
@@ -262,7 +265,7 @@ function preRequest(clickMarker, lon, lat, strahlerInformFunction) {
 
 
 // Inform user based on strahler order
-function strahlerInformDownstream(strahler, clickMarker) {
+function _strahlerInformDownstream(strahler, clickMarker) {
     if (strahler == null) {
       console.warn('[pre] Strahler: No strahler order found...')
     } else if (strahler == 1 | strahler == 2 | strahler == 3) {
@@ -283,7 +286,7 @@ function strahlerInformDownstream(strahler, clickMarker) {
 }
 
 // Inform user based on strahler order
-function strahlerInformUpstream(strahler, clickMarker) {
+function _strahlerInformUpstream(strahler, clickMarker) {
     if (strahler == null) {
       console.warn('[pre] Strahler: No strahler order found...')
     } else if (strahler == 1 | strahler == 2 | strahler == 3) {
@@ -310,7 +313,7 @@ async function _ogcRequest(clickMarker, processId, processDesc, payload_inputs_j
 
     // Which pygeoapi instance?
     var url = "https://aqua.igb-berlin.de/pygeoapi/processes/"+processId+"/execution";
-    
+
     try {
 
       // Make the initial request for processing:
@@ -362,7 +365,7 @@ async function _ogcRequest(clickMarker, processId, processDesc, payload_inputs_j
       }
 
       // Poll for the status...
-      pollStatus(statusUrl, processId, clickMarker);
+      _pollStatus(statusUrl, processId, clickMarker);
 
     // What kind of errors could this be?
     // Something that prevented even the proper HTTP request, I guess...
@@ -373,7 +376,7 @@ async function _ogcRequest(clickMarker, processId, processDesc, payload_inputs_j
     }
 }
 
-async function pollStatus(statusUrl, processId, clickMarker) {
+async function _pollStatus(statusUrl, processId, clickMarker) {
     const delay = ms => new Promise(res => setTimeout(res, ms));
 
     while (true) {
@@ -451,7 +454,7 @@ async function pollStatus(statusUrl, processId, clickMarker) {
 
             // Now: We received a response, and it's valid GeoJSON!
             // So here we start the whole display stuff!
-            successPleaseShowGeojson(resultData);
+            _successPleaseShowGeojson(resultData);
 
           } else {
             console.warn("[async] Result JSON is not valid GeoJSON.");

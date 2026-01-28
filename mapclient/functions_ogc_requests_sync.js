@@ -3,6 +3,10 @@
 ///////////////////////////////////////////////
 ////// Functions for making OGC requests //////
 ///////////////////////////////////////////////
+/// Note: TODO: If we add a prerequest function here, the first
+/// 5 functions are exactly the same as in the async part!
+/// Load them from the same file?
+
 
 // Define making request to OGC service (function):
 var ogcRequestTwoCoordinatePairs = function(map, lon1, lat1, lon2, lat2, processId, processDesc, logUserAction) {
@@ -35,7 +39,7 @@ var ogcRequestTwoCoordinatePairs = function(map, lon1, lat1, lon2, lat2, process
         "coordinates": [lon2, lat2],
       }
     }})
-    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json) ;
+    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json);
 }
 
 // Define making request to OGC service (function):
@@ -47,7 +51,7 @@ var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDe
     var lat1 = parseFloat(lat1);
 
     // Add icon and popup to click location:
-    clickMarker = putIconToClickLocation(lon1, lat1, map, logUserAction, false, processId, processDesc);
+    clickMarker = putIconToClickLocation(lon1, lat1, map, logUserAction);
     let paramstring = lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat)...";
     clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
 
@@ -64,7 +68,7 @@ var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDe
         "coordinates": [lon1, lat1]
       }
     }})
-    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json) ;
+    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json);
 }
 
 
