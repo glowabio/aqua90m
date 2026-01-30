@@ -536,12 +536,28 @@ def _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_
         snappedpoint_wkt = row[6]
         site_id = row[7]
 
-        # Convert to GeoJSON:
-        snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
+        # Catch geometry problems, e.g. stream segment is NULL, then snapping will return None:
+        # This happened for point  23.12695,37.8368 (subc_id 561594812, basin 1271669, region 66)
+        if snappedpoint_wkt is None:
+            err_msg = f"Point could not be snapped: lon lat = {lon}, {lat} ({colname_site_id} {site_id}, subcatchment {subc_id} in basin {basin_id}, region {reg_id})."
+            LOGGER.error(err_msg)
+            #raise ValueError(err_msg)
 
-        # Extract snapped coordinates:
-        lon_snapped = snappedpoint_simplegeom['coordinates'][0]
-        lat_snapped = snappedpoint_simplegeom['coordinates'][1]
+        # Convert to GeoJSON:
+        try:
+            snappedpoint_simplegeom = geomet.wkt.loads(snappedpoint_wkt)
+            # Extract snapped coordinates:
+            lon_snapped = snappedpoint_simplegeom['coordinates'][0]
+            lat_snapped = snappedpoint_simplegeom['coordinates'][1]
+
+        except StopIteration as e:
+            err_msg = f"Failed to load geometry: {snappedpoint_wkt} (in row: {row})"
+            LOGGER.error(f"{type(e).__name__}: {err_msg}")
+            LOGGER.error(f"Error details: {type(e).__name__}: {e.args}")
+            #raise ValueError(err_msg)
+            lon_snapped = None
+            lat_snapped = None
+
 
         # Append the line to dataframe:
         everything.append([site_id, subc_id, basin_id, reg_id, strahler, lon_snapped, lon, lat_snapped, lat])
