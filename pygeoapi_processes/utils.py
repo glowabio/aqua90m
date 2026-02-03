@@ -352,5 +352,6 @@ def _split_df(input_df, num_rows_per_chunk):
 
 def access_csv_as_dataframe_iterator(csv_url_or_path, num_rows_per_chunk):
     input_df = access_csv_as_dataframe(csv_url_or_path)
+    num_lines = len(input_df)
     generator = _split_df(input_df, num_rows_per_chunk)
-    return generator
+    return generator, num_lines
