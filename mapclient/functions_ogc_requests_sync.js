@@ -185,7 +185,7 @@ var _ogcRequest = function(clickMarker, processId, processDesc, payload_inputs_j
       console.log("[sync] Returning from OGC process: "+processId+"...");
       
       if (xhrPygeo.status == 200) {
-        console.error("[sync] OGC server returned HTTP 200");
+        console.log("[sync] OGC server returned HTTP 200");
       } else if (xhrPygeo.status == 400) {
         console.error("[sync] Oh no: Internal server error (HTTP 400)");
         var errmsg = xhrPygeo.response["description"];
