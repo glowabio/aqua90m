@@ -47,6 +47,12 @@ def make_insertion_rows_from_geojson(geojson, colname_site_id=None):
     if geojson['type'] == 'MultiPoint':
         LOGGER.debug('Found MultiPoint...')
         for lon, lat in geojson["coordinates"]:
+
+            # If values are NaN, we need to manually make them "NULL" before filling:
+            # TODO: Probably isna() is not the right one.
+            lon = lon if not pd.isna(lon) else 'NULL'
+            lat = lat if not pd.isna(lat) else 'NULL'
+
             row = f"(NULL, {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
             list_of_insert_rows.append(row)
 
@@ -54,6 +60,12 @@ def make_insertion_rows_from_geojson(geojson, colname_site_id=None):
         LOGGER.debug('Found GeometryCollection...')
         for point in geojson['geometries']:
             lon, lat = point['coordinates']
+
+            # If values are NaN, we need to manually make them "NULL" before filling:
+            # TODO: Probably isna() is not the right one.
+            lon = lon if not pd.isna(lon) else 'NULL'
+            lat = lat if not pd.isna(lat) else 'NULL'
+
             row = f"(NULL, {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
             list_of_insert_rows.append(row)
 
@@ -61,6 +73,12 @@ def make_insertion_rows_from_geojson(geojson, colname_site_id=None):
         LOGGER.debug('Found FeatureCollection...')
         for point in geojson['features']:
             lon, lat = point['geometry']['coordinates']
+
+            # If values are NaN, we need to manually make them "NULL" before filling:
+            # TODO: Probably isna() is not the right one.
+            lon = lon if not pd.isna(lon) else 'NULL'
+            lat = lat if not pd.isna(lat) else 'NULL'
+
             if colname_site_id is None:
                 row = f"(NULL, {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
             else:
@@ -94,6 +112,11 @@ def make_insertion_rows_from_dataframe(input_df, colname_lon, colname_lat, colna
         for row in input_df.itertuples(index=False):
             lon = row[colidx_lon]
             lat = row[colidx_lat]
+
+            # If values are NaN, we need to manually make them "NULL" before filling:
+            lon = lon if not pd.isna(lon) else 'NULL'
+            lat = lat if not pd.isna(lat) else 'NULL'
+
             row = f"(NULL, {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
             list_of_insert_rows.append(row)
     else:
@@ -104,6 +127,11 @@ def make_insertion_rows_from_dataframe(input_df, colname_lon, colname_lat, colna
             lon = row[colidx_lon]
             lat = row[colidx_lat]
             site_id = row[colidx_site_id]
+
+            # If values are NaN, we need to manually make them "NULL" before filling:
+            lon = lon if not pd.isna(lon) else 'NULL'
+            lat = lat if not pd.isna(lat) else 'NULL'
+
             row = f"('{site_id}', {lon}, {lat}, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))"
             list_of_insert_rows.append(row)
 
