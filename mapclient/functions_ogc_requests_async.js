@@ -93,14 +93,13 @@ var ogcRequestOneSubcid = function(map, subcid, processId, processDesc, logUserA
     var payload_inputs_json = JSON.stringify({"inputs":{"subc_id":subcid}})
 
     // If upstream, make pre-request:
-    // TODO: Enable pre-request for subc_ids! Just not implemented yet...
-    //if (processId.startsWith("get-upstream")) {
-    //  console.log('Requesting upstream... This may take a while, so we do a pre-request!');
-    //  _preRequestUpstream(clickMarker, payload_inputs_json);
-    //} else if (processId == 'get-shortest-path-to-outlet') {
-    //  console.log('Requesting downstream... This may take a while, so we do a pre-request!');
-    //  _preRequestDownstream(clickMarker, payload_inputs_json);
-    //}
+    if (processId.startsWith("get-upstream")) {
+      console.log('Requesting upstream... This may take a while, so we do a pre-request!');
+      _preRequestUpstreamSubcid(clickMarker, subcid);
+    } else if (processId == 'get-shortest-path-to-outlet') {
+      console.log('Requesting downstream... This may take a while, so we do a pre-request!');
+      _preRequestDownstreamSubcid(clickMarker, subcid);
+    }
 
     // Send HTTP request to OGC service:
     _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json);
@@ -196,17 +195,27 @@ var _successPleaseShowGeojson = function(responseJson) {
 // probably take, based on the strahler order.
 //
 function _preRequestUpstream(clickMarker, lon, lat) {
-  _preRequest(clickMarker, lon, lat, _strahlerInformUpstream)
+  let subcid = null;
+  _preRequest(clickMarker, lon, lat, subcid, _strahlerInformUpstream);
+}
+
+function _preRequestUpstreamSubcid(clickMarker, subcid) {
+  _preRequest(clickMarker, null, null, subcid, _strahlerInformUpstream);
 }
 
 function _preRequestDownstream(clickMarker, lon, lat) {
-  _preRequest(clickMarker, lon, lat, _strahlerInformDownstream)
+  let subcid = null;
+  _preRequest(clickMarker, lon, lat, subcid, _strahlerInformDownstream);
   // Downstream might be better to use something else, because headwaters
   // exist close to the coast and far from the coast, so strahler is not
   // a good predictor for computation duration...
 }
 
-function _preRequest(clickMarker, lon, lat, strahlerInformFunction) {
+function _preRequestDownstreamSubcid(clickMarker, subcid) {
+  _preRequest(clickMarker, null, null, subcid, _strahlerInformDownstream);
+}
+
+function _preRequest(clickMarker, lon, lat, subc_id, strahlerInformFunction) {
 
     // Construct HTTP request to OGC service:
     let xhrPygeo = new XMLHttpRequest();
@@ -215,13 +224,20 @@ function _preRequest(clickMarker, lon, lat, strahlerInformFunction) {
     xhrPygeo.setRequestHeader('Content-Type', 'application/json');
     xhrPygeo.responseType = 'json';
     // geometry_only must be false, so we get the strahler order returned!
-    var payload_inputs_json = JSON.stringify({"inputs":{
-      "point": {
-        "type": "Point",
-        "coordinates": [lon, lat]
-      },
-      "geometry_only": false
-    }})
+    if (subc_id === null) {
+        var payload_inputs_json = JSON.stringify({"inputs":{
+          "point": {
+            "type": "Point",
+            "coordinates": [lon, lat]
+          },
+          "geometry_only": false
+        }});
+    } else {
+        var payload_inputs_json = JSON.stringify({"inputs":{
+          "subc_id": subc_id,
+          "geometry_only": false
+        }});
+    };
 
     // Define behaviour after response:
     xhrPygeo.onerror = function() {
