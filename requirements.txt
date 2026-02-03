@@ -13,3 +13,6 @@ paramiko==2.11.0
 # for development and testing, the former for production.
 psycopg2-binary
 
+# we are running with gunicorn
+gunicorn
+
