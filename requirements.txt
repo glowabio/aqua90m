@@ -1,6 +1,4 @@
-pandas
-numpy
-rasterio
+
 geomet
 sshtunnel
 geoalchemy2
@@ -15,4 +13,10 @@ psycopg2-binary
 
 # we are running with gunicorn
 gunicorn
+
+# After updating to Ubuntu 24, these had to be fixed:
+# Note: May not be needed on a newer VM!
+numpy<2.0
+rasterio<1.5
+pandas>=2.1,<2.3
 
