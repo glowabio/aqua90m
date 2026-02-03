@@ -86,7 +86,7 @@ var ogcRequestOneSubcid = function(map, subcid, processId, processDesc, logUserA
     clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
 
     // Reset result field:
-    document.getElementById("responseField").innerHTML = "Response returned by server for subc_id <span class=\"code\">"+subcid1+"</span>...";
+    document.getElementById("responseField").innerHTML = "Response returned by server for subc_id <span class=\"code\">"+subcid+"</span>...";
     document.getElementById("displayGeoJSON").innerHTML = "waiting..."
 
     // Define JSON payload:

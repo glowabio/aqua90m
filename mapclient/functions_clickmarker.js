@@ -44,7 +44,7 @@ var putIconToSubcidLocation = function(map, logUserAction) {
   let iconHeight = 1
   var iconUrl = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; // 1x1 transparent gif
 
-  var clickMarker = _putIconToLocation([lat1, lon1], map, iconUrl, iconWidth, iconHeight, logUserAction);
+  var clickMarker = _putIconToLocation(latlon, map, iconUrl, iconWidth, iconHeight, logUserAction);
   return (clickMarker);
 }
 
