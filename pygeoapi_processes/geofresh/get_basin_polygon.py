@@ -90,7 +90,7 @@ class BasinPolygonGetter(GeoFreshBaseProcessor):
         if basin_id is not None:
             reg_id = basic_queries.get_regid_from_basinid(conn, LOGGER, basin_id)
         else:
-            basin_id, reg_id = basic_queries.get_basinid_regid(conn, LOGGER, lon=lon, lat=lat, subc_id=subc_id):
+            basin_id, reg_id = basic_queries.get_basinid_regid(conn, LOGGER, lon=lon, lat=lat, subc_id=subc_id)
 
         LOGGER.debug(f'Now, getting polygon for basin_id: {basin_id}')
         geojson_item = None
