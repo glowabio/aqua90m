@@ -10,7 +10,11 @@ import psycopg2
 from pygeoapi.process.base import BaseProcessor, ProcessorExecuteError
 import pygeoapi.process.aqua90m.pygeoapi_processes.utils as utils
 from pygeoapi.process.aqua90m.geofresh.database_connection import get_connection_object_config
-
+# for updating process status, only for TinyDB manager...
+from pygeoapi.util import JobStatus as JobStatus
+from pygeoapi.config import get_config as get_config
+import tinydb
+from filelock import FileLock
 
 class GeoFreshBaseProcessor(BaseProcessor):
 
@@ -22,6 +26,7 @@ class GeoFreshBaseProcessor(BaseProcessor):
         self.config = None
         self.download_dir = None
         self.download_url = None
+        self.tinydb_job_status_file = None
 
         # Set config:
         config_file_path = os.environ.get('AQUA90M_CONFIG_FILE', "./config.json")
@@ -38,6 +43,44 @@ class GeoFreshBaseProcessor(BaseProcessor):
     def __repr__(self):
         return f'<GeoFreshBaseProcessor> {self.process_id}'
 
+    def update_status(self, msg, progress=None):
+        # Note: Use sparsely, this is expensive.
+
+        # First time, read config to find the TinyDB file to be updated...
+        if self.tinydb_job_status_file is None:
+            LOGGER.debug('Updating the process status (first time)...')
+
+            LOGGER.debug(f'Loading config from: {os.environ.get('PYGEOAPI_CONFIG')}...')
+            pygeo_config = get_config()
+            manager_name = pygeo_config['server']['manager']['name']
+            LOGGER.debug(f'Config contains a job manager of type {manager_name}.')
+            if manager_name == 'TinyDB':
+                self.tinydb_job_status_file = pygeo_config['server']['manager']['connection']
+            else:
+                self.tinydb_job_status_file = False
+                LOGGER.warn(f"Cannot update job status ever on this instance, manager is not TinyDB, but {manager_name}")
+
+        # Cannot update if not TinyDB:
+        elif self.tinydb_job_status_file == False:
+            LOGGER.debug(f"Not updating job status because manager is not TinyDB.")
+            return
+
+        LOGGER.debug(f'Updating the process status. TinyDB file: {self.tinydb_job_status_file}')
+
+        status_dict = {
+            "status": JobStatus.running.value,
+            "message": msg
+        }
+        if progress is not None:
+            status_dict['progress'] = progress
+
+        with FileLock(f"{self.tinydb_job_status_file}.lock"):
+            mydb = tinydb.TinyDB(self.tinydb_job_status_file)
+            mydb.update(status_dict, tinydb.where('identifier') == self.job_id)
+            mydb.close()
+
+        LOGGER.debug('Updating the process status... done.')
+
 
     def execute(self, data, outputs=None):
         LOGGER.debug(f'Start execution: {self.process_id} (job {self.job_id}, os pid {os.getpid()})')
@@ -47,6 +90,7 @@ class GeoFreshBaseProcessor(BaseProcessor):
 
         try:
             conn = get_connection_object_config(self.config)
+            self.update_status('Started execution', 6)
             res = self._execute(data, outputs, conn)
             LOGGER.debug(f'Finished execution: {self.process_id} (job {self.job_id})')
             LOGGER.log(logging.TRACE, 'Closing connection...')
