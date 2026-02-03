@@ -503,6 +503,8 @@ def get_subcid_basinid_regid_for_all_2json(conn, LOGGER, points_geojson, colname
     # Iterate over points and call "get_subcid_basinid_regid" for each point:
     # TODO: loop!! This is not super efficient, but the quickest to implement :)
     LOGGER.debug(f'Getting subcatchment for {num} lon, lat pairs...')
+    LOGGER.warn("Using method 'get_subcid_basinid_regid_for_all_2json', which contains a loop.")
+
     for point in iterate_over: # either point or feature...
 
         # Get coordinates from input:
@@ -612,6 +614,7 @@ def get_basinid_regid_for_all_from_subcid_1csv(conn, LOGGER, input_df, colname_s
     colidx_site_id = input_df.columns.get_loc(colname_site_id)
 
     # Iterate over rows:
+    LOGGER.warn("Using method 'get_basinid_regid_for_all_from_subcid_1csv', which contains a loop.")
     for row in input_df.itertuples(index=False):
 
         # Get coordinates from input:

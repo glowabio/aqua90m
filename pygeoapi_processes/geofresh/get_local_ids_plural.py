@@ -378,8 +378,11 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
                 raise NotImplementedError(err_msg)
 
             # Special case: User provided CSV containing subc_ids, wants basin_ids and reg_ids
-            if colname_subc_id is not None:
+            if (colname_lon is None and
+                colname_lat is None and
+                colname_subc_id is not None):
                 # TODO: DEPRECATED, contains loop
+                LOGGER.warn(f"This method uses a loop, as the user provided subc_id.")
                 output_df = basic_queries.get_basinid_regid_for_all_from_subcid_1csv(
                     conn, LOGGER, input_df, colname_subc_id, colname_site_id)
 
