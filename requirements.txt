@@ -1,7 +1,11 @@
 pandas
+numpy
+rasterio
 geomet
 psycopg2
 sshtunnel
+geoalchemy2
+geojson
 # quick fix to avoid: AttributeError: module 'paramiko' has no attribute 'DSSKey'. Did you mean: 'RSAKey'?
 paramiko==2.11.0
 
