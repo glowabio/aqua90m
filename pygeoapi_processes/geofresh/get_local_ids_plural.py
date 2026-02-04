@@ -377,7 +377,13 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
                 LOGGER.debug(err_msg)
                 raise NotImplementedError(err_msg)
 
+            # Chunking of input csv:
+            num_rows_per_chunk = 1000 # this is fast, we don't need smaller chunks
+            input_df_generator, num_rows = utils.access_csv_as_dataframe_iterator(csv_url, num_rows_per_chunk)
+            output_df_list = []
+
             # Special case: User provided CSV containing subc_ids, wants basin_ids and reg_ids
+            # TODO: This is not chunked.
             if (colname_lon is None and
                 colname_lat is None and
                 colname_subc_id is not None):
@@ -391,14 +397,28 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
             elif 'subc_id' in which_ids or 'basin_id' in which_ids:
                 # Returns a dataframe with lon, lat, subc_id, basin_id, reg_id, possibly site_id
                 # without loop:
-                output_df = basic_queries.get_subcid_basinid_regid__dataframe_to_dataframe(
-                    conn, input_df, colname_lon, colname_lat, colname_site_id=colname_site_id)
+                self.update_status(f'Start to work on chunks of size {num_rows_per_chunk} rows')
+                n = 0
+                for chunk_df in input_df_generator:
+                    n += 1
+                    output_df_chunk = basic_queries.get_subcid_basinid_regid__dataframe_to_dataframe(
+                        conn, chunk_df, colname_lon, colname_lat, colname_site_id=colname_site_id)
+                    output_df_list.append(output_df_chunk)
+                    self.update_status_chunks(n, num_rows_per_chunk, num_rows)
+                output_df = pd.concat(output_df_list, ignore_index=True)
 
             elif 'reg_id' in which_ids:
                 # Returns a dataframe with lon, lat, reg_id, possibly site_id
                 # without loop:
-                output_df = basic_queries.get_regid__dataframe_to_dataframe(
-                    conn, input_df, colname_lon, colname_lat, colname_site_id=colname_site_id)
+                self.update_status(f'Start to work on chunks of size {num_rows_per_chunk} rows')
+                n = 0
+                for chunk_df in input_df_generator:
+                    n += 1
+                    output_df_chunk = basic_queries.get_regid__dataframe_to_dataframe(
+                        conn, chunk_df, colname_lon, colname_lat, colname_site_id=colname_site_id)
+                    output_df_list.append(output_df_chunk)
+                    self.update_status_chunks(n, num_rows_per_chunk, num_rows)
+                output_df = pd.concat(output_df_list, ignore_index=True)
 
 
 
