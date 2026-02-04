@@ -50,17 +50,37 @@ dev:
 
 To sum up:
 
-The old way using the geometry is pretty fast (about 1 sec/2 points) - but wrong.
+* The old way using the geometry is pretty fast (about 1 sec/2 points) - but wrong.
+* On-the-fly conversion to geography took ca. 1500 times longer (about 1494 sec/2 points, that almost 25 minutes)! Forget it.
+* Testing a preconverted geography column looks promising, it is pretty fast (about 1 sec/2 points). But we only tested that on one partition so far.
+* To compare a bit more realistically, we also ran the on-the-fly conversion on one partition, which took 25 times longer than with the pre-computed (about 25 sec/2 points).
+* Finally, we will have to compare the pre-converted geography column (for the entire table) with the on-the-fly converted geography (for the entire table) (the latter took about 1494 sec/2 points, that almost 25 minutes)...
 
-On-the-fly conversion to geography took ca. 1500 times longer (about 1494 sec/2 points, that almost 25 minutes)! Forget it.
+## How to run
 
-Testing a preconverted geography column looks promising, it is pretty fast (about 1 sec/2 points). But we only tested that on one partition so far.
+```
+# clone repos
+git clone git@github.com:glowabio/aqua90m.git
+cd aqua90m
 
-To compare a bit more realistically, we also ran the on-the-fly conversion on one partition, which took 25 times longer than with the pre-computed (about 25 sec/2 points).
+# create virtual env and install dependencies
+virtualenv venv
+source venv/bin/activate
+pip install -r requirements.txt
 
-Finally, we will have to compare the pre-converted geography column (for the entire table) with the on-the-fly converted geography (for the entire table) (the latter took about 1494 sec/2 points, that almost 25 minutes)...
+# make sure you have config:
+cat /opt/pyg_upstream_dev/pygeoapi/config.geofreshprod.json
 
+# run:
+cp geofresh/tests_snapping_methods_20260204/*.py geofresh/
+cd geofresh
+python testscript_snapping_preconverted_geography_subset66_vanessa.py
+# note: To use input csv files, add the path or URL in: csv_url_or_path
+# also change min_strahler, if desired
+# note: distance computation was not tested yet.
+```
 
+Results will be written as csv into the same directory.
 
 ### Plain geometry column (old way, wrong)
 
