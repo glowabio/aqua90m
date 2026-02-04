@@ -350,6 +350,11 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
     # computation incredibly slow, 6 minutes per point...
     # So the next plan is to make a column of "geography" type so that it is possible
     # to use spatial indices on them. So this may change again.
+    #
+    # Important Note: From February 2026 on, this is again the old, wrong,
+    # bad method - on the fly reprojection was just too slow. Snapping 50 points
+    # did not finish over an entire night.
+    #
     # TODO: IMPORTANT: Use a geography column on the database, to speed this up
     query = f'''
     UPDATE {tablename} AS temp1
@@ -362,7 +367,7 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
         SELECT seg.geom, seg.strahler, seg.subc_id
         FROM stream_segments seg
         WHERE seg.strahler >= {min_strahler}
-        ORDER BY seg.geom::geography <-> ST_SetSRID(ST_MakePoint(temp2.lon, temp2.lat), 4326)::geography
+        ORDER BY seg.geom <-> ST_SetSRID(ST_MakePoint(temp2.lon, temp2.lat), 4326)
         LIMIT 1
     ) AS closest
     WHERE temp1.geom_user = temp2.geom_user;
