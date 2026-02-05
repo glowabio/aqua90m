@@ -388,15 +388,12 @@ class SnappedPointsStrahlerGetterPlural(GeoFreshBaseProcessor):
         ## Handle CSV case:
         elif csv_url is not None:
             num_rows_per_chunk = 500
-            progress_percentage_min = 5
-            progress_percentage_max = 90
-            progress_percentage_max = progress_percentage_max - progress_percentage_min
 
             # Query database:
             LOGGER.info(f'PYGEOAPI USER PASSED STRAHLER {min_strahler}')
             if result_format == 'geojson':
                 LOGGER.debug('Requesting geojson (get_snapped_points_csv2json)')
-                input_df_generator, num_lines = utils.access_csv_as_dataframe_iterator(csv_url, num_rows_per_chunk)
+                input_df_generator, num_rows = utils.access_csv_as_dataframe_iterator(csv_url, num_rows_per_chunk)
                 output_json = {
                     "type": "FeatureCollection",
                     "features": []
@@ -407,14 +404,11 @@ class SnappedPointsStrahlerGetterPlural(GeoFreshBaseProcessor):
                     n += 1
                     output_json_chunk = snapping_strahler.get_snapped_points_csv2json(conn, chunk_df, min_strahler, colname_lon, colname_lat, colname_site_id, add_distance=add_distance)
                     output_json["features"].append(output_json_chunk["features"])
-                    # Calculate progress and update:
-                    progress = (progress_percentage_min+(i*num_rows_per_chunk/num_lines)*progress_percentage_max)
-                    LOGGER.warn(f'Finished chunk {n} (chunks of size {num_rows_per_chunk} rows, progress {progress}/100)')
-                    self.update_status(f'Finished chunk {n} (chunks of size {num_rows_per_chunk} rows)', progress)
+                    self.update_status_chunks(n, num_rows_per_chunk, num_rows)
 
             elif result_format == 'csv':
                 LOGGER.debug('Requesting csv (get_snapped_points_csv2csv)')
-                input_df_generator, num_lines = utils.access_csv_as_dataframe_iterator(csv_url, num_rows_per_chunk)
+                input_df_generator, num_rows = utils.access_csv_as_dataframe_iterator(csv_url, num_rows_per_chunk)
                 output_df_list = []
                 self.update_status(f'Start to work on chunks of size {num_rows_per_chunk} rows')
                 n = 0
@@ -422,10 +416,7 @@ class SnappedPointsStrahlerGetterPlural(GeoFreshBaseProcessor):
                     n += 1
                     output_df_chunk = output_df = snapping_strahler.get_snapped_points_csv2csv(conn, chunk_df, min_strahler, colname_lon, colname_lat, colname_site_id, add_distance=add_distance)
                     output_df_list.append(output_df_chunk)
-                    # Calculate progress and update:
-                    progress = (progress_percentage_min+(i*num_rows_per_chunk/num_lines)*progress_percentage_max)
-                    LOGGER.warn(f'Finished chunk {n} (chunks of size {num_rows_per_chunk} rows, progress {progress}/100)')
-                    self.update_status(f'Finished chunk {n} (chunks of size {num_rows_per_chunk} rows)', progress)
+                    self.update_status_chunks(n, num_rows_per_chunk, num_rows)
                     # WIP: TODO: If we want to append to a CSV:
                     #for i, chunk in enumerate(split_df(df, 100_000)):
                     #    chunk.to_csv("output.csv", mode="a", header=(i == 0), index=False)

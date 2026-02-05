@@ -43,6 +43,15 @@ class GeoFreshBaseProcessor(BaseProcessor):
     def __repr__(self):
         return f'<GeoFreshBaseProcessor> {self.process_id}'
 
+    def update_status_chunks(self, chunk_number, chunk_size, num_rows):
+        # If we process chunks, we update progress percentage after every chunk
+        # We want that progress to range from 5 to 90, so we have to split
+        # 85 into n chunks...
+        progress = int(5+(chunk_number*chunk_size/num_rows)*85)
+        msg = f'Finished chunk {chunk_number} (chunk size {chunk_size}, progress {progress}/100)'
+        LOGGER.debug(msg)
+        self.update_status(msg, progress=progress)
+
     def update_status(self, msg, progress=None):
         # Note: Use sparsely, this is expensive.
 
