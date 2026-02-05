@@ -46,11 +46,11 @@ def get_snapped_point_feature_coll(conn, lon, lat, strahler, basin_id, reg_id):
     # OUTPUT: FeatureCollection (point, stream segment, connecting line)
     return _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_feature = True)
 
-
+# For one point
 def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_feature = False):
     # INPUT: lon, lat, strahler
     # OUTPUT: FeatureCollection or GeometryCollection (point, stream segment, connecting line)
-    LOGGER.debug('Snapping point lon %s, lat %s to closest strahler %s (in basin %s, region %s)...' % (lon, lat, strahler, basin_id, reg_id))
+    LOGGER.debug(f'Snapping point lon {lon}, lat {lat} to closest strahler {strahler} (in basin {basin_id}, region {reg_id})...')
 
     ### Define query:
     """

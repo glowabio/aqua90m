@@ -158,16 +158,16 @@ def create_and_populate_temp_table(cursor, list_of_insert_rows, add_subcids=True
     _add_index(cursor, tablename)
 
     # For each point, find out and store and retrieve the reg_id:
-    reg_ids = _update_temp_table_regid(cursor, tablename)
+    reg_id_set = _update_temp_table_regid(cursor, tablename)
 
     # For each point, find out and store the basin_id and subc_id:
     if add_subcids:
-        _add_subcids(cursor, tablename, reg_ids)
+        _add_subcids(cursor, tablename, reg_id_set)
         LOGGER.debug(f'Populating temp table "{tablename}" (incl. subc_id, basin_id, reg_id)... done.')
     else:
         LOGGER.debug(f'Populating temp table "{tablename}" (incl. only reg_id)... done.')
 
-    return tablename, reg_ids
+    return tablename, reg_id_set
 
 
 def _tablename(tablename_prefix):

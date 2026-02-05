@@ -90,7 +90,7 @@ class GeoFreshBaseProcessor(BaseProcessor):
 
         try:
             conn = get_connection_object_config(self.config)
-            self.update_status('Started execution', 6)
+            self.update_status('Started job execution', 6)
             res = self._execute(data, outputs, conn)
             LOGGER.debug(f'Finished execution: {self.process_id} (job {self.job_id})')
             LOGGER.log(logging.TRACE, 'Closing connection...')
