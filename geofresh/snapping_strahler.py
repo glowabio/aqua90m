@@ -341,7 +341,7 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
         ADD COLUMN geom_closest geometry(LINESTRING, 4326),
         ADD COLUMN subcid_closest integer,
         ADD COLUMN strahler_closest integer;
-    '''.replace("\n", "")
+    '''
     cursor.execute(query)
 
     # Note: LATERAL makes the subquery run once per row of tablename.
@@ -631,8 +631,8 @@ def _package_result_in_geojson(cursor, colname_site_id):
         if row is None: break
 
         # Extract values from row:
-        lon = float(row[0])
-        lat = float(row[1])
+        lon = row[0]
+        lat = row[1]
         site_id = row[2]
         snappedpoint_wkt = row[3]
         strahler = row[4]
@@ -644,6 +644,19 @@ def _package_result_in_geojson(cursor, colname_site_id):
 
         # For debugging, add any attribute to the last SELECT statement, and look at all of them here:
         LOGGER.log(logging.TRACE, f'Result row: {row}')
+
+        # Try to parse lon and lat.
+        try:
+            lon = float(lon)
+            lat = float(lat)
+        except TypeError as e:
+            if lon is None and lat is None:
+                LOGGER.warn('Could not parse lon and lat: Both are None...')
+            elif lon is None or lat is None:
+                LOGGER.warn('Could not parse lon and lat: One of them is None...')
+            else:
+                err_msg = f'Could not parse lon and lat: {e}'
+                raise ValueError(err_msg)
 
         # Convert to GeoJSON:
         if snappedpoint_wkt is None:
@@ -711,12 +724,26 @@ def _package_result_in_dataframe(cursor, colname_lon, colname_lat, colname_site_
         if row is None: break
 
         # Extract values from row:
-        lon = float(row[0])
-        lat = float(row[1])
+        lon = row[0]
+        lat = row[1]
         site_id = row[2]
         snappedpoint_wkt = row[3]
         strahler = row[4]
         subc_id = row[5]
+
+        # Try to parse lon and lat.
+        try:
+            lon = float(lon)
+            lat = float(lat)
+        except TypeError as e:
+            if lon is None and lat is None:
+                LOGGER.warn('Could not parse lon and lat: Both are None...')
+            elif lon is None or lat is None:
+                LOGGER.warn('Could not parse lon and lat: One of them is None...')
+            else:
+                err_msg = f'Could not parse lon and lat: {e}'
+                raise ValueError(err_msg)
+
         try:
             distance_metres = row[6] # optional
         except IndexError as e:
