@@ -92,6 +92,7 @@ def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_fea
     # computation incredibly slow, 6 minutes per point.
     # So the next plan is to make a column of "geography" type so that it is possible
     # to use spatial indices on them. So this may change again.
+    #
     # TODO: IMPORTANT: Use a geography column on the database, to speed this up
     query = f'''
     SELECT 
@@ -304,17 +305,28 @@ def get_snapped_points_xy(conn, geojson=None, dataframe=None, colname_lon=None, 
         cursor, list_of_insert_rows)
 
     # Then, the nearest-neighbouring stream segments are added:
-    _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler)
+    if len(reg_ids)==1 and 66 in reg_ids:
+        _add_nearest_neighours_to_temptable_66(cursor, tablename, min_strahler)
+    else:
+        _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler)
 
     if add_distance:
-        result_to_be_returned = _snapping_with_distances(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id)
+        if len(reg_ids)==1 and 66 in reg_ids:
+            result_to_be_returned = _snapping_with_distances_66(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id)
+        else:
+            result_to_be_returned = _snapping_with_distances(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id)
     else:
         # Then the points are snapped to those neighbouring stream segments:
-        result_to_be_returned =  _snapping_without_distances(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id)
+        if len(reg_ids)==1 and 66 in reg_ids:
+            result_to_be_returned =  _snapping_without_distances_66(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id)
+        else:
+            result_to_be_returned =  _snapping_without_distances(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id)
+
 
     # Database hygiene: Drop the table
     temp_table_for_queries.drop_temp_table(cursor, tablename)
     return result_to_be_returned
+
 
 
 def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
@@ -381,6 +393,46 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
     LOGGER.debug(f'Adding nearest neighbours to temporary table "{tablename}"... done.')
 
 
+def _add_nearest_neighours_to_temptable_66(cursor, tablename, min_strahler):
+    # Fill the table with the geometry and properties of the nearest neighbour
+    # stream segment. For this we compute the distance using <->, and sort by that.
+    LOGGER.debug(f'[METHOD REGION 66] Adding nearest neighbours to temporary table "{tablename}"...')
+
+    # Note: The columns we UPDATE here (geom_closest, strahler_closest, subcid_closest)
+    # have to exist in the temp table!
+    query = f'''
+    ALTER TABLE {tablename}
+        ADD COLUMN geom_closest geography(LINESTRING, 4326),
+        ADD COLUMN subcid_closest integer,
+        ADD COLUMN strahler_closest integer;
+    '''
+    cursor.execute(query)
+
+    query = f'''
+    UPDATE {tablename} AS temp1
+    SET
+        geom_closest = closest.geog,
+        strahler_closest = closest.strahler,
+        subcid_closest = closest.subc_id
+    FROM {tablename} AS temp2
+    CROSS JOIN LATERAL (
+        SELECT seg.geog, seg.strahler, seg.subc_id
+        FROM "shiny_user"."stream_segments_geog_66" seg
+        WHERE seg.geog IS NOT NULL AND seg.strahler >= {min_strahler}
+        ORDER BY seg.geog <-> ST_SetSRID(ST_MakePoint(temp2.lon, temp2.lat), 4326)::geography
+        LIMIT 1
+    ) AS closest
+    WHERE temp1.geom_user = temp2.geom_user;
+    '''
+
+    ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
+    querystart = time.time()
+    cursor.execute(query)
+    log_query_time(querystart, 'adding nearest neighbours')
+    LOGGER.debug(f'Adding nearest neighbours to temporary table "{tablename}"... done.')
+
+
 def _snapping_with_distances(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id):
     # Compute the snapped point, store in table, and calculate distance.
 
@@ -423,7 +475,59 @@ def _snapping_with_distances(cursor, tablename, result_format, colname_lon, coln
             temp.geom_snapped::geography
         )
     FROM {tablename} AS temp;
-    '''.replace("\n", " ")
+    '''
+
+    ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
+    querystart = time.time()
+    cursor.execute(query)
+    log_query_time(querystart, 'computing distances and retrieve results')
+    return _package_result(cursor, result_format, colname_lon, colname_lat, colname_site_id)
+
+
+def _snapping_with_distances_66(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id):
+    # Compute the snapped point, store in table, and calculate distance.
+
+    # Add column for snapped point:
+    LOGGER.debug(f'[METHOD REGION 66] Adding snapped points to temporary table "{tablename}"...')
+    query = f'ALTER TABLE {tablename} ADD COLUMN geom_snapped geometry(POINT, 4326)'
+    cursor.execute(query)
+
+    # Compute snapped point, store in table:
+    query = f'''
+    UPDATE {tablename} AS temp
+        SET geom_snapped = ST_LineInterpolatePoint(
+            temp.geom_closest::geometry,
+            ST_LineLocatePoint(temp.geom_closest::geometry, temp.geom_user)
+        );
+    '''
+
+    ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
+    querystart = time.time()
+    cursor.execute(query)
+    log_query_time(querystart, 'computing snapped points and store in table')
+    LOGGER.debug(f'Adding snapped points to temporary table "{tablename}"... done.')
+
+    # Compute the distance, retrieve the snapped points:
+    # Note: ST_Distance operates on WGS84 and returns degrees, so we
+    # cast to a "geography", see explanation here:
+    # https://www.postgis.net/workshops/postgis-intro/geography.html
+    LOGGER.debug(f'Retrieving snapped points from temporary table "{tablename}"...')
+    query = f'''
+    SELECT
+        temp.lon,
+        temp.lat,
+        temp.site_id,
+        ST_AsText(temp.geom_snapped),
+        temp.strahler_closest,
+        temp.subcid_closest,
+        ST_Distance(
+            temp.geom_user::geography,
+            temp.geom_snapped::geography
+        )
+    FROM {tablename} AS temp;
+    '''
 
     ### Query database:
     LOGGER.log(logging.TRACE, "SQL query: {query}")
@@ -456,7 +560,41 @@ def _snapping_without_distances(cursor, tablename, result_format, colname_lon, c
         temp.strahler_closest,
         temp.subcid_closest
     FROM {tablename} AS temp
-    '''.replace("\n", " ")
+    '''
+
+    ### Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
+    querystart = time.time()
+    cursor.execute(query)
+    log_query_time(querystart, 'snapping without distances')
+    return _package_result(cursor, result_format, colname_lon, colname_lat, colname_site_id)
+
+
+
+def _snapping_without_distances_66(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id):
+    # Run the query that generates the snapped point, i.e. the point on the
+    # stream segment (nearest neighbour) that is closest to the original point.
+    # The nearest-neighbouring stream segments in question have been previously
+    # found and stored to column "geom_closest" by the previous query.
+    # (So this here is pretty much the normal snapping query).
+    #
+    # This RETURNS the snapped points, but does not STORE them in the temp table!
+    LOGGER.debug('[METHOD REGION 66] Snapping without distances...')
+    query = f'''
+    SELECT
+        temp.lon,
+        temp.lat,
+        temp.site_id,
+        ST_AsText(
+            ST_LineInterpolatePoint(
+                temp.geom_closest::geometry,
+                ST_LineLocatePoint(temp.geom_closest::geometry, ST_SetSRID(ST_MakePoint(temp.lon, temp.lat), 4326))
+            )
+        ),
+        temp.strahler_closest,
+        temp.subcid_closest
+    FROM {tablename} AS temp
+    '''
 
     ### Query database:
     LOGGER.log(logging.TRACE, "SQL query: {query}")
