@@ -3,12 +3,12 @@
 ///////////////////////////////////////////////
 
 // Define making request to OGC service (function):
-var _ogcRequest = function(clickMarker, processId, processDesc, payload_inputs_json) {
+var _ogcRequest = function(server, processId, processDesc, payload_inputs_json, clickMarker) {
     console.log('[sync] Preparing to make HTTP POST request...')
     document.getElementById("displayGeoJSON").innerHTML = "waiting..."
 
-    // Which pygeoapi instance?
-    var url = "https://aqua.igb-berlin.de/pygeoapi/processes/"+processId+"/execution";
+    // Define pygeoapi endpoint:
+    var url = server+"/processes/"+processId+"/execution";
 
     // Construct HTTP request to OGC service:
     let xhrPygeo = new XMLHttpRequest();

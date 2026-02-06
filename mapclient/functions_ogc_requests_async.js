@@ -35,12 +35,12 @@ var _successPleaseShowGeojson = function(responseJson) {
 
 
 // Define making request to OGC service (function):
-async function _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json) {
+async function _ogcRequest(server, processId, processDesc, payload_inputs_json, clickMarker) {
     console.log('[async] Preparing to make HTTP POST request...')
     document.getElementById("displayGeoJSON").innerHTML = "waiting..."
 
-    // Which pygeoapi instance?
-    var url = "https://aqua.igb-berlin.de/pygeoapi/processes/"+processId+"/execution";
+    // Define pygeoapi endpoint:
+    var url = server+"/processes/"+processId+"/execution";
 
     try {
 

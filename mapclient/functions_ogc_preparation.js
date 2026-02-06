@@ -1,3 +1,4 @@
+const server = "https://aqua.igb-berlin.de/pygeoapi";
 
 // Define making request to OGC service (function):
 var ogcRequestTwoCoordinatePairs = function(map, lon1, lat1, lon2, lat2, processId, processDesc, logUserAction) {
@@ -30,7 +31,7 @@ var ogcRequestTwoCoordinatePairs = function(map, lon1, lat1, lon2, lat2, process
         "coordinates": [lon2, lat2],
       }
     }})
-    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json);
+    _ogcRequest(server, processId, processDesc, payload_inputs_json, clickMarker);
 }
 
 // Define making request to OGC service (function):
@@ -53,10 +54,10 @@ var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDe
     // If upstream, make pre-request:
     if (processId.startsWith("get-upstream")) {
       console.log('Requesting upstream... This may take a while, so we do a pre-request!');
-      _preRequestUpstream(clickMarker, lon1, lat1);
+      _preRequestUpstream(server, clickMarker, lon1, lat1);
     } else if (processId == 'get-shortest-path-to-outlet') {
       console.log('Requesting downstream... This may take a while, so we do a pre-request!');
-      _preRequestDownstream(clickMarker, lon1, lat1);
+      _preRequestDownstream(server, clickMarker, lon1, lat1);
     }
 
     // Define JSON payload and send:
@@ -66,7 +67,7 @@ var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDe
         "coordinates": [lon1, lat1]
       }
     }})
-    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json);
+    _ogcRequest(server, processId, processDesc, payload_inputs_json, clickMarker);
 }
 
 
@@ -89,14 +90,14 @@ var ogcRequestOneSubcid = function(map, subcid, processId, processDesc, logUserA
     // If upstream, make pre-request:
     if (processId.startsWith("get-upstream")) {
       console.log('Requesting upstream... This may take a while, so we do a pre-request!');
-      _preRequestUpstreamSubcid(clickMarker, subcid);
+      _preRequestUpstreamSubcid(server, clickMarker, subcid);
     } else if (processId == 'get-shortest-path-to-outlet') {
       console.log('Requesting downstream... This may take a while, so we do a pre-request!');
-      _preRequestDownstreamSubcid(clickMarker, subcid);
+      _preRequestDownstreamSubcid(server, clickMarker, subcid);
     }
 
     // Send HTTP request to OGC service:
-    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json);
+    _ogcRequest(server, processId, processDesc, payload_inputs_json, clickMarker);
 }
 
 
@@ -120,7 +121,7 @@ var ogcRequestTwoSubcids = function(map, subcid1, subcid2, processId, processDes
     }})
 
     // Send HTTP request to OGC service:
-    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json);
+    _ogcRequest(server, processId, processDesc, payload_inputs_json, clickMarker);
 }
 
 
@@ -150,7 +151,7 @@ var ogcRequestTwoMixed = function(map, lon, lat, subcid, processId, processDesc,
     })
 
     // Send HTTP request to OGC service:
-    _ogcRequest(clickMarker, processId, processDesc, payload_inputs_json);
+    _ogcRequest(server, processId, processDesc, payload_inputs_json, clickMarker);
 }
 
 // Pre-Requests:
@@ -158,32 +159,35 @@ var ogcRequestTwoMixed = function(map, lon, lat, subcid, processId, processDesc,
 // a pre-request that checks how much time the actual request may
 // probably take, based on the strahler order.
 //
-function _preRequestUpstream(clickMarker, lon, lat) {
+function _preRequestUpstream(server, clickMarker, lon, lat) {
   let subcid = null;
-  _preRequest(clickMarker, lon, lat, subcid, _strahlerInformUpstream);
+  _preRequest(server, clickMarker, lon, lat, subcid, _strahlerInformUpstream);
 }
 
-function _preRequestUpstreamSubcid(clickMarker, subcid) {
-  _preRequest(clickMarker, null, null, subcid, _strahlerInformUpstream);
+function _preRequestUpstreamSubcid(server, clickMarker, subcid) {
+  _preRequest(server, clickMarker, null, null, subcid, _strahlerInformUpstream);
 }
 
-function _preRequestDownstream(clickMarker, lon, lat) {
+function _preRequestDownstream(server, clickMarker, lon, lat) {
   let subcid = null;
-  _preRequest(clickMarker, lon, lat, subcid, _strahlerInformDownstream);
+  _preRequest(server, clickMarker, lon, lat, subcid, _strahlerInformDownstream);
   // Downstream might be better to use something else, because headwaters
   // exist close to the coast and far from the coast, so strahler is not
   // a good predictor for computation duration...
 }
 
-function _preRequestDownstreamSubcid(clickMarker, subcid) {
-  _preRequest(clickMarker, null, null, subcid, _strahlerInformDownstream);
+function _preRequestDownstreamSubcid(server, clickMarker, subcid) {
+  _preRequest(server, clickMarker, null, null, subcid, _strahlerInformDownstream);
 }
 
-function _preRequest(clickMarker, lon, lat, subc_id, strahlerInformFunction) {
+function _preRequest(server, clickMarker, lon, lat, subc_id, strahlerInformFunction) {
 
     // Construct HTTP request to OGC service:
     let xhrPygeo = new XMLHttpRequest();
-    var url = "https://aqua.igb-berlin.de/pygeoapi/processes/get-local-streamsegments/execution";
+
+    // Define pygeoapi endpoint:
+    let processId = "get-local-streamsegments";
+    var url = server+"/processes/"+processId+"/execution";
     xhrPygeo.open('POST', url, true)
     xhrPygeo.setRequestHeader('Content-Type', 'application/json');
     xhrPygeo.responseType = 'json';
