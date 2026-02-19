@@ -69,11 +69,13 @@ var _ogcRequest = function(server, processId, processDesc, payload_inputs_json, 
 
       // Style features depending on their properties:
       if (document.getElementById("stylingStrahlerToggle").checked){
+        console.log("[DEBUG] Asked to style depending on strahler order.");
         pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
             styleLayerStrahler(layer, processId);
         });
 
       } else {
+        console.log("[DEBUG] Will style without strahler order.");
         pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
             styleLayerUni(layer, processId);
         });

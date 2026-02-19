@@ -12,12 +12,12 @@ var _successPleaseShowGeojson = function(responseJson, processId) {
 
     // Style features depending on their properties:
     if (document.getElementById("stylingStrahlerToggle").checked){
-        console.log("[DEBUG] Style depending on strahler order.");
+        console.log("[DEBUG] Asked to style depending on strahler order.");
         pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
             styleLayerStrahler(layer, processId);
         });
     } else {
-        console.log("[DEBUG] Style without strahler order.");
+        console.log("[DEBUG] Will style without strahler order.");
         pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
             styleLayerUni(layer, processId);
         });

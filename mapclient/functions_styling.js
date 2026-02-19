@@ -154,13 +154,15 @@ var styleLayerStrahler = function(layer, processId) {
   // TODO: Display number of subcatchment? Does server return them?
 
   // Which process?
-  console.log("[DEBUG] processId: "+processId);
+  //console.log("[DEBUG] processId: "+processId);
 
   if (processId == "get-upstream-bbox") {
+    console.log("[DEBUG] Styling based on strahler order makes no sense: "+processId);
     layer.setStyle({fillColor: 'grey', color: 'grey'});
     // Cannot differentiate by strahler: Just a bbox!
 
   } else if (processId == "get-shortest-path-to-outlet") {
+    console.log("[DEBUG] Styling based on strahler order makes sense: "+processId);
     // let's vary colour with strahler order, more precisely with
     // lightness in the HSL colour model:
     // Blue: hue=192, saturation=1
@@ -181,14 +183,17 @@ var styleLayerStrahler = function(layer, processId) {
     layer.setStyle({color: col_hex, weight: 8});
 
   } else if (processId == "get-upstream-dissolved-cont") {
+    console.log("[DEBUG] Styling based on strahler order makes no sense: "+processId);
     layer.setStyle({color: 'navy', weight: 5});
     // Cannot differentiate by strahler: Polygons are dissolved!
 
   } else if (processId == "get-upstream-subcatchments") {
+    console.log("[DEBUG] Styling based on strahler order makes sense BUT is not implemented yet: "+processId);
     layer.setStyle({color: 'navy', weight: 1});
     // TODO! Strahler-Style for upstream catchments
 
   } else if (processId == "get-upstream-streamsegments") {
+    console.log("[DEBUG] Styling based on strahler order makes sense: "+processId);
     // let's vary colour with strahler order, more precisely with
     // lightness in the HSL colour model:
     // Navy: hue=240, saturation=1
@@ -215,10 +220,12 @@ var styleLayerStrahler = function(layer, processId) {
 
   } else if (processId == "get-local-streamsegments") {
     // TODO MAYBE! Strahler-Style, although it is not great for local stuff...
+    console.log("[DEBUG] Styling based on strahler order makes partially sense, BUT is not implemented yet: "+processId);
     layer.setStyle({color: '#3366cc', weight: 4});
 
   } else if (processId == "get-local-streamsegments-subcatchments") {
     /// TODO MAYBE! Strahler-Style, although it is not great for local stuff...
+    console.log("[DEBUG] Styling based on strahler order makes partially sense, BUT is not really implemented yet: "+processId);
     if (layer.feature.geometry.type == 'LineString') {
       layer.setStyle({fillColor: '#3366cc', color: '#3366cc', weight: 4});
     } else if (layer.feature.geometry.type == 'MultiPolygon') {
@@ -230,6 +237,7 @@ var styleLayerStrahler = function(layer, processId) {
     };
 
   } else if (processId == "get-shortest-path-between-points") {
+    console.log("[DEBUG] Styling based on strahler order makes sense: "+processId);
     // let's vary colour with strahler order, more precisely with
     // lightness in the HSL colour model:
     // Blue: hue=192, saturation=1
@@ -253,6 +261,7 @@ var styleLayerStrahler = function(layer, processId) {
 
   } else if (processId == "get-snapped-point-plus") {
     // TODO MAYBE! Strahler-Style, although it is not great for local stuff...
+    console.log("[DEBUG] Styling based on strahler order makes partially sense, BUT is not really implemented yet: "+processId);
     if (layer.feature.properties.description == 'connecting line') {
       layer.setStyle({fillColor: 'red', color: 'red', weight: 1, dashArray: '8 4'});
       console.log('Found a connecting line and painted it dashed red...');
@@ -269,12 +278,14 @@ var styleLayerStrahler = function(layer, processId) {
     };
 
   } else if (processId == "get-snapped-points") {
+    console.log("[DEBUG] Styling based on strahler, how to do this: "+processId);
       // TODO How to style points?
       //layer.setStyle({color: 'black', weight: 3});
       //console.log('Found snapped point and painted them black...');
 
   // All others:
   } else {
+    console.log("[DEBUG] No styling info for process: "+processId);
     console.log('TODO: Found feature that is not styled yet. You may want to check this.');
     console.log('PAINTED IT PINK!')
     layer.setStyle({fillColor: 'pink', color: 'pink', weight: 3});
