@@ -143,7 +143,7 @@ var styleLayerUni = function(layer) {
   }
 };
 
-var styleLayerStrahler = function(layer) {
+var styleLayerStrahler = function(layer, processId) {
   // Depending on process:
   // Upstream bbox = Grey
   // Upstream (segments, catchments) = Navy
@@ -154,8 +154,7 @@ var styleLayerStrahler = function(layer) {
   // TODO: Display number of subcatchment? Does server return them?
 
   // Which process?
-  var dropdown = document.getElementById("processes");
-  var processId = dropdown.value;
+  console.log("[DEBUG] processId: "+processId);
 
   if (processId == "get-upstream-bbox") {
     layer.setStyle({fillColor: 'grey', color: 'grey'});

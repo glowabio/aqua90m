@@ -69,9 +69,14 @@ var _ogcRequest = function(server, processId, processDesc, payload_inputs_json, 
 
       // Style features depending on their properties:
       if (document.getElementById("stylingStrahlerToggle").checked){
-        pygeoResponseGeoJSONLayer.eachLayer(styleLayerStrahler);
+        pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
+            styleLayerStrahler(layer, processId);
+        });
+
       } else {
-        pygeoResponseGeoJSONLayer.eachLayer(styleLayerUni);
+        pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
+            styleLayerUni(layer, processId);
+        });
       }
 
       // Add styled layers to map:

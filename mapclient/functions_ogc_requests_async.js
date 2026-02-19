@@ -4,7 +4,7 @@
 ////// Functions for making OGC requests //////
 ///////////////////////////////////////////////
 
-var _successPleaseShowGeojson = function(responseJson) {
+var _successPleaseShowGeojson = function(responseJson, processId) {
     console.log("Displaying GeoJSON on the map...");
 
     // Make layer(s) from GeoJSON that the server returned:
@@ -12,9 +12,15 @@ var _successPleaseShowGeojson = function(responseJson) {
 
     // Style features depending on their properties:
     if (document.getElementById("stylingStrahlerToggle").checked){
-        pygeoResponseGeoJSONLayer.eachLayer(styleLayerStrahler);
+        console.log("[DEBUG] Style depending on strahler order.");
+        pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
+            styleLayerStrahler(layer, processId);
+        });
     } else {
-        pygeoResponseGeoJSONLayer.eachLayer(styleLayerUni);
+        console.log("[DEBUG] Style without strahler order.");
+        pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
+            styleLayerUni(layer, processId);
+        });
     }
 
     // Add styled layers to map:
@@ -182,7 +188,7 @@ async function _pollStatus(statusUrl, processId, clickMarker) {
 
             // Now: We received a response, and it's valid GeoJSON!
             // So here we start the whole display stuff!
-            _successPleaseShowGeojson(resultData);
+            _successPleaseShowGeojson(resultData, processId);
 
           } else {
             console.warn("[async] Result JSON is not valid GeoJSON.");
