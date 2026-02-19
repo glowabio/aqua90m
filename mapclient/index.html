@@ -225,7 +225,7 @@ integrity=
     let paramLon   = parseFloat(params.get('lon'));
     paramLat = Number.isFinite(paramLat) ? paramLat : null;
     paramLon = Number.isFinite(paramLon) ? paramLon : null;
-    //console.log("[DEBUG] URL params: "+paramLon+", "+paramLat+" (lon, lat), process: "+paramProcessId);
+    console.log("[DEBUG] URL params, values parsed: "+paramLon+", "+paramLat+" (lon, lat), process: "+paramProcessId);
 
     // Initialize the map
     const map = L.map('map')
@@ -474,7 +474,8 @@ integrity=
     map.on('click', mapClickBehaviour);
 
     // If URL params were passed, do not wait for user's click, but trigger the request already:
-    const requiredParams = ['paramLon', 'paramLat', 'paramProcessId'];
+    const requiredParams = ['lon', 'lat', 'processId'];
+    // console.log('[DEBUG] URL params that are present: '+params);
     const missing = requiredParams.filter(p => !params.has(p));
     if (missing.length == 3) {
       console.log('[urlparam] No useful URL parameters passed.')
