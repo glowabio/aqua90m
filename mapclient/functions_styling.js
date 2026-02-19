@@ -259,7 +259,9 @@ var styleLayerStrahler = function(layer, processId) {
     //console.log('Colour in HEX: '+col_hex);
     layer.setStyle({color: col_hex, weight: 8});
 
-  } else if (processId == "get-snapped-point-plus") {
+  } else if (processId === "get-snapped-point-plus" ||
+             processId === "get-snapped-points-strahler") {
+
     // TODO MAYBE! Strahler-Style, although it is not great for local stuff...
     console.log("[DEBUG] Styling based on strahler order makes partially sense, BUT is not really implemented yet: "+processId);
     if (layer.feature.properties.description == 'connecting line') {

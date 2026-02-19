@@ -61,12 +61,48 @@ var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDe
     }
 
     // Define JSON payload and send:
-    var payload_inputs_json = JSON.stringify({"inputs":{
+    var payload = {"inputs":{
       "point": {
         "type": "Point",
         "coordinates": [lon1, lat1]
       }
-    }})
+    }};
+
+    // Possibly add strahler order...
+    // TODO: The value should not be retrieved from document, but passed in function params...
+    // TODO: Validate and max value? What happens with strahler=99 or so?
+    if (processId.startsWith("get-snapped")) {
+      let strahlerSnap = document.getElementById("strahlerSnap").value;
+
+      // Safety:
+      if (typeof strahlerSnap !== "string"){
+        console.error("Strahler order is not string");
+        strahlerSnap = 1;
+      }
+      strahlerSnap = strahlerSnap.trim();
+      // Only digits allowed (no minus, no decimals)
+      if (!/^\d+$/.test(strahlerSnap)) {
+        console.error("Strahler order is not digits-only");
+        strahlerSnap = 1;
+      }
+      const strahlerSnapParsed = Number(strahlerSnap);
+      if (!Number.isSafeInteger(strahlerSnapParsed)) {
+        console.error("Strahler order is not a safe integer");
+        strahlerSnapParsed = 1;
+      }
+
+      // Now add to payload, if > 1:
+      if (strahlerSnapParsed > 1) {
+        payload.inputs.strahler = strahlerSnapParsed;
+        console.log('[debug] Added strahlerSnap of value '+strahlerSnapParsed+'...');
+        console.log(payload);
+        // TODO: This does not work in the "plus" version!
+        processId = "get-snapped-points-strahler";
+      }
+    }
+
+    // Stringify JSON:
+    var payload_inputs_json = JSON.stringify(payload);
     _ogcRequest(server, processId, processDesc, payload_inputs_json, clickMarker);
 }
 

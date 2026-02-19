@@ -44,7 +44,7 @@ integrity=
 
 
   <!-- Selection -->
-  <p><span>Click on the map to display:</span></p>
+  <p><span>Click on the map to display (please choose):</span></p>
   <select id="processes">
     <optgroup label="upstream">
       <option data-pairs="one" value="get-upstream-bbox">Upstream bounding box</option>
@@ -64,7 +64,12 @@ integrity=
     </optgroup>
   </select>
   <label><input type="checkbox" id="stylingStrahlerToggle" checked>Style depending on <strong>strahler</strong> order</label>
-  <div>(please choose!)...</div>
+  <div>
+      <input type="text" id="strahlerSnap" class="invisible" value="1"
+        onblur="if(this.value==''){ this.value='1'; this.style.color='#BBB';}"
+        onfocus="if(this.value==''){ this.value='1'; this.style.color='#000';} else {this.style.color='#000';}"
+        style="color:#BBB;" />
+  </div>
   <p id="scrollToTop">
     <span class="greynote">Note: Computing may take some time, depending on catchment size!</span>
     <br />
@@ -314,6 +319,18 @@ integrity=
         for(var i = 0; i < divsToHide.length; i++){
           divsToHide[i].classList.add('invisible');
         }
+      }
+
+      // Hide/unhide strahler order
+      // get-snapped-points
+      // get-snapped-point-plus
+      console.log("[DEBUG] Value of min strahler: "+document.getElementById("strahlerSnap").value);
+      if (this.value.startsWith("get-snapped-point")) {
+        document.getElementById("strahlerSnap").classList.remove('invisible');
+        console.log("[DEBUG] Show form to enter min strahler. Value: "+document.getElementById("strahlerSnap").value);
+      } else {
+        document.getElementById("strahlerSnap").classList.add('invisible');
+        console.log("[DEBUG] Hide form to enter min strahler. Value: "+document.getElementById("strahlerSnap").value);
       }
 
       // Previously, we had to disable the example buttons once a two-pair process
