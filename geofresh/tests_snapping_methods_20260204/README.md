@@ -709,3 +709,83 @@ Does not exist yet
 ### On-the-fly conversion to geography (super slow)
 
 We're not even trying this...
+
+
+## Continued 20 February 2026
+
+### Fifth test
+
+This is the same as the Vanessa-Test (with predefined geography columns, on the test table), BUT I also changed the temp table columns
+to geography (so I had to redefine/override the temp table creation functions).
+
+This is to see whether distance computation is faster or not based on a geography temp table.
+
+Because in the previous test, I used Vanessa's geography-columns to find the nearest neighbours, but then the
+temp table was all geometry-columns, so computing distance there does not yield any new insights...
+
+
+Insights:
+
+Interestingly, here, getting the `reg_id` takes a long time:
+
+```
+2026-02-20 20:37:47 - testscript:359 - DEBUG - Update reg_id (st_intersects) in temporary table "pygeo_2fee74295a9941139eed4e0caac9c5ee"...
+2026-02-20 20:49:06 - testscript:377 - DEBUG - Update reg_id (st_intersects) in temporary table "pygeo_2fee74295a9941139eed4e0caac9c5ee"... done
+```
+
+Sadly, I run into this error: `function st_linelocatepoint(geography, geography) does not exist`.
+It is weird, because the documentation for `ST_LineLocatePoint()` explicitly states that geography and
+geography are valid inputs: https://postgis.net/docs/ST_LineLocatePoint.html
+
+```
+Synopsis
+float8 ST_LineLocatePoint(geometry a_linestring, geometry a_point);
+float8 ST_LineLocatePoint(geography a_linestring, geography a_point, boolean use_spheroid = true);
+# source. https://postgis.net/docs/ST_LineLocatePoint.html
+```
+
+Maybe I have to set the `use_spheroid` boolean? But it has a default. Plus, it is not explained, so
+I am not sure what I'd have to set...
+Anyway, next attempt with setting it to `true` which is the default anyway...
+
+Log output:
+
+```
+(venv) mbuurman@aqua:/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh$ python testscript_snapping_preconverted_geography_subset66_vanessa_geogtemp.py
+2026-02-20 20:37:47 - testscript:82 -  INFO - Testing query: query_nearest_with_geography_VB, starting at 20260220_20-37-47
+2026-02-20 20:37:47 - testscript:92 - DEBUG - Reading CSV: /var/www/nginx/referencedata/aqua90m/fish_all_species_snapped_removed_empties.csv
+2026-02-20 20:37:47 - testscript:101 - DEBUG - Connect to database...
+2026-02-20 20:37:47 - database_connection:28 -  INFO - Database-Emergency-Off not configured (config file not found), using default (False).
+2026-02-20 20:37:47 - temp_table_for_queries:105 - DEBUG - Preparing to insert data from a dataframe into PostGIS database...
+2026-02-20 20:37:47 - temp_table_for_queries:138 - DEBUG - Created list of 3621 insert rows...
+2026-02-20 20:37:47 - temp_table_for_queries:139 - DEBUG - First insert row: ('3POTAM', 22.19779814, 40.53310984, ST_SetSRID(ST_MakePoint(22.19779814, 40.53310984), 4326))
+2026-02-20 20:37:47 - testscript:261 - DEBUG - Creating and populating temp table "pygeo_2fee74295a9941139eed4e0caac9c5ee"...
+2026-02-20 20:37:47 - testscript:294 - DEBUG - Creating temporary table "pygeo_2fee74295a9941139eed4e0caac9c5ee"...
+2026-02-20 20:37:47 - testscript:315 - DEBUG - Creating temporary table "pygeo_2fee74295a9941139eed4e0caac9c5ee"... done.
+2026-02-20 20:37:47 - testscript:322 - DEBUG - Inserting into temporary table "pygeo_2fee74295a9941139eed4e0caac9c5ee"...
+2026-02-20 20:37:47 - testscript:333 - DEBUG - Inserting into temporary table "pygeo_2fee74295a9941139eed4e0caac9c5ee"... done.
+2026-02-20 20:37:47 - testscript:339 - DEBUG - Creating index for temporary table "pygeo_2fee74295a9941139eed4e0caac9c5ee"...
+2026-02-20 20:37:47 - testscript:349 - DEBUG - Creating index for temporary table "pygeo_2fee74295a9941139eed4e0caac9c5ee"... done.
+2026-02-20 20:37:47 - testscript:359 - DEBUG - Update reg_id (st_intersects) in temporary table "pygeo_2fee74295a9941139eed4e0caac9c5ee"...
+2026-02-20 20:49:06 - testscript:377 - DEBUG - Update reg_id (st_intersects) in temporary table "pygeo_2fee74295a9941139eed4e0caac9c5ee"... done
+2026-02-20 20:49:06 - testscript:388 - DEBUG - Set of distinct reg_ids present in the temp table: {66, 59}
+2026-02-20 20:49:06 - testscript:394 - DEBUG - Update subc_id, basin_id (st_intersects) in temporary table "pygeo_2fee74295a9941139eed4e0caac9c5ee"...
+2026-02-20 20:52:22 - testscript:412 - DEBUG - Update subc_id, basin_id (st_intersects) in temporary table "pygeo_2fee74295a9941139eed4e0caac9c5ee"... done.
+2026-02-20 20:52:22 - testscript:278 - DEBUG - Populating temp table "pygeo_2fee74295a9941139eed4e0caac9c5ee" (incl. subc_id, basin_id, reg_id)... done.
+2026-02-20 20:52:22 - testscript:136 -  INFO - Starting query: Nearest Neigbours
+2026-02-20 20:52:33 - testscript:140 -  INFO - Finished query: Nearest Neigbours
+2026-02-20 20:52:33 - testscript:141 - DEBUG - **** TIME ************: 10.751922130584717
+2026-02-20 20:52:33 - testscript:161 -  INFO - Starting query: Snapping
+Traceback (most recent call last):
+  File "/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh/testscript_snapping_preconverted_geography_subset66_vanessa_geogtemp.py", line 419, in <module>
+    main()
+  File "/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh/testscript_snapping_preconverted_geography_subset66_vanessa_geogtemp.py", line 163, in main
+    cursor.execute(query)
+psycopg2.errors.UndefinedFunction: function st_linelocatepoint(geography, geography) does not exist
+LINE 5:                 ST_LineLocatePoint(temp.geog_closest, temp.g...
+                        ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+(venv) mbuurman@aqua:/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh$ 
+(venv) mbuurman@aqua:/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh$ 
+```
