@@ -50,7 +50,7 @@ if __name__ == '__main__':
     colname_lon = 'longitude_original'
     colname_lat = 'latitude_original'
     colname_site_id = 'site_id'
-    add_distance = False
+    add_distance = True
     min_strahler = 4
     config_file_path = "/opt/pyg_upstream_dev/pygeoapi/config.geofreshprod.json"
     output_csv_name = None # defined later based on query

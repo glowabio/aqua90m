@@ -50,7 +50,7 @@ if __name__ == '__main__':
     colname_lon = 'longitude_original'
     colname_lat = 'latitude_original'
     colname_site_id = 'site_id'
-    add_distance = False
+    add_distance = True
     min_strahler = 4
     config_file_path = "/opt/pyg_upstream_dev/pygeoapi/config.geofreshprod.json"
     output_csv_name = None # defined later based on query
@@ -159,6 +159,8 @@ FP2,20.7915502371247,40.1392343125345,560164915,1292502,66"""
         # Note: ST_Distance operates on WGS84 and returns degrees, so we
         # cast to a "geography", see explanation here:
         # https://www.postgis.net/workshops/postgis-intro/geography.html
+        # But here, for the sake of comparing, we just the plain old geometries
+        # even knowing the result is wrong...
         LOGGER.debug(f'Retrieving snapped points from temporary table "{tablename}"...')
         query = f'''
         SELECT
@@ -169,8 +171,8 @@ FP2,20.7915502371247,40.1392343125345,560164915,1292502,66"""
             temp.strahler_closest,
             temp.subcid_closest,
             ST_Distance(
-                temp.geom_user::geography,
-                temp.geom_snapped::geography
+                temp.geom_user,
+                temp.geom_snapped
             )
         FROM {tablename} AS temp;
         '''

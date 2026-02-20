@@ -51,7 +51,7 @@ if __name__ == '__main__':
     colname_lon = 'longitude_original'
     colname_lat = 'latitude_original'
     colname_site_id = 'site_id'
-    add_distance = False
+    add_distance = True
     min_strahler = 4
     config_file_path = "/opt/pyg_upstream_dev/pygeoapi/config.geofreshprod.json"
     output_csv_name = None # defined later based on query
@@ -139,14 +139,19 @@ FP2,20.7915502371247,40.1392343125345,560164915,1292502,66"""
 
     if add_distance:
 
+        # This does not make sense, as we have our temp table as geometries,
+        # so here we would have to cast to geographies. We have no preconverted
+        # geographies at this point!
+
+        """
         # Compute snapped point, store in table:
         query = f'ALTER TABLE {tablename} ADD COLUMN geom_snapped geometry(POINT, 4326)'
         cursor.execute(query)
         query = f'''
         UPDATE {tablename} AS temp
             SET geom_snapped = ST_LineInterpolatePoint(
-                temp.geom_closest,
-                ST_LineLocatePoint(temp.geom_closest, temp.geom_user)
+                temp.geom_closest::geometry,
+                ST_LineLocatePoint(temp.geom_closest::geometry, temp.geom_user)
             );
         '''
         LOGGER.info('Starting query: Snapping')
@@ -181,6 +186,7 @@ FP2,20.7915502371247,40.1392343125345,560164915,1292502,66"""
         queryend = time.time()
         LOGGER.info('Finished query: Distance')
         LOGGER.debug(f'**** TIME ************: {(queryend - querystart)}')
+        """
 
     ##################################
     ### Snapping without distances ###
