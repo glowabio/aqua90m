@@ -28,7 +28,7 @@ query_nearest_with_geography_VB = '''
         SELECT seg.geog, seg.strahler, seg.subc_id
         FROM "shiny_user"."stream_segments_geog_66" seg
         WHERE seg.geog IS NOT NULL AND seg.strahler >= {min_strahler}
-        ORDER BY seg.geog <-> ST_SetSRID(ST_MakePoint(temp2.lon, temp2.lat), 4326)::geography
+        ORDER BY seg.geog <-> temp2.geom_user::geography
         LIMIT 1
     ) AS closest
     WHERE temp1.geom_user = temp2.geom_user;
@@ -207,7 +207,7 @@ FP2,20.7915502371247,40.1392343125345,560164915,1292502,66"""
             ST_AsText(
                 ST_LineInterpolatePoint(
                     temp.geom_closest::geometry,
-                    ST_LineLocatePoint(temp.geom_closest::geometry, ST_SetSRID(ST_MakePoint(temp.lon, temp.lat), 4326))
+                    ST_LineLocatePoint(temp.geom_closest::geometry, temp.geom_user)
                 )
             ),
             temp.strahler_closest,
