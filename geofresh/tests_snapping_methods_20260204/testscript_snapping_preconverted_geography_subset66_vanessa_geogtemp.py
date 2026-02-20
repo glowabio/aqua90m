@@ -34,6 +34,10 @@ query_nearest_with_geography_VB = '''
     WHERE temp1.geom_user = temp2.geom_user;
 '''
 
+### THIS IS JUST A COPY OF testscript_snapping_preconverted_geography_subset66_vanessa.py
+### NEXT I WILL MODIFY THIS TO CHANGE THE TEMP TABLE COLUMNS
+### FROM GEOMETRY TO GEOGRAPHY
+### TO SEE WHAT THAT CHANGES!!
 
 if __name__ == '__main__':
 
