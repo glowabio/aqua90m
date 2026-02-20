@@ -39,12 +39,17 @@ if __name__ == '__main__':
 
     #csv_url_or_path = 'https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus_with_basinid.csv'
     #csv_url_or_path = '/var/www/nginx/referencedata/aqua90m/spdata_barbus_with_basinid.csv'
+    csv_url_or_path = 'https://aqua.igb-berlin.de/referencedata/aqua90m/fish_all_species_snapped_removed_empties.csv'
+    csv_url_or_path = '/var/www/nginx/referencedata/aqua90m/fish_all_species_snapped_removed_empties.csv'
     #csv_url_or_path = 'https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus_with_basinid_2points.csv'
     #csv_url_or_path = '/var/www/nginx/referencedata/aqua90m/spdata_barbus_with_basinid_2points.csv'
-    csv_url_or_path = None # so use two example points
+    #csv_url_or_path = None # so use two example points
 
-    colname_lon = 'lon'
-    colname_lat = 'lat'
+
+    #colname_lon = 'lon'
+    #colname_lat = 'lat'
+    colname_lon = 'longitude_original'
+    colname_lat = 'latitude_original'
     colname_site_id = 'site_id'
     add_distance = False
     min_strahler = 4
