@@ -789,3 +789,72 @@ HINT:  No function matches the given name and argument types. You might need to 
 (venv) mbuurman@aqua:/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh$ 
 (venv) mbuurman@aqua:/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh$ 
 ```
+
+Now with adaptation:
+
+```
+(venv) mbuurman@aqua:/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh$ 
+(venv) mbuurman@aqua:/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh$ 
+(venv) mbuurman@aqua:/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh$ git diff tests_snapping_methods_20260204/testscript_snapping_preconverted_geography_subset66_vanessa_geogtemp.py
+diff --git a/geofresh/tests_snapping_methods_20260204/testscript_snapping_preconverted_geography_subset66_vanessa_geogtemp.py b/geofresh/tests_snapping_methods_20260204/testscript_snapping_preconverted_geography_subset66_vanessa_geogtemp.py
+index 1a0ed61..b53fa30 100644
+--- a/geofresh/tests_snapping_methods_20260204/testscript_snapping_preconverted_geography_subset66_vanessa_geogtemp.py
++++ b/geofresh/tests_snapping_methods_20260204/testscript_snapping_preconverted_geography_subset66_vanessa_geogtemp.py
+@@ -213,7 +218,7 @@ FP2,20.7915502371247,40.1392343125345,560164915,1292502,66"""
+             ST_AsText(
+                 ST_LineInterpolatePoint(
+                     temp.geog_closest,
+-                    ST_LineLocatePoint(temp.geog_closest, temp.geog_user)
++                    ST_LineLocatePoint(temp.geog_closest, temp.geog_user, true)
+                 )
+             ),
+             temp.strahler_closest,
+(venv) mbuurman@aqua:/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh$ 
+```
+
+But still the same error:
+
+```
+(venv) mbuurman@aqua:/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh$ 
+(venv) mbuurman@aqua:/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh$ cp tests_snapping_methods_20260204/testscript_snapping_preconverted_geography_subset66_vanessa_geogtemp.py ./
+(venv) mbuurman@aqua:/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh$ python testscript_snapping_preconverted_geography_subset66_vanessa_geogtemp.py
+2026-02-20 21:02:52 - testscript:83 -  INFO - Testing query: query_nearest_with_geography_VB, starting at 20260220_21-02-52
+2026-02-20 21:02:52 - testscript:93 - DEBUG - Reading CSV: /var/www/nginx/referencedata/aqua90m/fish_all_species_snapped_removed_empties.csv
+2026-02-20 21:02:52 - testscript:102 - DEBUG - Connect to database...
+2026-02-20 21:02:52 - database_connection:28 -  INFO - Database-Emergency-Off not configured (config file not found), using default (False).
+2026-02-20 21:02:52 - temp_table_for_queries:105 - DEBUG - Preparing to insert data from a dataframe into PostGIS database...
+2026-02-20 21:02:52 - temp_table_for_queries:138 - DEBUG - Created list of 3621 insert rows...
+2026-02-20 21:02:52 - temp_table_for_queries:139 - DEBUG - First insert row: ('3POTAM', 22.19779814, 40.53310984, ST_SetSRID(ST_MakePoint(22.19779814, 40.53310984), 4326))
+2026-02-20 21:02:52 - testscript:262 - DEBUG - Creating and populating temp table "pygeo_a353fad431704252bb657db5ad5814db"...
+2026-02-20 21:02:52 - testscript:295 - DEBUG - Creating temporary table "pygeo_a353fad431704252bb657db5ad5814db"...
+2026-02-20 21:02:52 - testscript:316 - DEBUG - Creating temporary table "pygeo_a353fad431704252bb657db5ad5814db"... done.
+2026-02-20 21:02:52 - testscript:323 - DEBUG - Inserting into temporary table "pygeo_a353fad431704252bb657db5ad5814db"...
+2026-02-20 21:02:52 - testscript:334 - DEBUG - Inserting into temporary table "pygeo_a353fad431704252bb657db5ad5814db"... done.
+2026-02-20 21:02:52 - testscript:340 - DEBUG - Creating index for temporary table "pygeo_a353fad431704252bb657db5ad5814db"...
+2026-02-20 21:02:52 - testscript:350 - DEBUG - Creating index for temporary table "pygeo_a353fad431704252bb657db5ad5814db"... done.
+2026-02-20 21:02:52 - testscript:360 - DEBUG - Update reg_id (st_intersects) in temporary table "pygeo_a353fad431704252bb657db5ad5814db"...
+2026-02-20 21:14:14 - testscript:378 - DEBUG - Update reg_id (st_intersects) in temporary table "pygeo_a353fad431704252bb657db5ad5814db"... done
+2026-02-20 21:14:14 - testscript:389 - DEBUG - Set of distinct reg_ids present in the temp table: {66, 59}
+2026-02-20 21:14:14 - testscript:395 - DEBUG - Update subc_id, basin_id (st_intersects) in temporary table "pygeo_a353fad431704252bb657db5ad5814db"...
+2026-02-20 21:17:11 - testscript:413 - DEBUG - Update subc_id, basin_id (st_intersects) in temporary table "pygeo_a353fad431704252bb657db5ad5814db"... done.
+2026-02-20 21:17:11 - testscript:279 - DEBUG - Populating temp table "pygeo_a353fad431704252bb657db5ad5814db" (incl. subc_id, basin_id, reg_id)... done.
+2026-02-20 21:17:11 - testscript:137 -  INFO - Starting query: Nearest Neigbours
+2026-02-20 21:17:21 - testscript:141 -  INFO - Finished query: Nearest Neigbours
+2026-02-20 21:17:21 - testscript:142 - DEBUG - **** TIME ************: 10.836235523223877
+2026-02-20 21:17:21 - testscript:162 -  INFO - Starting query: Snapping
+Traceback (most recent call last):
+  File "/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh/testscript_snapping_preconverted_geography_subset66_vanessa_geogtemp.py", line 420, in <module>
+    main()
+  File "/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh/testscript_snapping_preconverted_geography_subset66_vanessa_geogtemp.py", line 164, in main
+    cursor.execute(query)
+psycopg2.errors.UndefinedFunction: function st_linelocatepoint(geography, geography) does not exist
+LINE 5:                 ST_LineLocatePoint(temp.geog_closest, temp.g...
+                        ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+(venv) mbuurman@aqua:/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh$ 
+(venv) mbuurman@aqua:/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh$ 
+(venv) mbuurman@aqua:/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh$ 
+(venv) mbuurman@aqua:/opt/pyg_upstream_dev/pygeoapi/pygeoapi/process/aqua90m/geofresh$ 
+
+```

@@ -162,6 +162,11 @@ FP2,20.7915502371247,40.1392343125345,560164915,1292502,66"""
         LOGGER.info('Starting query: Snapping')
         querystart = time.time()
         cursor.execute(query)
+        # Runs into:
+        #psycopg2.errors.UndefinedFunction: function st_linelocatepoint(geography, geometry) does not exist
+        #LINE 5:                 ST_LineLocatePoint(temp.geog_closest, temp.g...
+        #                        ^
+        #HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
         queryend = time.time()
         LOGGER.info('Finished query: Snapping')
         LOGGER.debug(f'**** TIME ************: {(queryend - querystart)}')
@@ -213,7 +218,7 @@ FP2,20.7915502371247,40.1392343125345,560164915,1292502,66"""
             ST_AsText(
                 ST_LineInterpolatePoint(
                     temp.geog_closest,
-                    ST_LineLocatePoint(temp.geog_closest, temp.geog_user)
+                    ST_LineLocatePoint(temp.geog_closest, temp.geog_user, true)
                 )
             ),
             temp.strahler_closest,
