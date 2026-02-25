@@ -145,8 +145,8 @@ FP2,20.7915502371247,40.1392343125345,560164915,1292502,66"""
         query = f'''
         UPDATE {tablename} AS temp
             SET geom_snapped = ST_LineInterpolatePoint(
-                temp.geom_closest,
-                ST_LineLocatePoint(temp.geom_closest, temp.geom_user)
+                temp.geom_closest::geometry,
+                ST_LineLocatePoint(temp.geom_closest::geometry, temp.geom_user)
             );
         '''
         LOGGER.info('Starting query: Snapping')
