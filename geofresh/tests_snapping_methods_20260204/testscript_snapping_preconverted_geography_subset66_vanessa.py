@@ -4,7 +4,7 @@ import json
 import pandas as pd
 from io import StringIO
 from datetime import datetime
-
+import sys
 
 from temp_table_for_queries import make_insertion_rows_from_dataframe
 from temp_table_for_queries import create_and_populate_temp_table
@@ -139,12 +139,18 @@ FP2,20.7915502371247,40.1392343125345,560164915,1292502,66"""
     ###############################
 
     if add_distance:
+        LOGGER.info('Adding distance does not make sense here as we have to typecast, so we dont gain insights on how fast it would be if we didnt have to typecast.')
+        # We are doing it anyway, otherwise the script would throw an error.
+        # Or we stop it here.
+        print("Stopping.")
+        sys.exit()
 
         # This does not make sense, as we have our temp table as geometries,
         # so here we would have to cast to geographies. We have no preconverted
         # geographies at this point!
+        # So this does not add any new insights, about how fast the snapping would
+        # be with preconverted geographies (if we don't have to typecast on-the-fly).
 
-        """
         # Compute snapped point, store in table:
         query = f'ALTER TABLE {tablename} ADD COLUMN geom_snapped geometry(POINT, 4326)'
         cursor.execute(query)
@@ -166,6 +172,10 @@ FP2,20.7915502371247,40.1392343125345,560164915,1292502,66"""
         # Note: ST_Distance operates on WGS84 and returns degrees, so we
         # cast to a "geography", see explanation here:
         # https://www.postgis.net/workshops/postgis-intro/geography.html
+
+        # So here, we also don't gain any new insights about how fast the distance
+        # computation would be with preconverted geographies (if we don't have to
+        # typecast on-the-fly).
         LOGGER.debug(f'Retrieving snapped points from temporary table "{tablename}"...')
         query = f'''
         SELECT
@@ -187,7 +197,7 @@ FP2,20.7915502371247,40.1392343125345,560164915,1292502,66"""
         queryend = time.time()
         LOGGER.info('Finished query: Distance')
         LOGGER.debug(f'**** TIME ************: {(queryend - querystart)}')
-        """
+
 
     ##################################
     ### Snapping without distances ###
