@@ -35,7 +35,8 @@ query_nearest_with_geography_VB = '''
 '''
 
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
+def main():
 
     #csv_url_or_path = 'https://aqua.igb-berlin.de/referencedata/aqua90m/spdata_barbus_with_basinid.csv'
     #csv_url_or_path = '/var/www/nginx/referencedata/aqua90m/spdata_barbus_with_basinid.csv'
@@ -239,3 +240,13 @@ FP2,20.7915502371247,40.1392343125345,560164915,1292502,66"""
     now = datetime.now()
     LOGGER.info(f'Tested query: {queryname}, finished at {now:%Y%m%d_%H-%M-%S}')
     LOGGER.info('Done.')
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as e:
+        LOGGER.error('Failed! %s' % e) # to be sure to get the time of failure
+        print('Failed. Stopping.')
+        #sys.exit(1)
+        raise e # to be sure to get the traceback.
+

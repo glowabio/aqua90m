@@ -417,5 +417,11 @@ def _add_subcids(cursor, tablename, reg_ids):
 
 # Finally run...
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        LOGGER.error('Failed! %s' % e) # to be sure to get the time of failure
+        print('Failed. Stopping.')
+        #sys.exit(1)
+        raise e # to be sure to get the traceback.
 
