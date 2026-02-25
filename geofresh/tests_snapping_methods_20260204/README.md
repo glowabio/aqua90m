@@ -1,6 +1,6 @@
 # Testing the different snapping methods
 
-Merret, 2026-03-04
+Merret, 2026-02-04
 
 ## Background
 
@@ -40,12 +40,80 @@ dev:
 ... ORDER BY seg.geog            <-> ST_SetSRID(ST_MakePoint(lon, lat), 4326)::geography
 ```
 
+For the distance computation between the original point and the snapped point (using
+`ST_Distance()`), we also have to use geographies instead of geometries.
+
+And it is questionable whether we should also use geographies for the actual snapping
+step, which uses `ST_LineLocatePoint()` and `ST_LineInterpolatePoint()`.
+
+So these options exist:
+
+* Old: Using geometries for all three steps. Plain wrong. Fast, as we have geometry columns.
+* Type-casting on the fly: Using geographies, but type-casting them on-the-fly, as we don't
+  have geography columns yet. Super slow, of course.
+* Pre-converted geography columns: Using geographies, from geography columns. For this, we
+  only have one table (one partition) with a pre-converted geography column, for testing.
+
+So for valid comparison, we also run the type-casting way on just one partition. As the fact
+of running it on one small partition compared to running it on the entire table might be part
+of the speed-up.
+
+
+## Snapping step also on geographies
+
+Another aspect, added later: We use a temporary table to store the points that should be
+snapped, and to compute the distance etc. This temp table could also be either in geometry
+(so far), or directly in geography, or type-casting.
+
+In the latter two cases, the snapping step and the distance computation step are then run
+on geographies, no longer on geometries.
+
+I added tests on that a week later.
+
+### Type casting to geog, for snapping step
+
+So I added a test where the temp table is still in geometry, but instead of type-casting
+the linestring to geometry for the snapping step (so both are geometry), we type-cast
+the point to a geography for the snapping step (so both are geography).
+
+```
+# test script:
+testscript_snapping_preconverted_geography_subset66_vanessa_cast_to_geog.py
+
+# NOT:
+ST_LineLocatePoint(temp.geom_closest::geometry, temp.geom_user)
+
+# BUT:
+ST_LineLocatePoint(temp.geom_closest::geography, temp.geom_user::geography)
+# OR: 
+ST_LineLocatePoint(temp.geom_closest::geography(LINESTRING, 4326), temp.geom_user::geography(POINT, 4326)) 
+```
+
+Unfortunately, this ran into errors, as our PostGIS version is too old
+to support `ST_LineLocatePoint(geography, geography)`.
+
+### Temp table in geography type
+
+In this test, I defined new functions to create the temp table, and defined the columns
+as geography columns right away:
+
+```
+testscript_snapping_preconverted_geography_subset66_vanessa_geogtemp.py
+
+# But this snapping test fails, as our PostGIS version is too old
+# to support ST_LineLocatePoint(geography, geography):
+psycopg2.errors.UndefinedFunction: function st_linelocatepoint(geography, geometry) does not exist
+LINE 5:                 ST_LineLocatePoint(temp.geog_closest, temp.g...
+                        ^
+```
+
+
 ## Test cases:
 
 * Plain geometry column (old way, entire table, wrong): Ca. 1 second for two points
-* On-the-fly conversion to geography (super slow): Ca. 1500 seconds
-* Pre-converted geography column (test table): Ca. 1 second for two points
-* On-the-fly conversion to geography (small table): Ca 25 seconds for two points
+* On-the-fly conversion to geography (just one partition, slow): Ca 25 seconds for two points
+* On-the-fly conversion to geography (entire table, super slow): Ca. 1500 seconds
+* Pre-converted geography column (just one partition): Ca. 1 second for two points
 * Pre-converted geography column (entire table): _To be done!_
 
 To sum up:
