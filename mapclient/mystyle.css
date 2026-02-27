@@ -1,5 +1,14 @@
 
 
+/* Link in Header, not style as link: */
+h1 a,
+h2 a,
+h3 a {
+  color: inherit;          /* reset color to match heading */
+  font: inherit;           /* reset font */
+  text-decoration: none !important; /* remove underline */
+}
+
 
 /* Positioning... */
 html,
