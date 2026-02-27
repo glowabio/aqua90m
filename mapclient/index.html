@@ -253,6 +253,17 @@ integrity=
     //console.log('[DEBUG] Initial view: ', initialViewLatLon);
     map.setView(initialViewLatLon, 7);
 
+    // Create custom control for process ID
+    const infoControl = L.control({ position: "topright" });
+    infoControl.onAdd = function (map) {
+        this._div = L.DomUtil.create("div", "info-box");
+	let processId = document.getElementById("processes").value;
+        this._div.innerHTML = "process id: "+processId;
+	// Don't move map if user clicks into it to copy-paste
+        L.DomEvent.disableClickPropagation(infoControl._div);
+        return this._div;
+    };
+    infoControl.addTo(map);
 
     // Other way. WORKS!
     //L.geoJSON(data, {
@@ -303,6 +314,10 @@ integrity=
     // the buttons for examples (which only work for one-click examples)!
     var eventProcessChanged = function(evt){
       console.log("Process changed to: "+this.value);
+
+      // Add name to info control
+      infoControl._div.innerHTML =
+          `process id: ${this.value}`;
 
       // Is this a process that needs one or two coordinate pairs?
       let pairs = evt.target.options[evt.target.selectedIndex].dataset.pairs;
