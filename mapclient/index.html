@@ -407,6 +407,15 @@ integrity=
         document.getElementById("customLon1").value=clicklon;
         document.getElementById("customLat1").value=clicklat;
 
+        // Update the URL field on top:
+        // TODO: ALso add this for min_strahler!
+        // TODO: ONE DAY: Also add this for two points, if I ever allow two points in URL params...
+        const url = new URL(window.location);
+        url.searchParams.set("lon", clicklon);
+        url.searchParams.set("lat", clicklat);
+        url.searchParams.set("processId", processId);
+        history.replaceState({}, "", url);
+
 	// Send the request:
         ogcRequestOneCoordinatePair(map, clicklon, clicklat, processId, processDesc, logUserAction);
 
