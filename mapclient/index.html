@@ -401,6 +401,13 @@ integrity=
 
       // Only click of one!
       if (pairs === "one") {
+
+        // Write the coordinates into the coordinate fields:
+        document.getElementById("customLonLat1").value=clicklon+", "+clicklat;
+        document.getElementById("customLon1").value=clicklon;
+        document.getElementById("customLat1").value=clicklat;
+
+	// Send the request:
         ogcRequestOneCoordinatePair(map, clicklon, clicklat, processId, processDesc, logUserAction);
 
       // If two clicks are expected, count the clicks and behave accordingly:
@@ -420,12 +427,23 @@ integrity=
           firstClickLat = clicklat;
           firstClickLon = clicklon;
 
+          // Write the coordinates into the coordinate fields:
+          document.getElementById("customLonLat1").value=clicklon+", "+clicklat;
+          document.getElementById("customLon1").value=clicklon;
+          document.getElementById("customLat1").value=clicklat;
+
           // Return to avoid triggering any request yet:
           return;
 
         // Second click of two:
         } else {
           console.log('[mapclick] Second click, the first one already occurred before.');
+
+          // Write the coordinates into the coordinate fields:
+          document.getElementById("customLonLat2").value=clicklon+", "+clicklat;
+          document.getElementById("customLon2").value=clicklon;
+          document.getElementById("customLat2").value=clicklat;
+
           // Make sure the next click is counted the first:
           thisIsSecondClick = false;
           ogcRequestTwoCoordinatePairs(map, firstClickLon, firstClickLat, clicklon, clicklat, processId, processDesc, logUserAction);
