@@ -12,6 +12,7 @@ var _ogcRequest = function(server, processId, processDesc, payload_inputs_json, 
 
     // Construct HTTP request to OGC service:
     let xhrPygeo = new XMLHttpRequest();
+    const startTime = performance.now(); // high-resolution timer
     xhrPygeo.open('POST', url, true)
     xhrPygeo.setRequestHeader('Content-Type', 'application/json');
     xhrPygeo.responseType = 'json';
@@ -33,6 +34,21 @@ var _ogcRequest = function(server, processId, processDesc, payload_inputs_json, 
     xhrPygeo.onreadystatechange = function () {
       if (xhrPygeo.readyState === XMLHttpRequest.DONE) {
         console.log("[sync] Request done with status:", xhrPygeo.status);
+        const elapsedMs = performance.now() - startTime;
+        const elapsedSec = (elapsedMs / 1000).toFixed(1);
+        console.log(`[sync] ${elapsedSec}s since first request`);
+        // update click marker. NOT TESTED YET! TODO: Test
+        const popup = clickMarker.getPopup();
+        let content = popup.getContent();
+        const updated = content.replace(
+          /(waited:\s*)[\d.]+/,
+          `$1${elapsedSec}`
+        );
+        // Update popup content
+        console.log("[DEBUG] Updated popup content: "+updated);
+        popup.setContent(updated);
+        // If popup is open, refresh it visually
+        clickMarker.setPopupContent(updated);
       }
     };
     xhrPygeo.onload = function() {

@@ -112,9 +112,14 @@ async function _ogcRequest(server, processId, processDesc, payload_inputs_json, 
 
 async function _pollStatus(statusUrl, processId, clickMarker) {
     const delay = ms => new Promise(res => setTimeout(res, ms));
+    const startTime = performance.now(); // high-resolution timer
 
     while (true) {
       await delay(2000);
+
+      const elapsedMs = performance.now() - startTime;
+      const elapsedSec = (elapsedMs / 1000).toFixed(1);
+      console.log(`[async] ${elapsedSec}s since first request`);
 
       const res = await fetch(statusUrl);
       if (!res.ok) {
@@ -126,10 +131,26 @@ async function _pollStatus(statusUrl, processId, clickMarker) {
 
       //document.getElementById('status').textContent = `Status: ${job.status}`;
       console.log(`[async] Status: ${job.status}`);
-      document.getElementById("displayGeoJSON").innerHTML = `Status: ${job.status}`;
+      document.getElementById("displayGeoJSON").innerHTML = `Status: ${job.status}: ${elapsedSec}s since first request`;
+
+      if (['accepted', 'running'].includes(job.status)) {
+         //clickMarker.bindPopup(`Status: ${job.status}: ${elapsedSec}s since first request`);
+	 const popup = clickMarker.getPopup();
+         let content = popup.getContent();
+         const updated = content.replace(
+           /(waited:\s*)[\d.]+/,
+           `$1${elapsedSec}`
+         );
+
+         // Update popup content
+         console.log("[DEBUG] Updated popup content: "+updated);
+         popup.setContent(updated);
+
+         // If popup is open, refresh it visually
+         clickMarker.setPopupContent(updated);
 
       // If successful, find the "application/json" result link
-      if (job.status === 'successful') {
+      } else if (job.status === 'successful') {
         const jsonResultLink = job.links?.find(
           link =>
             link.rel === "http://www.opengis.net/def/rel/ogc/1.0/results" &&

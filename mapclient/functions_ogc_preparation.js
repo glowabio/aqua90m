@@ -14,7 +14,7 @@ var ogcRequestTwoCoordinatePairs = function(map, lon1, lat1, lon2, lat2, process
     clickMarker = putIconToClickLocation(lon1, lat1, map, logUserAction+' (part 1)');
     clickMarker = putIconToClickLocation(lon1, lat1, map, logUserAction+' (part 2)');
     let paramstring = lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat) to "+lon2.toFixed(3)+", "+lat2.toFixed(3)+" (lon, lat)...";
-    clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
+    clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring+" (waited: 0 seconds)...").openPopup();
 
     // Reset result field:
     document.getElementById("responseField").innerHTML = "Response returned by server for <span class=\"code\">"+lon1+", "+lat1+"</span> to <span class=\"code\">"+lon2+", "+lat2+"</span> (lon, lat, WGS84)...";
@@ -45,7 +45,7 @@ var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDe
     // Add icon and popup to click location:
     clickMarker = putIconToClickLocation(lon1, lat1, map, logUserAction);
     let paramstring = lon1.toFixed(3)+", "+lat1.toFixed(3)+" (lon, lat)...";
-    clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring).openPopup();
+    clickMarker.bindPopup("Waiting for "+processDesc+" for "+paramstring+" (waited: 0 seconds)...").openPopup();
 
     // Reset result field:
     document.getElementById("responseField").innerHTML = "Response returned by server for lon, lat <span class=\"code\">"+lon1+", "+lat1+"</span> (lon, lat, WGS84)...";
