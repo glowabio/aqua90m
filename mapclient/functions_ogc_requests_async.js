@@ -124,12 +124,15 @@ async function _pollStatus(statusUrl, processId, clickMarker) {
       const res = await fetch(statusUrl);
       if (!res.ok) {
         console.error(`[async] HTTP error: ${res.status} ${res.statusText}`);
-        continue;
+        //continue;
+        throw new Error(`Failed to fetch results: ${res.statusText} (HTTP ${res.status}`);
       }
 
       const job = await res.json();
 
       //document.getElementById('status').textContent = `Status: ${job.status}`;
+      //const location = res.headers.get("Location");
+      //console.log(location);
       console.log(`[async] Status: ${job.status}`);
       document.getElementById("displayGeoJSON").innerHTML = `Status: ${job.status}: ${elapsedSec}s since first request`;
 

@@ -322,6 +322,8 @@ integrity=
       // Is this a process that needs one or two coordinate pairs?
       let pairs = evt.target.options[evt.target.selectedIndex].dataset.pairs;
       console.log("Process needs "+pairs+" coordinate pairs.");
+
+      // Hide/unhide example buttons
       if (pairs == 'two') {
         defineTwoClickExampleButtons();
         var divsToHide = document.getElementsByClassName("fortwo");
@@ -337,8 +339,11 @@ integrity=
       }
 
       // Hide/unhide strahler order
+      // The value of the form is ...
       // get-snapped-points
       // get-snapped-point-plus
+      // Note: When strahler is specified and >1, it will always show connecting line and ...
+      // so the difference between with and without "-plus" is removed!
       console.log("[DEBUG] Value of min strahler: "+document.getElementById("strahlerSnap").value);
       if (this.value.startsWith("get-snapped-point")) {
         document.getElementById("strahlerSnap").classList.remove('invisible');
@@ -452,6 +457,7 @@ integrity=
 
     // Define clearing the map
     var clearMap = function() {
+      console.log("[DEBUG] Clearing the map.");
       for (var i = 0; i < allMyLayers.length; i++) {
         map.removeLayer(allMyLayers[i]);
       };

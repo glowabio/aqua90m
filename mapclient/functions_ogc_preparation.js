@@ -73,7 +73,7 @@ var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDe
     // TODO: Validate and max value? What happens with strahler=99 or so?
     if (processId.startsWith("get-snapped")) {
       let strahlerSnap = document.getElementById("strahlerSnap").value;
-
+      console.log('[DEBUG] Min strahler value: '+strahlerSnap);
       // Safety:
       if (typeof strahlerSnap !== "string"){
         console.error("Strahler order is not string");
