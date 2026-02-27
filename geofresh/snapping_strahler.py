@@ -85,7 +85,7 @@ def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_fea
 
     # Important Note: Until January 2026, we used "geometry" instead of
     # "geography" type for the <-> operator:
-    # ... ORDER BY seg.geom <-> ST_SetSRID(ST_MakePoint(temp2.lon, temp2.lat), 4326)
+    # ... ORDER BY seg.geom <-> ST_SetSRID(ST_MakePoint(lon, lat), 4326)
     # Unfortunately, that takes the WGS84 lon and lat coordinates as flat space
     # and computes distances in cartesian euclidean space, so in higher latitudes
     # we get big errors. So we moved this so "geography", but that makes the
@@ -117,7 +117,7 @@ def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_fea
     '''
 
     ### Query database:
-    LOGGER.log(logging.TRACE, "SQL query: {query}")
+    LOGGER.log(logging.TRACE, f"SQL query: {query}")
     cursor = conn.cursor()
     querystart = time.time()
     cursor.execute(query)
@@ -355,7 +355,7 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
     #
     # Important Note: Until January 2026, we used "geometry" instead of
     # "geography" type for the <-> operator:
-    # ... ORDER BY seg.geom <-> ST_SetSRID(ST_MakePoint(temp2.lon, temp2.lat), 4326)
+    # ... ORDER BY seg.geom <-> temp.geom_user
     # Unfortunately, that takes the WGS84 lon and lat coordinates as flat space
     # and computes distances in cartesian euclidean space, so in higher latitudes
     # we get big errors. So we moved this so "geography", but that makes the
@@ -379,7 +379,7 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
         SELECT seg.geom, seg.strahler, seg.subc_id
         FROM stream_segments seg
         WHERE seg.strahler >= {min_strahler}
-        ORDER BY seg.geom <-> ST_SetSRID(ST_MakePoint(temp2.lon, temp2.lat), 4326)
+        ORDER BY seg.geom <-> temp2.geom_user
         LIMIT 1
     ) AS closest
     WHERE temp1.geom_user = temp2.geom_user;
@@ -419,7 +419,7 @@ def _add_nearest_neighours_to_temptable_66(cursor, tablename, min_strahler):
         SELECT seg.geog, seg.strahler, seg.subc_id
         FROM "shiny_user"."stream_segments_geog_66" seg
         WHERE seg.geog IS NOT NULL AND seg.strahler >= {min_strahler}
-        ORDER BY seg.geog <-> ST_SetSRID(ST_MakePoint(temp2.lon, temp2.lat), 4326)::geography
+        ORDER BY seg.geog <-> temp2.geom_user::geography
         LIMIT 1
     ) AS closest
     WHERE temp1.geom_user = temp2.geom_user;
@@ -554,7 +554,7 @@ def _snapping_without_distances(cursor, tablename, result_format, colname_lon, c
         ST_AsText(
             ST_LineInterpolatePoint(
                 temp.geom_closest,
-                ST_LineLocatePoint(temp.geom_closest, ST_SetSRID(ST_MakePoint(temp.lon, temp.lat), 4326))
+                ST_LineLocatePoint(temp.geom_closest, temp.geom_user)
             )
         ),
         temp.strahler_closest,
@@ -588,7 +588,7 @@ def _snapping_without_distances_66(cursor, tablename, result_format, colname_lon
         ST_AsText(
             ST_LineInterpolatePoint(
                 temp.geom_closest::geometry,
-                ST_LineLocatePoint(temp.geom_closest::geometry, ST_SetSRID(ST_MakePoint(temp.lon, temp.lat), 4326))
+                ST_LineLocatePoint(temp.geom_closest::geometry, temp.geom_user)
             )
         ),
         temp.strahler_closest,
