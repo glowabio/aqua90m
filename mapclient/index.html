@@ -228,8 +228,10 @@ integrity=
     const paramProcessId = params.get('processId');
     let paramLat   = parseFloat(params.get('lat'));
     let paramLon   = parseFloat(params.get('lon'));
+    let paramStrahler = parseInt(params.get('strahler'));
     paramLat = Number.isFinite(paramLat) ? paramLat : null;
     paramLon = Number.isFinite(paramLon) ? paramLon : null;
+    paramStrahler = Number.isFinite(paramStrahler) ? paramStrahler : null;
     console.log("[DEBUG] URL params, values parsed: "+paramLon+", "+paramLat+" (lon, lat), process: "+paramProcessId);
 
     // Initialize the map
@@ -414,6 +416,7 @@ integrity=
         url.searchParams.set("lon", clicklon);
         url.searchParams.set("lat", clicklat);
         url.searchParams.set("processId", processId);
+        url.searchParams.set("strahler", document.getElementById("strahlerSnap").value);
         history.replaceState({}, "", url);
 
 	// Send the request:
@@ -543,10 +546,16 @@ integrity=
     // console.log('[DEBUG] URL params that are present: '+params);
     const missing = requiredParams.filter(p => !params.has(p));
     if (missing.length == 3) {
-      console.log('[urlparam] No useful URL parameters passed.')
-      console.log('Waiting for user to click to get a coordinate...');
+      console.log('[urlparam] None of the required URL parameters passed.')
     } else {
-      // If all URL params were passed, continue here...
+      // If all required URL params were passed, continue here...
+      // Optional URL param: strahler order!
+      console.log("[DEBUG] URL param strahler: "+paramStrahler);
+      if (!(paramStrahler == null)) {
+          console.log("[INFO] URL param strahler was set to: "+paramStrahler);
+          document.getElementById('strahlerSnap').value = paramStrahler;
+          console.log("[DEBUG] strahler URL param was written into relevant field: "+document.getElementById('strahlerSnap').value);
+      }
       urlParamBehaviour(paramLon, paramLat, paramProcessId);
     }
     console.log('Waiting for user to click to get a coordinate...');
