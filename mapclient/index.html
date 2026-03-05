@@ -318,6 +318,11 @@ integrity=
     var eventProcessChanged = function(evt){
       console.log("Process changed to: "+this.value);
 
+      // Update the URL params field on top:
+      console.log("[processchanged] Will update the URL params field");
+      //let strahler = document.getElementById("strahlerSnap").value;
+      updateUrlParams(null, null, this.value, null);
+
       // Add name to info control
       infoControl._div.innerHTML =
           `process id: ${this.value}`;
