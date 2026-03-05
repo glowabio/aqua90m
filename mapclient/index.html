@@ -233,7 +233,7 @@ integrity=
     paramLat = Number.isFinite(paramLat) ? paramLat : null;
     paramLon = Number.isFinite(paramLon) ? paramLon : null;
     paramStrahler = Number.isFinite(paramStrahler) ? paramStrahler : null;
-    console.log("[DEBUG] URL params, values parsed: "+paramLon+", "+paramLat+" (lon, lat), process: "+paramProcessId);
+    console.log("[urlparams] URL params, values parsed: "+paramLon+", "+paramLat+" (lon, lat), process: "+paramProcessId);
 
     // Initialize the map
     const map = L.map('map')
@@ -253,10 +253,10 @@ integrity=
     // either from URL params or default
     //const initialViewLatLon = [paramLat ?? 53.014, paramLon ?? 12.008]; // Northern Germany (zoom 7)
     let initialViewLatLon = [paramLat ?? 60.19123, paramLon ?? 24.94612]; // Helsinki (zoom 10)
-    //console.log('[DEBUG] Initial view: ', initialViewLatLon);
+    //console.log('[main] Initial view: ', initialViewLatLon);
     map.setView(initialViewLatLon, 7);
 
-    // Create custom control for process ID
+    // Create custom control textbox for processId
     const infoControl = L.control({ position: "topright" });
     infoControl.onAdd = function (map) {
         this._div = L.DomUtil.create("div", "info-box");
@@ -316,22 +316,20 @@ integrity=
     // Define event listener for change of process id, so I can switch off/ switch on
     // the buttons for examples (which only work for one-click examples)!
     var eventProcessChanged = function(evt){
-      console.log("Process changed to: "+this.value);
+      console.log("[processchanged] Process changed to: "+this.value);
 
       // Update the URL params field on top:
-      console.log("[processchanged] Will update the URL params field");
-      //let strahler = document.getElementById("strahlerSnap").value;
       updateUrlParams(null, null, this.value, null);
 
       // Add name to info control
-      infoControl._div.innerHTML =
-          `process id: ${this.value}`;
+      console.log("[processchanged] Updating the process id displayed on the map");
+      infoControl._div.innerHTML = `process id: ${this.value}`;
 
       // Is this a process that needs one or two coordinate pairs?
       let pairs = evt.target.options[evt.target.selectedIndex].dataset.pairs;
-      console.log("Process needs "+pairs+" coordinate pairs.");
+      console.log("[processchanged] Selected process needs "+pairs+" coordinate pair(s).");
 
-      // Hide/unhide example buttons
+      // Hide/unhide example buttons, depending on number of coordinate pairs needed
       if (pairs == 'two') {
         defineTwoClickExampleButtons();
         var divsToHide = document.getElementsByClassName("fortwo");
@@ -348,17 +346,18 @@ integrity=
 
       // Hide/unhide strahler order
       // The value of the form is ...
-      // get-snapped-points
-      // get-snapped-point-plus
+      // * get-snapped-points
+      // * get-snapped-point-plus
       // Note: When strahler is specified and >1, it will always show connecting line and ...
       // so the difference between with and without "-plus" is removed!
-      console.log("[DEBUG] Value of min strahler: "+document.getElementById("strahlerSnap").value);
+      let strahler = document.getElementById("strahlerSnap").value;
+      console.log("[processchanged] Value of min strahler: "+strahler);
       if (this.value.startsWith("get-snapped-point")) {
         document.getElementById("strahlerSnap").classList.remove('invisible');
-        console.log("[DEBUG] Show form to enter min strahler. Value: "+document.getElementById("strahlerSnap").value);
+        console.log("[processchanged] Show form to enter min strahler. Value: "+strahler);
       } else {
         document.getElementById("strahlerSnap").classList.add('invisible');
-        console.log("[DEBUG] Hide form to enter min strahler. Value: "+document.getElementById("strahlerSnap").value);
+        console.log("[processchanged] Hide form to enter min strahler. Value: "+strahler);
       }
 
       // Previously, we had to disable the example buttons once a two-pair process
@@ -392,7 +391,7 @@ integrity=
 
     // Set the URL params in current window:
     var updateUrlParams = function(lat, lon, processId, strahler) {
-        console.log('[urlparams] Updating the URL params...');
+        console.log("[urlparams] Updating the URL params in browser's URL field");
         // Update the URL field on top:
         // TODO: ALso add this for min_strahler!
         // TODO: ONE DAY: Also add this for two points, if I ever allow two points in URL params...
@@ -504,7 +503,6 @@ integrity=
         // Select the process in the dropdown (and trigger event):
         const select = document.getElementById("processes");
         select.value = processId;
-        console.log("URL params: Fire process changed");
         select.dispatchEvent(new Event("input", { bubbles: true }));
         // TODO Allow passing two pairs!
         // TODO Get the proper processDesc, e.g. Upstream catchment (individual polygons)
@@ -516,7 +514,7 @@ integrity=
 
     // Define clearing the map
     var clearMap = function() {
-      console.log("[DEBUG] Clearing the map.");
+      console.log("[clearmap] Clearing the map.");
       for (var i = 0; i < allMyLayers.length; i++) {
         map.removeLayer(allMyLayers[i]);
       };
@@ -572,18 +570,18 @@ integrity=
 
     // If URL params were passed, do not wait for user's click, but trigger the request already:
     const requiredParams = ['lon', 'lat', 'processId'];
-    // console.log('[DEBUG] URL params that are present: '+params);
+    // console.log("[main] URL params that are present: "+params);
     const missing = requiredParams.filter(p => !params.has(p));
     if (missing.length == 3) {
-      console.log('[urlparam] None of the required URL parameters passed.')
+      console.log("[main] None of the required URL parameters passed.")
     } else {
       // If all required URL params were passed, continue here...
       // Optional URL param: strahler order!
-      console.log("[DEBUG] URL param strahler: "+paramStrahler);
+      console.log("[main] URL param strahler: "+paramStrahler);
       if (!(paramStrahler == null)) {
-          console.log("[INFO] URL param strahler was set to: "+paramStrahler);
+          console.log("[main] URL param strahler was set to: "+paramStrahler);
           document.getElementById('strahlerSnap').value = paramStrahler;
-          console.log("[DEBUG] strahler URL param was written into relevant field: "+document.getElementById('strahlerSnap').value);
+          console.log("[main] strahler URL param was written into relevant field: "+document.getElementById('strahlerSnap').value);
       }
       urlParamBehaviour(paramLon, paramLat, paramProcessId);
     }

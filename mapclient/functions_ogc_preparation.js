@@ -2,7 +2,7 @@ const server = "https://aqua.igb-berlin.de/pygeoapi";
 
 // Define making request to OGC service (function):
 var ogcRequestTwoCoordinatePairs = function(map, lon1, lat1, lon2, lat2, processId, processDesc, logUserAction) {
-    console.log('[DEBUG] Triggering suite of actions for two pairs of coordinates...');
+    console.log('[ogc-prep] Triggering suite of actions for two pairs of coordinates...');
 
     // Parse coordinates to Float
     var lat1 = parseFloat(lat1);
@@ -36,7 +36,7 @@ var ogcRequestTwoCoordinatePairs = function(map, lon1, lat1, lon2, lat2, process
 
 // Define making request to OGC service (function):
 var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDesc, logUserAction) {
-    console.log('[DEBUG] Triggering suite of actions for one pair of coordinates...');
+    console.log('[ogc-prep] Triggering suite of actions for one pair of coordinates...');
 
     // Parse coordinates to Float
     var lon1 = parseFloat(lon1);
@@ -53,10 +53,10 @@ var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDe
 
     // If upstream, make pre-request:
     if (processId.startsWith("get-upstream")) {
-      console.log('Requesting upstream... This may take a while, so we do a pre-request!');
+      console.log('[ogc-prep] Requesting upstream... This may take a while, so we do a pre-request!');
       _preRequestUpstream(server, clickMarker, lon1, lat1);
     } else if (processId == 'get-shortest-path-to-outlet') {
-      console.log('Requesting downstream... This may take a while, so we do a pre-request!');
+      console.log('[ogc-prep] Requesting downstream... This may take a while, so we do a pre-request!');
       _preRequestDownstream(server, clickMarker, lon1, lat1);
     }
 
@@ -73,7 +73,7 @@ var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDe
     // TODO: Validate and max value? What happens with strahler=99 or so?
     if (processId.startsWith("get-snapped")) {
       let strahlerSnap = document.getElementById("strahlerSnap").value;
-      console.log('[DEBUG] Min strahler value: '+strahlerSnap);
+      console.log('[ogc-prep] Process accepts min strahler. Current value: '+strahlerSnap);
       // Safety:
       if (typeof strahlerSnap !== "string"){
         console.error("Strahler order is not string");
@@ -94,7 +94,7 @@ var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDe
       // Now add to payload, if > 1:
       if (strahlerSnapParsed > 1) {
         payload.inputs.strahler = strahlerSnapParsed;
-        console.log('[debug] Added strahlerSnap of value '+strahlerSnapParsed+'...');
+        console.log('[ogc-prep] Added strahlerSnap of value '+strahlerSnapParsed+'...');
         console.log(payload);
         // TODO: This does not work in the "plus" version!
         processId = "get-snapped-points-strahler";
@@ -109,7 +109,7 @@ var ogcRequestOneCoordinatePair = function(map, lon1, lat1, processId, processDe
 
 // Define making request to OGC service (function):
 var ogcRequestOneSubcid = function(map, subcid, processId, processDesc, logUserAction) {
-    console.log('[DEBUG] Triggering suite of actions for one subc_id...');
+    console.log('[ogc-prep] Triggering suite of actions for one subc_id...');
 
     // Add icon and popup to click location:
     clickMarker = putIconToSubcidLocation(map, logUserAction);
@@ -125,10 +125,10 @@ var ogcRequestOneSubcid = function(map, subcid, processId, processDesc, logUserA
 
     // If upstream, make pre-request:
     if (processId.startsWith("get-upstream")) {
-      console.log('Requesting upstream... This may take a while, so we do a pre-request!');
+      console.log('[ogc-prep] Requesting upstream... This may take a while, so we do a pre-request!');
       _preRequestUpstreamSubcid(server, clickMarker, subcid);
     } else if (processId == 'get-shortest-path-to-outlet') {
-      console.log('Requesting downstream... This may take a while, so we do a pre-request!');
+      console.log('[ogc-prep] Requesting downstream... This may take a while, so we do a pre-request!');
       _preRequestDownstreamSubcid(server, clickMarker, subcid);
     }
 
@@ -139,7 +139,7 @@ var ogcRequestOneSubcid = function(map, subcid, processId, processDesc, logUserA
 
 // Define making request to OGC service (function):
 var ogcRequestTwoSubcids = function(map, subcid1, subcid2, processId, processDesc, logUserAction) {
-    console.log('[DEBUG] Triggering suite of actions for two subc_ids...');
+    console.log('[ogc-prep] Triggering suite of actions for two subc_ids...');
 
     // Add icon and popup to some location:
     clickMarker = putIconToSubcidLocation(map, logUserAction);
@@ -163,7 +163,7 @@ var ogcRequestTwoSubcids = function(map, subcid1, subcid2, processId, processDes
 
 // Define making request to OGC service (function):
 var ogcRequestTwoMixed = function(map, lon, lat, subcid, processId, processDesc, logUserAction) {
-    console.log('[DEBUG] Triggering suite of actions for one pair of coordinates and one subc_id (mixed)...');
+    console.log('[ogc-prep] Triggering suite of actions for one pair of coordinates and one subc_id (mixed)...');
 
     // Add icon and popup to some location:
     clickMarker = putIconToClickLocation(lon, lat, map, logUserAction);

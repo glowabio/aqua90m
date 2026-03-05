@@ -12,12 +12,12 @@ var _successPleaseShowGeojson = function(responseJson, processId) {
 
     // Style features depending on their properties:
     if (document.getElementById("stylingStrahlerToggle").checked){
-        console.log("[DEBUG] Asked to style depending on strahler order.");
+        console.log("[async] Asked to style depending on strahler order.");
         pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
             styleLayerStrahler(layer, processId);
         });
     } else {
-        console.log("[DEBUG] Will style without strahler order.");
+        console.log("[async] Will style without strahler order.");
         pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
             styleLayerUni(layer, processId);
         });
@@ -146,7 +146,7 @@ async function _pollStatus(statusUrl, processId, clickMarker) {
          );
 
          // Update popup content
-         console.log("[DEBUG] Updated popup content: "+updated);
+         console.log("[async] Updated popup content: "+updated);
          popup.setContent(updated);
 
          // If popup is open, refresh it visually

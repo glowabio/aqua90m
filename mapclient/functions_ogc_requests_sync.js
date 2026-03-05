@@ -45,7 +45,6 @@ var _ogcRequest = function(server, processId, processDesc, payload_inputs_json, 
           `$1${elapsedSec}`
         );
         // Update popup content
-        console.log("[DEBUG] Updated popup content: "+updated);
         popup.setContent(updated);
         // If popup is open, refresh it visually
         clickMarker.setPopupContent(updated);
@@ -76,8 +75,8 @@ var _ogcRequest = function(server, processId, processDesc, payload_inputs_json, 
         // TODO Headwater, how to handle? Has not happened for a while, I think we now include the local
         // one itself to the upstream, so the response will not be null anywhere. Except for ocean I guess.
       } else {
-        console.log('[debug] Server response: '+xhrPygeo.response.type);
-        console.log('[debug] Server response as JSON: '+JSON.stringify(xhrPygeo.response));
+        console.log('[sync] Server response: '+xhrPygeo.response.type);
+        console.log('[sync] Server response as JSON: '+JSON.stringify(xhrPygeo.response));
       }
 
       // Make layer(s) from GeoJSON that the server returned:
@@ -85,13 +84,13 @@ var _ogcRequest = function(server, processId, processDesc, payload_inputs_json, 
 
       // Style features depending on their properties:
       if (document.getElementById("stylingStrahlerToggle").checked){
-        console.log("[DEBUG] Asked to style depending on strahler order.");
+        console.log("[sync] Asked to style depending on strahler order.");
         pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
             styleLayerStrahler(layer, processId);
         });
 
       } else {
-        console.log("[DEBUG] Will style without strahler order.");
+        console.log("[sync] Will style without strahler order.");
         pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
             styleLayerUni(layer, processId);
         });
@@ -100,9 +99,9 @@ var _ogcRequest = function(server, processId, processDesc, payload_inputs_json, 
       // Add styled layers to map:
       pygeoResponseGeoJSONLayer.addTo(map);
       allMyLayers.push(pygeoResponseGeoJSONLayer);
-      console.log('[debug] Added layer to map...');
+      console.log('[sync] Added layer to map...');
       map.fitBounds(pygeoResponseGeoJSONLayer.getBounds());
-      console.log('[debug] Zoomed to layer...');
+      console.log('[sync] Zoomed to layer...');
       clickMarker.closePopup();
 
       // Move web page to map!
