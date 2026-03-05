@@ -385,6 +385,29 @@ integrity=
     var firstClickLon = null;
     var firstClickLat = null;
 
+    // Set the URL params in current window:
+    var updateUrlParams = function(lat, lon, processId, strahler) {
+        console.log('[urlparams] Updating the URL params...');
+        // Update the URL field on top:
+        // TODO: ALso add this for min_strahler!
+        // TODO: ONE DAY: Also add this for two points, if I ever allow two points in URL params...
+        const url = new URL(window.location);
+	if (lon !== null) {
+	  url.searchParams.set("lon", lon);
+	}
+	if (lat !== null) {
+          url.searchParams.set("lat", lat);
+	}
+	if (processId !== null) {
+	  url.searchParams.set("processId", processId);
+        }
+
+	//let strahler = document.getElementById("strahlerSnap").value;
+	if (strahler !== null) {
+          url.searchParams.set("strahler", strahler);
+        }
+        history.replaceState({}, "", url);
+    };
 
     // Define behaviour on map click (function)
     var mapClickBehaviour = function(evt) {
@@ -410,15 +433,10 @@ integrity=
         document.getElementById("customLon1").value=clicklon;
         document.getElementById("customLat1").value=clicklat;
 
-        // Update the URL field on top:
-        // TODO: ALso add this for min_strahler!
-        // TODO: ONE DAY: Also add this for two points, if I ever allow two points in URL params...
-        const url = new URL(window.location);
-        url.searchParams.set("lon", clicklon);
-        url.searchParams.set("lat", clicklat);
-        url.searchParams.set("processId", processId);
-        url.searchParams.set("strahler", document.getElementById("strahlerSnap").value);
-        history.replaceState({}, "", url);
+        // Update the URL params field on top:
+	console.log('[mapclick] Will update the URL params field');
+        let strahler = document.getElementById("strahlerSnap").value;
+        updateUrlParams(clicklon, clicklat, processId, strahler);
 
 	// Send the request:
         ogcRequestOneCoordinatePair(map, clicklon, clicklat, processId, processDesc, logUserAction);
