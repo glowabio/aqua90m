@@ -551,10 +551,16 @@ integrity=
       let processDesc = "process provided by user"
       // TODO Get the proper processDesc, e.g. Upstream catchment (individual polygons)
 
-      // Go for it!
-      console.log("[urlparams] Triggering process: "+processId);
-      ogcRequestOneCoordinatePair(map, paramLon, paramLat, processId, processDesc, logUserAction);
-      return true;
+      let skipConfirm = urlParams.get("confirm")?.toLowerCase() === "false";
+      if (skipConfirm || confirm("You want to compute "+processId+" for coordinates "+paramLon+", "+paramLat+" (lon, lat)?")) {
+        // Go for it!
+        console.log("[urlparams] Triggering process: "+processId);
+        ogcRequestOneCoordinatePair(map, paramLon, paramLat, processId, processDesc, logUserAction);
+        return true;
+      } else {
+        console.log("[urlparams] User prevented us from triggering process: "+processId);
+        return false;
+      }
     };
 
 
