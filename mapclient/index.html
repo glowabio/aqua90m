@@ -498,29 +498,63 @@ integrity=
       }
     };
 
-    var urlParamBehaviour = function(lon, lat, processId, processDesc, pairs, logUserAction) {
-      console.log('[urlparam] User passed URL parameters...');
+    // If URL params were passed, do not wait for user's click, but trigger the request already:
+    var urlParamBehaviour = function(params) {
+      console.log('[urlparams] User passed at least some URL parameters');
 
-      // Some URL params were passed.
-      // Now checking whether the required values are there and formatted correctly:
-      if (missing.length > 0) {
-        console.warn("[urlparam] Missing parameters:", missing.join(', '));
-      } else if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-        console.warn("[urlparam] All required parameters present, but at least one coordinate is not a number: "+lon+", "+lat+" (lon, lat). Not doing anything.");
+      // Are required values there?
+      const requiredParams = ['lon', 'lat', 'processId'];
+      const missing = requiredParams.filter(p => !params.has(p));
+      if (missing.length == 3) {
+        console.log("[urlparams] None of the required URL parameters passed.")
+        return false;
+      } else if (missing.length > 0) {
+        console.warn("[urlparams] Missing parameters:", missing.join(', '));
+        return false;
       } else {
-        console.log("[urlparam] All required parameters present: "+lon+", "+lat+" (lon, lat), triggering process: "+processId);
-        let logUserAction = "passed URL params";
-        let pairs = "one"; // currently, we can only pass one pair of coords
-        let processDesc = "process provided by user"
-        // Select the process in the dropdown (and trigger event):
-        const select = document.getElementById("processes");
-        select.value = processId;
-        select.dispatchEvent(new Event("input", { bubbles: true }));
-        // TODO Allow passing two pairs!
-        // TODO Get the proper processDesc, e.g. Upstream catchment (individual polygons)
-        ogcRequestOneCoordinatePair(map, lon, lat, processId, processDesc, logUserAction);
-
+        console.log("[urlparams] All required parameters present");
       }
+
+      // Are lon lat formatted ok?
+      paramLon = parseFloat(urlParams.get('lon'));
+      paramLat = parseFloat(urlParams.get('lat'));
+      paramLon = Number.isFinite(paramLon) ? paramLon : null;
+      paramLat = Number.isFinite(paramLat) ? paramLat: null;
+      if (!Number.isFinite(paramLat) || !Number.isFinite(paramLon)) {
+        console.warn("[urlparams] At least one coordinate is not a number: "+paramLon+", "+paramLat+" (lon, lat). Not doing anything.");
+        return false;
+      }
+
+      // Get process id
+      const processId = params.get('processId');
+      console.log("[urlparams] URL param processId: "+processId);
+
+      // Set the process to selected in the dropdown (and trigger event):
+      // TODO: Problem: This event then will try to reset the URL params... Puh.
+      const select = document.getElementById("processes");
+      select.value = processId;
+      select.dispatchEvent(new Event("input", { bubbles: true }));
+
+      // Optional URL param: strahler order!
+      let paramStrahler = parseInt(params.get('strahler'));
+      paramStrahler = Number.isFinite(paramStrahler) ? paramStrahler : null;
+      console.log("[urlparams] URL param strahler: "+paramStrahler);
+      if (!(paramStrahler == null)) {
+        console.log("[urlparams] URL param strahler was set to: "+paramStrahler);
+        document.getElementById('strahlerSnap').value = paramStrahler;
+        console.log("[urlparams] strahler URL param was written into relevant field: "+document.getElementById('strahlerSnap').value);
+      }
+
+      let logUserAction = "passed URL params";
+      let pairs = "one"; // currently, we can only pass one pair of coords
+      // TODO Allow passing two pairs!
+      let processDesc = "process provided by user"
+      // TODO Get the proper processDesc, e.g. Upstream catchment (individual polygons)
+
+      // Go for it!
+      console.log("[urlparams] Triggering process: "+processId);
+      ogcRequestOneCoordinatePair(map, paramLon, paramLat, processId, processDesc, logUserAction);
+      return true;
     };
 
 
@@ -580,24 +614,16 @@ integrity=
     // Bind map click behaviour to the map click event:
     map.on('click', mapClickBehaviour);
 
-    // If URL params were passed, do not wait for user's click, but trigger the request already:
-    const requiredParams = ['lon', 'lat', 'processId'];
-    // console.log("[main] URL params that are present: "+params);
-    const missing = requiredParams.filter(p => !params.has(p));
-    if (missing.length == 3) {
-      console.log("[main] None of the required URL parameters passed.")
-    } else {
-      // If all required URL params were passed, continue here...
-      // Optional URL param: strahler order!
-      console.log("[main] URL param strahler: "+paramStrahler);
-      if (!(paramStrahler == null)) {
-          console.log("[main] URL param strahler was set to: "+paramStrahler);
-          document.getElementById('strahlerSnap').value = paramStrahler;
-          console.log("[main] strahler URL param was written into relevant field: "+document.getElementById('strahlerSnap').value);
-      }
-      urlParamBehaviour(paramLon, paramLat, paramProcessId);
+    // Handle URL params or wait for click:
+    let waitForClick = true;
+    if (window.location.search) {
+      // If URL params were passed, do not wait for user's click, but trigger the request already:
+      let enoughParamsPassed = urlParamBehaviour(urlParams);
+      waitForClick = !enoughParamsPassed;
     }
-    console.log('Waiting for user to click to get a coordinate...');
+    if (waitForClick) {
+      console.log('[main] Waiting for user to click to get a coordinate...');
+    };
 
   </script>
 </body>
