@@ -225,15 +225,21 @@ integrity=
   <script>
 
     // Get URL params, if any:
-    const params = new URLSearchParams(window.location.search);
-    const paramProcessId = params.get('processId');
-    let paramLat   = parseFloat(params.get('lat'));
-    let paramLon   = parseFloat(params.get('lon'));
-    let paramStrahler = parseInt(params.get('strahler'));
-    paramLat = Number.isFinite(paramLat) ? paramLat : null;
-    paramLon = Number.isFinite(paramLon) ? paramLon : null;
-    paramStrahler = Number.isFinite(paramStrahler) ? paramStrahler : null;
-    console.log("[urlparams] URL params, values parsed: "+paramLon+", "+paramLat+" (lon, lat), process: "+paramProcessId);
+    let paramLon = null;
+    let paramLat = null;
+    const urlParams = new URLSearchParams(window.location.search);
+    if (!window.location.search) {
+      console.log("[main] No URL params passed");
+    } else {
+      console.log("[main] URL params that were passed: "+urlParams);
+      // Already parse these, so they are used to initialize the map:
+      paramLon = parseFloat(urlParams.get('lon'));
+      paramLat = parseFloat(urlParams.get('lat'));
+      paramLon = Number.isFinite(paramLon) ? paramLon : null;
+      paramLat = Number.isFinite(paramLat) ? paramLat: null;
+      console.log("[main] Lonlat parsed from URL params (for initial map centre): "+paramLon+", "+paramLat);
+    };
+
 
     // Initialize the map
     const map = L.map('map')
