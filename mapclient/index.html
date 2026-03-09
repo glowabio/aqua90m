@@ -412,10 +412,18 @@ integrity=
 	  url.searchParams.set("processId", processId);
         }
 
-	//let strahler = document.getElementById("strahlerSnap").value;
-	if (strahler !== null) {
-          url.searchParams.set("strahler", strahler);
+        let strahlerField = document.getElementById("strahlerSnap");
+        if (strahlerField.classList.contains("invisible")) {
+            console.log("[urlparams] Strahler field is invisible, removing strahler from URL params");
+	    url.searchParams.delete("strahler");
+        } else {
+            console.log("[urlparams] Strahler field is visible, adding to URL params");
+            let strahler = document.getElementById("strahlerSnap").value;
+	    if (strahler !== null) {
+                url.searchParams.set("strahler", strahler);
+            }
         }
+
         history.replaceState({}, "", url);
     };
 
@@ -444,9 +452,7 @@ integrity=
         document.getElementById("customLat1").value=clicklat;
 
         // Update the URL params field on top:
-	console.log('[mapclick] Will update the URL params field');
-        let strahler = document.getElementById("strahlerSnap").value;
-        updateUrlParams(clicklon, clicklat, processId, strahler);
+        updateUrlParams(clicklon, clicklat, processId, null);
 
 	// Send the request:
         ogcRequestOneCoordinatePair(map, clicklon, clicklat, processId, processDesc, logUserAction);
