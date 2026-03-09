@@ -11,17 +11,7 @@ var _successPleaseShowGeojson = function(responseJson, processId) {
     var pygeoResponseGeoJSONLayer = L.geoJSON(responseJson);
 
     // Style features depending on their properties:
-    if (document.getElementById("stylingStrahlerToggle").checked){
-        console.log("[async] Asked to style depending on strahler order.");
-        pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
-            styleLayerStrahler(layer, processId);
-        });
-    } else {
-        console.log("[async] Will style without strahler order.");
-        pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
-            styleLayerUni(layer, processId);
-        });
-    }
+    styleLayer(pygeoResponseGeoJSONLayer, processId);
 
     // Add styled layers to map:
     pygeoResponseGeoJSONLayer.addTo(map);

@@ -65,7 +65,24 @@ var strahler_to_line_weight = function(strahler, min_weight=2, max_weight=4) {
   return(weight)
 }
 
-var styleLayerUni = function(layer) {
+
+var styleLayer = function(pygeoResponseGeoJSONLayer, processId) {
+  // Style features depending on their properties:
+  if (document.getElementById("stylingStrahlerToggle").checked){
+    console.log("[styling] Asked to style depending on strahler order.");
+    pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
+      _styleLayerStrahler(layer, processId);
+    });
+
+  } else {
+    console.log("[sync] Will style without strahler order.");
+    pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
+      _styleLayerUni(layer, processId);
+    });
+  }
+}
+
+var _styleLayerUni = function(layer) {
   // Depending on process:
   // Upstream bbox = Grey
   // Upstream (segments, catchments) = Navy
@@ -143,7 +160,7 @@ var styleLayerUni = function(layer) {
   }
 };
 
-var styleLayerStrahler = function(layer, processId) {
+var _styleLayerStrahler = function(layer, processId) {
   // Depending on process:
   // Upstream bbox = Grey
   // Upstream (segments, catchments) = Navy

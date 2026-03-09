@@ -83,18 +83,7 @@ var _ogcRequest = function(server, processId, processDesc, payload_inputs_json, 
       var pygeoResponseGeoJSONLayer = L.geoJSON(xhrPygeo.response);
 
       // Style features depending on their properties:
-      if (document.getElementById("stylingStrahlerToggle").checked){
-        console.log("[sync] Asked to style depending on strahler order.");
-        pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
-            styleLayerStrahler(layer, processId);
-        });
-
-      } else {
-        console.log("[sync] Will style without strahler order.");
-        pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
-            styleLayerUni(layer, processId);
-        });
-      }
+      styleLayer(pygeoResponseGeoJSONLayer, processId);
 
       // Add styled layers to map:
       pygeoResponseGeoJSONLayer.addTo(map);
