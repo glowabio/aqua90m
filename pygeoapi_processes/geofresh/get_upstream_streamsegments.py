@@ -113,7 +113,7 @@ class UpstreamStreamSegmentsGetter(GeoFreshBaseProcessor):
 
         # Log interesting cases:
         if len(upstream_ids) == 0:
-            LOGGER.warning('No upstream ids. Cannot get upstream linestrings .')
+            LOGGER.warning('No upstream ids. Cannot get upstream linestrings.')
         if len(upstream_ids) == 1 and subc_id == upstream_ids[0]:
             LOGGER.debug('Upstream catchments equals subcatchment!')
 
@@ -157,10 +157,12 @@ class UpstreamStreamSegmentsGetter(GeoFreshBaseProcessor):
                 feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(
                     conn, upstream_ids, basin_id, reg_id)
 
+                # Add some info to the FeatureCollection:
+                feature_coll["cumulative_length"] = cum_length_by_strahler["all_strahler_orders"],
+                feature_coll["cumulative_length_by_strahler"] = cum_length_by_strahler
+
             # Add some info to the FeatureCollection:
             feature_coll["part_of_upstream_catchment_of"] = subc_id
-            feature_coll["cumulative_length"] = cum_length_by_strahler["all_strahler_orders"],
-            feature_coll["cumulative_length_by_strahler"] = cum_length_by_strahler
             if add_upstream_ids:
                 feature_coll["upstream_ids"] = upstream_ids
 
