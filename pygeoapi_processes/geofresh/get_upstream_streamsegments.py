@@ -42,6 +42,7 @@ curl -X POST https://${PYSERVER}/processes/get-upstream-streamsegments/execution
     "lat": 54.695070,
     "geometry_only": false,
     "add_upstream_ids": true,
+    "min_strahler": 4,
     "comment": "schlei-near-rabenholz"
     }
 }'
@@ -69,6 +70,7 @@ class UpstreamStreamSegmentsGetter(GeoFreshBaseProcessor):
         point = data.get('point', None)
         lon = data.get('lon', None)
         lat = data.get('lat', None)
+        min_strahler = data.get('min_strahler', 1)
         subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
         comment = data.get('comment') # optional
         add_upstream_ids = data.get('add_upstream_ids', False)
@@ -100,8 +102,9 @@ class UpstreamStreamSegmentsGetter(GeoFreshBaseProcessor):
                 conn, LOGGER, lon, lat)
 
         # Get upstream ids
+        # TODO: When it returns itself, no min strahler is checked!!
         upstream_ids = upstream_subcids.get_upstream_catchment_ids_incl_itself(
-            conn, subc_id, basin_id, reg_id)
+            conn, subc_id, basin_id, reg_id, min_strahler=min_strahler)
 
         # Cumulative length as JSON:
         # TODO: We could include this into the query for the FeatureCollection,
