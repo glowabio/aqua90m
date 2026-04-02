@@ -9,10 +9,12 @@ LOGGER = logging.getLogger(__name__)
 try:
     # If the package is installed in local python PATH:
     import aqua90m.utils.exceptions as exc
+    import aqua90m.geofresh.basic_queries as basic_queries
 except ModuleNotFoundError as e1:
     try:
         # If we are using this from pygeoapi:
         import pygeoapi.process.aqua90m.utils.exceptions as exc
+        import pygeoapi.process.aqua90m.geofresh.basic_queries as basic_queries
     except ModuleNotFoundError as e2:
         msg = 'Module not found: '+e1.name+' (imported in '+__name__+').' + \
               ' If this is being run from' + \
@@ -101,6 +103,17 @@ def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id, min_
         ') WHERE component > 0 GROUP BY component;
         '''
     else:
+
+        # Get strahler of the subcatchment itself:
+        own_strahler = basic_queries.get_strahler_order(conn, subc_id, basin_id, reg_id)
+
+        # Usually, the catchment itself is always returned as its own upstream catchment. So we need
+        # to check if it reached the min_strahler, otherwise we have to return an empty list here.
+        # TODO: Maybe reflect whether it really makes sense to return the catchment itself?
+        if own_strahler < min_strahler:
+            LOGGER.debug(f'Own strahler {own_strahler} too small, does not reach {min_strahler}, returning []')
+            return []
+
         query = f'''
         SELECT {subc_id}, array_agg(node)::bigint[] AS nodes
         FROM pgr_connectedComponents('
@@ -135,6 +148,7 @@ def get_upstream_catchment_ids_incl_itself(conn, subc_id, basin_id, reg_id, min_
     upstream_catchment_subcids = row[1]
 
     # Adding the subcatchment itself if it not returned:
+    # TODO: This is WRONG: Here we are adding the local subcatchment without filtering it by min_strahler!
     if not subc_id in upstream_catchment_subcids:
         upstream_catchment_subcids.append(subc_id)
         LOGGER.info('FYI: The database did not return the local subcatchment itself in the list of upstream subcatchments, so added it.')

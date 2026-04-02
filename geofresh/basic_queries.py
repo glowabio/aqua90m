@@ -308,6 +308,34 @@ def get_all_subcids_from_basinid(conn, LOGGER, basin_id, reg_id, min_strahler=No
 
     return subc_ids
 
+
+def get_strahler_order(conn, subc_id, basin_id, reg_id):
+
+    query = f'''
+    SELECT strahler
+    FROM hydro.stream_segments
+    WHERE subc_id = {subc_id}
+        AND reg_id = {reg_id}
+        AND basin_id = {basin_id}
+    '''
+
+    ### Query database:
+    cursor = conn.cursor()
+    LOGGER.log(logging.TRACE, 'Querying database...')
+    cursor.execute(query)
+    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
+
+    row = cursor.fetchone()
+    if row is None:
+        return None
+
+    strahler = None
+    if row[0] is not None:
+        strahler = int(row[0])
+
+    return strahler
+
+
 #################################
 ### for many points at a time ###
 ### without loops/iteration   ###
