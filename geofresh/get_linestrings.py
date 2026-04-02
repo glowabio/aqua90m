@@ -173,6 +173,9 @@ def get_accum_length_by_strahler(conn, subc_ids, basin_id, reg_id):
     # TODO: Maybe just add this to one of the above...? Or might users want
     # the cumulative length without requesting the geometries?
 
+    if len(subc_ids) == 0:
+        return 0
+
     # Define query:
     relevant_ids = ", ".join([str(elem) for elem in subc_ids])
     query = f'''
@@ -212,6 +215,9 @@ def get_accum_length_by_strahler(conn, subc_ids, basin_id, reg_id):
 
 
 def get_accum_length(conn, subc_ids, basin_id, reg_id):
+
+    if len(subc_ids) == 0:
+        return 0
 
     relevant_ids = ", ".join([str(elem) for elem in subc_ids])
     query = f'''
