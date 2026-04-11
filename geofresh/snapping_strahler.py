@@ -98,10 +98,10 @@ def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_fea
     query = f'''
     SELECT 
         ST_AsText(ST_LineInterpolatePoint(
-            closest.geom,
-            ST_LineLocatePoint(closest.geom, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))
+            closest.geog::geometry,
+            ST_LineLocatePoint(closest.geog::geometry, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326))
         )),
-        ST_AsText(closest.geom),
+        ST_AsText(closest.geog),
         closest.strahler,
         closest.subc_id
     FROM (
@@ -113,7 +113,7 @@ def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_fea
         SELECT candidate_segments.*
         FROM candidate_regions r
         CROSS JOIN LATERAL (
-            SELECT reg_id, subc_id, strahler, geom, seg.geom::geography <-> ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326)::geography AS dist
+            SELECT reg_id, subc_id, strahler, geog, seg.geog <-> ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326)::geography AS dist
             FROM hydro.stream_segments seg
             WHERE seg.reg_id = r.reg_id
             AND seg.strahler >= {strahler}
@@ -334,11 +334,11 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
     # stream segment. For this we compute the distance using <->, and sort by that.
     LOGGER.debug(f'Adding nearest neighbours to temporary table "{tablename}"...')
 
-    # Note: The columns we UPDATE here (geom_closest, strahler_closest, subcid_closest)
+    # Note: The columns we UPDATE here (geog_closest, strahler_closest, subcid_closest)
     # have to exist in the temp table!
     query = f'''
     ALTER TABLE {tablename}
-        ADD COLUMN geom_closest geometry(LINESTRING, 4326),
+        ADD COLUMN geog_closest geography(LINESTRING, 4326),
         ADD COLUMN subcid_closest integer,
         ADD COLUMN strahler_closest integer;
     '''
@@ -396,16 +396,16 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
     query = f'''
     UPDATE {tablename} AS temp1
     SET
-        geom_closest = closest.geom,
+        geog_closest = closest.geog,
         strahler_closest = closest.strahler,
         subcid_closest = closest.subc_id
     FROM {tablename} AS temp2
     CROSS JOIN LATERAL (
-        SELECT seg.geom, seg.strahler, seg.subc_id
+        SELECT seg.geog, seg.strahler, seg.subc_id
         FROM stream_segments seg
         WHERE seg.strahler >= {min_strahler}
         AND reg_id = ANY (ARRAY[{reg_ids_string}])
-        ORDER BY seg.geom <-> temp2.geom_user
+        ORDER BY seg.geog <-> temp2.geom_user::geography
         LIMIT 1
     ) AS closest
     WHERE temp1.geom_user = temp2.geom_user;
@@ -431,8 +431,8 @@ def _snapping_with_distances(cursor, tablename, result_format, colname_lon, coln
     query = f'''
     UPDATE {tablename} AS temp
         SET geom_snapped = ST_LineInterpolatePoint(
-            temp.geom_closest,
-            ST_LineLocatePoint(temp.geom_closest, temp.geom_user)
+            temp.geog_closest::geometry,
+            ST_LineLocatePoint(temp.geog_closest::geometry, temp.geom_user)
         );
     '''
 
@@ -471,11 +471,12 @@ def _snapping_with_distances(cursor, tablename, result_format, colname_lon, coln
     return _package_result(cursor, result_format, colname_lon, colname_lat, colname_site_id)
 
 
+
 def _snapping_without_distances(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id):
     # Run the query that generates the snapped point, i.e. the point on the
     # stream segment (nearest neighbour) that is closest to the original point.
     # The nearest-neighbouring stream segments in question have been previously
-    # found and stored to column "geom_closest" by the previous query.
+    # found and stored to column "geog_closest" by the previous query.
     # (So this here is pretty much the normal snapping query).
     #
     # This RETURNS the snapped points, but does not STORE them in the temp table!
@@ -487,8 +488,8 @@ def _snapping_without_distances(cursor, tablename, result_format, colname_lon, c
         temp.site_id,
         ST_AsText(
             ST_LineInterpolatePoint(
-                temp.geom_closest,
-                ST_LineLocatePoint(temp.geom_closest, temp.geom_user)
+                temp.geog_closest::geometry,
+                ST_LineLocatePoint(temp.geog_closest::geometry, temp.geom_user)
             )
         ),
         temp.strahler_closest,
