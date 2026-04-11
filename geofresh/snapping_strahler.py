@@ -86,14 +86,23 @@ def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_fea
     # Important Note: Until January 2026, we used "geometry" instead of
     # "geography" type for the <-> operator:
     # ... ORDER BY seg.geom <-> ST_SetSRID(ST_MakePoint(lon, lat), 4326)
+    #
     # Unfortunately, that takes the WGS84 lon and lat coordinates as flat space
     # and computes distances in cartesian euclidean space, so in higher latitudes
-    # we get big errors. So we moved this so "geography", but that makes the
-    # computation incredibly slow, 6 minutes per point.
-    # So the next plan is to make a column of "geography" type so that it is possible
-    # to use spatial indices on them. So this may change again.
+    # we get big errors. So we moved this so "geography".
     #
-    # TODO: IMPORTANT: Use a geography column on the database, to speed this up
+    # Casting from geometry to geography was too slow (6 minutes per point). So
+    # we made a change on the PostGIS database on the server: We introduced a
+    # column of "geography" type (so that it is possible to use spatial indices
+    # on them).
+    #
+    # Unfortunately, it does not seem to pick up the right partitions using the
+    # spatial indices, so we introduced pre-selecting regional units (to filter
+    # the stream segments) by making buffers around the points given by the user.
+    #
+    # Note: ST_LineInterpolatePoint and ST_LineLocatePoint operate on geometry only
+    # (not geography), at least in our server's current PostGIS database version, so
+    # we case the segment's geography to a geometry.
     buffer_size_in_degrees = 5
     query = f'''
     SELECT 
@@ -316,17 +325,16 @@ def get_snapped_points_xy(conn, geojson=None, dataframe=None, colname_lon=None, 
     # Then, the nearest-neighbouring stream segments are added:
     _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler)
 
+    # Then, snap the points to the closest stream segments (and compute the
+    # distance between the user-given point and snapped point, if requested):
     if add_distance:
         result_to_be_returned = _snapping_with_distances(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id)
     else:
-        # Then the points are snapped to those neighbouring stream segments:
         result_to_be_returned =  _snapping_without_distances(cursor, tablename, result_format, colname_lon, colname_lat, colname_site_id)
-
 
     # Database hygiene: Drop the table
     temp_table_for_queries.drop_temp_table(cursor, tablename)
     return result_to_be_returned
-
 
 
 def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
@@ -356,18 +364,23 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
     # Important Note: Until January 2026, we used "geometry" instead of
     # "geography" type for the <-> operator:
     # ... ORDER BY seg.geom <-> temp.geom_user
+    #
     # Unfortunately, that takes the WGS84 lon and lat coordinates as flat space
     # and computes distances in cartesian euclidean space, so in higher latitudes
-    # we get big errors. So we moved this so "geography", but that makes the
-    # computation incredibly slow, 6 minutes per point...
-    # So the next plan is to make a column of "geography" type so that it is possible
-    # to use spatial indices on them. So this may change again.
+    # we get big errors. So we moved this so "geography".
     #
-    # Important Note: From February 2026 on, this is again the old, wrong,
-    # bad method - on the fly reprojection was just too slow. Snapping 50 points
-    # did not finish over an entire night.
+    # Casting from geometry to geography was too slow (6 minutes per point). So
+    # we made a change on the PostGIS database on the server: We introduced a
+    # column of "geography" type (so that it is possible to use spatial indices
+    # on them).
     #
-    # TODO: IMPORTANT: Use a geography column on the database, to speed this up
+    # Unfortunately, it does not seem to pick up the right partitions using the
+    # spatial indices, so we introduced pre-selecting regional units (to filter
+    # the stream segments) by making buffers around the points given by the user.
+    #
+    # We use one set of regions for the entire query. If the user happens to
+    # spread out their points over the entire globe, this set will be big
+    # and will not speed up the thing very much.
 
     # Pre-query for regional unit ids:
     buffer_size_in_degress = 5
@@ -381,18 +394,20 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
     ) AS candidate_regions;
     '''
 
-    ### (Pre-)Query database:
+    # (Pre-)Query database:
+    LOGGER.debug(f'First, finding neighbouring regions to restrict nearest neighbour search (temp table "{tablename}")...')
     LOGGER.log(logging.TRACE, "SQL query: {query}")
     querystart = time.time()
     cursor.execute(query)
     log_query_time(querystart, 'finding neighbouring regions using buffer...')
-    LOGGER.debug(f'Finding neighbouring regions to restrict nearest neighbour search (temp table "{tablename}")... done.')
+    LOGGER.debug(f'First, finding neighbouring regions to restrict nearest neighbour search (temp table "{tablename}")... done.')
 
     # Use the result for next query:
     reg_ids = [r[0] for r in cursor]
     reg_ids_string = ", ".join([str(elem) for elem in reg_ids])
     LOGGER.debug(f'Using these regions for finding nearest neighbours: {reg_ids_string}')
 
+    # Query to search for and store the nearest neighbour:
     query = f'''
     UPDATE {tablename} AS temp1
     SET
@@ -411,11 +426,13 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
     WHERE temp1.geom_user = temp2.geom_user;
     '''
 
-    ### Query database:
+    # Query database:
+    LOGGER.debug(f'Second, sorting segments by distance and adding closest to temporary table "{tablename}"...')
     LOGGER.log(logging.TRACE, "SQL query: {query}")
     querystart = time.time()
     cursor.execute(query)
     log_query_time(querystart, 'adding nearest neighbours')
+    LOGGER.debug(f'Second, sorting segments by distance and adding closest to temporary table "{tablename}"... done.')
     LOGGER.debug(f'Adding nearest neighbours to temporary table "{tablename}"... done.')
 
 
@@ -428,6 +445,9 @@ def _snapping_with_distances(cursor, tablename, result_format, colname_lon, coln
     cursor.execute(query)
 
     # Compute snapped point, store in table:
+    # Note: ST_LineInterpolatePoint and ST_LineLocatePoint operate on geometry only
+    # (not geography), at least in our server's current PostGIS database version, so
+    # we case the segment's geography to a geometry.
     query = f'''
     UPDATE {tablename} AS temp
         SET geom_snapped = ST_LineInterpolatePoint(
@@ -436,7 +456,7 @@ def _snapping_with_distances(cursor, tablename, result_format, colname_lon, coln
         );
     '''
 
-    ### Query database:
+    # Query database:
     LOGGER.log(logging.TRACE, "SQL query: {query}")
     querystart = time.time()
     cursor.execute(query)
@@ -463,7 +483,7 @@ def _snapping_with_distances(cursor, tablename, result_format, colname_lon, coln
     FROM {tablename} AS temp;
     '''
 
-    ### Query database:
+    # Query database:
     LOGGER.log(logging.TRACE, "SQL query: {query}")
     querystart = time.time()
     cursor.execute(query)
@@ -497,7 +517,7 @@ def _snapping_without_distances(cursor, tablename, result_format, colname_lon, c
     FROM {tablename} AS temp
     '''
 
-    ### Query database:
+    # Query database:
     LOGGER.log(logging.TRACE, "SQL query: {query}")
     querystart = time.time()
     cursor.execute(query)
