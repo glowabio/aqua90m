@@ -94,6 +94,7 @@ def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_fea
     # to use spatial indices on them. So this may change again.
     #
     # TODO: IMPORTANT: Use a geography column on the database, to speed this up
+    buffer_size_in_degrees = 5
     query = f'''
     SELECT 
         ST_AsText(ST_LineInterpolatePoint(
@@ -104,13 +105,21 @@ def _get_snapped_point_plus(conn, lon, lat, strahler, basin_id, reg_id, make_fea
         closest.strahler,
         closest.subc_id
     FROM (
-        SELECT 
-            seg.subc_id,
-            seg.strahler,
-            seg.geom AS geom,
-            seg.geom::geography <-> ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326)::geography AS dist
-        FROM hydro.stream_segments seg
-        WHERE seg.strahler >= {strahler}
+        WITH candidate_regions AS (
+          SELECT reg_id
+          FROM hydro.regional_units reg
+          WHERE ST_DWithin(reg.geom, ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326), {buffer_size_in_degrees})
+        )
+        SELECT candidate_segments.*
+        FROM candidate_regions r
+        CROSS JOIN LATERAL (
+            SELECT reg_id, subc_id, strahler, geom, seg.geom::geography <-> ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326)::geography AS dist
+            FROM hydro.stream_segments seg
+            WHERE seg.reg_id = r.reg_id
+            AND seg.strahler >= {strahler}
+            ORDER BY dist
+            LIMIT 1
+        ) candidate_segments
         ORDER BY dist
         LIMIT 1
     ) AS closest;
@@ -359,6 +368,31 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
     # did not finish over an entire night.
     #
     # TODO: IMPORTANT: Use a geography column on the database, to speed this up
+
+    # Pre-query for regional unit ids:
+    buffer_size_in_degress = 5
+    query = f'''
+    SELECT DISTINCT candidate_regions.reg_id
+    FROM {tablename} AS temp
+    CROSS JOIN LATERAL (
+        SELECT reg_id
+        FROM hydro.regional_units reg
+        WHERE ST_DWithin(reg.geom, temp.geom_user, {buffer_size_in_degress})
+    ) AS candidate_regions;
+    '''
+
+    ### (Pre-)Query database:
+    LOGGER.log(logging.TRACE, "SQL query: {query}")
+    querystart = time.time()
+    cursor.execute(query)
+    log_query_time(querystart, 'finding neighbouring regions using buffer...')
+    LOGGER.debug(f'Finding neighbouring regions to restrict nearest neighbour search (temp table "{tablename}")... done.')
+
+    # Use the result for next query:
+    reg_ids = [r[0] for r in cursor]
+    reg_ids_string = ", ".join([str(elem) for elem in reg_ids])
+    LOGGER.debug(f'Using these regions for finding nearest neighbours: {reg_ids_string}')
+
     query = f'''
     UPDATE {tablename} AS temp1
     SET
@@ -370,6 +404,7 @@ def _add_nearest_neighours_to_temptable(cursor, tablename, min_strahler):
         SELECT seg.geom, seg.strahler, seg.subc_id
         FROM stream_segments seg
         WHERE seg.strahler >= {min_strahler}
+        AND reg_id = ANY (ARRAY[{reg_ids_string}])
         ORDER BY seg.geom <-> temp2.geom_user
         LIMIT 1
     ) AS closest
