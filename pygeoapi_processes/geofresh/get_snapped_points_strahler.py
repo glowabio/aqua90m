@@ -75,6 +75,8 @@ class SnappedPointsStrahlerGetter(GeoFreshBaseProcessor):
         strahler = data.get('strahler')
         geometry_only = data.get('geometry_only', False)
         comment = data.get('comment') # optional
+        # Use the old version with geometry:
+        flatearth = data.get('flatearth', False)
 
         # Check types:
         utils.is_bool_parameters(dict(geometry_only=geometry_only))
@@ -91,6 +93,14 @@ class SnappedPointsStrahlerGetter(GeoFreshBaseProcessor):
         LOGGER.info(f'START: Getting snapped point for lon, lat: {lon}, {lat}')
         subc_id_before_snap, basin_id, reg_id = basic_queries.get_subcid_basinid_regid(
             conn, LOGGER, lon, lat)
+
+        # Use "geometry" type instead of "geography" type on database:
+        if flatearth:
+            LOGGER.info("Using old flat-earth version of strahler-snapping...")
+            import pygeoapi.process.aqua90m.geofresh.snapping_strahler_flatearth as snapping_strahler
+        else:
+            LOGGER.info("NOT: Using old flat-earth version of strahler-snapping...")
+            import pygeoapi.process.aqua90m.geofresh.snapping_strahler as snapping_strahler
 
         # Return geometry only:
         if geometry_only:

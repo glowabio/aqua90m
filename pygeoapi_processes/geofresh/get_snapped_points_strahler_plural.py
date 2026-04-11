@@ -295,7 +295,8 @@ class SnappedPointsStrahlerGetterPlural(GeoFreshBaseProcessor):
         result_format = data.get('result_format', None)
         # Optional comment:
         comment = data.get('comment') # optional
-
+        # Use the old version with geometry:
+        flatearth = data.get('flatearth', False)
 
         #######################
         ### Validate inputs ###
@@ -364,6 +365,15 @@ class SnappedPointsStrahlerGetterPlural(GeoFreshBaseProcessor):
         ##########################
         ### Actual computation ###
         ##########################
+
+        ## Use "geometry" type instead of "geography" type on database:
+        if flatearth:
+            LOGGER.info("Using old flat-earth version of strahler-snapping...")
+            import pygeoapi.process.aqua90m.geofresh.snapping_strahler_flatearth as snapping_strahler
+        else:
+            LOGGER.info("NOT: Using old flat-earth version of strahler-snapping...")
+            import pygeoapi.process.aqua90m.geofresh.snapping_strahler as snapping_strahler
+
 
         ## Potential outputs:
         output_json = None
