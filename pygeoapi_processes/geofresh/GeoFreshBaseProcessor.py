@@ -164,6 +164,14 @@ class GeoFreshBaseProcessor(BaseProcessor):
             err_msg_user = f"Database error: {err_msg_user}"
             raise ProcessorExecuteError(user_msg = err_msg_user)
 
+        except KeyError as ekey:
+            if conn is not None:
+                conn.close()
+            LOGGER.error(f'During process execution, this happened: {repr(ekey)}')
+            print(traceback.format_exc())
+            raise ProcessorExecuteError(f'Missing key (KeyError): {ekey}')
+            #TODO OR: raise ProcessorExecuteError(ekey, user_msg=f'KeyError: {ekey.message)}')
+
         except Exception as e:
             if conn is not None:
                 conn.close()
