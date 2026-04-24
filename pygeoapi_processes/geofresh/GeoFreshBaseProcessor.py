@@ -128,6 +128,8 @@ class GeoFreshBaseProcessor(BaseProcessor):
                 err_msg_user = "Resource conflict (details hidden, please ask admin/see log)"
             elif isinstance(e3, psycopg2.DataError):
                 err_msg_user = "Invalid input (details hidden, please ask admin/see log)"
+            elif isinstance(e3, psycopg2.errors.SyntaxError):
+                err_msg_user = "Invalid input (syntax error, please check your inputs - if you are sure they are not malformed, please ask admin/see log)"
             else:
                 # For example:
                 #psycopg2.InterfaceError
