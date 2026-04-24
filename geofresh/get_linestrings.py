@@ -91,7 +91,7 @@ def get_streamsegment_linestrings_geometry_coll(conn, subc_ids, basin_id, reg_id
     return geometry_coll
 
 
-def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id):
+def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id, add_target_streams=False):
 
     ### Define query:
     '''
@@ -115,7 +115,7 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id)
     # e.g. 506250459, 506251015, 506251126, 506251712
     query = f'''
     SELECT 
-        ST_AsText(geom), subc_id, strahler
+        ST_AsText(geom), subc_id, strahler, target
     FROM hydro.stream_segments
     WHERE subc_id IN ({relevant_ids})
         AND reg_id = {reg_id}
@@ -157,6 +157,8 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id)
                 "strahler_order": int(row[2])
             }
         }
+        if add_target_streams:
+            feature["properties"]["target"] = int(row[3])
         features_geojson.append(feature)
 
     feature_coll = {

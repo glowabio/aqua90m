@@ -29,11 +29,11 @@ curl -X POST https://${PYSERVER}/processes/get-upstream-streamsegments/execution
     "lat": 54.695070,
     "geometry_only": true,
     "comment": "schlei-near-rabenholz"
-    }
+  }
 }'
 
 # Request a FeatureCollection (LineStrings):
-# Tested: 2026-01-02
+# Tested: 2026-04-24
 curl -X POST https://${PYSERVER}/processes/get-upstream-streamsegments/execution \
 --header "Content-Type: application/json" \
 --data '{
@@ -42,9 +42,10 @@ curl -X POST https://${PYSERVER}/processes/get-upstream-streamsegments/execution
     "lat": 54.695070,
     "geometry_only": false,
     "add_upstream_ids": true,
-    "min_strahler": 4,
+    "add_target_streams": true,
+    "min_strahler": 2,
     "comment": "schlei-near-rabenholz"
-    }
+  }
 }'
 
 # Large: In the middle of Elbe river: 53.537158298376575, 9.99475350366553
@@ -74,6 +75,7 @@ class UpstreamStreamSegmentsGetter(GeoFreshBaseProcessor):
         subc_id = data.get('subc_id', None) # optional, need either lonlat OR subc_id
         comment = data.get('comment') # optional
         add_upstream_ids = data.get('add_upstream_ids', False)
+        add_target_streams = data.get('add_target_streams', True)
         geometry_only = data.get('geometry_only', False)
 
         # Check if boolean:
@@ -158,7 +160,7 @@ class UpstreamStreamSegmentsGetter(GeoFreshBaseProcessor):
                 # Note: The feature collection contains the strahler order for each feature (each stream segment)
                 LOGGER.debug(f'... Getting upstream catchment line segments for subc_id: {subc_id}')
                 feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(
-                    conn, upstream_ids, basin_id, reg_id)
+                    conn, upstream_ids, basin_id, reg_id, add_target_streams=add_target_streams)
 
                 # Add some info to the FeatureCollection:
                 feature_coll["cumulative_length"] = cum_length_by_strahler["all_strahler_orders"],
