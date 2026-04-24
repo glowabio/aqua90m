@@ -96,7 +96,7 @@ class BasinSubcatchmentsGetter(GeoFreshBaseProcessor):
         lon = data.get('lon', None)
         lat = data.get('lat', None)
         subc_id  = data.get('subc_id',  None) # optional, need either lonlat OR subc_id
-        #strahler_min = data.get('strahler_min', 0) # Not in database # TODO do we need it?
+        #min_strahler = data.get('min_strahler', 0) # Not in database # TODO do we need it?
         geometry_only = data.get('geometry_only', False)
         add_segment_ids = data.get('add_segment_ids', False)
         comment = data.get('comment') # optional
@@ -171,7 +171,7 @@ if __name__ == '__main__':
         "inputs": {
             "basin_id": 1288419,
             "geometry_only": False,
-            "strahler_min": 4,
+            "min_strahler": 4,
             "add_segment_ids": True,
             "comment": "test1"
         }

@@ -28,7 +28,7 @@ curl -X POST https://$PYSERVER/processes/get-basin-streamsegments/execution \
     "basin_id": 1288419,
     "geometry_only": false,
     "comment": "close to bremerhaven",
-    "strahler_min": 4,
+    "min_strahler": 4,
     "add_segment_ids": true,
     "add_target_streams": false
   },
@@ -102,7 +102,7 @@ class BasinStreamSegmentsGetter(GeoFreshBaseProcessor):
         lon = data.get('lon', None)     # optional, ...
         lat = data.get('lat', None)     # optional, ...
         subc_id  = data.get('subc_id',  None) # optional, ...
-        strahler_min = data.get('strahler_min', 0)
+        min_strahler = data.get('min_strahler', 0)
         geometry_only = data.get('geometry_only', False)
         add_segment_ids = data.get('add_segment_ids', False)
         add_target_streams = data.get('add_target_streams', True)
@@ -143,10 +143,10 @@ class BasinStreamSegmentsGetter(GeoFreshBaseProcessor):
         geojson_collection = None
         if geometry_only:
             geojson_collection = get_linestrings.get_streamsegment_linestrings_geometry_coll_by_basin(
-                conn, basin_id, reg_id, strahler_min = strahler_min)
+                conn, basin_id, reg_id, min_strahler = min_strahler)
         else:
             geojson_collection = get_linestrings.get_streamsegment_linestrings_feature_coll_by_basin(
-                conn, basin_id, reg_id, strahler_min = strahler_min, add_target_streams=add_target_streams)
+                conn, basin_id, reg_id, min_strahler = min_strahler, add_target_streams=add_target_streams)
 
             if add_segment_ids:
                 segment_ids = []
@@ -178,7 +178,7 @@ if __name__ == '__main__':
         "inputs": {
             "basin_id": 1288419,
             "geometry_only": False,
-            "strahler_min": 4,
+            "min_strahler": 4,
             "add_segment_ids": True,
             "comment": "test1"
         }

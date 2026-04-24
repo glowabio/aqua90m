@@ -249,7 +249,7 @@ def get_accum_length(conn, subc_ids, basin_id, reg_id):
     return cum_length
 
 
-def get_streamsegment_linestrings_geometry_coll_by_basin(conn, basin_id, reg_id, strahler_min=0):
+def get_streamsegment_linestrings_geometry_coll_by_basin(conn, basin_id, reg_id, min_strahler=0):
 
     query = f'''
     SELECT 
@@ -257,7 +257,7 @@ def get_streamsegment_linestrings_geometry_coll_by_basin(conn, basin_id, reg_id,
     FROM hydro.stream_segments
     WHERE basin_id = {basin_id}
         AND reg_id = {reg_id}
-        AND strahler >= {strahler_min}
+        AND strahler >= {min_strahler}
     '''
 
     ### Query database:
@@ -296,7 +296,7 @@ def get_streamsegment_linestrings_geometry_coll_by_basin(conn, basin_id, reg_id,
     return geometry_coll
 
 
-def get_streamsegment_linestrings_feature_coll_by_basin(conn, basin_id, reg_id, strahler_min=0, add_target_streams=False):
+def get_streamsegment_linestrings_feature_coll_by_basin(conn, basin_id, reg_id, min_strahler=0, add_target_streams=False):
 
     ### Define query:
     '''
@@ -312,7 +312,7 @@ def get_streamsegment_linestrings_feature_coll_by_basin(conn, basin_id, reg_id, 
     FROM hydro.stream_segments
     WHERE basin_id = {basin_id}
         AND reg_id = {reg_id}
-        AND strahler >= {strahler_min}
+        AND strahler >= {min_strahler}
     '''
 
     ### Query database:
