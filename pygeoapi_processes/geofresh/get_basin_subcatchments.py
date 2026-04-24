@@ -132,7 +132,7 @@ class BasinSubcatchmentsGetter(GeoFreshBaseProcessor):
             reg_id = basic_queries.get_regid_from_basinid(conn, LOGGER, basin_id)
 
         ## Get GeoJSON geometry:
-        LOGGER.debug(f'Now, getting stream segments for basin_id: {basin_id}')
+        LOGGER.debug(f'Now, getting subcatchments for basin_id: {basin_id}')
         geojson_collection = None
         if geometry_only:
             geojson_collection = get_polygons.get_subcatchment_polygons_geometry_coll_by_basin(
@@ -148,7 +148,7 @@ class BasinSubcatchmentsGetter(GeoFreshBaseProcessor):
                 geojson_collection['segment_ids'] = segment_ids
 
         ## Return link to result (wrapped in JSON) if requested, or directly the JSON object:
-        return self.return_results('stream_segments', requested_outputs, output_df=None, output_json=geojson_collection, comment=comment)
+        return self.return_results('subcatchments', requested_outputs, output_df=None, output_json=geojson_collection, comment=comment)
 
 
 if __name__ == '__main__':

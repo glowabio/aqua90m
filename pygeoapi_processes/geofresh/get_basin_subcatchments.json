@@ -80,8 +80,8 @@
     },
     "outputs": {
         "subcatchments": {
-            "title": "Stream Segments",
-            "description": "Stream Segment, include Strahler Order.",
+            "title": "Subcatchments",
+            "description": "Subcatchments of this basin.",
             "schema": {
                 "type": "object",
                 "contentMediaType": "application/json"
