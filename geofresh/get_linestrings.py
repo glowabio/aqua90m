@@ -154,7 +154,7 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id,
             "geometry": geometry,
             "properties": {
                 "subc_id": int(row[1]),
-                "strahler_order": int(row[2])
+                "strahler": int(row[2])
             }
         }
         if add_target_streams:
@@ -347,7 +347,7 @@ def get_streamsegment_linestrings_feature_coll_by_basin(conn, basin_id, reg_id, 
             "properties": {
                 "subc_id": row[1],
                 "length": row[3],
-                "strahler_order": row[4]
+                "strahler": row[4]
             }
         }
         if add_target_streams:
