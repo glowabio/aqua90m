@@ -75,7 +75,7 @@ var styleLayer = function(pygeoResponseGeoJSONLayer, processId) {
     });
 
   } else {
-    console.log("[sync] Will style without strahler order.");
+    console.log("[styling] Will style without strahler order.");
     pygeoResponseGeoJSONLayer.eachLayer(function(layer) {
       _styleLayerUni(layer, processId);
     });
@@ -192,7 +192,7 @@ var _styleLayerStrahler = function(layer, processId) {
     let lightness = 0.5
 
     // Get from strahler to a lightness value between 0.2 and 0.9!
-    let strahler = layer.feature.properties.strahler_order;
+    let strahler = layer.feature.properties.strahler;
     let lowest_lightness = 0.2
     let highest_lightness = 0.9
     lightness = strahler_to_hsl_lightness(strahler, lowest_lightness, highest_lightness);
@@ -223,7 +223,7 @@ var _styleLayerStrahler = function(layer, processId) {
     let lightness = 0.25
 
     // Get from strahler to a lightness value between 0.2 and 0.9!
-    let strahler = layer.feature.properties.strahler_order;
+    let strahler = layer.feature.properties.strahler;
     let lowest_lightness = 0
     let highest_lightness = 0.8
     lightness = strahler_to_hsl_lightness(strahler, lowest_lightness, highest_lightness);
@@ -267,7 +267,7 @@ var _styleLayerStrahler = function(layer, processId) {
     let lightness = 0.5
 
     // Get from strahler to a lightness value between 0.2 and 0.9!
-    let strahler = layer.feature.properties.strahler_order;
+    let strahler = layer.feature.properties.strahler;
     let lowest_lightness = 0.2
     let highest_lightness = 0.9
     lightness = strahler_to_hsl_lightness(strahler, lowest_lightness, highest_lightness);
