@@ -174,6 +174,7 @@ class ShortestPathToOutletGetterPlural(GeoFreshBaseProcessor):
             add_downstream_ids=add_downstream_ids
         ))
 
+        # TODO: THis is also returned when we have GeoJSON input!
         if not downstream_ids_only:
             err_msg = "Cannot return geometries for CSV input yet! (And probably never will, because returning geometry inside a CSV does not make sense...)"
             LOGGER.error(err_msg)

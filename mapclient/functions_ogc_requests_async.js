@@ -5,7 +5,7 @@
 ///////////////////////////////////////////////
 
 var _successPleaseShowGeojson = function(responseJson, processId) {
-    console.log("Displaying GeoJSON on the map...");
+    console.log("[async-show] Displaying GeoJSON on the map...");
 
     // Make layer(s) from GeoJSON that the server returned:
     var pygeoResponseGeoJSONLayer = L.geoJSON(responseJson);
@@ -16,9 +16,9 @@ var _successPleaseShowGeojson = function(responseJson, processId) {
     // Add styled layers to map:
     pygeoResponseGeoJSONLayer.addTo(map);
     allMyLayers.push(pygeoResponseGeoJSONLayer);
-    console.log('Added layer to map...');
+    console.log('[async-show] Added layer to map...');
     map.fitBounds(pygeoResponseGeoJSONLayer.getBounds());
-    console.log('Zoomed to layer...');
+    console.log('[async-show] Zoomed to layer...');
     clickMarker.closePopup();
 
     // Move web page to map!
@@ -26,7 +26,9 @@ var _successPleaseShowGeojson = function(responseJson, processId) {
 
     // Write GeoJSON into field so that user can copy-paste it:
     var prettyResponse = JSON.stringify(responseJson, null, 2); // spacing level = 2
+    //console.log('[async-show] Pretty response: '+prettyResponse);
     document.getElementById("displayGeoJSON").innerHTML = prettyResponse;
+    console.log('[async-show] Pretty response displayed...');
 }
 
 
@@ -109,11 +111,11 @@ async function _pollStatus(statusUrl, processId, clickMarker) {
 
       const elapsedMs = performance.now() - startTime;
       const elapsedSec = (elapsedMs / 1000).toFixed(1);
-      console.log(`[async] ${elapsedSec}s since first request`);
+      console.log(`[async-poll] ${elapsedSec}s since first request`);
 
       const res = await fetch(statusUrl);
       if (!res.ok) {
-        console.error(`[async] HTTP error: ${res.status} ${res.statusText}`);
+        console.error(`[async-poll] HTTP error: ${res.status} ${res.statusText}`);
         //continue;
         throw new Error(`Failed to fetch results: ${res.statusText} (HTTP ${res.status}`);
       }
@@ -123,7 +125,7 @@ async function _pollStatus(statusUrl, processId, clickMarker) {
       //document.getElementById('status').textContent = `Status: ${job.status}`;
       //const location = res.headers.get("Location");
       //console.log(location);
-      console.log(`[async] Status: ${job.status}`);
+      console.log(`[async-poll] Status: ${job.status}`);
       document.getElementById("displayGeoJSON").innerHTML = `Status: ${job.status}: ${elapsedSec}s since first request`;
 
       if (['accepted', 'running'].includes(job.status)) {
@@ -136,7 +138,7 @@ async function _pollStatus(statusUrl, processId, clickMarker) {
          );
 
          // Update popup content
-         console.log("[async] Updated popup content: "+updated);
+         console.log("[async-poll] Updated popup content: "+updated);
          popup.setContent(updated);
 
          // If popup is open, refresh it visually
@@ -152,7 +154,7 @@ async function _pollStatus(statusUrl, processId, clickMarker) {
 
         // If we cannot find a result link:
         if (!jsonResultLink) {
-          console.warn("[async] Job succeeded, but no JSON result link was found.");
+          console.warn("[async-poll] Job succeeded, but no JSON result link was found.");
           // TODO Maybe throw error here.
           break;
         }
@@ -160,18 +162,18 @@ async function _pollStatus(statusUrl, processId, clickMarker) {
         // If we do find a result link, fetch the result:
         try {
           const resultRes = await fetch(jsonResultLink.href);
-          console.log("[async] Returning from OGC process: "+processId+"...");
+          console.log("[async-poll] Returning from OGC process: "+processId+"...");
 
           // If the result fetching failed:
           if (!resultRes.ok) {
             if (resultRes.status == 400) {
-                console.warn("[async] Oh no: Internal server error (HTTP 400)");
+                console.warn("[async-poll] Oh no: Internal server error (HTTP 400)");
                 const resultData = await resultRes.json();
                 var errmsg = resultData.description;
                 clickMarker.bindPopup(errmsg);
                 document.getElementById("displayGeoJSON").innerHTML = errmsg;
             } else {
-                console.warn("[async] Oh no: OGC server returned bad HTTP status: "+resultRes.status);
+                console.warn("[async-poll] Oh no: OGC server returned bad HTTP status: "+resultRes.status);
                 clickMarker.bindPopup("Failed for unspecified reason (possibly timeout), try another one!!");
                 document.getElementById("displayGeoJSON").innerHTML = "nothing to display";
             }
@@ -180,14 +182,16 @@ async function _pollStatus(statusUrl, processId, clickMarker) {
 
           // If the result fetching succeeded, get the JSON from the response:
           const resultData = await resultRes.json();
+          //console.log('[async-poll] Result JSON (not pretty yet): '+JSON.stringify(resultData, null, 2));
           // Display raw JSON for now - later the pretty JSON will be shown!
           document.getElementById("displayGeoJSON").innerHTML = JSON.stringify(resultData, null, 2);
+          console.log('[async-poll] Displayed result JSON (not pretty)');
 
           // If there is no response, it might be a headwater!
           // TODO: Is this in the right location? Wouldn't the resultRes.json() have thrown an error anyway?
           // Stream segments CAN be shown if it is a headwater! Then they would be returned!
           if (resultData == null){
-            console.warn('[async] Result data is null... This should not happen.')
+            console.warn('[async-poll] Result data is null... This should not happen.')
             clickMarker.bindPopup("No "+lookingfor+", is this a headwater?").openPopup();
             // TODO Headwater, how to handle? Has not happened for a while, I think we now include the local
             // one itself to the upstream, so the response will not be null anywhere. Except for ocean I guess.
@@ -205,13 +209,13 @@ async function _pollStatus(statusUrl, processId, clickMarker) {
             _successPleaseShowGeojson(resultData, processId);
 
           } else {
-            console.warn("[async] Result JSON is not valid GeoJSON.");
+            console.warn("[async-poll] Result JSON is not valid GeoJSON.");
           }
 
         // If the response is not valid GeoJSON:
         } catch (err) {
             var errmsg = "Job succeeded, but result fetch failed: " + err.message;
-            console.warn('[async] '+errmsg);
+            console.warn('[async-poll] '+errmsg);
             document.getElementById("displayGeoJSON").innerHTML = errmsg;
             clickMarker.bindPopup(errmsg);
         }
@@ -226,8 +230,9 @@ async function _pollStatus(statusUrl, processId, clickMarker) {
         } else {
           var errmsg = `Job ${job.status}.`;
         }
-        console.warn('[async] '+errmsg);
+        console.warn('[async-poll] '+errmsg);
         document.getElementById('displayGeoJSON').innerHTML = errmsg;
+        console.warn('[async-poll] Displayed: '+errmsg);
         clickMarker.bindPopup(errmsg);
         break;
       }
