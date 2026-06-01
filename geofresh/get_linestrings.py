@@ -190,84 +190,6 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id,
     return feature_coll
 
 
-def get_accum_length_by_strahler(conn, subc_ids, basin_id, reg_id):
-    # TODO: Maybe just add this to one of the above...? Or might users want
-    # the cumulative length without requesting the geometries?
-
-    if len(subc_ids) == 0:
-        return 0
-
-    # Define query:
-    relevant_ids = ", ".join([str(elem) for elem in subc_ids])
-    query = f'''
-    SELECT length, strahler
-    FROM stream_segments
-    WHERE subc_id IN ({relevant_ids})
-        AND reg_id = {reg_id}
-        AND basin_id = {basin_id}
-    '''
-
-    # Query database:
-    cursor = conn.cursor()
-    LOGGER.log(logging.TRACE, 'Querying database...')
-    cursor.execute(query)
-    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
-
-    # Iterate over result rows
-    cum_length = 0
-    length_by_strahler = {}
-    while (True):
-        row = cursor.fetchone()
-        if row is None:
-            break
-
-        length = row[0]
-        strahler = row[1]
-        cum_length += length
-        LOGGER.log(logging.TRACE, 'Length of this segment: %s, cum %s, strahler %s' % (length, cum_length, strahler))
-        if str(strahler) in length_by_strahler:
-            length_by_strahler[str(strahler)] += length
-        else:
-            length_by_strahler[str(strahler)] = length
-
-    length_by_strahler["all_strahler_orders"] = cum_length
-    LOGGER.log(logging.TRACE, 'Returning dict: %s' % length_by_strahler)
-    return length_by_strahler
-
-
-def get_accum_length(conn, subc_ids, basin_id, reg_id):
-
-    if len(subc_ids) == 0:
-        return 0
-
-    relevant_ids = ", ".join([str(elem) for elem in subc_ids])
-    query = f'''
-    SELECT length
-    FROM stream_segments
-    WHERE subc_id IN ({relevant_ids})
-        AND reg_id = {reg_id}
-        AND basin_id = {basin_id}
-    '''
-
-    ### Query database:
-    cursor = conn.cursor()
-    LOGGER.log(logging.TRACE, 'Querying database...')
-    cursor.execute(query)
-    LOGGER.log(logging.TRACE, 'Querying database... DONE.')
-
-    ### Iterate over results
-    cum_length = 0
-    while (True):
-        row = cursor.fetchone()
-        if row is None:
-            break
-
-        cum_length += row[0]
-        LOGGER.log(logging.TRACE, 'Length of this segment: %s, cum: %s' % (row[0], cum_length))
-
-    return cum_length
-
-
 def get_streamsegment_linestrings_geometry_coll_by_basin(conn, basin_id, reg_id, min_strahler=0):
 
     query = f'''
@@ -457,10 +379,3 @@ if __name__ == "__main__":
     res = get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id)
     print('RESULT:\n%s' % res)
 
-    print('\nSTART RUNNING FUNCTION: get_accum_length_by_strahler')
-    res = get_accum_length_by_strahler(conn, subc_ids, basin_id, reg_id)
-    print('RESULT:\n%s' % res)
-
-    print('\nSTART RUNNING FUNCTION: get_accum_length_by_strahler')
-    res = get_accum_length(conn, subc_ids, basin_id, reg_id)
-    print('RESULT:\n%s' % res)
