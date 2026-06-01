@@ -115,7 +115,7 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id,
     # e.g. 506250459, 506251015, 506251126, 506251712
     query = f'''
     SELECT 
-        ST_AsText(geom), subc_id, strahler, target
+        ST_AsText(geom), subc_id, strahler, length, target
     FROM hydro.stream_segments
     WHERE subc_id IN ({relevant_ids})
         AND reg_id = {reg_id}
@@ -131,6 +131,8 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id,
     ### Get results and construct GeoJSON:
     LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
     features_geojson = []
+    cum_length = 0
+    cum_length_by_strahler = {}
     while (True):
         row = cursor.fetchone()
         if row is None:
@@ -149,23 +151,40 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id,
             # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
 
         # Note: Casting integers to int() to avoid error "Object of type int64 is not JSON serializable"
+        subc_id = int(row[1])
+        strahler = int(row[2])
+        length = float(row[3])
         feature = {
             "type": "Feature",
             "geometry": geometry,
             "properties": {
-                "subc_id": int(row[1]),
-                "strahler": int(row[2])
+                "subc_id": subc_id,
+                "strahler": strahler,
+                "length": length
             }
         }
+        # Collect cumulative length:
+        cum_length += length
+        if str(strahler) in cum_length_by_strahler:
+            cum_length_by_strahler[str(strahler)] += length
+            LOGGER.debug(f'Nth strahler {strahler}: {length}')
+        else:
+            LOGGER.debug(f'First strahler {strahler}: {length}')
+            cum_length_by_strahler[str(strahler)] = length
+
+       # Add target if required:
         if add_target_streams:
-            feature["properties"]["target"] = int(row[3])
+            feature["properties"]["target"] = int(row[4])
         features_geojson.append(feature)
 
     feature_coll = {
         "type": "FeatureCollection",
         "features": features_geojson,
         "basin_id": int(basin_id),
-        "region_id": int(reg_id)
+        "region_id": int(reg_id),
+        "cumulative_length": cum_length,
+        "cumulative_length_by_strahler": cum_length_by_strahler
+
     }
 
     return feature_coll
@@ -308,7 +327,7 @@ def get_streamsegment_linestrings_feature_coll_by_basin(conn, basin_id, reg_id, 
 
     query = f'''
     SELECT
-        ST_AsText(geom), subc_id, target, length, strahler
+        ST_AsText(geom), subc_id, strahler, length, target
     FROM hydro.stream_segments
     WHERE basin_id = {basin_id}
         AND reg_id = {reg_id}
@@ -324,6 +343,8 @@ def get_streamsegment_linestrings_feature_coll_by_basin(conn, basin_id, reg_id, 
     ### Get results and construct GeoJSON:
     LOGGER.log(logging.TRACE, 'Iterating over the result rows, constructing GeoJSON...')
     features_geojson = []
+    cum_length = 0
+    cum_length_by_strahler = {}
     while (True):
         row = cursor.fetchone()
         if row is None:
@@ -341,17 +362,33 @@ def get_streamsegment_linestrings_feature_coll_by_basin(conn, basin_id, reg_id, 
             # A geometry can be None/null, which is the valid value for unlocated Features in GeoJSON spec:
             # https://datatracker.ietf.org/doc/html/rfc7946#section-3.2
 
+        subc_id = int(row[1])
+        strahler = int(row[2])
+        length = float(row[3])
         feature = {
             "type": "Feature",
             "geometry": geometry,
             "properties": {
-                "subc_id": row[1],
-                "length": row[3],
-                "strahler": row[4]
+                "subc_id": subc_id,
+                "length": length,
+                "strahler": strahler
             }
         }
+
+        # Collect cumulative length:
+        cum_length += length
+        if str(strahler) in length_by_strahler:
+            cum_length_by_strahler[str(strahler)] += length
+            #LOGGER.debug(f'Nth strahler {strahler}: {length}')
+        else:
+            #LOGGER.debug(f'First strahler {strahler}: {length}')
+            cum_length_by_strahler[str(strahler)] = length
+
+        # Add target if required:
         if add_target_streams:
-            feature["properties"]["target"] = int(row[2])
+            feature["properties"]["target"] = int(row[4])
+
+        # Append feature to list
         features_geojson.append(feature)
 
     feature_coll = {
@@ -359,7 +396,9 @@ def get_streamsegment_linestrings_feature_coll_by_basin(conn, basin_id, reg_id, 
         "features": features_geojson,
         "basin_id": basin_id,
         "region_id": reg_id,
-        "number_stream_segments": len(features_geojson)
+        "number_stream_segments": len(features_geojson),
+        "cumulative_length": cum_length,
+        "cumulative_length_by_strahler": cum_length_by_strahler
     }
 
     return feature_coll

@@ -108,14 +108,6 @@ class UpstreamStreamSegmentsGetter(GeoFreshBaseProcessor):
         upstream_ids = upstream_subcids.get_upstream_catchment_ids_incl_itself(
             conn, subc_id, basin_id, reg_id, min_strahler=min_strahler)
 
-        # Cumulative length as JSON:
-        # TODO: We could include this into the query for the FeatureCollection,
-        # instead of querying the database twice. But for now, it works.
-        LOGGER.debug("Querying for cumulative length...")
-        cum_length_by_strahler = get_linestrings.get_accum_length_by_strahler(
-            conn, upstream_ids, basin_id, reg_id)
-        LOGGER.debug(f"Querying for cumulative length DONE: {cum_length_by_strahler}")
-
         # Log interesting cases:
         if len(upstream_ids) == 0:
             LOGGER.warning('No upstream ids. Cannot get upstream linestrings.')
@@ -161,10 +153,6 @@ class UpstreamStreamSegmentsGetter(GeoFreshBaseProcessor):
                 LOGGER.debug(f'... Getting upstream catchment line segments for subc_id: {subc_id}')
                 feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(
                     conn, upstream_ids, basin_id, reg_id, add_target_streams=add_target_streams)
-
-                # Add some info to the FeatureCollection:
-                feature_coll["cumulative_length"] = cum_length_by_strahler["all_strahler_orders"],
-                feature_coll["cumulative_length_by_strahler"] = cum_length_by_strahler
 
             # Add some info to the FeatureCollection:
             feature_coll["part_of_upstream_catchment_of"] = subc_id
