@@ -282,7 +282,9 @@ class LocalIdGetterPlural(GeoFreshBaseProcessor):
         # Set result_format to input format:
         if result_format is None:
             if points_geojson is not None:
-                result_format = 'geojson'
+                # GeoJSON as output format is not implemented (throws exception further down)!
+                #result_format = 'geojson'
+                result_format = 'json'
             elif csv_url is not None:
                 result_format = 'csv'
 
