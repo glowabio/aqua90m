@@ -117,17 +117,8 @@ class UpstreamStreamSegmentsGetter(GeoFreshBaseProcessor):
 
         # Get geometry only:
         if geometry_only:
-
-            if len(upstream_ids) == 0:
-                geometry_coll = {
-                    "type": "GeometryCollection",
-                    "geometries": []
-                }
-            else:
-                LOGGER.debug(f'... Getting upstream catchment line segments for subc_id: {subc_id}')
-                geometry_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll(conn, upstream_ids, basin_id, reg_id)
-
-            LOGGER.debug('END: Received GeometryCollection: %s' % str(geometry_coll)[0:50])
+            LOGGER.debug(f'... Getting upstream catchment line segments for subc_id: {subc_id}')
+            geometry_coll = get_linestrings.get_streamsegment_linestrings_geometry_coll(conn, upstream_ids, basin_id, reg_id)
 
             # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             return self.return_results('upstream_stream_segments', requested_outputs, output_df=None, output_json=geometry_coll, comment=comment)
@@ -136,23 +127,10 @@ class UpstreamStreamSegmentsGetter(GeoFreshBaseProcessor):
         # Get FeatureCollection
         if not geometry_only:
 
-            if len(upstream_ids) == 0:
-                # Feature Collections can have empty array according to GeoJSON spec::
-                # https://datatracker.ietf.org/doc/html/rfc7946#section-3.3
-                feature_coll = {
-                    "type": "FeatureCollection",
-                    "features": [],
-                    "basin_id": basin_id,
-                    "reg_id": reg_id,
-                    "cumulative_length": 0,
-                    "cumulative_length_by_strahler": 0
-                }
-
-            else:
-                # Note: The feature collection contains the strahler order for each feature (each stream segment)
-                LOGGER.debug(f'... Getting upstream catchment line segments for subc_id: {subc_id}')
-                feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(
-                    conn, upstream_ids, basin_id, reg_id, add_target_streams=add_target_streams)
+            # Note: The feature collection contains the strahler order for each feature (each stream segment)
+            LOGGER.debug(f'... Getting upstream catchment line segments for subc_id: {subc_id}')
+            feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(
+                conn, upstream_ids, basin_id, reg_id, add_target_streams=add_target_streams)
 
             # Add some info to the FeatureCollection:
             feature_coll["part_of_upstream_catchment_of"] = subc_id

@@ -41,9 +41,20 @@ def get_streamsegment_linestrings_geometry_coll(conn, subc_ids, basin_id, reg_id
     LINESTRING(9.924583333333334 54.69291666666666,9.924583333333334 54.69375,9.92375 54.694583333333334,9.92375 54.69625,9.924583333333334 54.69708333333333)                                                                                                                                                                                                                                              | 506251712
     '''
 
+    # If no subc_ids are given, return empty GeometryCollections:
+    # GeometryCollections can have empty array according to GeoJSON spec:
+    # https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.8
+    if len(upstream_ids) == 0:
+        geometry_coll = {
+            "type": "GeometryCollection",
+            "geometries": []
+        }
+        return geometry_coll
+
+    # Check if too many catchments?
     upstream_subcids.too_many_upstream_catchments(len(subc_ids), 'individual stream segments')
 
-
+    # Construct query:
     relevant_ids = ", ".join([str(elem) for elem in subc_ids])
     # e.g. 506250459, 506251015, 506251126, 506251712
     query = f'''
@@ -108,10 +119,26 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id,
     LINESTRING(9.924583333333334 54.69291666666666,9.924583333333334 54.69375,9.92375 54.694583333333334,9.92375 54.69625,9.924583333333334 54.69708333333333)                                                                                                                                                                                                                                              | 506251712
     '''
 
+
+    # If no subc_ids are given, return empty FeatureCollection:
+    # Feature Collections can have empty array according to GeoJSON spec:
+    # https://datatracker.ietf.org/doc/html/rfc7946#section-3.3
+    if len(subc_ids) == 0:
+        feature_coll = {
+            "type": "FeatureCollection",
+            "features": [],
+            "basin_id": basin_id,
+            "reg_id": reg_id,
+            "cumulative_length": 0,
+            "cumulative_length_by_strahler": 0
+        }
+        return feature_coll
+
+    # Check if too many catchments?
     upstream_subcids.too_many_upstream_catchments(len(subc_ids), 'individual stream segments')
 
+    # Construct query:
     relevant_ids = ','.join(map(str, subc_ids))
-
     # e.g. 506250459, 506251015, 506251126, 506251712
     query = f'''
     SELECT 
@@ -167,9 +194,7 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id,
         cum_length += length
         if str(strahler) in cum_length_by_strahler:
             cum_length_by_strahler[str(strahler)] += length
-            LOGGER.debug(f'Nth strahler {strahler}: {length}')
         else:
-            LOGGER.debug(f'First strahler {strahler}: {length}')
             cum_length_by_strahler[str(strahler)] = length
 
        # Add target if required:
@@ -184,7 +209,6 @@ def get_streamsegment_linestrings_feature_coll(conn, subc_ids, basin_id, reg_id,
         "region_id": int(reg_id),
         "cumulative_length": cum_length,
         "cumulative_length_by_strahler": cum_length_by_strahler
-
     }
 
     return feature_coll
@@ -301,9 +325,7 @@ def get_streamsegment_linestrings_feature_coll_by_basin(conn, basin_id, reg_id, 
         cum_length += length
         if str(strahler) in length_by_strahler:
             cum_length_by_strahler[str(strahler)] += length
-            #LOGGER.debug(f'Nth strahler {strahler}: {length}')
         else:
-            #LOGGER.debug(f'First strahler {strahler}: {length}')
             cum_length_by_strahler[str(strahler)] = length
 
         # Add target if required:
