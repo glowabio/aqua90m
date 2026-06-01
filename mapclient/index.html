@@ -485,6 +485,7 @@ integrity=
         // Second click of two:
         } else {
           console.log('[mapclick] Second click, the first one already occurred before.');
+          clickMarker = putIconToClickLocation(clicklon, clicklat, map, logUserAction);
 
           // Write the coordinates into the coordinate fields:
           document.getElementById("customLonLat2").value=clicklon+", "+clicklat;
