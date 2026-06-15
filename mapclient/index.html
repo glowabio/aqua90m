@@ -260,7 +260,8 @@ integrity=
     //const initialViewLatLon = [paramLat ?? 53.014, paramLon ?? 12.008]; // Northern Germany (zoom 7)
     let initialViewLatLon = [paramLat ?? 60.19123, paramLon ?? 24.94612]; // Helsinki (zoom 10)
     //console.log('[main] Initial view: ', initialViewLatLon);
-    map.setView(initialViewLatLon, 7);
+    let zoomLevel = 7;
+    map.setView(initialViewLatLon, zoomLevel);
 
     // Create custom control textbox for processId
     const infoControl = L.control({ position: "topright" });
@@ -503,19 +504,27 @@ integrity=
     var urlParamBehaviour = function(params) {
       console.log('[urlparams] User passed at least some URL parameters');
 
-      // Are required values there?
-      const requiredParams = ['lon', 'lat', 'processId'];
-      const missing = requiredParams.filter(p => !params.has(p));
-      if (missing.length == 3) {
-        console.log("[urlparams] None of the required URL parameters passed.")
-        return false;
-      } else if (missing.length > 0) {
-        console.warn("[urlparams] Missing parameters:", missing.join(', '));
-        return false;
-      } else {
-        console.log("[urlparams] All required parameters present");
+      // Is there a bbox? Then just zoom there...
+      const minLon = Number(params.get("lon_min"));
+      const minLat = Number(params.get("lat_min"));
+      const maxLon = Number(params.get("lon_max"));
+      const maxLat = Number(params.get("lat_max"));
+      if (
+        ["lon_max", "lat_min", "lon_max", "lat_max"].every(p => params.has(p)) &&
+        [minLon, minLat, maxLon, maxLat].every(v => !Number.isNaN(v))
+      ) {
+        console.log("[urlparams] Found bbox in URL params, just zooming in...");
+        const bounds = [
+          [minLat, minLon], // southwest
+          [maxLat, maxLon]  // northeast
+        ];
+        map.fitBounds(bounds);
+	// Return false to indicate no process has been run yet, still waiting for
+	// a click and a process id...
+	return false;
       }
 
+      // First get lon, lat:
       // Are lon lat formatted ok?
       paramLon = parseFloat(urlParams.get('lon'));
       paramLat = parseFloat(urlParams.get('lat'));
@@ -526,8 +535,18 @@ integrity=
         return false;
       }
 
-      // Get process id
+      // If there is no process id, just zoom to coordinate pair...
       const processId = params.get('processId');
+      if (processId == null) {
+        console.log("[urlparams] URL param processId does not exist, just zooming in...");
+	let zoomLevel = 7;
+	map.setView([paramLat, paramLon], zoomLevel);
+	// Return false to indicate no process has been run yet, still waiting for
+        // a click and a process id...
+	return false;
+      }
+
+      // We have a process id, so proceed to using it:
       console.log("[urlparams] URL param processId: "+processId);
 
       // Set the process to selected in the dropdown (and trigger event):
