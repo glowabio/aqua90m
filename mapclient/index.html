@@ -513,47 +513,40 @@ integrity=
         ["lon_max", "lat_min", "lon_max", "lat_max"].every(p => params.has(p)) &&
         [minLon, minLat, maxLon, maxLat].every(v => !Number.isNaN(v))
       ) {
-        console.log("[urlparams] Found bbox in URL params, just zooming in...");
+        console.log("[urlparams] Found bbox in URL params, zooming in...");
         const bounds = [
           [minLat, minLon], // southwest
           [maxLat, maxLon]  // northeast
         ];
         map.fitBounds(bounds);
-	// Return false to indicate no process has been run yet, still waiting for
-	// a click and a process id...
-	return false;
       }
 
-      // First get lon, lat:
-      // Are lon lat formatted ok?
+      // Get lon, lat. Are lon lat formatted ok?
       paramLon = parseFloat(urlParams.get('lon'));
       paramLat = parseFloat(urlParams.get('lat'));
       paramLon = Number.isFinite(paramLon) ? paramLon : null;
       paramLat = Number.isFinite(paramLat) ? paramLat: null;
       if (!Number.isFinite(paramLat) || !Number.isFinite(paramLon)) {
-        console.warn("[urlparams] At least one coordinate is not a number: "+paramLon+", "+paramLat+" (lon, lat). Not doing anything.");
-        return false;
-      }
-
-      // If there is no process id, just zoom to coordinate pair...
-      const processId = params.get('processId');
-      if (processId == null) {
-        console.log("[urlparams] URL param processId does not exist, just zooming in...");
+        console.warn("[urlparams] At least one coordinate is not a number: "+paramLon+", "+paramLat+" (lon, lat).");
+      } else {
+        console.log("[urlparams] Found coordinate pair in URL params, zooming in...");
 	let zoomLevel = 7;
 	map.setView([paramLat, paramLon], zoomLevel);
-	// Return false to indicate no process has been run yet, still waiting for
-        // a click and a process id...
-	return false;
       }
 
-      // We have a process id, so proceed to using it:
-      console.log("[urlparams] URL param processId: "+processId);
-
-      // Set the process to selected in the dropdown (and trigger event):
-      // TODO: Problem: This event then will try to reset the URL params... Puh.
-      const select = document.getElementById("processes");
-      select.value = processId;
-      select.dispatchEvent(new Event("input", { bubbles: true }));
+      // Get process id
+      const processId = params.get('processId');
+      if (processId == null) {
+        console.log("[urlparams] URL param processId does not exist...");
+      } else {
+        // We have a process id, so proceed to using it:
+        console.log("[urlparams] URL param processId: "+processId);
+        // Set the process to selected in the dropdown (and trigger event):
+        // TODO: Problem: This event then will try to reset the URL params... Puh.
+        const select = document.getElementById("processes");
+        select.value = processId;
+        select.dispatchEvent(new Event("input", { bubbles: true }));
+      }
 
       // Optional URL param: strahler order!
       let paramStrahler = parseInt(params.get('strahler'));
@@ -571,6 +564,19 @@ integrity=
       let processDesc = "process provided by user"
       // TODO Get the proper processDesc, e.g. Upstream catchment (individual polygons)
 
+
+      // If we do not have enough parameters to start a process, return false
+      // to indicate no process has been run yet, still waiting for a click
+      // and a process id...
+      if (!Number.isFinite(paramLat) || !Number.isFinite(paramLon)) {
+        return false;
+      }
+      if (processId == null) {
+        return false;
+      }
+
+
+      // If we do have enough parameters, ask user for confirmation to be sure...
       let skipConfirm = urlParams.get("confirm")?.toLowerCase() === "false";
       if (skipConfirm || confirm("You want to compute "+processId+" for coordinates "+paramLon+", "+paramLat+" (lon, lat)?")) {
         // Go for it!
