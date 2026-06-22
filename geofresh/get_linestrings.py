@@ -323,7 +323,7 @@ def get_streamsegment_linestrings_feature_coll_by_basin(conn, basin_id, reg_id, 
 
         # Collect cumulative length:
         cum_length += length
-        if str(strahler) in length_by_strahler:
+        if str(strahler) in cum_length_by_strahler:
             cum_length_by_strahler[str(strahler)] += length
         else:
             cum_length_by_strahler[str(strahler)] = length
