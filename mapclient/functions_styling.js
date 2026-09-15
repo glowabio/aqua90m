@@ -212,9 +212,10 @@ var _styleLayerStrahler = function(layer, processId) {
     // Cannot differentiate by strahler: Polygons are dissolved!
 
   } else if (processId == "get-upstream-subcatchments") {
+    // TODO! Strahler-Style for upstream catchments
+    // We do not have strahler order in the result GeoJSON, so we cannot use it to style!
     console.log("[styling] Styling based on strahler order makes sense BUT is not implemented yet: "+processId);
     layer.setStyle({color: 'navy', weight: 1});
-    // TODO! Strahler-Style for upstream catchments
 
   } else if (processId == "get-upstream-streamsegments") {
     console.log("[styling] Styling based on strahler order makes sense: "+processId);

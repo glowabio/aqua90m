@@ -91,6 +91,9 @@ var _ogcRequest = function(server, processId, processDesc, payload_inputs_json, 
       console.log('[sync] Added layer to map...');
       map.fitBounds(pygeoResponseGeoJSONLayer.getBounds());
       console.log('[sync] Zoomed to layer...');
+      // Replace popup text content before closing it (as user can reopen it)
+      const popUpText = clickMarker.getPopup().getContent();
+      clickMarker.setPopupContent(popUpText.replace("Waiting for ", "Done: "));
       clickMarker.closePopup();
 
       // Move web page to map!

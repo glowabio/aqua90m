@@ -47,19 +47,19 @@ integrity=
   <!-- Selection -->
   <p><span>Click on the map to display (please choose):</span></p>
   <select id="processes">
-    <optgroup label="upstream">
+    <optgroup label="Upstream catchments">
       <option data-pairs="one" value="get-upstream-bbox">Upstream bounding box</option>
       <option data-pairs="one" value="get-upstream-dissolved-cont">Upstream catchment (one large polygon)</option>
       <option data-pairs="one" value="get-upstream-subcatchments">Upstream catchment (individual polygons)</option>
       <option data-pairs="one" value="get-upstream-streamsegments" selected="selected">Upstream stream segments</option>
     </optgroup>
-    <optgroup label="local">
+    <optgroup label="Info about place itself">
       <option data-pairs="one" value="get-local-streamsegments">Local stream segment</option>
       <option data-pairs="one" value="get-local-streamsegments-subcatchments">Local stream segment and local subcatchment</option>
       <option data-pairs="one" value="get-snapped-points">Snapped point</option>
       <option data-pairs="one" value="get-snapped-point-plus">Snapped point, local stream segment and local subcatchment</option>
     </optgroup>
-    <optgroup label="routing">
+    <optgroup label="River-network routing">
       <option data-pairs="one" value="get-shortest-path-to-outlet">Shortest path from point to sea</option>
       <option data-pairs="two" value="get-shortest-path-between-points">Shortest path from point to point</option>
     </optgroup>
