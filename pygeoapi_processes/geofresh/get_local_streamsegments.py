@@ -105,6 +105,9 @@ class LocalStreamSegmentsGetter(GeoFreshBaseProcessor):
             LOGGER.debug('Now, getting stream segment (incl. strahler order) for subc_id: %s' % subc_id)
             feature_coll = get_linestrings.get_streamsegment_linestrings_feature_coll(conn, [subc_id], basin_id, reg_id)
             streamsegment_feature = feature_coll["features"][0]
+            # TODO: Instead of adding this to the feature, return an entire FeatureColl!
+            streamsegment_feature["properties"]["basin_id"] = basin_id
+            streamsegment_feature["properties"]["red_id"] = reg_id
 
             # Return link to result (wrapped in JSON) if requested, or directly the JSON object:
             return self.return_results('stream_segment', requested_outputs, output_df=None, output_json=streamsegment_feature, comment=comment)
