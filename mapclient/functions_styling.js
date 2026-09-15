@@ -152,6 +152,13 @@ var _styleLayerUni = function(layer) {
       //layer.setStyle({color: 'black', weight: 3});
       //console.log('Found snapped point and painted them black...');
 
+  } else if (processId == "get-basin-polygon") {
+    layer.setStyle({fillColor: 'navy', color: 'navy', weight: 5});
+  } else if (processId == "get-basin-streamsegments") {
+    layer.setStyle({fillColor: 'navy', color: 'navy', weight: 5});
+  } else if (processId == "get-basin-subcatchments") {
+    layer.setStyle({fillColor: 'navy', color: 'navy', weight: 5});
+
   // All others:
   } else {
     console.log('TODO: Found feature that is not styled yet. You may want to check this.');
@@ -301,6 +308,42 @@ var _styleLayerStrahler = function(layer, processId) {
       // TODO How to style points?
       //layer.setStyle({color: 'black', weight: 3});
       //console.log('Found snapped point and painted them black...');
+
+  } else if (processId == "get-basin-polygon") {
+    console.log("[styling] Styling based on strahler order makes no sense: "+processId);
+    layer.setStyle({fillColor: 'navy', color: 'navy', weight: 5});
+
+  } else if (processId == "get-basin-streamsegments") {
+    // layer.setStyle({fillColor: 'navy', color: 'navy', weight: 5});
+    console.log("[styling] Styling based on strahler order makes sense: "+processId);
+    // let's vary colour with strahler order, more precisely with
+    // lightness in the HSL colour model:
+    // Navy: hue=240, saturation=1
+    //  lightness = 0.25 or 25% medium blue
+    //  lightness = 0.2 or 20% black-ish
+    //  lightness = 0.9 or 90% quite light
+    // Reasonable base colour to start with. Now vary lightness with strahler...
+    let hue = 240;
+    let saturation = 1;
+    let lightness = 0.25
+
+    // Get from strahler to a lightness value between 0.2 and 0.9!
+    let strahler = layer.feature.properties.strahler;
+    let lowest_lightness = 0
+    let highest_lightness = 0.8
+    lightness = strahler_to_hsl_lightness(strahler, lowest_lightness, highest_lightness);
+    let col_hex = convert_hsl_to_hex(hue, 1, lightness);
+
+    // Get from strahler to a line weight value between 2 and 4!
+    let min_weight = 2;
+    let max_weight = 4;
+    let weight = strahler_to_line_weight(strahler, min_weight, max_weight)
+    layer.setStyle({color: col_hex, weight: weight});
+
+  } else if (processId == "get-basin-subcatchments") {
+    // TODO strahler styling for basin subcatchments (like upstream subcatchments)
+    // We do not have strahler order in the result GeoJSON, so we cannot use it to style!
+    layer.setStyle({fillColor: 'navy', color: 'navy', weight: 5});
 
   // All others:
   } else {

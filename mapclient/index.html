@@ -63,6 +63,11 @@ integrity=
       <option data-pairs="one" value="get-shortest-path-to-outlet">Shortest path from point to sea</option>
       <option data-pairs="two" value="get-shortest-path-between-points">Shortest path from point to point</option>
     </optgroup>
+    <optgroup label="River basin">
+      <option data-pairs="one" value="get-basin-polygon">Basin (entire basin as one polygon)</option>
+      <option data-pairs="one" value="get-basin-streamsegments">Stream segments of a basin (all individual stream segments)</option>
+      <option data-pairs="one" value="get-basin-subcatchments">Subcatchments of a basin (all individual subcatchments as polygons)</option>
+    </optgroup>
   </select>
   <label><input type="checkbox" id="stylingStrahlerToggle" checked>Style depending on <strong>strahler</strong> order</label>
   <div>
