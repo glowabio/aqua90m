@@ -44,7 +44,7 @@ def get_streamsegment_linestrings_geometry_coll(conn, subc_ids, basin_id, reg_id
     # If no subc_ids are given, return empty GeometryCollections:
     # GeometryCollections can have empty array according to GeoJSON spec:
     # https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.8
-    if len(upstream_ids) == 0:
+    if len(subc_ids) == 0:
         geometry_coll = {
             "type": "GeometryCollection",
             "geometries": []
